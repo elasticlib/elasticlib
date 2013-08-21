@@ -1,5 +1,6 @@
 package store;
 
+import store.info.ContentInfo;
 import java.io.InputStream;
 
 public class ContentReader {

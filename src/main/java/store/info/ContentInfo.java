@@ -1,8 +1,9 @@
-package store;
+package store.info;
 
 import static java.util.Collections.unmodifiableMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import static java.util.Objects.requireNonNull;
 import store.hash.Hash;
 
@@ -32,6 +33,29 @@ public final class ContentInfo {
 
     public static ContentInfoBuilder contentInfo() {
         return new ContentInfoBuilder();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hash, length, metadata);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || obj.getClass() != ContentInfo.class) {
+            return false;
+        }
+        final ContentInfo other = (ContentInfo) obj;
+        if (!hash.equals(other.hash)) {
+            return false;
+        }
+        if (length != other.length) {
+            return false;
+        }
+        if (!metadata.equals(other.metadata)) {
+            return false;
+        }
+        return true;
     }
 
     /**

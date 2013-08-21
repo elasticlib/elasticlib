@@ -1,5 +1,7 @@
 package store;
 
+import store.info.ContentInfo;
+import store.info.InfoManager;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -46,7 +48,7 @@ public class Store {
     }
 
     public ContentWriter put(ContentInfo contentInfo) {
-        infoManager.add(contentInfo);
+        infoManager.put(contentInfo);
         return new ContentWriter();
     }
 

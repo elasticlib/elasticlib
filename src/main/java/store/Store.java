@@ -1,18 +1,21 @@
 package store;
 
-import store.info.ContentInfo;
-import store.info.InfoManager;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import store.hash.Hash;
+import store.info.ContentInfo;
+import store.info.InfoManager;
+import store.lock.LockManager;
 
 public class Store {
 
+    private final LockManager lockManager;
     private final InfoManager infoManager;
 
     private Store(Path root) {
+        lockManager = new LockManager();
         infoManager = new InfoManager(root.resolve("info"));
     }
 
@@ -48,8 +51,16 @@ public class Store {
     }
 
     public ContentWriter put(ContentInfo contentInfo) {
-        infoManager.put(contentInfo);
-        return new ContentWriter();
+        if (!lockManager.lock(contentInfo.getHash())) {
+            throw new IllegalStateException("Operation concurrente");
+        }
+        try {
+            infoManager.put(contentInfo);
+            return new ContentWriter();
+
+        } finally {
+            lockManager.unlock(contentInfo.getHash());
+        }
     }
 
     public ContentReader get(Hash hash) {

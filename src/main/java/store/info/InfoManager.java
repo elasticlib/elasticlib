@@ -1,5 +1,6 @@
 package store.info;
 
+import store.Index;
 import com.google.common.base.Optional;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -39,12 +40,12 @@ public class InfoManager {
                 .put("metadata", contentInfo.getMetadata())
                 .build();
 
-        int index = index(contentInfo.getHash());
+        int index = Index.of(key(contentInfo.getHash()));
         while (true) {
             Page page = cache.get(index);
             if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
                 try {
-                    Files.write(bucket(contentInfo.getHash()),
+                    Files.write(root.resolve(key(contentInfo.getHash())),
                                 bytes,
                                 StandardOpenOption.APPEND, StandardOpenOption.CREATE);
                     return;
@@ -69,7 +70,7 @@ public class InfoManager {
     }
 
     private Page getPage(Hash hash) {
-        int index = index(hash);
+        int index = Index.of(key(hash));
         while (true) {
             Page page = cache.get(index);
             if (page.state() == LOADED) {
@@ -91,7 +92,7 @@ public class InfoManager {
     }
 
     private Page load(Hash hash) throws IOException {
-        Path bucket = bucket(hash);
+        Path bucket = root.resolve(key(hash));
         if (!Files.exists(bucket)) {
             return Page.empty();
         }
@@ -111,14 +112,6 @@ public class InfoManager {
 
     private static StreamDecoder streamDecoder(Path path) throws IOException {
         return new StreamDecoder(new BufferedInputStream(Files.newInputStream(path)));
-    }
-
-    private static int index(Hash hash) {
-        return IndexResolver.index(key(hash));
-    }
-
-    private Path bucket(Hash hash) {
-        return root.resolve(key(hash));
     }
 
     private static String key(Hash hash) {

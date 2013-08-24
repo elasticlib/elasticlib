@@ -65,15 +65,19 @@ public class Store {
         if (!lockManager.lock(contentInfo.getHash())) {
             throw new IllegalStateException("Operation concurrente");
         }
+        operationManager.begin(contentInfo);
         try {
-            operationManager.begin(contentInfo);
             contentManager.put(contentInfo, source);
-            operationManager.complete(contentInfo);
-            infoManager.put(contentInfo);
 
-        } finally {
+        } catch (IOException e) {
+            operationManager.abort(contentInfo);
             lockManager.unlock(contentInfo.getHash());
+            throw new RuntimeException(e);
         }
+        operationManager.complete(contentInfo);
+        infoManager.put(contentInfo);
+        operationManager.clear(contentInfo);
+        lockManager.unlock(contentInfo.getHash());
     }
 
     public ContentReader get(Hash hash) {

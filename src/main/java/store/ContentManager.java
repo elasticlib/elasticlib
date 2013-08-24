@@ -37,7 +37,7 @@ public class ContentManager {
         return new ContentManager(path);
     }
 
-    public void put(ContentInfo info, InputStream source) {
+    public void put(ContentInfo info, InputStream source) throws IOException {
         Hash hash = info.getHash();
         Path file = createFile(hash);
         try (OutputStream target = Files.newOutputStream(file)) {
@@ -47,7 +47,7 @@ public class ContentManager {
             }
         } catch (IOException e) {
             delete(file);
-            throw new RuntimeException(e);
+            throw e;
         }
     }
 

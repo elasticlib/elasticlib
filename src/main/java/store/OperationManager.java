@@ -56,6 +56,10 @@ public class OperationManager {
         }
     }
 
+    public void abort(ContentInfo contentInfo) {
+        delete("pending", contentInfo.getHash());
+    }
+
     public void complete(ContentInfo contentInfo) {
         Hash hash = contentInfo.getHash();
         Path source = path("pending", hash);
@@ -65,6 +69,20 @@ public class OperationManager {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void clear(ContentInfo contentInfo) {
+        delete("completed", contentInfo.getHash());
+    }
+
+    private void delete(String dir, Hash hash) {
+        Path path = path(dir, hash);
+        try {
+            Files.deleteIfExists(path);
+
+        } catch (IOException e) {
+            // TODO simplement logger l'erreur
         }
     }
 

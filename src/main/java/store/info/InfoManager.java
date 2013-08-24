@@ -3,6 +3,7 @@ package store.info;
 import com.google.common.base.Optional;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -52,20 +53,13 @@ public class InfoManager {
     }
 
     public void put(ContentInfo contentInfo) {
-        byte[] bytes = encoder()
-                .put("hash", contentInfo.getHash()
-                .value())
-                .put("length", contentInfo.getLength())
-                .put("metadata", contentInfo.getMetadata())
-                .build();
-
         int index = Index.of(key(contentInfo.getHash()));
         while (true) {
             Page page = cache.get(index);
             if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
                 try {
                     Files.write(root.resolve(key(contentInfo.getHash())),
-                                bytes,
+                                bytes(contentInfo),
                                 StandardOpenOption.APPEND, StandardOpenOption.CREATE);
                     return;
 
@@ -82,6 +76,44 @@ public class InfoManager {
     public Optional<ContentInfo> get(Hash hash) {
         return getPage(hash)
                 .get(hash);
+    }
+
+    public void delete(Hash hash) {
+        int index = Index.of(key(hash));
+        while (true) {
+            Page page = cache.get(index);
+            Path bucket = root.resolve(key(hash));
+            if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
+                try {
+                    Page loaded = load(hash);
+                    Collection<ContentInfo> contentInfos = loaded.getAll();
+                    if (contentInfos.size() == 1 && contentInfos.iterator()
+                            .next()
+                            .getHash()
+                            .equals(hash)) {
+
+                        Files.delete(bucket);
+
+                    } else {
+                        try (OutputStream outputStream = Files.newOutputStream(bucket)) {
+                            for (ContentInfo contentInfo : contentInfos) {
+                                if (!hash.equals(contentInfo.getHash())) {
+                                    outputStream.write(bytes(contentInfo));
+                                }
+                            }
+                        }
+                    }
+                    return;
+
+                } catch (IOException e) {
+                    // FIXME Oh mon dieu, il fallait écrire dans un autre fichier et faire un move :'(
+                    throw new StoreRuntimeException(e);
+
+                } finally {
+                    cache.set(index, Page.unloaded());
+                }
+            }
+        }
     }
 
     private Page getPage(Hash hash) {
@@ -132,5 +164,14 @@ public class InfoManager {
     private static String key(Hash hash) {
         return hash.encode()
                 .substring(0, KEY_LENGTH);
+    }
+
+    private static byte[] bytes(ContentInfo contentInfo) {
+        Hash hash = contentInfo.getHash();
+        return encoder()
+                .put("hash", hash.value())
+                .put("length", contentInfo.getLength())
+                .put("metadata", contentInfo.getMetadata())
+                .build();
     }
 }

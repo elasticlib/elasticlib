@@ -57,6 +57,10 @@ final class Page {
         return Optional.absent();
     }
 
+    public Collection<ContentInfo> getAll() {
+        return info.values();
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(state, info);

@@ -81,5 +81,6 @@ public class Store {
 
     public void delete(Hash hash) {
         operationManager.delete(hash);
+        infoManager.delete(hash);
     }
 }

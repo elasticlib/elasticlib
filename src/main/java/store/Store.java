@@ -77,7 +77,7 @@ public class Store {
     }
 
     public ContentReader get(Hash hash) {
-        return new ContentReader(infoManager.get(hash));
+        return new ContentReader(infoManager.get(hash), contentManager.get(hash));
     }
 
     public void delete(Hash hash) {

@@ -1,14 +1,16 @@
 package store;
 
-import store.info.ContentInfo;
 import java.io.InputStream;
+import store.info.ContentInfo;
 
 public class ContentReader {
 
     private final ContentInfo info;
+    private final InputStream inputStream;
 
-    public ContentReader(ContentInfo info) {
+    public ContentReader(ContentInfo info, InputStream inputStream) {
         this.info = info;
+        this.inputStream = inputStream;
     }
 
     public ContentInfo info() {
@@ -16,6 +18,6 @@ public class ContentReader {
     }
 
     public InputStream inputStream() {
-        return null; // TODO
+        return inputStream;
     }
 }

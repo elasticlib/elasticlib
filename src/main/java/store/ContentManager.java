@@ -39,7 +39,7 @@ public class ContentManager {
 
     public void put(ContentInfo info, InputStream source) {
         Hash hash = info.getHash();
-        Path file = file(hash);
+        Path file = createFile(hash);
         try (OutputStream target = Files.newOutputStream(file)) {
             Digest digest = copy(source, target);
             if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
@@ -47,6 +47,14 @@ public class ContentManager {
             }
         } catch (IOException e) {
             delete(file);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public InputStream get(Hash hash) {
+        try {
+            return Files.newInputStream(openFile(hash));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -63,7 +71,7 @@ public class ContentManager {
         return digestBuilder.build();
     }
 
-    private Path file(Hash hash) {
+    private Path createFile(Hash hash) {
         try {
             Path dir = root.resolve(key(hash));
             if (!Files.exists(dir)) {
@@ -74,6 +82,11 @@ public class ContentManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Path openFile(Hash hash) {
+        return root.resolve(key(hash))
+                .resolve(hash.encode());
     }
 
     private void delete(Path path) {

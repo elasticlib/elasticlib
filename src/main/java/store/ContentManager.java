@@ -44,25 +44,29 @@ public class ContentManager {
 
     public void put(ContentInfo info, InputStream source) {
         Hash hash = info.getHash();
-        Path file = createFile(hash);
+        Path path = createPath(hash);
         try {
-            Digest digest = write(source, file);
+            Digest digest = write(source, path);
             if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
                 throw new IntegrityCheckingFailedException();
             }
         } catch (StoreException e) {
-            delete(file);
+            deleteFile(path);
             throw e;
         }
     }
 
     public InputStream get(Hash hash) {
         try {
-            return Files.newInputStream(openFile(hash));
+            return Files.newInputStream(path(hash));
 
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
         }
+    }
+
+    public void delete(Hash hash) {
+        deleteFile(path(hash));
     }
 
     private static Digest write(InputStream source, Path path) throws WriteException {
@@ -82,7 +86,7 @@ public class ContentManager {
         }
     }
 
-    private Path createFile(Hash hash) {
+    private Path createPath(Hash hash) {
         try {
             Path dir = root.resolve(key(hash));
             if (!Files.exists(dir)) {
@@ -95,12 +99,12 @@ public class ContentManager {
         }
     }
 
-    private Path openFile(Hash hash) {
+    private Path path(Hash hash) {
         return root.resolve(key(hash))
                 .resolve(hash.encode());
     }
 
-    private void delete(Path path) {
+    private void deleteFile(Path path) {
         try {
             Files.deleteIfExists(path);
 

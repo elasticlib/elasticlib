@@ -107,6 +107,10 @@ public class OperationManager {
         }
     }
 
+    public void clear(Hash hash) {
+        remove("deleted", hash);
+    }
+
     private Path path(String dir, Hash hash) {
         return root.resolve(dir)
                 .resolve(hash.encode());

@@ -8,21 +8,15 @@ import java.nio.file.Path;
 import store.hash.Hash;
 import store.info.ContentInfo;
 import store.info.InfoManager;
-import store.lock.LockManager;
+import store.operation.OperationManager;
 
 public class Store {
 
-    private final LockManager lockManager;
     private final OperationManager operationManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Store(LockManager lockManager,
-                  OperationManager operationManager,
-                  InfoManager infoManager,
-                  ContentManager contentManager) {
-
-        this.lockManager = lockManager;
+    private Store(OperationManager operationManager, InfoManager infoManager, ContentManager contentManager) {
         this.operationManager = operationManager;
         this.infoManager = infoManager;
         this.contentManager = contentManager;
@@ -36,9 +30,7 @@ public class Store {
             if (!isEmptyDir(path)) {
                 throw new IllegalArgumentException(path.toString());
             }
-
-            return new Store(new LockManager(),
-                             OperationManager.create(path.resolve("operations")),
+            return new Store(OperationManager.create(path.resolve("operations")),
                              InfoManager.create(path.resolve("info")),
                              ContentManager.create(path.resolve("content")));
 
@@ -55,29 +47,25 @@ public class Store {
     }
 
     public static Store open(Path path) {
-        return new Store(new LockManager(),
-                         OperationManager.open(path.resolve("operations")),
+        return new Store(OperationManager.open(path.resolve("operations")),
                          InfoManager.open(path.resolve("info")),
                          ContentManager.open(path.resolve("content")));
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        if (!lockManager.lock(contentInfo.getHash())) {
+        if (!operationManager.begin(contentInfo)) {
             throw new IllegalStateException("Operation concurrente");
         }
-        operationManager.begin(contentInfo);
         try {
             contentManager.put(contentInfo, source);
 
         } catch (IOException e) {
             operationManager.abort(contentInfo);
-            lockManager.unlock(contentInfo.getHash());
             throw new RuntimeException(e);
         }
         operationManager.complete(contentInfo);
         infoManager.put(contentInfo);
         operationManager.clear(contentInfo);
-        lockManager.unlock(contentInfo.getHash());
     }
 
     public ContentReader get(Hash hash) {
@@ -85,9 +73,8 @@ public class Store {
     }
 
     public void delete(Hash hash) {
-        if (!lockManager.lock(hash)) {
+        if (!operationManager.delete(hash)) {
             throw new IllegalStateException("Operation concurrente");
         }
-        operationManager.delete(hash);
     }
 }

@@ -1,4 +1,4 @@
-package store;
+package store.operation;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,9 +12,11 @@ import static store.io.ObjectEncoder.encoder;
 public class OperationManager {
 
     private final Path root;
+    private final Locks locks;
 
     private OperationManager(Path root) {
         this.root = root;
+        locks = new Locks();
     }
 
     public static OperationManager create(Path path) {
@@ -40,8 +42,11 @@ public class OperationManager {
         return new OperationManager(path);
     }
 
-    public void begin(ContentInfo contentInfo) {
+    public boolean begin(ContentInfo contentInfo) {
         Hash hash = contentInfo.getHash();
+        if (!locks.lock(hash)) {
+            return false;
+        }
         Path path = path("pending", hash);
         byte[] bytes = encoder()
                 .put("hash", hash.value())
@@ -54,10 +59,11 @@ public class OperationManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return true;
     }
 
     public void abort(ContentInfo contentInfo) {
-        delete("pending", contentInfo.getHash());
+        remove("pending", contentInfo.getHash());
     }
 
     public void complete(ContentInfo contentInfo) {
@@ -73,23 +79,27 @@ public class OperationManager {
     }
 
     public void clear(ContentInfo contentInfo) {
-        delete("completed", contentInfo.getHash());
+        remove("completed", contentInfo.getHash());
     }
 
-    private void delete(String dir, Hash hash) {
-        Path path = path(dir, hash);
+    private void remove(String dir, Hash hash) {
         try {
-            Files.deleteIfExists(path);
+            Files.deleteIfExists(path(dir, hash));
 
         } catch (IOException e) {
             // TODO simplement logger l'erreur
+        } finally {
+            locks.unlock(hash);
         }
     }
 
-    public void delete(Hash hash) {
-        Path path = path("deleted", hash);
+    public boolean delete(Hash hash) {
+        if (!locks.lock(hash)) {
+            return false;
+        }
         try {
-            Files.createFile(path);
+            Files.createFile(path("deleted", hash));
+            return true;
 
         } catch (IOException e) {
             throw new RuntimeException(e);

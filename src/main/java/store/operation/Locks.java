@@ -1,14 +1,14 @@
-package store.lock;
+package store.operation;
 
 import store.Index;
 import store.hash.Hash;
 
-public class LockManager {
+class Locks {
 
     private static final int KEY_LENGTH = 1;
     private final Page[] locks;
 
-    public LockManager() {
+    public Locks() {
         locks = new Page[1 << (4 * KEY_LENGTH)];
         for (int i = 0; i < locks.length; i++) {
             locks[i] = new Page();

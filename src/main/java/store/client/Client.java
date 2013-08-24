@@ -49,6 +49,14 @@ public class Client {
                 get(args[1], args[2]);
                 return;
 
+
+            case "delete":
+                if (args.length < 3) {
+                    throw new IllegalArgumentException();
+                }
+                delete(args[1], args[2]);
+                return;
+
             default:
                 throw new IllegalArgumentException(args[0]);
         }
@@ -118,5 +126,12 @@ public class Client {
                 }
             }
         }
+    }
+
+    private static void delete(String storepath, String encodedHash) {
+        Store store = Store.open(Paths.get(storepath));
+        Hash hash = new Hash(encodedHash);
+
+        store.delete(hash);
     }
 }

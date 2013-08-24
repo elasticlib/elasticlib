@@ -5,6 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import store.exception.IntegrityCheckingFailedException;
+import store.exception.InvalidStorePathException;
+import store.exception.StoreException;
+import store.exception.StoreRuntimeException;
+import store.exception.WriteException;
 import store.hash.Digest;
 import store.hash.Digest.DigestBuilder;
 import store.hash.Hash;
@@ -26,26 +31,26 @@ public class ContentManager {
             return new ContentManager(path);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
     public static ContentManager open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new IllegalArgumentException(path.toString());
+            throw new InvalidStorePathException();
         }
         return new ContentManager(path);
     }
 
-    public void put(ContentInfo info, InputStream source) throws IOException {
+    public void put(ContentInfo info, InputStream source) {
         Hash hash = info.getHash();
         Path file = createFile(hash);
-        try (OutputStream target = Files.newOutputStream(file)) {
-            Digest digest = copy(source, target);
+        try {
+            Digest digest = write(source, file);
             if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
-                throw new IOException("Echec de validation de l'empreinte du contenu");
+                throw new IntegrityCheckingFailedException();
             }
-        } catch (IOException e) {
+        } catch (StoreException e) {
             delete(file);
             throw e;
         }
@@ -54,21 +59,27 @@ public class ContentManager {
     public InputStream get(Hash hash) {
         try {
             return Files.newInputStream(openFile(hash));
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
-    private static Digest copy(InputStream source, OutputStream target) throws IOException {
-        DigestBuilder digestBuilder = new DigestBuilder();
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int len = source.read(buffer);
-        while (len != -1) {
-            digestBuilder.add(buffer, len);
-            target.write(buffer, 0, len);
-            len = source.read(buffer);
+    private static Digest write(InputStream source, Path path) throws WriteException {
+        try (OutputStream target = Files.newOutputStream(path)) {
+            DigestBuilder digestBuilder = new DigestBuilder();
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int len = source.read(buffer);
+            while (len != -1) {
+                digestBuilder.add(buffer, len);
+                target.write(buffer, 0, len);
+                len = source.read(buffer);
+            }
+            return digestBuilder.build();
+
+        } catch (IOException e) {
+            throw new WriteException(e);
         }
-        return digestBuilder.build();
     }
 
     private Path createFile(Hash hash) {
@@ -80,7 +91,7 @@ public class ContentManager {
             return dir.resolve(hash.encode());
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WriteException(e);
         }
     }
 

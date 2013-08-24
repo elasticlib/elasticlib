@@ -5,6 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import store.exception.ConcurrentOperationException;
+import store.exception.InvalidStorePathException;
+import store.exception.StoreRuntimeException;
 import store.hash.Hash;
 import store.info.ContentInfo;
 import static store.io.ObjectEncoder.encoder;
@@ -28,7 +31,7 @@ public class OperationManager {
             return new OperationManager(path);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
@@ -37,15 +40,15 @@ public class OperationManager {
                 !Files.isDirectory(path.resolve("pending")) ||
                 !Files.isDirectory(path.resolve("completed")) ||
                 !Files.isDirectory(path.resolve("deleted"))) {
-            throw new IllegalArgumentException(path.toString());
+            throw new InvalidStorePathException();
         }
         return new OperationManager(path);
     }
 
-    public boolean begin(ContentInfo contentInfo) {
+    public void begin(ContentInfo contentInfo) {
         Hash hash = contentInfo.getHash();
         if (!locks.lock(hash)) {
-            return false;
+            throw new ConcurrentOperationException();
         }
         Path path = path("pending", hash);
         byte[] bytes = encoder()
@@ -57,9 +60,8 @@ public class OperationManager {
             Files.write(path, bytes, StandardOpenOption.CREATE_NEW);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
-        return true;
     }
 
     public void abort(ContentInfo contentInfo) {
@@ -74,7 +76,7 @@ public class OperationManager {
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
@@ -93,16 +95,15 @@ public class OperationManager {
         }
     }
 
-    public boolean delete(Hash hash) {
+    public void delete(Hash hash) {
         if (!locks.lock(hash)) {
-            return false;
+            throw new ConcurrentOperationException();
         }
         try {
             Files.createFile(path("deleted", hash));
-            return true;
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import store.exception.StoreRuntimeException;
 
 public class Digest {
 
@@ -38,7 +39,7 @@ public class Digest {
             return builder.build();
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
@@ -52,7 +53,7 @@ public class Digest {
                 messageDigest = MessageDigest.getInstance(ALGORITHM);
 
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+                throw new StoreRuntimeException(e);
             }
         }
 

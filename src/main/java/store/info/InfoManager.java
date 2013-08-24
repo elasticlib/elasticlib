@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import store.Index;
+import store.exception.InvalidStorePathException;
+import store.exception.StoreRuntimeException;
 import store.hash.Hash;
 import static store.info.ContentInfo.contentInfo;
 import static store.info.PageState.*;
@@ -38,13 +40,13 @@ public class InfoManager {
             return new InfoManager(path);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
     public static InfoManager open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new IllegalArgumentException(path.toString());
+            throw new InvalidStorePathException();
         }
         return new InfoManager(path);
     }
@@ -68,7 +70,7 @@ public class InfoManager {
                     return;
 
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new StoreRuntimeException(e);
 
                 } finally {
                     cache.set(index, Page.unloaded());
@@ -77,13 +79,9 @@ public class InfoManager {
         }
     }
 
-    public ContentInfo get(Hash hash) {
-        Page page = getPage(hash);
-        Optional<ContentInfo> contentInfo = page.get(hash);
-        if (!contentInfo.isPresent()) {
-            throw new IllegalArgumentException("Unknown hash");
-        }
-        return contentInfo.get();
+    public Optional<ContentInfo> get(Hash hash) {
+        return getPage(hash)
+                .get(hash);
     }
 
     private Page getPage(Hash hash) {
@@ -102,7 +100,7 @@ public class InfoManager {
 
                 } catch (IOException e) {
                     cache.set(index, Page.unloaded());
-                    throw new RuntimeException(e);
+                    throw new StoreRuntimeException(e);
                 }
             }
         }

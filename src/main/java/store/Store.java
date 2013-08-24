@@ -1,10 +1,15 @@
 package store;
 
+import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import store.exception.InvalidStorePathException;
+import store.exception.StoreException;
+import store.exception.StoreRuntimeException;
+import store.exception.UnknownHashException;
 import store.hash.Hash;
 import store.info.ContentInfo;
 import store.info.InfoManager;
@@ -28,14 +33,14 @@ public class Store {
                 Files.createDirectories(path);
             }
             if (!isEmptyDir(path)) {
-                throw new IllegalArgumentException(path.toString());
+                throw new InvalidStorePathException();
             }
             return new Store(OperationManager.create(path.resolve("operations")),
                              InfoManager.create(path.resolve("info")),
                              ContentManager.create(path.resolve("content")));
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 
@@ -53,15 +58,13 @@ public class Store {
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        if (!operationManager.begin(contentInfo)) {
-            throw new IllegalStateException("Operation concurrente");
-        }
+        operationManager.begin(contentInfo);
         try {
             contentManager.put(contentInfo, source);
 
-        } catch (IOException e) {
+        } catch (StoreException e) {
             operationManager.abort(contentInfo);
-            throw new RuntimeException(e);
+            throw e;
         }
         operationManager.complete(contentInfo);
         infoManager.put(contentInfo);
@@ -69,12 +72,14 @@ public class Store {
     }
 
     public ContentReader get(Hash hash) {
-        return new ContentReader(infoManager.get(hash), contentManager.get(hash));
+        Optional<ContentInfo> info = infoManager.get(hash);
+        if (!info.isPresent()) {
+            throw new UnknownHashException();
+        }
+        return new ContentReader(info.get(), contentManager.get(hash));
     }
 
     public void delete(Hash hash) {
-        if (!operationManager.delete(hash)) {
-            throw new IllegalStateException("Operation concurrente");
-        }
+        operationManager.delete(hash);
     }
 }

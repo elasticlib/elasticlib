@@ -39,29 +39,49 @@ public class ContentManager {
 
     public void put(ContentInfo info, InputStream source) {
         Hash hash = info.getHash();
-        Path dir = root.resolve(key(hash));
-        Path file = dir.resolve(hash.encode());
-        try {
-            if (!Files.exists(dir)) {
-                Files.createDirectories(dir);
-            }
-            DigestBuilder digestBuilder = new DigestBuilder();
-            try (OutputStream target = Files.newOutputStream(file)) {
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int len = source.read(buffer);
-                while (len != -1) {
-                    digestBuilder.add(buffer, len);
-                    target.write(buffer, 0, len);
-                    len = source.read(buffer);
-                }
-            }
-            Digest digest = digestBuilder.build();
+        Path file = file(hash);
+        try (OutputStream target = Files.newOutputStream(file)) {
+            Digest digest = copy(source, target);
             if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
                 throw new IOException("Echec de validation de l'empreinte du contenu");
             }
+        } catch (IOException e) {
+            delete(file);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Digest copy(InputStream source, OutputStream target) throws IOException {
+        DigestBuilder digestBuilder = new DigestBuilder();
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int len = source.read(buffer);
+        while (len != -1) {
+            digestBuilder.add(buffer, len);
+            target.write(buffer, 0, len);
+            len = source.read(buffer);
+        }
+        return digestBuilder.build();
+    }
+
+    private Path file(Hash hash) {
+        try {
+            Path dir = root.resolve(key(hash));
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir); // FIXME synchroniser ?
+            }
+            return dir.resolve(hash.encode());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void delete(Path path) {
+        try {
+            Files.deleteIfExists(path);
+
+        } catch (IOException e) {
+            // TODO simplement logger l'erreur
         }
     }
 

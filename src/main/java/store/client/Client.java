@@ -8,12 +8,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Map.Entry;
-import store.info.ContentInfo;
-import static store.info.ContentInfo.contentInfo;
-import store.ContentWriter;
 import store.Store;
 import store.hash.Digest;
 import store.hash.Hash;
+import store.info.ContentInfo;
+import static store.info.ContentInfo.contentInfo;
 
 public class Client {
 
@@ -58,16 +57,12 @@ public class Client {
                 .withLength(digest.getLength())
                 .build();
 
-        ContentWriter writer = store.put(contentInfo);
         try (InputStream inputStream = Files.newInputStream(file, StandardOpenOption.READ)) {
-            writer.write(inputStream);
-            writer.complete();
+            store.put(contentInfo, inputStream);
 
         } catch (IOException e) {
-            writer.abort();
             throw new RuntimeException(e);
         }
-
         System.out.println(contentInfo.getHash());
     }
 

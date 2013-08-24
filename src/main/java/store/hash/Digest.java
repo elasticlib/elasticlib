@@ -27,20 +27,43 @@ public class Digest {
 
     public static Digest of(InputStream inputStream) {
         try {
-            MessageDigest messageDigest = MessageDigest.getInstance(ALGORITHM);
-            long totalLength = 0;
+            DigestBuilder builder = new DigestBuilder();
 
             byte[] buffer = new byte[BUFFER_SIZE];
             int len = inputStream.read(buffer);
             while (len != -1) {
-                messageDigest.update(buffer);
-                totalLength += len;
+                builder.add(buffer, len);
                 len = inputStream.read(buffer);
             }
-            return new Digest(new Hash(messageDigest.digest()), totalLength);
+            return builder.build();
 
-        } catch (NoSuchAlgorithmException | IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static class DigestBuilder {
+
+        private final MessageDigest messageDigest;
+        private long totalLength = 0;
+
+        public DigestBuilder() {
+            try {
+                messageDigest = MessageDigest.getInstance(ALGORITHM);
+
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public DigestBuilder add(byte[] bytes, int length) {
+            messageDigest.update(bytes, 0, length);
+            totalLength += length;
+            return this;
+        }
+
+        public Digest build() {
+            return new Digest(new Hash(messageDigest.digest()), totalLength);
         }
     }
 }

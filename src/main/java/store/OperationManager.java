@@ -13,8 +13,31 @@ public class OperationManager {
 
     private final Path root;
 
-    public OperationManager(Path root) {
+    private OperationManager(Path root) {
         this.root = root;
+    }
+
+    public static OperationManager create(Path path) {
+        try {
+            Files.createDirectory(path);
+            Files.createDirectory(path.resolve("pending"));
+            Files.createDirectory(path.resolve("completed"));
+            Files.createDirectory(path.resolve("deleted"));
+            return new OperationManager(path);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static OperationManager open(Path path) {
+        if (!Files.isDirectory(path) ||
+                !Files.isDirectory(path.resolve("pending")) ||
+                !Files.isDirectory(path.resolve("completed")) ||
+                !Files.isDirectory(path.resolve("deleted"))) {
+            throw new IllegalArgumentException(path.toString());
+        }
+        return new OperationManager(path);
     }
 
     public void begin(ContentInfo contentInfo) {

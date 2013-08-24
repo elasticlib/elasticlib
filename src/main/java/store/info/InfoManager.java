@@ -1,6 +1,5 @@
 package store.info;
 
-import store.Index;
 import com.google.common.base.Optional;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -10,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import store.Index;
 import store.hash.Hash;
 import static store.info.ContentInfo.contentInfo;
 import static store.info.PageState.*;
@@ -23,13 +23,30 @@ public class InfoManager {
     private final Path root;
     private final AtomicReferenceArray<Page> cache;
 
-    public InfoManager(Path root) {
+    private InfoManager(Path root) {
         this.root = root;
 
         cache = new AtomicReferenceArray<>(1 << (4 * KEY_LENGTH));
         for (int i = 0; i < cache.length(); i++) {
             cache.set(i, Page.unloaded());
         }
+    }
+
+    public static InfoManager create(Path path) {
+        try {
+            Files.createDirectory(path);
+            return new InfoManager(path);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static InfoManager open(Path path) {
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException(path.toString());
+        }
+        return new InfoManager(path);
     }
 
     public void put(ContentInfo contentInfo) {

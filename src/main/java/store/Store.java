@@ -1,6 +1,7 @@
 package store;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,11 +15,17 @@ public class Store {
     private final LockManager lockManager;
     private final OperationManager operationManager;
     private final InfoManager infoManager;
+    private final ContentManager contentManager;
 
-    private Store(Path root) {
-        lockManager = new LockManager();
-        operationManager = new OperationManager(root.resolve("operations"));
-        infoManager = new InfoManager(root.resolve("info"));
+    private Store(LockManager lockManager,
+                  OperationManager operationManager,
+                  InfoManager infoManager,
+                  ContentManager contentManager) {
+
+        this.lockManager = lockManager;
+        this.operationManager = operationManager;
+        this.infoManager = infoManager;
+        this.contentManager = contentManager;
     }
 
     public static Store create(Path path) {
@@ -29,9 +36,11 @@ public class Store {
             if (!isEmptyDir(path)) {
                 throw new IllegalArgumentException(path.toString());
             }
-            Files.createDirectory(path.resolve("content"));
-            Files.createDirectory(path.resolve("info"));
-            return new Store(path);
+
+            return new Store(new LockManager(),
+                             OperationManager.create(path.resolve("operations")),
+                             InfoManager.create(path.resolve("info")),
+                             ContentManager.create(path.resolve("content")));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -46,20 +55,21 @@ public class Store {
     }
 
     public static Store open(Path path) {
-        if (!Files.isDirectory(path.resolve("content")) || !Files.isDirectory(path.resolve("info"))) {
-            throw new IllegalArgumentException(path.toString());
-        }
-        return new Store(path);
+        return new Store(new LockManager(),
+                         OperationManager.open(path.resolve("operations")),
+                         InfoManager.open(path.resolve("info")),
+                         ContentManager.open(path.resolve("content")));
     }
 
-    public ContentWriter put(ContentInfo contentInfo) {
+    public void put(ContentInfo contentInfo, InputStream source) {
         if (!lockManager.lock(contentInfo.getHash())) {
             throw new IllegalStateException("Operation concurrente");
         }
         try {
             operationManager.begin(contentInfo);
+            contentManager.put(contentInfo, source);
+            operationManager.complete(contentInfo);
             infoManager.put(contentInfo);
-            return new ContentWriter();
 
         } finally {
             lockManager.unlock(contentInfo.getHash());

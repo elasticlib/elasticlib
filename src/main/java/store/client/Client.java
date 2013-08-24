@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Map.Entry;
+import store.ContentReader;
 import store.Store;
 import store.hash.Digest;
 import store.hash.Hash;
@@ -78,19 +79,20 @@ public class Client {
     private static void get(String storepath, String encodedHash) {
         Store store = Store.open(Paths.get(storepath));
         Hash hash = new Hash(encodedHash);
-        ContentInfo contentInfo = store.get(hash)
-                .info();
+        try (ContentReader reader = store.get(hash)) {
+            ContentInfo contentInfo = reader.info();
 
-        System.out.println("Hash : " + contentInfo.getHash());
-        System.out.println("Length : " + contentInfo.getLength());
+            System.out.println("Hash : " + contentInfo.getHash());
+            System.out.println("Length : " + contentInfo.getLength());
 
-        Map<String, Object> metadata = contentInfo.getMetadata();
-        if (metadata.isEmpty()) {
-            System.out.println("No metadata");
-        } else {
-            System.out.println("Metadata : ");
-            for (Entry<String, Object> entry : metadata.entrySet()) {
-                System.out.println(entry.getKey() + "=" + entry.getValue());
+            Map<String, Object> metadata = contentInfo.getMetadata();
+            if (metadata.isEmpty()) {
+                System.out.println("No metadata");
+            } else {
+                System.out.println("Metadata : ");
+                for (Entry<String, Object> entry : metadata.entrySet()) {
+                    System.out.println(entry.getKey() + "=" + entry.getValue());
+                }
             }
         }
     }

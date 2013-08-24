@@ -12,10 +12,12 @@ import store.lock.LockManager;
 public class Store {
 
     private final LockManager lockManager;
+    private final OperationManager operationManager;
     private final InfoManager infoManager;
 
     private Store(Path root) {
         lockManager = new LockManager();
+        operationManager = new OperationManager(root.resolve("operations"));
         infoManager = new InfoManager(root.resolve("info"));
     }
 
@@ -55,6 +57,7 @@ public class Store {
             throw new IllegalStateException("Operation concurrente");
         }
         try {
+            operationManager.begin(contentInfo);
             infoManager.put(contentInfo);
             return new ContentWriter();
 
@@ -68,6 +71,9 @@ public class Store {
     }
 
     public void delete(Hash hash) {
-        // TODO
+        if (!lockManager.lock(hash)) {
+            throw new IllegalStateException("Operation concurrente");
+        }
+        operationManager.delete(hash);
     }
 }

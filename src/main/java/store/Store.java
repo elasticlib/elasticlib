@@ -72,6 +72,10 @@ public class Store {
     }
 
     public ContentReader get(Hash hash) {
+        // TODO Ajouter une operation read à operationManager (pas possible de read si deleted, pas de persistance)
+        // store.delete() doit supprimer le contenu immédiatement si possible
+        // sinon il le marque comme supprimable (peut se faire via des locks en mode read-write)
+        // La fermeture du dernier contentReader ouvert lance la suppression
         Optional<ContentInfo> info = infoManager.get(hash);
         if (!info.isPresent()) {
             throw new UnknownHashException();

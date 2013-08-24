@@ -23,6 +23,7 @@ public class ContentReader implements Closeable {
         return inputStream;
     }
 
+    @Override
     public void close() {
         try {
             inputStream.close();

@@ -35,6 +35,13 @@ public class Client {
                 put(args[1], args[2]);
                 return;
 
+            case "fail":
+                if (args.length < 3) {
+                    throw new IllegalArgumentException();
+                }
+                fail(args[1], args[2]);
+                return;
+
             case "get":
                 if (args.length < 3) {
                     throw new IllegalArgumentException();
@@ -54,6 +61,24 @@ public class Client {
         ContentInfo contentInfo = contentInfo()
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
+                .build();
+
+        try (InputStream inputStream = Files.newInputStream(file)) {
+            store.put(contentInfo, inputStream);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(contentInfo.getHash());
+    }
+
+    private static void fail(String storepath, String filepath) {
+        Store store = Store.open(Paths.get(storepath));
+        Path file = Paths.get(filepath);
+        Digest digest = digest(file);
+        ContentInfo contentInfo = contentInfo()
+                .withHash(digest.getHash())
+                .withLength(digest.getLength() * 2) // pour faire échouer
                 .build();
 
         try (InputStream inputStream = Files.newInputStream(file)) {

@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.ContentReader;
@@ -43,7 +42,6 @@ public class Client {
                 get(args[1], args[2]);
                 return;
 
-
             default:
                 throw new IllegalArgumentException(args[0]);
         }
@@ -58,7 +56,7 @@ public class Client {
                 .withLength(digest.getLength())
                 .build();
 
-        try (InputStream inputStream = Files.newInputStream(file, StandardOpenOption.READ)) {
+        try (InputStream inputStream = Files.newInputStream(file)) {
             store.put(contentInfo, inputStream);
 
         } catch (IOException e) {
@@ -68,7 +66,7 @@ public class Client {
     }
 
     private static Digest digest(Path path) {
-        try (InputStream inputStream = Files.newInputStream(path, StandardOpenOption.READ)) {
+        try (InputStream inputStream = Files.newInputStream(path)) {
             return Digest.of(inputStream);
 
         } catch (IOException e) {

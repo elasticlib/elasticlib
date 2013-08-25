@@ -101,9 +101,17 @@ public class Store {
                 throw new ConcurrentModificationException();
 
             case GRANTED:
+                if (!infoManager.contains(hash)) {
+                    operationManager.endDelete(hash);
+                    throw new UnknownHashException();
+                }
                 return;
 
             case ERASABLE:
+                if (!infoManager.contains(hash)) {
+                    operationManager.endDelete(hash);
+                    throw new UnknownHashException();
+                }
                 erase(hash);
         }
     }

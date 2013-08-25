@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ConcurrentModificationException;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreException;
 import store.exception.StoreRuntimeException;
@@ -13,6 +14,7 @@ import store.exception.UnknownHashException;
 import store.hash.Hash;
 import store.info.ContentInfo;
 import store.info.InfoManager;
+import static store.operation.LockState.*;
 import store.operation.OperationManager;
 
 public class Store {
@@ -58,35 +60,53 @@ public class Store {
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        operationManager.begin(contentInfo);
+        if (operationManager.beginPut(contentInfo) == DENIED) {
+            throw new ConcurrentModificationException();
+        }
         try {
             contentManager.put(contentInfo, source);
 
         } catch (StoreException e) {
-            operationManager.abort(contentInfo);
+            operationManager.abortPut(contentInfo);
             throw e;
         }
-        operationManager.complete(contentInfo);
+        operationManager.completePut(contentInfo);
         infoManager.put(contentInfo);
-        operationManager.clear(contentInfo);
+        operationManager.endPut(contentInfo);
     }
 
     public ContentReader get(Hash hash) {
-        // TODO Ajouter une operation read à operationManager (pas possible de read si deleted, pas de persistance)
-        // store.delete() doit supprimer le contenu immédiatement si possible
-        // sinon il le marque comme supprimable (peut se faire via des locks en mode read-write)
-        // La fermeture du dernier contentReader ouvert lance la suppression
-        Optional<ContentInfo> info = infoManager.get(hash);
-        if (!info.isPresent()) {
-            throw new UnknownHashException();
+        if (operationManager.beginGet(hash) == GRANTED) {
+            Optional<ContentInfo> info = infoManager.get(hash);
+            if (info.isPresent()) {
+                return new ContentReader(this, info.get(), contentManager.get(hash));
+            }
         }
-        return new ContentReader(info.get(), contentManager.get(hash));
+        throw new UnknownHashException();
+    }
+
+    void close(Hash hash) {
+        if (operationManager.endGet(hash) == ERASABLE) {
+            erase(hash);
+        }
     }
 
     public void delete(Hash hash) {
-        operationManager.delete(hash);
+        switch (operationManager.beginDelete(hash)) {
+            case DENIED:
+                throw new ConcurrentModificationException();
+
+            case GRANTED:
+                return;
+
+            case ERASABLE:
+                erase(hash);
+        }
+    }
+
+    private void erase(Hash hash) {
         infoManager.delete(hash);
         contentManager.delete(hash);
-        operationManager.clear(hash);
+        operationManager.endDelete(hash);
     }
 }

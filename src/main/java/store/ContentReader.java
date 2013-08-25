@@ -3,14 +3,18 @@ package store;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import store.exception.StoreRuntimeException;
 import store.info.ContentInfo;
 
 public class ContentReader implements Closeable {
 
+    private final Store store;
     private final ContentInfo info;
     private final InputStream inputStream;
+    private boolean isOpen = true;
 
-    public ContentReader(ContentInfo info, InputStream inputStream) {
+    public ContentReader(Store store, ContentInfo info, InputStream inputStream) {
+        this.store = store;
         this.info = info;
         this.inputStream = inputStream;
     }
@@ -20,16 +24,24 @@ public class ContentReader implements Closeable {
     }
 
     public InputStream inputStream() {
+        if (!isOpen) {
+            throw new IllegalStateException();
+        }
         return inputStream;
     }
 
     @Override
     public void close() {
+        if (!isOpen) {
+            return;
+        }
         try {
             inputStream.close();
+            isOpen = false;
+            store.close(info.getHash());
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StoreRuntimeException(e);
         }
     }
 }

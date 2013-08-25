@@ -5,12 +5,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import store.exception.ConcurrentOperationException;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreRuntimeException;
 import store.hash.Hash;
 import store.info.ContentInfo;
 import static store.io.ObjectEncoder.encoder;
+import static store.operation.LockState.*;
 
 public class OperationManager {
 
@@ -45,10 +45,10 @@ public class OperationManager {
         return new OperationManager(path);
     }
 
-    public void begin(ContentInfo contentInfo) {
+    public LockState beginPut(ContentInfo contentInfo) {
         Hash hash = contentInfo.getHash();
-        if (!locks.lock(hash)) {
-            throw new ConcurrentOperationException();
+        if (locks.putLock(hash) == DENIED) {
+            return DENIED;
         }
         Path path = path("pending", hash);
         byte[] bytes = encoder()
@@ -62,13 +62,15 @@ public class OperationManager {
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
         }
+        return GRANTED;
     }
 
-    public void abort(ContentInfo contentInfo) {
+    public void abortPut(ContentInfo contentInfo) {
         remove("pending", contentInfo.getHash());
+        locks.putUnlock(contentInfo.getHash());
     }
 
-    public void complete(ContentInfo contentInfo) {
+    public void completePut(ContentInfo contentInfo) {
         Hash hash = contentInfo.getHash();
         Path source = path("pending", hash);
         Path target = path("completed", hash);
@@ -80,8 +82,36 @@ public class OperationManager {
         }
     }
 
-    public void clear(ContentInfo contentInfo) {
+    public void endPut(ContentInfo contentInfo) {
         remove("completed", contentInfo.getHash());
+        locks.putUnlock(contentInfo.getHash());
+    }
+
+    public LockState beginGet(Hash hash) {
+        return locks.getLock(hash);
+    }
+
+    public LockState endGet(Hash hash) {
+        return locks.getUnlock(hash);
+    }
+
+    public LockState beginDelete(Hash hash) {
+        LockState state = locks.deleteLock(hash);
+        if (state == DENIED) {
+            return DENIED;
+        }
+        try {
+            Files.createFile(path("deleted", hash));
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
+        return state;
+    }
+
+    public void endDelete(Hash hash) {
+        remove("deleted", hash);
+        locks.deleteUnlock(hash);
     }
 
     private void remove(String dir, Hash hash) {
@@ -90,25 +120,7 @@ public class OperationManager {
 
         } catch (IOException e) {
             // TODO simplement logger l'erreur
-        } finally {
-            locks.unlock(hash);
         }
-    }
-
-    public void delete(Hash hash) {
-        if (!locks.lock(hash)) {
-            throw new ConcurrentOperationException();
-        }
-        try {
-            Files.createFile(path("deleted", hash));
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
-    }
-
-    public void clear(Hash hash) {
-        remove("deleted", hash);
     }
 
     private Path path(String dir, Hash hash) {

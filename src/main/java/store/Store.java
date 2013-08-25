@@ -55,6 +55,9 @@ public class Store {
     }
 
     public static Store open(Path path) {
+
+        // TODO faire une reprise des operations !
+
         return new Store(OperationManager.open(path.resolve("operations")),
                          InfoManager.open(path.resolve("info")),
                          ContentManager.open(path.resolve("content")));

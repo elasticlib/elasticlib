@@ -9,4 +9,10 @@ public final class WriteException extends StoreException {
     public WriteException(IOException cause) {
         initCause(cause);
     }
+
+    @Override
+    public String getMessage() {
+        return "Write error occured : " + getCause()
+                .getMessage();
+    }
 }

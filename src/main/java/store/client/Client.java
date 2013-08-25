@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import store.ContentReader;
 import store.Store;
+import store.exception.StoreException;
+import store.exception.UnknownHashException;
 import store.hash.Digest;
 import store.hash.Hash;
 import store.info.ContentInfo;
@@ -18,40 +20,49 @@ public class Client {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            throw new IllegalArgumentException();
+            System.out.println("Syntax : store operation arguments...");
+            return;
         }
-        switch (args[0]) {
-            case "create":
-                if (args.length < 2) {
-                    throw new IllegalArgumentException();
-                }
-                Store.create(Paths.get(args[1]));
-                return;
+        try {
+            switch (args[0]) {
+                case "create":
+                    if (args.length < 2) {
+                        System.out.println("More arguments expected");
+                        return;
+                    }
+                    Store.create(Paths.get(args[1]));
+                    return;
 
-            case "put":
-                if (args.length < 3) {
-                    throw new IllegalArgumentException();
-                }
-                put(args[1], args[2]);
-                return;
+                case "put":
+                    if (args.length < 3) {
+                        System.out.println("More arguments expected");
+                        return;
+                    }
+                    put(args[1], args[2]);
+                    return;
 
-            case "get":
-                if (args.length < 3) {
-                    throw new IllegalArgumentException();
-                }
-                get(args[1], args[2]);
-                return;
+                case "get":
+                    if (args.length < 3) {
+                        System.out.println("More arguments expected");
+                        return;
+                    }
+                    get(args[1], args[2]);
+                    return;
 
 
-            case "delete":
-                if (args.length < 3) {
-                    throw new IllegalArgumentException();
-                }
-                delete(args[1], args[2]);
-                return;
+                case "delete":
+                    if (args.length < 3) {
+                        System.out.println("More arguments expected");
+                        return;
+                    }
+                    delete(args[1], args[2]);
+                    return;
 
-            default:
-                throw new IllegalArgumentException(args[0]);
+                default:
+                    System.out.println("Unsupported operation : " + args[0]);
+            }
+        } catch (StoreException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -84,7 +95,7 @@ public class Client {
 
     private static void get(String storepath, String encodedHash) {
         Store store = Store.open(Paths.get(storepath));
-        Hash hash = new Hash(encodedHash);
+        Hash hash = hash(encodedHash);
         try (ContentReader reader = store.get(hash)) {
             ContentInfo contentInfo = reader.info();
 
@@ -105,8 +116,17 @@ public class Client {
 
     private static void delete(String storepath, String encodedHash) {
         Store store = Store.open(Paths.get(storepath));
-        Hash hash = new Hash(encodedHash);
-
+        Hash hash = hash(encodedHash);
         store.delete(hash);
+    }
+
+    private static Hash hash(String encoded) {
+        try {
+            return new Hash(encoded);
+
+        } catch (IllegalArgumentException e) {
+            throw new UnknownHashException();
+
+        }
     }
 }

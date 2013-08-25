@@ -7,6 +7,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ConcurrentModificationException;
+import store.exception.ContentAlreadyStoredException;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreException;
 import store.exception.StoreRuntimeException;
@@ -64,6 +65,9 @@ public class Store {
             throw new ConcurrentModificationException();
         }
         try {
+            if (infoManager.contains(contentInfo.getHash())) {
+                throw new ContentAlreadyStoredException();
+            }
             contentManager.put(contentInfo, source);
 
         } catch (StoreException e) {

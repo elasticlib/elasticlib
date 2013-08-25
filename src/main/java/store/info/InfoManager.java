@@ -78,6 +78,11 @@ public class InfoManager {
                 .get(hash);
     }
 
+    public boolean contains(Hash hash) {
+        return getPage(hash)
+                .contains(hash);
+    }
+
     public void delete(Hash hash) {
         int index = Index.of(key(hash));
         while (true) {

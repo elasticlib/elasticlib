@@ -50,6 +50,10 @@ final class Page {
         return state;
     }
 
+    public boolean contains(Hash hash) {
+        return info.containsKey(hash);
+    }
+
     public Optional<ContentInfo> get(Hash hash) {
         if (info.containsKey(hash)) {
             return Optional.of(info.get(hash));

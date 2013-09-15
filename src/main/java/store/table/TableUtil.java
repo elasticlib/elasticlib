@@ -1,17 +1,17 @@
-package store;
+package store.table;
 
-public final class Index {
+final class TableUtil {
 
     private static final char[] alphabet = new char[]{'0', '1', '2', '3',
                                                       '4', '5', '6', '7',
                                                       '8', '9', 'a', 'b',
                                                       'c', 'd', 'e', 'f'};
 
-    private Index() {
+    private TableUtil() {
         // Non-instanciable.
     }
 
-    public static int of(String key) {
+    public static int indexOf(String key) {
         int index = 0;
         for (int i = 0; i < key.length(); i++) {
             index += pow(key.length() - i - 1) * position(key.charAt(i));

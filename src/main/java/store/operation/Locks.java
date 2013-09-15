@@ -1,64 +1,61 @@
 package store.operation;
 
-import store.Index;
 import store.hash.Hash;
+import store.table.Table;
 
 class Locks {
 
     private static final int KEY_LENGTH = 1;
-    private final Page[] locks;
+    private final Table<Page> locks;
 
     public Locks() {
-        locks = new Page[1 << (4 * KEY_LENGTH)];
-        for (int i = 0; i < locks.length; i++) {
-            locks[i] = new Page();
-        }
+        locks = new Table<Page>(KEY_LENGTH) {
+            @Override
+            protected Page initialValue() {
+                return new Page();
+            }
+        };
     }
 
     public LockState putLock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            return locks[index].putLock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            return page.putLock(hash);
         }
     }
 
     public void putUnlock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            locks[index].putUnlock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            page.putUnlock(hash);
         }
     }
 
     public LockState getLock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            return locks[index].getLock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            return page.getLock(hash);
         }
     }
 
     public LockState getUnlock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            return locks[index].getUnlock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            return page.getUnlock(hash);
         }
     }
 
     public LockState deleteLock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            return locks[index].deleteLock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            return page.deleteLock(hash);
         }
     }
 
     public void deleteUnlock(Hash hash) {
-        int index = Index.of(key(hash));
-        synchronized (locks[index]) {
-            locks[index].deleteUnlock(hash);
+        Page page = locks.get(hash);
+        synchronized (page) {
+            page.deleteUnlock(hash);
         }
-    }
-
-    private static String key(Hash hash) {
-        return hash.encode()
-                .substring(0, KEY_LENGTH);
     }
 }

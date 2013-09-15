@@ -9,8 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import store.Index;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreRuntimeException;
 import store.hash.Hash;
@@ -19,20 +17,22 @@ import static store.info.PageState.*;
 import store.io.ObjectDecoder;
 import static store.io.ObjectEncoder.encoder;
 import store.io.StreamDecoder;
+import store.table.AtomicTable;
 
 public class InfoManager {
 
     private static final int KEY_LENGTH = 2;
     private final Path root;
-    private final AtomicReferenceArray<Page> cache;
+    private final AtomicTable<Page> cache;
 
     private InfoManager(Path root) {
         this.root = root;
-
-        cache = new AtomicReferenceArray<>(1 << (4 * KEY_LENGTH));
-        for (int i = 0; i < cache.length(); i++) {
-            cache.set(i, Page.unloaded());
-        }
+        cache = new AtomicTable<Page>(KEY_LENGTH) {
+            @Override
+            protected Page initialValue() {
+                return Page.unloaded();
+            }
+        };
     }
 
     public static InfoManager create(Path path) {
@@ -53,10 +53,10 @@ public class InfoManager {
     }
 
     public void put(ContentInfo contentInfo) {
-        int index = Index.of(key(contentInfo.getHash()));
+        Hash hash = contentInfo.getHash();
         while (true) {
-            Page page = cache.get(index);
-            if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
+            Page page = cache.get(hash);
+            if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
                     Files.write(root.resolve(key(contentInfo.getHash())),
                                 bytes(contentInfo),
@@ -67,7 +67,7 @@ public class InfoManager {
                     throw new StoreRuntimeException(e);
 
                 } finally {
-                    cache.set(index, Page.unloaded());
+                    cache.set(hash, Page.unloaded());
                 }
             }
         }
@@ -84,11 +84,10 @@ public class InfoManager {
     }
 
     public void delete(Hash hash) {
-        int index = Index.of(key(hash));
         while (true) {
-            Page page = cache.get(index);
+            Page page = cache.get(hash);
             Path bucket = root.resolve(key(hash));
-            if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
+            if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
                     Page loaded = load(hash);
                     Collection<ContentInfo> contentInfos = loaded.getAll();
@@ -115,28 +114,27 @@ public class InfoManager {
                     throw new StoreRuntimeException(e);
 
                 } finally {
-                    cache.set(index, Page.unloaded());
+                    cache.set(hash, Page.unloaded());
                 }
             }
         }
     }
 
     private Page getPage(Hash hash) {
-        int index = Index.of(key(hash));
         while (true) {
-            Page page = cache.get(index);
+            Page page = cache.get(hash);
             if (page.state() == LOADED) {
                 return page;
             }
-            if (page.state() != LOCKED && cache.compareAndSet(index, page, Page.locked())) {
+            if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
                     Page loaded = load(hash);
                     // FIXME si il y a trop de pages chargées, il faut en décharger une !
-                    cache.set(index, loaded);
+                    cache.set(hash, loaded);
                     return loaded;
 
                 } catch (IOException e) {
-                    cache.set(index, Page.unloaded());
+                    cache.set(hash, Page.unloaded());
                     throw new StoreRuntimeException(e);
                 }
             }

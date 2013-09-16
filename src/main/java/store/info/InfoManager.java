@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.LinkedList;
+import store.exception.ContentAlreadyStoredException;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreRuntimeException;
 import store.hash.Hash;
@@ -58,6 +59,9 @@ public class InfoManager {
             Page page = cache.get(hash);
             if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
+                    if (page.contains(hash)) {
+                        throw new ContentAlreadyStoredException();
+                    }
                     Files.write(root.resolve(key(contentInfo.getHash())),
                                 bytes(contentInfo),
                                 StandardOpenOption.APPEND, StandardOpenOption.CREATE);

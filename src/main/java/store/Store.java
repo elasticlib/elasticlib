@@ -6,41 +6,42 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import store.exception.ContentAlreadyStoredException;
+import java.util.Iterator;
+import java.util.List;
 import store.exception.InvalidStorePathException;
-import store.exception.StoreException;
 import store.exception.StoreRuntimeException;
 import store.exception.UnknownHashException;
 import store.hash.Hash;
 import store.info.ContentInfo;
-import store.info.InfoManager;
 import static store.operation.LockState.*;
 import store.operation.OperationManager;
 
 public class Store {
 
     private final OperationManager operationManager;
-    private final InfoManager infoManager;
-    private final ContentManager contentManager;
+    private final List<Volume> volumes;
 
-    private Store(OperationManager operationManager, InfoManager infoManager, ContentManager contentManager) {
+    private Store(OperationManager operationManager, List<Volume> volumes) {
         this.operationManager = operationManager;
-        this.infoManager = infoManager;
-        this.contentManager = contentManager;
+        this.volumes = volumes;
     }
 
-    public static Store create(Path path) {
+    public static Store create(Config config) {
         try {
-            if (!Files.exists(path)) {
-                Files.createDirectories(path);
+            Path root = config.getRoot();
+            if (!Files.exists(root)) {
+                Files.createDirectories(root);
             }
-            if (!isEmptyDir(path)) {
+            if (!isEmptyDir(root)) {
                 throw new InvalidStorePathException();
             }
-            return new Store(OperationManager.create(path.resolve("operations")),
-                             InfoManager.create(path.resolve("info")),
-                             ContentManager.create(path.resolve("content")));
+            List<Volume> volumes = new ArrayList<>();
+            for (Path path : config.getVolumePaths()) {
+                volumes.add(Volume.create(path));
+            }
+            return new Store(OperationManager.create(root.resolve("operations")), volumes);
 
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
@@ -54,13 +55,16 @@ public class Store {
         }
     }
 
-    public static Store open(Path path) {
+    public static Store open(Config config) {
+        Path root = config.getRoot();
+        List<Volume> volumes = new ArrayList<>();
+        for (Path path : config.getVolumePaths()) {
+            volumes.add(Volume.open(path));
+        }
 
         // TODO faire une reprise des operations !
 
-        return new Store(OperationManager.open(path.resolve("operations")),
-                         InfoManager.open(path.resolve("info")),
-                         ContentManager.open(path.resolve("content")));
+        return new Store(OperationManager.open(root.resolve("operations")), volumes);
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
@@ -68,25 +72,33 @@ public class Store {
             throw new ConcurrentModificationException();
         }
         try {
-            if (infoManager.contains(contentInfo.getHash())) {
-                throw new ContentAlreadyStoredException();
+            Iterator<Volume> it = volumes.iterator();
+            Volume first = it.next();
+            first.put(contentInfo, source);
+            while (it.hasNext()) {
+                Volume next = it.next();
+                try (ContentReader reader = reader(first, contentInfo.getHash())) {
+                    next.put(contentInfo, reader.inputStream());
+                }
             }
-            contentManager.put(contentInfo, source);
-
-        } catch (StoreException e) {
-            operationManager.abortPut(contentInfo);
-            throw e;
+        } finally {
+            operationManager.endPut(contentInfo);
         }
-        operationManager.completePut(contentInfo);
-        infoManager.put(contentInfo);
-        operationManager.endPut(contentInfo);
+    }
+
+    private ContentReader reader(Volume volume, Hash hash) {
+        return volume.get(hash)
+                .get()
+                .reader(this);
     }
 
     public ContentReader get(Hash hash) {
         if (operationManager.beginGet(hash) == GRANTED) {
-            Optional<ContentInfo> info = infoManager.get(hash);
-            if (info.isPresent()) {
-                return new ContentReader(this, info.get(), contentManager.get(hash));
+            Optional<Content> content = volumes.get(0)
+                    .get(hash);
+            if (content.isPresent()) {
+                return content.get()
+                        .reader(this);
             }
         }
         throw new UnknownHashException();
@@ -104,14 +116,16 @@ public class Store {
                 throw new ConcurrentModificationException();
 
             case GRANTED:
-                if (!infoManager.contains(hash)) {
+                if (!volumes.get(0)
+                        .contains(hash)) {
                     operationManager.endDelete(hash);
                     throw new UnknownHashException();
                 }
                 return;
 
             case ERASABLE:
-                if (!infoManager.contains(hash)) {
+                if (!volumes.get(0)
+                        .contains(hash)) {
                     operationManager.endDelete(hash);
                     throw new UnknownHashException();
                 }
@@ -120,8 +134,9 @@ public class Store {
     }
 
     private void erase(Hash hash) {
-        infoManager.delete(hash);
-        contentManager.delete(hash);
+        for (Volume volume : volumes) {
+            volume.erase(hash);
+        }
         operationManager.endDelete(hash);
     }
 }

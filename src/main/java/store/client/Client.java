@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import static java.util.Arrays.asList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import store.Config;
 import store.ContentReader;
 import store.Store;
 import store.exception.StoreException;
@@ -30,7 +33,7 @@ public class Client {
                         System.out.println("More arguments expected");
                         return;
                     }
-                    Store.create(Paths.get(args[1]));
+                    create(args[1]);
                     return;
 
                 case "put":
@@ -66,8 +69,12 @@ public class Client {
         }
     }
 
+    private static void create(String storepath) {
+        Store.create(config(storepath));
+    }
+
     private static void put(String storepath, String filepath) {
-        Store store = Store.open(Paths.get(storepath));
+        Store store = Store.open(config(storepath));
         Path file = Paths.get(filepath);
         Digest digest = digest(file);
         ContentInfo contentInfo = contentInfo()
@@ -84,17 +91,8 @@ public class Client {
         System.out.println(contentInfo.getHash());
     }
 
-    private static Digest digest(Path path) {
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            return Digest.of(inputStream);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static void get(String storepath, String encodedHash) {
-        Store store = Store.open(Paths.get(storepath));
+        Store store = Store.open(config(storepath));
         Hash hash = hash(encodedHash);
         try (ContentReader reader = store.get(hash)) {
             ContentInfo contentInfo = reader.info();
@@ -115,9 +113,26 @@ public class Client {
     }
 
     private static void delete(String storepath, String encodedHash) {
-        Store store = Store.open(Paths.get(storepath));
+        Store store = Store.open(config(storepath));
         Hash hash = hash(encodedHash);
         store.delete(hash);
+    }
+
+    private static Config config(String storepath) {
+        Path root = Paths.get(storepath);
+        List<Path> volumes = asList(root.resolve("volume1"),
+                                    root.resolve("volume2"));
+
+        return new Config(root, volumes);
+    }
+
+    private static Digest digest(Path path) {
+        try (InputStream inputStream = Files.newInputStream(path)) {
+            return Digest.of(inputStream);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Hash hash(String encoded) {

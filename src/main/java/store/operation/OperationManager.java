@@ -3,7 +3,6 @@ package store.operation;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import store.exception.InvalidStorePathException;
 import store.exception.StoreRuntimeException;
@@ -26,7 +25,6 @@ public class OperationManager {
         try {
             Files.createDirectory(path);
             Files.createDirectory(path.resolve("pending"));
-            Files.createDirectory(path.resolve("completed"));
             Files.createDirectory(path.resolve("deleted"));
             return new OperationManager(path);
 
@@ -38,7 +36,6 @@ public class OperationManager {
     public static OperationManager open(Path path) {
         if (!Files.isDirectory(path) ||
                 !Files.isDirectory(path.resolve("pending")) ||
-                !Files.isDirectory(path.resolve("completed")) ||
                 !Files.isDirectory(path.resolve("deleted"))) {
             throw new InvalidStorePathException();
         }
@@ -65,25 +62,8 @@ public class OperationManager {
         return GRANTED;
     }
 
-    public void abortPut(ContentInfo contentInfo) {
-        remove("pending", contentInfo.getHash());
-        locks.putUnlock(contentInfo.getHash());
-    }
-
-    public void completePut(ContentInfo contentInfo) {
-        Hash hash = contentInfo.getHash();
-        Path source = path("pending", hash);
-        Path target = path("completed", hash);
-        try {
-            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
-    }
-
     public void endPut(ContentInfo contentInfo) {
-        remove("completed", contentInfo.getHash());
+        remove("pending", contentInfo.getHash());
         locks.putUnlock(contentInfo.getHash());
     }
 

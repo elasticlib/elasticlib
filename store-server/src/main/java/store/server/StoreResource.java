@@ -1,5 +1,6 @@
 package store.server;
 
+import java.io.InputStream;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -9,7 +10,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import static store.common.json.JsonCodec.decodeConfig;
+import static store.common.json.JsonCodec.decodeContentInfo;
 
 @Path("/")
 public class StoreResource {
@@ -26,10 +29,12 @@ public class StoreResource {
     }
 
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("put")
-    public String put() {
-        return "put"; // TODO
+    public Response put(@FormDataParam("info") JsonObject json, @FormDataParam("source") InputStream inputStream) {
+        storeManager.put(decodeContentInfo(json), inputStream);
+        return Response.ok()
+                .build();
     }
 
     @POST

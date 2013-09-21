@@ -3,9 +3,12 @@ package store.server;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
 
@@ -15,7 +18,9 @@ public class StoreServer {
 
     public StoreServer(Path home) {
         StoreManager.init(home);
-        ResourceConfig resourceConfig = new ResourceConfig(StoreResource.class);
+        ResourceConfig resourceConfig = new ResourceConfig(StoreResource.class)
+                .register(MultiPartFeature.class)
+                .register(new LoggingFilter(Logger.getGlobal(), false));
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 
         Runtime.getRuntime()

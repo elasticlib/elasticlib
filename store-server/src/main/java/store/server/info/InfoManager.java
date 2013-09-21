@@ -1,6 +1,5 @@
 package store.server.info;
 
-import store.common.info.ContentInfo;
 import com.google.common.base.Optional;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -10,11 +9,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.LinkedList;
+import store.common.hash.Hash;
+import store.common.info.ContentInfo;
+import static store.common.info.ContentInfo.contentInfo;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.common.hash.Hash;
-import static store.common.info.ContentInfo.contentInfo;
 import static store.server.info.PageState.*;
 import store.server.io.ObjectDecoder;
 import static store.server.io.ObjectEncoder.encoder;
@@ -60,6 +60,9 @@ public class InfoManager {
             Page page = cache.get(hash);
             if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
+                    if (page.state() == UNLOADED) {
+                        page = load(hash);
+                    }
                     if (page.contains(hash)) {
                         throw new ContentAlreadyStoredException();
                     }
@@ -94,8 +97,10 @@ public class InfoManager {
             Path bucket = root.resolve(key(hash));
             if (page.state() != LOCKED && cache.compareAndSet(hash, page, Page.locked())) {
                 try {
-                    Page loaded = load(hash);
-                    Collection<ContentInfo> contentInfos = loaded.getAll();
+                    if (page.state() == UNLOADED) {
+                        page = load(hash);
+                    }
+                    Collection<ContentInfo> contentInfos = page.getAll();
                     if (contentInfos.size() == 1 && contentInfos.iterator()
                             .next()
                             .getHash()

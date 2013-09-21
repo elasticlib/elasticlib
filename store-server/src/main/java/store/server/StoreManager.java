@@ -16,8 +16,10 @@ import javax.json.Json;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import store.common.Config;
+import store.common.info.ContentInfo;
 import store.common.json.JsonCodec;
 import static store.common.json.JsonCodec.encode;
+import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
 
 public final class StoreManager {
@@ -58,6 +60,22 @@ public final class StoreManager {
 
         } finally {
             lock.writeLock()
+                    .unlock();
+        }
+    }
+
+    public void put(ContentInfo contentInfo, InputStream source) {
+        lock.readLock()
+                .lock();
+        try {
+            if (!store.isPresent()) {
+                throw new NoStoreException();
+            }
+            store.get()
+                    .put(contentInfo, source);
+
+        } finally {
+            lock.readLock()
                     .unlock();
         }
     }

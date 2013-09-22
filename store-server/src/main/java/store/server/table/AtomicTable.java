@@ -1,7 +1,7 @@
 package store.server.table;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import store.common.hash.Hash;
+import store.common.Hash;
 import static store.server.table.TableUtil.indexOf;
 
 public abstract class AtomicTable<T> {

@@ -1,7 +1,7 @@
 package store.server;
 
 import java.io.InputStream;
-import store.common.info.ContentInfo;
+import store.common.ContentInfo;
 
 public class Content {
 

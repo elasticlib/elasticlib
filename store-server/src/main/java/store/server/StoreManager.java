@@ -16,10 +16,10 @@ import javax.json.Json;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import store.common.Config;
-import store.common.hash.Hash;
-import store.common.info.ContentInfo;
-import store.common.json.JsonCodec;
-import static store.common.json.JsonCodec.encode;
+import store.common.Hash;
+import store.common.ContentInfo;
+import store.common.JsonCodec;
+import static store.common.JsonCodec.encode;
 import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
 

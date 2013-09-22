@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import store.common.hash.Hash;
-import store.common.info.ContentInfo;
+import store.common.Hash;
+import store.common.ContentInfo;
 import static store.server.info.PageState.*;
 
 final class Page {

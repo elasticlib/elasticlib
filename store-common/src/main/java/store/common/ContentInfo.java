@@ -1,11 +1,11 @@
-package store.common.info;
+package store.common;
 
 import static java.util.Collections.unmodifiableMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import static java.util.Objects.requireNonNull;
-import store.common.hash.Hash;
+import store.common.Hash;
 
 public final class ContentInfo {
 

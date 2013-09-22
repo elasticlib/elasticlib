@@ -1,6 +1,6 @@
 package store.server.operation;
 
-import store.common.hash.Hash;
+import store.common.Hash;
 import store.server.table.Table;
 
 class Locks {

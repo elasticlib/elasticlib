@@ -22,11 +22,11 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import store.common.Config;
-import store.common.hash.Digest;
-import store.common.info.ContentInfo;
-import static store.common.info.ContentInfo.contentInfo;
-import static store.common.json.JsonCodec.decodeContentInfo;
-import static store.common.json.JsonCodec.encode;
+import store.common.Digest;
+import store.common.ContentInfo;
+import static store.common.ContentInfo.contentInfo;
+import static store.common.JsonCodec.decodeContentInfo;
+import static store.common.JsonCodec.encode;
 
 public class StoreClient implements Closeable {
 

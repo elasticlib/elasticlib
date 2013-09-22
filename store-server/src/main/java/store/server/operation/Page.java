@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import store.common.hash.Hash;
+import store.common.Hash;
 import static store.server.operation.LockState.*;
 
 final class Page {

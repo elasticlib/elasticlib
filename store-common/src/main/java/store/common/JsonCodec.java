@@ -1,4 +1,4 @@
-package store.common.json;
+package store.common;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,8 +13,8 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import store.common.Config;
-import store.common.hash.Hash;
-import store.common.info.ContentInfo;
+import store.common.Hash;
+import store.common.ContentInfo;
 
 public final class JsonCodec {
 

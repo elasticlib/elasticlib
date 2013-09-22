@@ -1,6 +1,6 @@
 package store.server.table;
 
-import store.common.hash.Hash;
+import store.common.Hash;
 import static store.server.table.TableUtil.indexOf;
 
 public abstract class Table<T> {

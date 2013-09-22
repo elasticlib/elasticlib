@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import store.common.Config;
-import store.common.info.ContentInfo;
+import store.common.ContentInfo;
 
 public final class App {
 

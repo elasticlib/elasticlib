@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import store.server.exception.StoreRuntimeException;
-import store.common.info.ContentInfo;
+import store.common.ContentInfo;
 
 public class ContentReader implements Closeable {
 

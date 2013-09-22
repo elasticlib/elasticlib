@@ -12,11 +12,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import store.common.hash.Hash;
-import store.common.info.ContentInfo;
-import static store.common.json.JsonCodec.decodeConfig;
-import static store.common.json.JsonCodec.decodeContentInfo;
-import static store.common.json.JsonCodec.encode;
+import store.common.Hash;
+import store.common.ContentInfo;
+import static store.common.JsonCodec.decodeConfig;
+import static store.common.JsonCodec.decodeContentInfo;
+import static store.common.JsonCodec.encode;
 
 @Path("/")
 @Singleton

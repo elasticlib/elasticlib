@@ -38,8 +38,7 @@ public class Volume {
 
     private static boolean isEmptyDir(Path dir) throws IOException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            return !stream.iterator()
-                    .hasNext();
+            return !stream.iterator().hasNext();
         }
     }
 

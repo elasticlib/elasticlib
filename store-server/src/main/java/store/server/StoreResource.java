@@ -33,8 +33,7 @@ public class StoreResource {
     @Path("create")
     public Response create(JsonObject json) {
         storeManager.create(decodeConfig(json));
-        return Response.ok()
-                .build();
+        return Response.ok().build();
     }
 
     @POST
@@ -42,8 +41,7 @@ public class StoreResource {
     @Path("put")
     public Response put(@FormDataParam("info") JsonObject json, @FormDataParam("source") InputStream inputStream) {
         storeManager.put(decodeContentInfo(json), inputStream);
-        return Response.ok()
-                .build();
+        return Response.ok().build();
     }
 
     @POST

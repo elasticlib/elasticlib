@@ -22,9 +22,8 @@ public final class JsonCodec {
     }
 
     public static JsonObject encode(ContentInfo contentInfo) {
-        Hash hash = contentInfo.getHash();
         return Json.createObjectBuilder()
-                .add("hash", hash.encode())
+                .add("hash", contentInfo.getHash().encode())
                 .add("length", contentInfo.getLength())
                 .add("metadata", encodeMap(contentInfo.getMetadata()))
                 .build();
@@ -42,8 +41,7 @@ public final class JsonCodec {
     private static JsonObjectBuilder encodeMap(Map<String, Object> map) {
         JsonObjectBuilder json = Json.createObjectBuilder();
         for (Entry<String, Object> entry : map.entrySet()) {
-            json.add(entry.getKey(), entry.getValue()
-                    .toString());
+            json.add(entry.getKey(), entry.getValue().toString());
         }
         return json;
     }
@@ -57,13 +55,10 @@ public final class JsonCodec {
     }
 
     public static JsonObject encode(Config config) {
-        String root = config.getRoot()
-                .toAbsolutePath()
-                .toString();
+        String root = config.getRoot().toAbsolutePath().toString();
         JsonArrayBuilder volumes = Json.createArrayBuilder();
         for (Path path : config.getVolumePaths()) {
-            volumes.add(path.toAbsolutePath()
-                    .toString());
+            volumes.add(path.toAbsolutePath().toString());
         }
         return Json.createObjectBuilder()
                 .add("root", root)
@@ -74,8 +69,7 @@ public final class JsonCodec {
     public static Config decodeConfig(JsonObject json) {
         Path root = Paths.get(json.getString("root"));
         List<Path> volumes = new ArrayList<>();
-        for (JsonString value : json.getJsonArray("volumes")
-                .getValuesAs(JsonString.class)) {
+        for (JsonString value : json.getJsonArray("volumes").getValuesAs(JsonString.class)) {
             volumes.add(Paths.get(value.getString()));
         }
         return new Config(root, volumes);

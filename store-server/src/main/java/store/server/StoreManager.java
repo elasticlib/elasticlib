@@ -41,8 +41,7 @@ public final class StoreManager {
     }
 
     public void create(Config config) {
-        lock.writeLock()
-                .lock();
+        lock.writeLock().lock();
         try {
             if (store.isPresent()) {
                 throw new StoreAlreadyExists();
@@ -51,40 +50,33 @@ public final class StoreManager {
             saveConfig(config);
 
         } finally {
-            lock.writeLock()
-                    .unlock();
+            lock.writeLock().unlock();
         }
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        lock.readLock()
-                .lock();
+        lock.readLock().lock();
         try {
             if (!store.isPresent()) {
                 throw new NoStoreException();
             }
-            store.get()
-                    .put(contentInfo, source);
+            store.get().put(contentInfo, source);
 
         } finally {
-            lock.readLock()
-                    .unlock();
+            lock.readLock().unlock();
         }
     }
 
     public ContentInfo info(Hash hash) {
-        lock.readLock()
-                .lock();
+        lock.readLock().lock();
         try {
             if (!store.isPresent()) {
                 throw new NoStoreException();
             }
-            return store.get()
-                    .info(hash);
+            return store.get().info(hash);
 
         } finally {
-            lock.readLock()
-                    .unlock();
+            lock.readLock().unlock();
         }
     }
 

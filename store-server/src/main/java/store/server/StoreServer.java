@@ -24,8 +24,7 @@ public class StoreServer {
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 
-        Runtime.getRuntime()
-                .addShutdownHook(new Thread() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 httpServer.stop();

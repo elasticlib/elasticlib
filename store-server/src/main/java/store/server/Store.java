@@ -49,8 +49,7 @@ public class Store {
 
     private static boolean isEmptyDir(Path dir) throws IOException {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            return !stream.iterator()
-                    .hasNext();
+            return !stream.iterator().hasNext();
         }
     }
 
@@ -86,16 +85,13 @@ public class Store {
     }
 
     private ContentReader reader(Volume volume, Hash hash) {
-        return volume.get(hash)
-                .get()
-                .reader(this);
+        return volume.get(hash).get().reader(this);
     }
 
     public ContentInfo info(Hash hash) {
         if (operationManager.beginGet(hash) == GRANTED) {
             try {
-                Optional<ContentInfo> info = volumes.get(0)
-                        .info(hash);
+                Optional<ContentInfo> info = volumes.get(0).info(hash);
                 if (info.isPresent()) {
                     return info.get();
                 }
@@ -108,11 +104,9 @@ public class Store {
 
     public ContentReader get(Hash hash) {
         if (operationManager.beginGet(hash) == GRANTED) {
-            Optional<Content> content = volumes.get(0)
-                    .get(hash);
+            Optional<Content> content = volumes.get(0).get(hash);
             if (content.isPresent()) {
-                return content.get()
-                        .reader(this);
+                return content.get().reader(this);
             }
         }
         throw new UnknownHashException();
@@ -130,16 +124,14 @@ public class Store {
                 throw new ConcurrentModificationException();
 
             case GRANTED:
-                if (!volumes.get(0)
-                        .contains(hash)) {
+                if (!volumes.get(0).contains(hash)) {
                     operationManager.endDelete(hash);
                     throw new UnknownHashException();
                 }
                 return;
 
             case ERASABLE:
-                if (!volumes.get(0)
-                        .contains(hash)) {
+                if (!volumes.get(0).contains(hash)) {
                     operationManager.endDelete(hash);
                     throw new UnknownHashException();
                 }

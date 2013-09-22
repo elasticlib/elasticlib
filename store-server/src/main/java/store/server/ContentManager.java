@@ -5,15 +5,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import store.common.hash.Digest;
+import store.common.hash.Digest.DigestBuilder;
+import store.common.hash.Hash;
+import store.common.info.ContentInfo;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.WriteException;
-import store.common.hash.Digest;
-import store.common.hash.Digest.DigestBuilder;
-import store.common.hash.Hash;
-import store.common.info.ContentInfo;
 
 public class ContentManager {
 
@@ -100,8 +100,7 @@ public class ContentManager {
     }
 
     private Path path(Hash hash) {
-        return root.resolve(key(hash))
-                .resolve(hash.encode());
+        return root.resolve(key(hash)).resolve(hash.encode());
     }
 
     private void deleteFile(Path path) {
@@ -114,7 +113,6 @@ public class ContentManager {
     }
 
     private static String key(Hash hash) {
-        return hash.encode()
-                .substring(0, KEY_LENGTH);
+        return hash.encode().substring(0, KEY_LENGTH);
     }
 }

@@ -31,8 +31,7 @@ final class Page {
         if (!gets.containsKey(hash)) {
             gets.put(hash, new Counter());
         }
-        gets.get(hash)
-                .increment();
+        gets.get(hash).increment();
         return GRANTED;
     }
 

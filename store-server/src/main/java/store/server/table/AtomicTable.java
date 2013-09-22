@@ -33,7 +33,6 @@ public abstract class AtomicTable<T> {
     }
 
     private int index(Hash hash) {
-        return indexOf(hash.encode()
-                .substring(0, keyLength));
+        return indexOf(hash.encode().substring(0, keyLength));
     }
 }

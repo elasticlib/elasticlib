@@ -82,13 +82,11 @@ public class InfoManager {
     }
 
     public Optional<ContentInfo> get(Hash hash) {
-        return getPage(hash)
-                .get(hash);
+        return getPage(hash).get(hash);
     }
 
     public boolean contains(Hash hash) {
-        return getPage(hash)
-                .contains(hash);
+        return getPage(hash).contains(hash);
     }
 
     public void delete(Hash hash) {
@@ -101,17 +99,13 @@ public class InfoManager {
                         page = load(hash);
                     }
                     Collection<ContentInfo> contentInfos = page.getAll();
-                    if (contentInfos.size() == 1 && contentInfos.iterator()
-                            .next()
-                            .getHash()
-                            .equals(hash)) {
-
+                    if (contentInfos.size() == 1 && contentInfos.iterator().next().getHash().equals(hash)) {
                         Files.delete(bucket);
 
                     } else {
                         try (OutputStream outputStream = Files.newOutputStream(bucket)) {
                             for (ContentInfo contentInfo : contentInfos) {
-                                if (!hash.equals(contentInfo.getHash())) {
+                                if (!contentInfo.getHash().equals(hash)) {
                                     outputStream.write(bytes(contentInfo));
                                 }
                             }
@@ -175,14 +169,12 @@ public class InfoManager {
     }
 
     private static String key(Hash hash) {
-        return hash.encode()
-                .substring(0, KEY_LENGTH);
+        return hash.encode().substring(0, KEY_LENGTH);
     }
 
     private static byte[] bytes(ContentInfo contentInfo) {
-        Hash hash = contentInfo.getHash();
         return encoder()
-                .put("hash", hash.value())
+                .put("hash", contentInfo.getHash().value())
                 .put("length", contentInfo.getLength())
                 .put("metadata", contentInfo.getMetadata())
                 .build();

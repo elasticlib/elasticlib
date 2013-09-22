@@ -21,9 +21,7 @@ public abstract class Table<T> {
 
     @SuppressWarnings("unchecked")
     public T get(Hash hash) {
-        int index = indexOf(hash.encode()
-                .substring(0, keyLength));
-
+        int index = indexOf(hash.encode().substring(0, keyLength));
         return (T) buckets[index];
     }
 }

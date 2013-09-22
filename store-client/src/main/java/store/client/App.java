@@ -4,10 +4,9 @@ import com.google.common.base.Optional;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import static java.util.Arrays.asList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import store.common.Config;
 import store.common.info.ContentInfo;
@@ -27,8 +26,7 @@ public final class App {
             System.out.println("Unsupported command : " + args[0]);
             return;
         }
-        command.get()
-                .execute(params(args));
+        command.get().execute(params(args));
     }
 
     private static enum Command {
@@ -82,8 +80,7 @@ public final class App {
                     ContentInfo info = client.info(params.get(0));
                     System.out.println("Hash : " + info.getHash());
                     System.out.println("Length : " + info.getLength());
-                    Map<String, Object> metadata = info.getMetadata();
-                    for (Entry<String, Object> entry : metadata.entrySet()) {
+                    for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
                         System.out.println(entry.getKey() + " : " + entry.getValue());
                     }
                 }
@@ -94,7 +91,7 @@ public final class App {
 
         public static Optional<Command> of(String arg0) {
             for (Command command : Command.values()) {
-                if (arg0.equalsIgnoreCase(command.name())) {
+                if (command.name().equalsIgnoreCase(arg0)) {
                     return Optional.of(command);
                 }
             }
@@ -103,7 +100,6 @@ public final class App {
     }
 
     private static List<String> params(String[] args) {
-        return asList(args)
-                .subList(1, args.length);
+        return Arrays.asList(args).subList(1, args.length);
     }
 }

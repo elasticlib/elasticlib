@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
 import store.common.hash.Hash;
 import store.common.info.ContentInfo;
+import store.server.exception.InvalidStorePathException;
+import store.server.exception.StoreRuntimeException;
 import static store.server.io.ObjectEncoder.encoder;
 import static store.server.operation.LockState.*;
 
@@ -104,7 +104,6 @@ public class OperationManager {
     }
 
     private Path path(String dir, Hash hash) {
-        return root.resolve(dir)
-                .resolve(hash.encode());
+        return root.resolve(dir).resolve(hash.encode());
     }
 }

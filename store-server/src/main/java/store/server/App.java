@@ -16,7 +16,6 @@ public final class App {
         }
         Path home = Paths.get(args[0]);
         new StoreServer(home).start();
-        currentThread()
-                .join();
+        currentThread().join();
     }
 }

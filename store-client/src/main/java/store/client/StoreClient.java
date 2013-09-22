@@ -23,10 +23,13 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import static store.client.SinkOutputStream.sink;
 import store.common.Config;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
+import static store.common.IoUtil.copy;
+import static store.common.IoUtil.copyAndDigest;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.write;
 
@@ -82,7 +85,7 @@ public class StoreClient implements Closeable {
 
     private static Digest digest(Path filepath) {
         try (InputStream inputStream = Files.newInputStream(filepath)) {
-            return Digest.of(inputStream);
+            return copyAndDigest(inputStream, sink());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -115,13 +118,8 @@ public class StoreClient implements Closeable {
 
         try (InputStream inputStream = response.readEntity(InputStream.class);
                 OutputStream outputStream = new DefferedFileOutputStream(Paths.get(encodedHash))) {
+            copy(inputStream, outputStream);
 
-            byte[] buffer = new byte[8192];
-            int len = inputStream.read(buffer);
-            while (len != -1) {
-                outputStream.write(buffer, 0, len);
-                len = inputStream.read(buffer);
-            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

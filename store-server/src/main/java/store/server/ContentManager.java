@@ -5,10 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import store.common.Digest;
-import store.common.Digest.DigestBuilder;
-import store.common.Hash;
 import store.common.ContentInfo;
+import store.common.Digest;
+import store.common.Hash;
+import static store.common.IoUtil.copyAndDigest;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreException;
@@ -17,7 +17,6 @@ import store.server.exception.WriteException;
 
 public class ContentManager {
 
-    private static final int BUFFER_SIZE = 65536;
     private static final int KEY_LENGTH = 2;
     private final Path root;
 
@@ -46,9 +45,13 @@ public class ContentManager {
         Hash hash = info.getHash();
         Path path = createPath(hash);
         try {
-            Digest digest = write(source, path);
-            if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
-                throw new IntegrityCheckingFailedException();
+            try (OutputStream target = Files.newOutputStream(path)) {
+                Digest digest = copyAndDigest(source, target);
+                if (info.getLength() != digest.getLength() || !hash.equals(digest.getHash())) {
+                    throw new IntegrityCheckingFailedException();
+                }
+            } catch (IOException e) {
+                throw new WriteException(e);
             }
         } catch (StoreException e) {
             deleteFile(path);
@@ -67,23 +70,6 @@ public class ContentManager {
 
     public void delete(Hash hash) {
         deleteFile(path(hash));
-    }
-
-    private static Digest write(InputStream source, Path path) throws WriteException {
-        try (OutputStream target = Files.newOutputStream(path)) {
-            DigestBuilder digestBuilder = new DigestBuilder();
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int len = source.read(buffer);
-            while (len != -1) {
-                digestBuilder.add(buffer, len);
-                target.write(buffer, 0, len);
-                len = source.read(buffer);
-            }
-            return digestBuilder.build();
-
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
     }
 
     private Path createPath(Hash hash) {

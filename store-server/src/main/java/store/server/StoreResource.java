@@ -11,7 +11,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -62,7 +61,7 @@ public class StoreResource {
         final Hash hash = new Hash(encodedHash);
         return Response.ok(new StreamingOutput() {
             @Override
-            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+            public void write(OutputStream outputStream) throws IOException {
                 try (ContentReader reader = storeManager.get(hash)) {
                     InputStream inputStream = reader.inputStream();
                     byte[] buffer = new byte[8192];

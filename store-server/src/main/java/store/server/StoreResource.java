@@ -12,8 +12,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import store.common.Hash;
 import store.common.ContentInfo;
+import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.write;
@@ -45,10 +45,10 @@ public class StoreResource {
     }
 
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("delete")
-    public String delete() {
-        return "delete"; // TODO
+    @Path("delete/{hash}")
+    public Response delete(@PathParam("hash") String encodedHash) {
+        storeManager.delete(new Hash(encodedHash));
+        return Response.ok().build();
     }
 
     @GET

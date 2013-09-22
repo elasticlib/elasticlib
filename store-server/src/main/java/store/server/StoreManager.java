@@ -67,6 +67,19 @@ public final class StoreManager {
         }
     }
 
+    public void delete(Hash hash) {
+        lock.readLock().lock();
+        try {
+            if (!store.isPresent()) {
+                throw new NoStoreException();
+            }
+            store.get().delete(hash);
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public ContentInfo info(Hash hash) {
         lock.readLock().lock();
         try {

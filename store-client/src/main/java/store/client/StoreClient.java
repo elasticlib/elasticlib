@@ -78,8 +78,18 @@ public class StoreClient implements Closeable {
                 .getReasonPhrase();
     }
 
+    public String delete(String encodedHash) {
+        return target.path("delete/{hash}")
+                .resolveTemplate("hash", encodedHash)
+                .request()
+                .method("POST")
+                .getStatusInfo()
+                .getReasonPhrase();
+    }
+
     public ContentInfo info(String encodedHash) {
-        JsonObject json = target.path("info/" + encodedHash)
+        JsonObject json = target.path("info/{hash}")
+                .resolveTemplate("hash", encodedHash)
                 .request()
                 .get(JsonObject.class);
 
@@ -93,10 +103,6 @@ public class StoreClient implements Closeable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public String delete(String encodedHash) {
-        return ""; // TODO this is a stub
     }
 
     public String get(String encodedHash) {

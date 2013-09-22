@@ -3,26 +3,30 @@ package store.server.operation;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import store.common.ContentInfo;
+import java.util.Date;
 import store.common.Hash;
+import store.server.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import static store.server.io.ObjectEncoder.encoder;
+import store.server.table.Table;
 
 public class OperationManager {
 
-    private final Path root;
+    private static final int KEY_LENGTH = 1;
+    private final Table<Segment> segments;
 
-    private OperationManager(Path root) {
-        this.root = root;
+    private OperationManager(final Path root) {
+        segments = new Table<Segment>(KEY_LENGTH) {
+            @Override
+            protected Segment initialValue(String key) {
+                return new Segment(root.resolve(key));
+            }
+        };
     }
 
     public static OperationManager create(Path path) {
         try {
             Files.createDirectory(path);
-            Files.createDirectory(path.resolve("pending"));
-            Files.createDirectory(path.resolve("deleted"));
             return new OperationManager(path);
 
         } catch (IOException e) {
@@ -31,57 +35,32 @@ public class OperationManager {
     }
 
     public static OperationManager open(Path path) {
-        if (!Files.isDirectory(path) ||
-                !Files.isDirectory(path.resolve("pending")) ||
-                !Files.isDirectory(path.resolve("deleted"))) {
+        if (!Files.isDirectory(path)) {
             throw new InvalidStorePathException();
         }
         return new OperationManager(path);
     }
 
-    public void beginPut(ContentInfo contentInfo) {
-        Hash hash = contentInfo.getHash();
-        Path path = path("pending", hash);
-        byte[] bytes = encoder()
-                .put("hash", hash.value())
-                .put("length", contentInfo.getLength())
-                .put("metadata", contentInfo.getMetadata())
-                .build();
-        try {
-            Files.write(path, bytes, StandardOpenOption.CREATE_NEW);
+    public void beginPut(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.BEGIN_PUT);
+    }
 
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+    public void endPut(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.END_PUT);
+    }
+
+    public void beginDelete(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.BEGIN_DELETE);
+    }
+
+    public void endDelete(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.END_DELETE);
+    }
+
+    private void add(Uid uid, Hash hash, OpCode opCode) {
+        Segment segment = segments.get(hash);
+        synchronized (segment) {
+            segment.add(new Step(uid, hash, new Date().getTime(), opCode));
         }
-    }
-
-    public void endPut(ContentInfo contentInfo) {
-        remove("pending", contentInfo.getHash());
-    }
-
-    public void beginDelete(Hash hash) {
-        try {
-            Files.createFile(path("deleted", hash));
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
-    }
-
-    public void endDelete(Hash hash) {
-        remove("deleted", hash);
-    }
-
-    private void remove(String dir, Hash hash) {
-        try {
-            Files.deleteIfExists(path(dir, hash));
-
-        } catch (IOException e) {
-            // TODO simplement logger l'erreur
-        }
-    }
-
-    private Path path(String dir, Hash hash) {
-        return root.resolve(dir).resolve(hash.encode());
     }
 }

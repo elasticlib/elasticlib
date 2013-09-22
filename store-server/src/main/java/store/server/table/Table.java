@@ -2,6 +2,7 @@ package store.server.table;
 
 import store.common.Hash;
 import static store.server.table.TableUtil.indexOf;
+import static store.server.table.TableUtil.keyOf;
 
 public abstract class Table<T> {
 
@@ -13,11 +14,11 @@ public abstract class Table<T> {
         this.keyLength = keyLength;
         buckets = new Object[1 << (4 * keyLength)];
         for (int i = 0; i < buckets.length; i++) {
-            buckets[i] = initialValue();
+            buckets[i] = initialValue(keyOf(i, keyLength));
         }
     }
 
-    protected abstract T initialValue();
+    protected abstract T initialValue(String key);
 
     @SuppressWarnings("unchecked")
     public T get(Hash hash) {

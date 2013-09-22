@@ -19,6 +19,15 @@ final class TableUtil {
         return index;
     }
 
+    public static String keyOf(int index, int keyLength) {
+        String hex = Integer.toHexString(index);
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < keyLength - hex.length(); i++) {
+            builder.append('0');
+        }
+        return builder.append(hex).toString();
+    }
+
     private static int pow(int i) {
         return 1 << (4 * i);
     }

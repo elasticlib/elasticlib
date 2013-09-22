@@ -1,8 +1,16 @@
 package store.server;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,10 +22,12 @@ import store.server.info.InfoManager;
 
 public class Volume {
 
+    private final Uid uid;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Volume(InfoManager infoManager, ContentManager contentManager) {
+    private Volume(Uid uid, InfoManager infoManager, ContentManager contentManager) {
+        this.uid = uid;
         this.infoManager = infoManager;
         this.contentManager = contentManager;
     }
@@ -28,12 +38,21 @@ public class Volume {
             if (!isEmptyDir(path)) {
                 throw new InvalidStorePathException();
             }
-            return new Volume(InfoManager.create(path.resolve("info")),
+            Uid uid = Uid.random();
+            writeUid(path.resolve("uid"), uid);
+            return new Volume(uid,
+                              InfoManager.create(path.resolve("info")),
                               ContentManager.create(path.resolve("content")));
 
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
         }
+    }
+
+    public static Volume open(Path path) {
+        return new Volume(readUid(path.resolve("uid")),
+                          InfoManager.open(path.resolve("info")),
+                          ContentManager.open(path.resolve("content")));
     }
 
     private static boolean isEmptyDir(Path dir) throws IOException {
@@ -42,9 +61,32 @@ public class Volume {
         }
     }
 
-    public static Volume open(Path path) {
-        return new Volume(InfoManager.open(path.resolve("info")),
-                          ContentManager.open(path.resolve("content")));
+    private static void writeUid(Path path, Uid uid) {
+        try (OutputStream outputStream = Files.newOutputStream(path);
+                Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
+                BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
+
+            bufferedWriter.write(uid.toString());
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
+    }
+
+    private static Uid readUid(Path path) {
+        try (InputStream inputStream = Files.newInputStream(path);
+                Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
+                BufferedReader bufferedReader = new BufferedReader(reader)) {
+
+            return new Uid(bufferedReader.readLine());
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
+    }
+
+    public Uid getUid() {
+        return uid;
     }
 
     public boolean contains(Hash hash) {

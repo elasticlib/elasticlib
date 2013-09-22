@@ -72,18 +72,15 @@ public class Store {
             throw new ConcurrentModificationException();
         }
         try {
-            operationManager.beginPut(contentInfo);
             Iterator<Volume> it = volumes.iterator();
             Volume first = it.next();
-            first.put(contentInfo, source);
+            put(first, contentInfo, source);
             while (it.hasNext()) {
                 Volume next = it.next();
                 try (ContentReader reader = first.get(contentInfo.getHash()).get().reader(this)) {
-                    next.put(contentInfo, reader.inputStream());
+                    put(next, contentInfo, reader.inputStream());
                 }
             }
-            operationManager.endPut(contentInfo);
-
         } finally {
             lockManager.writeUnlock(hash);
         }
@@ -94,15 +91,27 @@ public class Store {
             throw new ConcurrentModificationException();
         }
         try {
-            operationManager.beginDelete(hash);
             for (Volume volume : volumes) {
-                volume.delete(hash);
+                delete(volume, hash);
             }
-            operationManager.endDelete(hash);
-
         } finally {
             lockManager.writeUnlock(hash);
         }
+    }
+
+    private void put(Volume volume, ContentInfo contentInfo, InputStream source) {
+        Uid uid = volume.getUid();
+        Hash hash = contentInfo.getHash();
+        operationManager.beginPut(uid, hash);
+        volume.put(contentInfo, source);
+        operationManager.endPut(uid, hash);
+    }
+
+    private void delete(Volume volume, Hash hash) {
+        Uid uid = volume.getUid();
+        operationManager.beginDelete(uid, hash);
+        volume.delete(hash);
+        operationManager.endDelete(uid, hash);
     }
 
     public ContentInfo info(Hash hash) {

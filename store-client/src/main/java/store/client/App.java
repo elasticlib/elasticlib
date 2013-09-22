@@ -69,7 +69,8 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    client.get(params.get(0));
+                    String result = client.get(params.get(0));
+                    System.out.println(result);
                 }
             }
         },

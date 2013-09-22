@@ -3,9 +3,11 @@ package store.client;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.json.JsonObject;
@@ -78,6 +80,15 @@ public class StoreClient implements Closeable {
                 .getReasonPhrase();
     }
 
+    private static Digest digest(Path filepath) {
+        try (InputStream inputStream = Files.newInputStream(filepath)) {
+            return Digest.of(inputStream);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public String delete(String encodedHash) {
         return target.path("delete/{hash}")
                 .resolveTemplate("hash", encodedHash)
@@ -96,17 +107,26 @@ public class StoreClient implements Closeable {
         return readContentInfo(json);
     }
 
-    private static Digest digest(Path filepath) {
-        try (InputStream inputStream = Files.newInputStream(filepath)) {
-            return Digest.of(inputStream);
+    public String get(String encodedHash) {
+        Response response = target.path("get/{hash}")
+                .resolveTemplate("hash", encodedHash)
+                .request()
+                .get();
 
+        try (InputStream inputStream = response.readEntity(InputStream.class);
+                OutputStream outputStream = Files.newOutputStream(Paths.get(encodedHash))) {
+
+            byte[] buffer = new byte[8192];
+            int len = inputStream.read(buffer);
+            while (len != -1) {
+                outputStream.write(buffer, 0, len);
+                len = inputStream.read(buffer);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public String get(String encodedHash) {
-        return ""; // TODO this is a stub
+        return response.getStatusInfo()
+                .getReasonPhrase();
     }
 
     @Override

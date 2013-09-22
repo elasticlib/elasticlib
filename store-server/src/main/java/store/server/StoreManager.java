@@ -93,6 +93,19 @@ public final class StoreManager {
         }
     }
 
+    public ContentReader get(Hash hash) {
+        lock.readLock().lock();
+        try {
+            if (!store.isPresent()) {
+                throw new NoStoreException();
+            }
+            return store.get().get(hash);
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     private Optional<Config> loadConfig() {
         Path path = home.resolve(CONFIG_PATH);
         if (!Files.exists(path)) {

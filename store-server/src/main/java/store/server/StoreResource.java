@@ -1,6 +1,8 @@
 package store.server;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import javax.inject.Singleton;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
@@ -9,8 +11,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.ContentInfo;
 import store.common.Hash;
@@ -52,10 +56,24 @@ public class StoreResource {
     }
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("get/{hash}")
-    public String get(@PathParam("hash") String hash) {
-        return hash; // TODO
+    public Response get(@PathParam("hash") String encodedHash) {
+        final Hash hash = new Hash(encodedHash);
+        return Response.ok(new StreamingOutput() {
+            @Override
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                try (ContentReader reader = storeManager.get(hash)) {
+                    InputStream inputStream = reader.inputStream();
+                    byte[] buffer = new byte[8192];
+                    int len = inputStream.read(buffer);
+                    while (len != -1) {
+                        outputStream.write(buffer, 0, len);
+                        len = inputStream.read(buffer);
+                    }
+                }
+            }
+        }).build();
     }
 
     @GET

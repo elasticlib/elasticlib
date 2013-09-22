@@ -114,7 +114,7 @@ public class StoreClient implements Closeable {
                 .get();
 
         try (InputStream inputStream = response.readEntity(InputStream.class);
-                OutputStream outputStream = Files.newOutputStream(Paths.get(encodedHash))) {
+                OutputStream outputStream = new DefferedFileOutputStream(Paths.get(encodedHash))) {
 
             byte[] buffer = new byte[8192];
             int len = inputStream.read(buffer);

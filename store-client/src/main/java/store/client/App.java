@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import store.common.Config;
+import store.common.info.ContentInfo;
 
 public final class App {
 
@@ -24,17 +27,15 @@ public final class App {
             System.out.println("Unsupported command : " + args[0]);
             return;
         }
-        String result = command.get()
+        command.get()
                 .execute(params(args));
-
-        System.out.println(result);
     }
 
     private static enum Command {
 
         CREATE {
             @Override
-            public String execute(List<String> params) {
+            public void execute(List<String> params) {
                 Iterator<String> it = params.iterator();
                 Path root = Paths.get(it.next());
                 List<Path> volumes = new ArrayList<>();
@@ -43,36 +44,53 @@ public final class App {
                 }
                 Config config = new Config(root, volumes);
                 try (StoreClient client = new StoreClient()) {
-                    return client.create(config);
+                    String result = client.create(config);
+                    System.out.println(result);
                 }
             }
         },
         PUT {
             @Override
-            public String execute(List<String> params) {
+            public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    return client.put(Paths.get(params.get(0)));
-                }
-            }
-        },
-        GET {
-            @Override
-            public String execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
-                    return client.get(params.get(0));
+                    String result = client.put(Paths.get(params.get(0)));
+                    System.out.println(result);
                 }
             }
         },
         DELETE {
             @Override
-            public String execute(List<String> params) {
+            public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    return client.delete(params.get(0));
+                    String result = client.delete(params.get(0));
+                    System.out.println(result);
+                }
+            }
+        },
+        GET {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.get(params.get(0));
+                }
+            }
+        },
+        INFO {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    ContentInfo info = client.info(params.get(0));
+                    System.out.println("Hash : " + info.getHash());
+                    System.out.println("Length : " + info.getLength());
+                    Map<String, Object> metadata = info.getMetadata();
+                    for (Entry<String, Object> entry : metadata.entrySet()) {
+                        System.out.println(entry.getKey() + " : " + entry.getValue());
+                    }
                 }
             }
         },;
 
-        public abstract String execute(List<String> params);
+        public abstract void execute(List<String> params);
 
         public static Optional<Command> of(String arg0) {
             for (Command command : Command.values()) {

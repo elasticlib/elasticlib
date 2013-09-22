@@ -57,6 +57,10 @@ public class Volume {
         contentManager.put(contentInfo, source);
     }
 
+    public Optional<ContentInfo> info(Hash hash) {
+        return infoManager.get(hash);
+    }
+
     public Optional<Content> get(Hash hash) {
         Optional<ContentInfo> info = infoManager.get(hash);
         if (info.isPresent()) {

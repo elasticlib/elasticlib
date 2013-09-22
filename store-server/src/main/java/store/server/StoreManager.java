@@ -16,6 +16,7 @@ import javax.json.Json;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import store.common.Config;
+import store.common.hash.Hash;
 import store.common.info.ContentInfo;
 import store.common.json.JsonCodec;
 import static store.common.json.JsonCodec.encode;
@@ -73,6 +74,22 @@ public final class StoreManager {
             }
             store.get()
                     .put(contentInfo, source);
+
+        } finally {
+            lock.readLock()
+                    .unlock();
+        }
+    }
+
+    public ContentInfo info(Hash hash) {
+        lock.readLock()
+                .lock();
+        try {
+            if (!store.isPresent()) {
+                throw new NoStoreException();
+            }
+            return store.get()
+                    .info(hash);
 
         } finally {
             lock.readLock()

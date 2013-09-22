@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import static javax.ws.rs.client.Entity.entity;
@@ -24,6 +25,7 @@ import store.common.Config;
 import store.common.hash.Digest;
 import store.common.info.ContentInfo;
 import static store.common.info.ContentInfo.contentInfo;
+import static store.common.json.JsonCodec.decodeContentInfo;
 import static store.common.json.JsonCodec.encode;
 
 public class StoreClient implements Closeable {
@@ -74,6 +76,12 @@ public class StoreClient implements Closeable {
                 .post(entity(multipart, multipart.getMediaType()))
                 .getStatusInfo()
                 .getReasonPhrase();
+    }
+
+    public ContentInfo info(String encodedHash) {
+        return decodeContentInfo(target.path("info/" + encodedHash)
+                .request()
+                .get(JsonObject.class));
     }
 
     private static Digest digest(Path filepath) {

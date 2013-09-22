@@ -91,6 +91,21 @@ public class Store {
                 .reader(this);
     }
 
+    public ContentInfo info(Hash hash) {
+        if (operationManager.beginGet(hash) == GRANTED) {
+            try {
+                Optional<ContentInfo> info = volumes.get(0)
+                        .info(hash);
+                if (info.isPresent()) {
+                    return info.get();
+                }
+            } finally {
+                close(hash);
+            }
+        }
+        throw new UnknownHashException();
+    }
+
     public ContentReader get(Hash hash) {
         if (operationManager.beginGet(hash) == GRANTED) {
             Optional<Content> content = volumes.get(0)

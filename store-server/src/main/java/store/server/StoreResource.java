@@ -11,8 +11,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import store.common.hash.Hash;
+import store.common.info.ContentInfo;
 import static store.common.json.JsonCodec.decodeConfig;
 import static store.common.json.JsonCodec.decodeContentInfo;
+import static store.common.json.JsonCodec.encode;
 
 @Path("/")
 public class StoreResource {
@@ -54,7 +57,8 @@ public class StoreResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("info/{hash}")
-    public String info(@PathParam("hash") String hash) {
-        return hash; // TODO
+    public JsonObject info(@PathParam("hash") String encodedHash) {
+        ContentInfo info = storeManager.info(new Hash(encodedHash));
+        return encode(info);
     }
 }

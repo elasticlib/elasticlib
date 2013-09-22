@@ -25,13 +25,12 @@ import store.server.exception.StoreAlreadyExists;
 
 public final class StoreManager {
 
-    private static StoreManager INSTANCE;
     private static final String CONFIG_PATH = "store.config";
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Optional<Store> store;
 
-    private StoreManager(Path home) {
+    public StoreManager(Path home) {
         this.home = home;
         Optional<Config> config = loadConfig();
         if (config.isPresent()) {
@@ -39,14 +38,6 @@ public final class StoreManager {
         } else {
             store = Optional.absent();
         }
-    }
-
-    public static void init(Path home) {
-        INSTANCE = new StoreManager(home);
-    }
-
-    public static StoreManager get() {
-        return INSTANCE;
     }
 
     public void create(Config config) {

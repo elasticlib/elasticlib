@@ -1,6 +1,7 @@
 package store.server;
 
 import java.io.InputStream;
+import javax.inject.Singleton;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -18,9 +19,14 @@ import static store.common.json.JsonCodec.decodeContentInfo;
 import static store.common.json.JsonCodec.encode;
 
 @Path("/")
+@Singleton
 public class StoreResource {
 
-    private StoreManager storeManager = StoreManager.get();
+    private final StoreManager storeManager;
+
+    public StoreResource(StoreManager storeManager) {
+        this.storeManager = storeManager;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

@@ -17,10 +17,11 @@ public class StoreServer {
     private final HttpServer httpServer;
 
     public StoreServer(Path home) {
-        StoreManager.init(home);
-        ResourceConfig resourceConfig = new ResourceConfig(StoreResource.class)
+        ResourceConfig resourceConfig = new ResourceConfig()
                 .register(MultiPartFeature.class)
+                .register(new StoreResource(new StoreManager(home)))
                 .register(new LoggingFilter(Logger.getGlobal(), false));
+
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 
         Runtime.getRuntime()

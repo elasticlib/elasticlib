@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.size;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
@@ -18,11 +19,15 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import org.glassfish.jersey.apache.connector.ApacheConnector;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.filter.LoggingFilter;
+import static org.glassfish.jersey.media.multipart.Boundary.addBoundary;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.SinkOutputStream.sink;
 import store.common.Config;
 import store.common.ContentInfo;
@@ -42,11 +47,14 @@ public class StoreClient implements Closeable {
         Logger logger = Logger.getGlobal();
         logger.setLevel(Level.OFF);
 
-        client = ClientBuilder.newBuilder()
-                .register(MultiPartFeature.class)
-                .register(new LoggingFilter(logger, true))
-                .build();
+        ClientConfig clientConfig = new ClientConfig()
+                .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024);
 
+        clientConfig.connector(new ApacheConnector(clientConfig))
+                .register(MultiPartFeature.class)
+                .register(new LoggingFilter(logger, true));
+
+        client = ClientBuilder.newClient(clientConfig);
         target = client.target(localhost(8080));
     }
 
@@ -72,19 +80,31 @@ public class StoreClient implements Closeable {
                 .withLength(digest.getLength())
                 .build();
 
-        MultiPart multipart = new FormDataMultiPart()
-                .field("info", write(info), MediaType.APPLICATION_JSON_TYPE)
-                .bodyPart(new FileDataBodyPart("source", filepath.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        try (InputStream inputStream = new LoggingInputStream("Uploading content",
+                                                              newInputStream(filepath),
+                                                              digest.getLength())) {
 
-        return target.path("put")
-                .request()
-                .post(entity(multipart, multipart.getMediaType()))
-                .getStatusInfo()
-                .getReasonPhrase();
+            MultiPart multipart = new FormDataMultiPart()
+                    .field("info", write(info), MediaType.APPLICATION_JSON_TYPE)
+                    .bodyPart(new StreamDataBodyPart("source",
+                                                     inputStream,
+                                                     filepath.getFileName().toString(),
+                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            return target.path("put")
+                    .request()
+                    .post(entity(multipart, addBoundary(multipart.getMediaType())))
+                    .getStatusInfo()
+                    .getReasonPhrase();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Digest digest(Path filepath) {
-        try (InputStream inputStream = Files.newInputStream(filepath)) {
+        try (InputStream inputStream = new LoggingInputStream("Computing content digest",
+                                                              newInputStream(filepath),
+                                                              size(filepath))) {
             return copyAndDigest(inputStream, sink());
 
         } catch (IOException e) {

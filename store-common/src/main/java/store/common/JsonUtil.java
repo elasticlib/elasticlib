@@ -7,46 +7,44 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.json.Json;
+import static javax.json.Json.createArrayBuilder;
+import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
-import store.common.Config;
-import store.common.Hash;
-import store.common.ContentInfo;
+import static store.common.ContentInfo.contentInfo;
 
-public final class JsonCodec {
+public final class JsonUtil {
 
-    private JsonCodec() {
+    private JsonUtil() {
     }
 
-    public static JsonObject encode(ContentInfo contentInfo) {
-        return Json.createObjectBuilder()
+    public static JsonObject write(ContentInfo contentInfo) {
+        return createObjectBuilder()
                 .add("hash", contentInfo.getHash().encode())
                 .add("length", contentInfo.getLength())
-                .add("metadata", encodeMap(contentInfo.getMetadata()))
+                .add("metadata", writeMap(contentInfo.getMetadata()))
                 .build();
     }
 
-    public static ContentInfo decodeContentInfo(JsonObject json) {
-        return ContentInfo.contentInfo()
+    public static ContentInfo readContentInfo(JsonObject json) {
+        return contentInfo()
                 .withHash(new Hash(json.getString("hash")))
-                .withLength(json.getJsonNumber("length")
-                .longValue())
-                .withMetadata(decodeMap(json.getJsonObject("metadata")))
+                .withLength(json.getJsonNumber("length").longValue())
+                .withMetadata(readMap(json.getJsonObject("metadata")))
                 .build();
     }
 
-    private static JsonObjectBuilder encodeMap(Map<String, Object> map) {
-        JsonObjectBuilder json = Json.createObjectBuilder();
+    private static JsonObjectBuilder writeMap(Map<String, Object> map) {
+        JsonObjectBuilder json = createObjectBuilder();
         for (Entry<String, Object> entry : map.entrySet()) {
             json.add(entry.getKey(), entry.getValue().toString());
         }
         return json;
     }
 
-    private static Map<String, Object> decodeMap(JsonObject json) {
+    private static Map<String, Object> readMap(JsonObject json) {
         Map<String, Object> map = new HashMap<>();
         for (String key : json.keySet()) {
             map.put(key, json.getString(key));
@@ -54,19 +52,19 @@ public final class JsonCodec {
         return map;
     }
 
-    public static JsonObject encode(Config config) {
+    public static JsonObject write(Config config) {
         String root = config.getRoot().toAbsolutePath().toString();
-        JsonArrayBuilder volumes = Json.createArrayBuilder();
+        JsonArrayBuilder volumes = createArrayBuilder();
         for (Path path : config.getVolumePaths()) {
             volumes.add(path.toAbsolutePath().toString());
         }
-        return Json.createObjectBuilder()
+        return createObjectBuilder()
                 .add("root", root)
                 .add("volumes", volumes)
                 .build();
     }
 
-    public static Config decodeConfig(JsonObject json) {
+    public static Config readConfig(JsonObject json) {
         Path root = Paths.get(json.getString("root"));
         List<Path> volumes = new ArrayList<>();
         for (JsonString value : json.getJsonArray("volumes").getValuesAs(JsonString.class)) {

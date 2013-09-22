@@ -16,10 +16,10 @@ import javax.json.Json;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import store.common.Config;
-import store.common.Hash;
 import store.common.ContentInfo;
-import store.common.JsonCodec;
-import static store.common.JsonCodec.encode;
+import store.common.Hash;
+import static store.common.JsonUtil.readConfig;
+import static store.common.JsonUtil.write;
 import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
 
@@ -89,7 +89,7 @@ public final class StoreManager {
                 Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
                 JsonReader jsonReader = Json.createReader(reader)) {
 
-            return Optional.of(JsonCodec.decodeConfig(jsonReader.readObject()));
+            return Optional.of(readConfig(jsonReader.readObject()));
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -103,7 +103,7 @@ public final class StoreManager {
                     Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
                     JsonWriter jsonWriter = Json.createWriter(writer)) {
 
-                jsonWriter.writeObject(encode(config));
+                jsonWriter.writeObject(write(config));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

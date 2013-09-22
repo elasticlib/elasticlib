@@ -22,11 +22,11 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import store.common.Config;
-import store.common.Digest;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
-import static store.common.JsonCodec.decodeContentInfo;
-import static store.common.JsonCodec.encode;
+import store.common.Digest;
+import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.write;
 
 public class StoreClient implements Closeable {
 
@@ -55,7 +55,7 @@ public class StoreClient implements Closeable {
     public String create(Config config) {
         return target.path("create")
                 .request()
-                .post(entity(encode(config), MediaType.APPLICATION_JSON), Response.class)
+                .post(entity(write(config), MediaType.APPLICATION_JSON), Response.class)
                 .getStatusInfo()
                 .getReasonPhrase();
     }
@@ -68,7 +68,7 @@ public class StoreClient implements Closeable {
                 .build();
 
         MultiPart multipart = new FormDataMultiPart()
-                .field("info", encode(info), MediaType.APPLICATION_JSON_TYPE)
+                .field("info", write(info), MediaType.APPLICATION_JSON_TYPE)
                 .bodyPart(new FileDataBodyPart("source", filepath.toFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
         return target.path("put")
@@ -79,9 +79,11 @@ public class StoreClient implements Closeable {
     }
 
     public ContentInfo info(String encodedHash) {
-        return decodeContentInfo(target.path("info/" + encodedHash)
+        JsonObject json = target.path("info/" + encodedHash)
                 .request()
-                .get(JsonObject.class));
+                .get(JsonObject.class);
+
+        return readContentInfo(json);
     }
 
     private static Digest digest(Path filepath) {

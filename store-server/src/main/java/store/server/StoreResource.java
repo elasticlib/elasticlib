@@ -14,9 +14,9 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.Hash;
 import store.common.ContentInfo;
-import static store.common.JsonCodec.decodeConfig;
-import static store.common.JsonCodec.decodeContentInfo;
-import static store.common.JsonCodec.encode;
+import static store.common.JsonUtil.readConfig;
+import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.write;
 
 @Path("/")
 @Singleton
@@ -32,7 +32,7 @@ public class StoreResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("create")
     public Response create(JsonObject json) {
-        storeManager.create(decodeConfig(json));
+        storeManager.create(readConfig(json));
         return Response.ok().build();
     }
 
@@ -40,7 +40,7 @@ public class StoreResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("put")
     public Response put(@FormDataParam("info") JsonObject json, @FormDataParam("source") InputStream inputStream) {
-        storeManager.put(decodeContentInfo(json), inputStream);
+        storeManager.put(readContentInfo(json), inputStream);
         return Response.ok().build();
     }
 
@@ -63,6 +63,6 @@ public class StoreResource {
     @Path("info/{hash}")
     public JsonObject info(@PathParam("hash") String encodedHash) {
         ContentInfo info = storeManager.info(new Hash(encodedHash));
-        return encode(info);
+        return write(info);
     }
 }

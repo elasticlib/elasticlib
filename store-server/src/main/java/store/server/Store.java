@@ -11,16 +11,17 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import store.common.Config;
-import store.common.Hash;
 import store.common.ContentInfo;
+import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
-import static store.server.operation.LockState.*;
+import store.server.lock.LockManager;
 import store.server.operation.OperationManager;
 
 public class Store {
 
+    private final LockManager lockManager = new LockManager();
     private final OperationManager operationManager;
     private final List<Volume> volumes;
 
@@ -66,30 +67,46 @@ public class Store {
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        if (operationManager.beginPut(contentInfo) == DENIED) {
+        Hash hash = contentInfo.getHash();
+        if (!lockManager.writeLock(hash)) {
             throw new ConcurrentModificationException();
         }
         try {
+            operationManager.beginPut(contentInfo);
             Iterator<Volume> it = volumes.iterator();
             Volume first = it.next();
             first.put(contentInfo, source);
             while (it.hasNext()) {
                 Volume next = it.next();
-                try (ContentReader reader = reader(first, contentInfo.getHash())) {
+                try (ContentReader reader = first.get(contentInfo.getHash()).get().reader(this)) {
                     next.put(contentInfo, reader.inputStream());
                 }
             }
-        } finally {
             operationManager.endPut(contentInfo);
+
+        } finally {
+            lockManager.writeUnlock(hash);
         }
     }
 
-    private ContentReader reader(Volume volume, Hash hash) {
-        return volume.get(hash).get().reader(this);
+    public void delete(Hash hash) {
+        if (!lockManager.writeLock(hash)) {
+            throw new ConcurrentModificationException();
+        }
+        try {
+            operationManager.beginDelete(hash);
+            for (Volume volume : volumes) {
+                volume.delete(hash);
+            }
+            operationManager.endDelete(hash);
+
+        } finally {
+            lockManager.writeUnlock(hash);
+        }
     }
 
     public ContentInfo info(Hash hash) {
-        if (operationManager.beginGet(hash) == GRANTED) {
+        if (!lockManager.readLock(hash)) {
             try {
                 Optional<ContentInfo> info = volumes.get(0).info(hash);
                 if (info.isPresent()) {
@@ -103,7 +120,7 @@ public class Store {
     }
 
     public ContentReader get(Hash hash) {
-        if (operationManager.beginGet(hash) == GRANTED) {
+        if (!lockManager.readLock(hash)) {
             Optional<Content> content = volumes.get(0).get(hash);
             if (content.isPresent()) {
                 return content.get().reader(this);
@@ -113,36 +130,6 @@ public class Store {
     }
 
     void close(Hash hash) {
-        if (operationManager.endGet(hash) == ERASABLE) {
-            erase(hash);
-        }
-    }
-
-    public void delete(Hash hash) {
-        switch (operationManager.beginDelete(hash)) {
-            case DENIED:
-                throw new ConcurrentModificationException();
-
-            case GRANTED:
-                if (!volumes.get(0).contains(hash)) {
-                    operationManager.endDelete(hash);
-                    throw new UnknownHashException();
-                }
-                return;
-
-            case ERASABLE:
-                if (!volumes.get(0).contains(hash)) {
-                    operationManager.endDelete(hash);
-                    throw new UnknownHashException();
-                }
-                erase(hash);
-        }
-    }
-
-    private void erase(Hash hash) {
-        for (Volume volume : volumes) {
-            volume.erase(hash);
-        }
-        operationManager.endDelete(hash);
+        lockManager.readUnlock(hash);
     }
 }

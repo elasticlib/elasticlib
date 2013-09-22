@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import store.common.Hash;
 import store.common.ContentInfo;
+import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.info.InfoManager;
@@ -68,7 +68,7 @@ public class Volume {
         return Optional.absent();
     }
 
-    public void erase(Hash hash) {
+    public void delete(Hash hash) {
         infoManager.delete(hash);
         contentManager.delete(hash);
     }

@@ -41,6 +41,13 @@ public class StoreResource {
     }
 
     @POST
+    @Path("drop")
+    public Response drop() {
+        storeManager.drop();
+        return Response.ok().build();
+    }
+
+    @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("put")
     public Response put(@FormDataParam("info") JsonObject json, @FormDataParam("source") InputStream inputStream) {

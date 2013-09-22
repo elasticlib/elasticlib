@@ -17,8 +17,8 @@ public final class App {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("Syntax : store command arguments");
+        if (args.length == 0) {
+            System.out.println("Syntax : store command params...");
             return;
         }
         Optional<Command> command = Command.of(args[0]);
@@ -43,6 +43,15 @@ public final class App {
                 Config config = new Config(root, volumes);
                 try (StoreClient client = new StoreClient()) {
                     String result = client.create(config);
+                    System.out.println(result);
+                }
+            }
+        },
+        DROP {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    String result = client.drop();
                     System.out.println(result);
                 }
             }

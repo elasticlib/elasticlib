@@ -2,14 +2,18 @@ package store.server;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
@@ -22,6 +26,7 @@ import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.write;
 import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
+import store.server.exception.WriteException;
 
 public final class StoreManager {
 
@@ -52,6 +57,49 @@ public final class StoreManager {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    public void drop() {
+        lock.writeLock().lock();
+        try {
+            if (!store.isPresent()) {
+                throw new NoStoreException();
+            }
+            Config config = loadConfig().get();
+            for (Path volume : config.getVolumePaths()) {
+                recursiveDelete(volume);
+            }
+            recursiveDelete(config.getRoot());
+            Files.delete(home.resolve(CONFIG_PATH));
+            store = Optional.absent();
+
+        } catch (IOException e) {
+            throw new WriteException(e);
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private static void recursiveDelete(Path path) throws IOException {
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                if (e == null) {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+
+                } else {
+                    throw e;
+                }
+            }
+        });
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {

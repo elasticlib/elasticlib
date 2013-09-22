@@ -73,6 +73,14 @@ public class StoreClient implements Closeable {
                 .getReasonPhrase();
     }
 
+    public String drop() {
+        return target.path("drop")
+                .request()
+                .method("POST")
+                .getStatusInfo()
+                .getReasonPhrase();
+    }
+
     public String put(Path filepath) {
         Digest digest = digest(filepath);
         ContentInfo info = contentInfo()

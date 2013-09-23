@@ -115,7 +115,7 @@ public class Store {
     }
 
     public ContentInfo info(Hash hash) {
-        if (!lockManager.readLock(hash)) {
+        if (lockManager.readLock(hash)) {
             try {
                 Optional<ContentInfo> info = volumes.get(0).info(hash);
                 if (info.isPresent()) {
@@ -129,7 +129,7 @@ public class Store {
     }
 
     public ContentReader get(Hash hash) {
-        if (!lockManager.readLock(hash)) {
+        if (lockManager.readLock(hash)) {
             Optional<Content> content = volumes.get(0).get(hash);
             if (content.isPresent()) {
                 return content.get().reader(this);

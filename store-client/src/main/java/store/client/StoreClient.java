@@ -17,6 +17,7 @@ import static javax.ws.rs.client.Entity.entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.apache.connector.ApacheConnector;
 import org.glassfish.jersey.client.ClientConfig;
@@ -63,23 +64,25 @@ public class StoreClient implements Closeable {
                 .build();
     }
 
-    public String create(Config config) {
-        return target.path("create")
-                .request()
-                .post(entity(write(config), MediaType.APPLICATION_JSON), Response.class)
-                .getStatusInfo()
-                .getReasonPhrase();
+    private static void ensureOk(Response response) {
+        if (response.getStatus() != Status.OK.getStatusCode()) {
+            throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
+        }
     }
 
-    public String drop() {
-        return target.path("drop")
+    public void create(Config config) {
+        ensureOk(target.path("create")
                 .request()
-                .method("POST")
-                .getStatusInfo()
-                .getReasonPhrase();
+                .post(entity(write(config), MediaType.APPLICATION_JSON), Response.class));
     }
 
-    public String put(Path filepath) {
+    public void drop() {
+        ensureOk(target.path("drop")
+                .request()
+                .method("POST"));
+    }
+
+    public void put(Path filepath) {
         Digest digest = digest(filepath);
         ContentInfo info = contentInfo()
                 .withHash(digest.getHash())
@@ -96,50 +99,47 @@ public class StoreClient implements Closeable {
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            return target.path("put")
+            ensureOk(target.path("put")
                     .request()
-                    .post(entity(multipart, addBoundary(multipart.getMediaType())))
-                    .getStatusInfo()
-                    .getReasonPhrase();
+                    .post(entity(multipart, addBoundary(multipart.getMediaType()))));
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RequestFailedException(e);
         }
     }
 
-    public String delete(String encodedHash) {
-        return target.path("delete/{hash}")
+    public void delete(String encodedHash) {
+        ensureOk(target.path("delete/{hash}")
                 .resolveTemplate("hash", encodedHash)
                 .request()
-                .method("POST")
-                .getStatusInfo()
-                .getReasonPhrase();
+                .method("POST"));
     }
 
     public ContentInfo info(String encodedHash) {
-        JsonObject json = target.path("info/{hash}")
+        Response response = target.path("info/{hash}")
                 .resolveTemplate("hash", encodedHash)
                 .request()
-                .get(JsonObject.class);
+                .get();
 
-        return readContentInfo(json);
+        ensureOk(response);
+        return readContentInfo(response.readEntity(JsonObject.class));
     }
 
-    public String get(String encodedHash) {
+    public void get(String encodedHash) {
         Response response = target.path("get/{hash}")
                 .resolveTemplate("hash", encodedHash)
                 .request()
                 .get();
+
+        ensureOk(response);
 
         try (InputStream inputStream = response.readEntity(InputStream.class);
                 OutputStream outputStream = new DefferedFileOutputStream(Paths.get(encodedHash))) {
             copy(inputStream, outputStream);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RequestFailedException(e);
         }
-        return response.getStatusInfo()
-                .getReasonPhrase();
     }
 
     @Override

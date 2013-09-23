@@ -28,7 +28,12 @@ public final class App {
             System.out.println("Unsupported command : " + args[0]);
             return;
         }
-        command.get().execute(params(args));
+        try {
+            command.get().execute(params(args));
+
+        } catch (RequestFailedException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private static enum Command {
@@ -44,8 +49,7 @@ public final class App {
                 }
                 Config config = new Config(root, volumes);
                 try (StoreClient client = new StoreClient()) {
-                    String result = client.create(config);
-                    System.out.println(result);
+                    client.create(config);
                 }
             }
         },
@@ -53,8 +57,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    String result = client.drop();
-                    System.out.println(result);
+                    client.drop();
                 }
             }
         },
@@ -62,8 +65,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    String result = client.put(Paths.get(params.get(0)));
-                    System.out.println(result);
+                    client.put(Paths.get(params.get(0)));
                 }
             }
         },
@@ -71,8 +73,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    String result = client.delete(params.get(0));
-                    System.out.println(result);
+                    client.delete(params.get(0));
                 }
             }
         },
@@ -80,8 +81,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    String result = client.get(params.get(0));
-                    System.out.println(result);
+                    client.get(params.get(0));
                 }
             }
         },

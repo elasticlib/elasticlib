@@ -8,8 +8,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import static store.client.DigestUtil.digest;
 import store.common.Config;
 import store.common.ContentInfo;
+import store.common.Digest;
 
 public final class App {
 
@@ -95,7 +97,15 @@ public final class App {
                     }
                 }
             }
-        },;
+        },
+        DIGEST {
+            @Override
+            public void execute(List<String> params) {
+                Digest digest = digest(Paths.get(params.get(0)));
+                System.out.println("Hash : " + digest.getHash());
+                System.out.println("Length : " + digest.getLength());
+            }
+        };
 
         public abstract void execute(List<String> params);
 

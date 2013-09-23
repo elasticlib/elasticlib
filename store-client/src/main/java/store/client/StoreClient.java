@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.size;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
@@ -28,13 +27,12 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
-import static store.client.SinkOutputStream.sink;
+import static store.client.DigestUtil.digest;
 import store.common.Config;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
 import static store.common.IoUtil.copy;
-import static store.common.IoUtil.copyAndDigest;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.write;
 
@@ -103,17 +101,6 @@ public class StoreClient implements Closeable {
                     .post(entity(multipart, addBoundary(multipart.getMediaType())))
                     .getStatusInfo()
                     .getReasonPhrase();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Digest digest(Path filepath) {
-        try (InputStream inputStream = new LoggingInputStream("Computing content digest",
-                                                              newInputStream(filepath),
-                                                              size(filepath))) {
-            return copyAndDigest(inputStream, sink());
 
         } catch (IOException e) {
             throw new RuntimeException(e);

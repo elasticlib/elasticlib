@@ -3,15 +3,15 @@ package store.common;
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;
 
-public abstract class AbstractBytesHolder {
+public abstract class AbstractKey {
 
     private final byte[] value;
 
-    public AbstractBytesHolder(byte[] value) {
+    public AbstractKey(byte[] value) {
         this.value = value;
     }
 
-    public AbstractBytesHolder(String encoded) {
+    public AbstractKey(String encoded) {
         this(base16()
                 .lowerCase()
                 .decode(encoded.toLowerCase()));
@@ -42,6 +42,6 @@ public abstract class AbstractBytesHolder {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        return Arrays.equals(value, AbstractBytesHolder.class.cast(obj).value);
+        return Arrays.equals(value, AbstractKey.class.cast(obj).value);
     }
 }

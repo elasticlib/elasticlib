@@ -1,6 +1,6 @@
 package store.common;
 
-public final class Hash extends AbstractBytesHolder {
+public final class Hash extends AbstractKey {
 
     public Hash(byte[] value) {
         super(value);

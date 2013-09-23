@@ -1,9 +1,9 @@
 package store.server;
 
 import java.security.SecureRandom;
-import store.common.AbstractBytesHolder;
+import store.common.AbstractKey;
 
-public final class Uid extends AbstractBytesHolder {
+public final class Uid extends AbstractKey {
 
     private static final SecureRandom numberGenerator = new SecureRandom();
 

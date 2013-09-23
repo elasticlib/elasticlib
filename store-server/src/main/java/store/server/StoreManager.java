@@ -102,56 +102,60 @@ public final class StoreManager {
         });
     }
 
-    public void put(ContentInfo contentInfo, InputStream source) {
+    public void put(final ContentInfo contentInfo, final InputStream source) {
+        readLocked(new Command<Void>() {
+            @Override
+            public Void apply(Store store) {
+                store.put(contentInfo, source);
+                return null;
+            }
+        });
+    }
+
+    public void delete(final Hash hash) {
+        readLocked(new Command<Void>() {
+            @Override
+            public Void apply(Store store) {
+                store.delete(hash);
+                return null;
+            }
+        });
+    }
+
+    public ContentInfo info(final Hash hash) {
+        return readLocked(new Command<ContentInfo>() {
+            @Override
+            public ContentInfo apply(Store store) {
+                return store.info(hash);
+            }
+        });
+    }
+
+    public ContentReader get(final Hash hash) {
+        return readLocked(new Command<ContentReader>() {
+            @Override
+            public ContentReader apply(Store store) {
+                return store.get(hash);
+            }
+        });
+    }
+
+    private <T> T readLocked(Command<T> command) {
         lock.readLock().lock();
         try {
             if (!store.isPresent()) {
                 throw new NoStoreException();
             }
-            store.get().put(contentInfo, source);
+            return command.apply(store.get());
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    public void delete(Hash hash) {
-        lock.readLock().lock();
-        try {
-            if (!store.isPresent()) {
-                throw new NoStoreException();
-            }
-            store.get().delete(hash);
+    private interface Command<T> {
 
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    public ContentInfo info(Hash hash) {
-        lock.readLock().lock();
-        try {
-            if (!store.isPresent()) {
-                throw new NoStoreException();
-            }
-            return store.get().info(hash);
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    public ContentReader get(Hash hash) {
-        lock.readLock().lock();
-        try {
-            if (!store.isPresent()) {
-                throw new NoStoreException();
-            }
-            return store.get().get(hash);
-
-        } finally {
-            lock.readLock().unlock();
-        }
+        T apply(Store store);
     }
 
     private Optional<Config> loadConfig() {

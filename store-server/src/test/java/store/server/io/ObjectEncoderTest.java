@@ -22,8 +22,7 @@ public class ObjectEncoderTest {
                 .put("bool", true)
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -36,8 +35,7 @@ public class ObjectEncoderTest {
                 .put("lg", 1432897L)
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -66,8 +64,7 @@ public class ObjectEncoderTest {
                 .put("map", map)
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -81,8 +78,7 @@ public class ObjectEncoderTest {
                 .put("map", Collections.<String, Object>emptyMap())
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -105,8 +101,7 @@ public class ObjectEncoderTest {
                 .put("list", list)
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -120,8 +115,7 @@ public class ObjectEncoderTest {
                 .put("list", emptyList())
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -143,8 +137,7 @@ public class ObjectEncoderTest {
                 .put("bool", false)
                 .build();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     private static byte[] array(int... values) {

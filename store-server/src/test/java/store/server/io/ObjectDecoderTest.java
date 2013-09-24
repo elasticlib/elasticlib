@@ -1,6 +1,5 @@
 package store.server.io;
 
-import store.server.io.ObjectDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +16,7 @@ public class ObjectDecoderTest {
                              0x01); // value
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getBoolean("bool"))
-                .isEqualTo(true);
+        assertThat(decoder.getBoolean("bool")).isEqualTo(true);
     }
 
     @Test
@@ -28,8 +26,7 @@ public class ObjectDecoderTest {
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getLong("lg"))
-                .isEqualTo(1432897L);
+        assertThat(decoder.getLong("lg")).isEqualTo(1432897L);
     }
 
     @Test
@@ -54,8 +51,7 @@ public class ObjectDecoderTest {
         map.put("bool", false);
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getMap("map"))
-                .isEqualTo(map);
+        assertThat(decoder.getMap("map")).isEqualTo(map);
     }
 
     @Test
@@ -65,8 +61,7 @@ public class ObjectDecoderTest {
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getMap("map"))
-                .isEmpty();
+        assertThat(decoder.getMap("map")).isEmpty();
     }
 
     @Test
@@ -85,8 +80,7 @@ public class ObjectDecoderTest {
         list.add("test");
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getList("list"))
-                .isEqualTo(list);
+        assertThat(decoder.getList("list")).isEqualTo(list);
     }
 
     @Test
@@ -96,8 +90,7 @@ public class ObjectDecoderTest {
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getList("list"))
-                .isEmpty();
+        assertThat(decoder.getList("list")).isEmpty();
     }
 
     @Test
@@ -113,15 +106,9 @@ public class ObjectDecoderTest {
                              0x00); // entry
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-
-        assertThat(decoder.getInt("num"))
-                .isEqualTo(4);
-
-        assertThat(decoder.getString("str"))
-                .isEqualTo("test");
-
-        assertThat(decoder.getBoolean("bool"))
-                .isEqualTo(false);
+        assertThat(decoder.getInt("num")).isEqualTo(4);
+        assertThat(decoder.getString("str")).isEqualTo("test");
+        assertThat(decoder.getBoolean("bool")).isEqualTo(false);
     }
 
     private static byte[] array(int... values) {

@@ -122,6 +122,15 @@ public final class StoreManager {
         });
     }
 
+    public boolean contains(final Hash hash) {
+        return readLocked(new Command<Boolean>() {
+            @Override
+            public Boolean apply(Store store) {
+                return store.contains(hash);
+            }
+        });
+    }
+
     public ContentInfo info(final Hash hash) {
         return readLocked(new Command<ContentInfo>() {
             @Override

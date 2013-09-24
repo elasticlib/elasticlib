@@ -89,6 +89,16 @@ public class StoreClient implements Closeable {
                 .withLength(digest.getLength())
                 .build();
 
+        Response response = target.path("contains/{hash}")
+                .resolveTemplate("hash", digest.getHash())
+                .request()
+                .get();
+
+        ensureOk(response);
+        if (response.readEntity(Boolean.class)) {
+            throw new RequestFailedException("This content is already stored");
+        }
+
         try (InputStream inputStream = new LoggingInputStream("Uploading content",
                                                               newInputStream(filepath),
                                                               digest.getLength())) {

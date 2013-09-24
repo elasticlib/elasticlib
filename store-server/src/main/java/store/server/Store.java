@@ -114,6 +114,20 @@ public class Store {
         operationManager.endDelete(uid, hash);
     }
 
+    public boolean contains(Hash hash) {
+        if (lockManager.readLock(hash)) {
+            try {
+                Optional<ContentInfo> info = volumes.get(0).info(hash);
+                if (info.isPresent()) {
+                    return true;
+                }
+            } finally {
+                close(hash);
+            }
+        }
+        return false;
+    }
+
     public ContentInfo info(Hash hash) {
         if (lockManager.readLock(hash)) {
             try {

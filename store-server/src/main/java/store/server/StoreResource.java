@@ -63,6 +63,22 @@ public class StoreResource {
     }
 
     @GET
+    @Path("contains/{hash}")
+    public Response contains(@PathParam("hash") String encodedHash) {
+        return Response.ok()
+                .entity(storeManager.contains(new Hash(encodedHash)))
+                .build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("info/{hash}")
+    public JsonObject info(@PathParam("hash") String encodedHash) {
+        ContentInfo info = storeManager.info(new Hash(encodedHash));
+        return write(info);
+    }
+
+    @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("get/{hash}")
     public Response get(@PathParam("hash") String encodedHash) {
@@ -75,13 +91,5 @@ public class StoreResource {
                 }
             }
         }).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("info/{hash}")
-    public JsonObject info(@PathParam("hash") String encodedHash) {
-        ContentInfo info = storeManager.info(new Hash(encodedHash));
-        return write(info);
     }
 }

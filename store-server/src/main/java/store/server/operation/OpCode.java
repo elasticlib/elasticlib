@@ -2,10 +2,8 @@ package store.server.operation;
 
 enum OpCode {
 
-    BEGIN_PUT(0x01),
-    END_PUT(0x02),
-    BEGIN_DELETE(0x03),
-    END_DELETE(0x04);
+    PUT(0x01),
+    DELETE(0x02);
     private final byte value;
 
     private OpCode(int value) {

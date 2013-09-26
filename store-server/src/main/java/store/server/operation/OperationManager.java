@@ -41,20 +41,12 @@ public class OperationManager {
         return new OperationManager(path);
     }
 
-    public void beginPut(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.BEGIN_PUT);
+    public void put(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.PUT);
     }
 
-    public void endPut(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.END_PUT);
-    }
-
-    public void beginDelete(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.BEGIN_DELETE);
-    }
-
-    public void endDelete(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.END_DELETE);
+    public void delete(Uid uid, Hash hash) {
+        add(uid, hash, OpCode.DELETE);
     }
 
     private void add(Uid uid, Hash hash, OpCode opCode) {

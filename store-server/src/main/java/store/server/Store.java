@@ -74,11 +74,13 @@ public class Store {
         try {
             Iterator<Volume> it = volumes.iterator();
             Volume first = it.next();
-            put(first, contentInfo, source);
+            operationManager.put(first.getUid(), hash);
+            first.put(contentInfo, source);
             while (it.hasNext()) {
                 Volume next = it.next();
                 try (ContentReader reader = first.get(contentInfo.getHash()).get().reader(this)) {
-                    put(next, contentInfo, reader.inputStream());
+                    operationManager.put(next.getUid(), hash);
+                    next.put(contentInfo, reader.inputStream());
                 }
             }
         } finally {
@@ -92,26 +94,13 @@ public class Store {
         }
         try {
             for (Volume volume : volumes) {
-                delete(volume, hash);
+                Uid uid = volume.getUid();
+                operationManager.delete(uid, hash);
+                volume.delete(hash);
             }
         } finally {
             lockManager.writeUnlock(hash);
         }
-    }
-
-    private void put(Volume volume, ContentInfo contentInfo, InputStream source) {
-        Uid uid = volume.getUid();
-        Hash hash = contentInfo.getHash();
-        operationManager.beginPut(uid, hash);
-        volume.put(contentInfo, source);
-        operationManager.endPut(uid, hash);
-    }
-
-    private void delete(Volume volume, Hash hash) {
-        Uid uid = volume.getUid();
-        operationManager.beginDelete(uid, hash);
-        volume.delete(hash);
-        operationManager.endDelete(uid, hash);
     }
 
     public boolean contains(Hash hash) {

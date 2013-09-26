@@ -102,12 +102,8 @@ public class Volume {
         return infoManager.get(hash);
     }
 
-    public Optional<Content> get(Hash hash) {
-        Optional<ContentInfo> info = infoManager.get(hash);
-        if (info.isPresent()) {
-            return Optional.of(new Content(info.get(), contentManager.get(hash)));
-        }
-        return Optional.absent();
+    public InputStream get(Hash hash) {
+        return contentManager.get(hash);
     }
 
     public void delete(Hash hash) {

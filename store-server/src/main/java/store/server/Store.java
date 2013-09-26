@@ -75,9 +75,12 @@ public class Store {
             first.put(contentInfo, source);
             while (it.hasNext()) {
                 Volume next = it.next();
-                try (ContentReader reader = first.get(contentInfo.getHash()).get().reader(this)) {
+                try (InputStream inputstream = first.get(hash)) {
                     operationManager.put(next.getUid(), hash);
-                    next.put(contentInfo, reader.inputStream());
+                    next.put(contentInfo, inputstream);
+
+                } catch (IOException e) {
+                    throw new StoreRuntimeException(e);
                 }
             }
         } finally {
@@ -108,7 +111,7 @@ public class Store {
                     return true;
                 }
             } finally {
-                close(hash);
+                lockManager.readUnlock(hash);
             }
         }
         return false;
@@ -122,7 +125,7 @@ public class Store {
                     return info.get();
                 }
             } finally {
-                close(hash);
+                lockManager.readUnlock(hash);
             }
         }
         throw new UnknownHashException();
@@ -130,9 +133,15 @@ public class Store {
 
     public ContentReader get(Hash hash) {
         if (lockManager.readLock(hash)) {
-            Optional<Content> content = volumes.get(0).get(hash);
-            if (content.isPresent()) {
-                return content.get().reader(this);
+            try {
+                Optional<ContentInfo> info = volumes.get(0).info(hash);
+                if (info.isPresent()) {
+                    InputStream inputStream = volumes.get(0).get(hash);
+                    lockManager.readLock(hash);
+                    return new ContentReader(this, info.get(), inputStream);
+                }
+            } finally {
+                lockManager.readUnlock(hash);
             }
         }
         throw new UnknownHashException();

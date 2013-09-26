@@ -1,7 +1,7 @@
 package store.server.lock;
 
 import store.common.Hash;
-import store.server.table.Table;
+import store.server.Table;
 
 public class LockManager {
 

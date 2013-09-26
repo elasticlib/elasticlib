@@ -7,7 +7,7 @@ import store.common.Hash;
 import store.server.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.server.table.Table;
+import store.server.Table;
 
 public class OperationManager {
 

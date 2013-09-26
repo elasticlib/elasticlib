@@ -18,30 +18,18 @@ public class LockManager {
     }
 
     public boolean writeLock(Hash hash) {
-        Segment segment = segments.get(hash);
-        synchronized (segment) {
-            return segment.writeLock(hash);
-        }
+        return segments.get(hash).writeLock(hash);
     }
 
     public void writeUnlock(Hash hash) {
-        Segment segment = segments.get(hash);
-        synchronized (segment) {
-            segment.writeUnlock(hash);
-        }
+        segments.get(hash).writeUnlock(hash);
     }
 
     public boolean readLock(Hash hash) {
-        Segment segment = segments.get(hash);
-        synchronized (segment) {
-            return segment.readLock(hash);
-        }
+        return segments.get(hash).readLock(hash);
     }
 
     public void readUnlock(Hash hash) {
-        Segment segment = segments.get(hash);
-        synchronized (segment) {
-            segment.readUnlock(hash);
-        }
+        segments.get(hash).readUnlock(hash);
     }
 }

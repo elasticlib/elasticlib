@@ -11,18 +11,18 @@ final class Segment {
     private final Map<Hash, Counter> read = new HashMap<>();
     private final Set<Hash> write = new HashSet<>();
 
-    public boolean writeLock(Hash hash) {
+    public synchronized boolean writeLock(Hash hash) {
         if (write.contains(hash) || read.containsKey(hash)) {
             return false;
         }
         return write.add(hash);
     }
 
-    public void writeUnlock(Hash hash) {
+    public synchronized void writeUnlock(Hash hash) {
         write.remove(hash);
     }
 
-    public boolean readLock(Hash hash) {
+    public synchronized boolean readLock(Hash hash) {
         if (write.contains(hash)) {
             return false;
         }
@@ -33,7 +33,7 @@ final class Segment {
         return true;
     }
 
-    public void readUnlock(Hash hash) {
+    public synchronized void readUnlock(Hash hash) {
         Counter counter = read.get(hash);
         if (counter != null) {
             counter.decrement();

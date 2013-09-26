@@ -3,7 +3,6 @@ package store.server.operation;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
 import store.common.Hash;
 import store.server.Uid;
 import store.server.exception.InvalidStorePathException;
@@ -42,17 +41,10 @@ public class OperationManager {
     }
 
     public void put(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.PUT);
+        segments.get(hash).add(uid, hash, OpCode.PUT);
     }
 
     public void delete(Uid uid, Hash hash) {
-        add(uid, hash, OpCode.DELETE);
-    }
-
-    private void add(Uid uid, Hash hash, OpCode opCode) {
-        Segment segment = segments.get(hash);
-        synchronized (segment) {
-            segment.add(new Step(uid, hash, new Date().getTime(), opCode));
-        }
+        segments.get(hash).add(uid, hash, OpCode.DELETE);
     }
 }

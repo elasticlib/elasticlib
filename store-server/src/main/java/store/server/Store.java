@@ -60,9 +60,6 @@ public class Store {
         for (Path path : config.getVolumePaths()) {
             volumes.add(Volume.open(path));
         }
-
-        // TODO faire une reprise des operations !
-
         return new Store(OperationManager.open(root.resolve("operations")), volumes);
     }
 

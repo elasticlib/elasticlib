@@ -103,7 +103,7 @@ public final class StoreManager {
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {
-        readLocked(new Command<Void>() {
+        readLocked(new Request<Void>() {
             @Override
             public Void apply(Store store) {
                 store.put(contentInfo, source);
@@ -113,7 +113,7 @@ public final class StoreManager {
     }
 
     public void delete(final Hash hash) {
-        readLocked(new Command<Void>() {
+        readLocked(new Request<Void>() {
             @Override
             public Void apply(Store store) {
                 store.delete(hash);
@@ -123,7 +123,7 @@ public final class StoreManager {
     }
 
     public boolean contains(final Hash hash) {
-        return readLocked(new Command<Boolean>() {
+        return readLocked(new Request<Boolean>() {
             @Override
             public Boolean apply(Store store) {
                 return store.contains(hash);
@@ -132,7 +132,7 @@ public final class StoreManager {
     }
 
     public ContentInfo info(final Hash hash) {
-        return readLocked(new Command<ContentInfo>() {
+        return readLocked(new Request<ContentInfo>() {
             @Override
             public ContentInfo apply(Store store) {
                 return store.info(hash);
@@ -141,7 +141,7 @@ public final class StoreManager {
     }
 
     public void get(final Hash hash, final OutputStream outputStream) {
-        readLocked(new Command<Void>() {
+        readLocked(new Request<Void>() {
             @Override
             public Void apply(Store store) {
                 store.get(hash, outputStream);
@@ -150,20 +150,20 @@ public final class StoreManager {
         });
     }
 
-    private <T> T readLocked(Command<T> command) {
+    private <T> T readLocked(Request<T> request) {
         lock.readLock().lock();
         try {
             if (!store.isPresent()) {
                 throw new NoStoreException();
             }
-            return command.apply(store.get());
+            return request.apply(store.get());
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private interface Command<T> {
+    private interface Request<T> {
 
         T apply(Store store);
     }

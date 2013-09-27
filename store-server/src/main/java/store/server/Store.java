@@ -3,6 +3,7 @@ package store.server;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,9 +14,11 @@ import java.util.List;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Hash;
+import static store.common.IoUtil.copy;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
+import store.server.exception.WriteException;
 import store.server.lock.LockManager;
 import store.server.operation.OperationManager;
 
@@ -104,50 +107,49 @@ public class Store {
     }
 
     public boolean contains(Hash hash) {
-        if (lockManager.readLock(hash)) {
-            try {
-                Optional<ContentInfo> info = volumes.get(0).info(hash);
-                if (info.isPresent()) {
-                    return true;
-                }
-            } finally {
-                lockManager.readUnlock(hash);
-            }
+        if (!lockManager.readLock(hash)) {
+            throw new ConcurrentModificationException();
         }
-        return false;
+        try {
+            return volumes.get(0).contains(hash);
+
+        } finally {
+            lockManager.readUnlock(hash);
+        }
     }
 
     public ContentInfo info(Hash hash) {
-        if (lockManager.readLock(hash)) {
-            try {
-                Optional<ContentInfo> info = volumes.get(0).info(hash);
-                if (info.isPresent()) {
-                    return info.get();
-                }
-            } finally {
-                lockManager.readUnlock(hash);
-            }
+        if (!lockManager.readLock(hash)) {
+            throw new ConcurrentModificationException();
         }
-        throw new UnknownHashException();
+        try {
+            Optional<ContentInfo> info = volumes.get(0).info(hash);
+            if (!info.isPresent()) {
+                throw new UnknownHashException();
+            }
+            return info.get();
+
+        } finally {
+            lockManager.readUnlock(hash);
+        }
     }
 
-    public ContentReader get(Hash hash) {
-        if (lockManager.readLock(hash)) {
-            try {
-                Optional<ContentInfo> info = volumes.get(0).info(hash);
-                if (info.isPresent()) {
-                    InputStream inputStream = volumes.get(0).get(hash);
-                    lockManager.readLock(hash);
-                    return new ContentReader(this, info.get(), inputStream);
-                }
-            } finally {
-                lockManager.readUnlock(hash);
-            }
+    public void get(Hash hash, OutputStream outputStream) {
+        if (!lockManager.readLock(hash)) {
+            throw new ConcurrentModificationException();
         }
-        throw new UnknownHashException();
-    }
+        try {
+            if (!volumes.get(0).contains(hash)) {
+                throw new UnknownHashException();
+            }
+            try (InputStream inputStream = volumes.get(0).get(hash)) {
+                copy(inputStream, outputStream);
 
-    void close(Hash hash) {
-        lockManager.readUnlock(hash);
+            } catch (IOException e) {
+                throw new WriteException(e);
+            }
+        } finally {
+            lockManager.readUnlock(hash);
+        }
     }
 }

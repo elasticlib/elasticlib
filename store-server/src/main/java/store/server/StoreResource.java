@@ -17,7 +17,6 @@ import javax.ws.rs.core.StreamingOutput;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.ContentInfo;
 import store.common.Hash;
-import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.write;
@@ -86,9 +85,7 @@ public class StoreResource {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {
-                try (ContentReader reader = storeManager.get(hash)) {
-                    copy(reader.inputStream(), outputStream);
-                }
+                storeManager.get(hash, outputStream);
             }
         }).build();
     }

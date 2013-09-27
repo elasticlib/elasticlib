@@ -140,11 +140,12 @@ public final class StoreManager {
         });
     }
 
-    public ContentReader get(final Hash hash) {
-        return readLocked(new Command<ContentReader>() {
+    public void get(final Hash hash, final OutputStream outputStream) {
+        readLocked(new Command<Void>() {
             @Override
-            public ContentReader apply(Store store) {
-                return store.get(hash);
+            public Void apply(Store store) {
+                store.get(hash, outputStream);
+                return null;
             }
         });
     }

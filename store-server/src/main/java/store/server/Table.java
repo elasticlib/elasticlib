@@ -1,5 +1,7 @@
 package store.server;
 
+import java.util.HashSet;
+import java.util.Set;
 import store.common.Hash;
 
 public abstract class Table<T> {
@@ -10,7 +12,7 @@ public abstract class Table<T> {
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public Table(int keyLength) {
         this.keyLength = keyLength;
-        buckets = new Object[1 << (4 * keyLength)];
+        buckets = new Object[size(keyLength)];
         for (int i = 0; i < buckets.length; i++) {
             buckets[i] = initialValue(keyOf(i, keyLength));
         }
@@ -32,5 +34,18 @@ public abstract class Table<T> {
             builder.append('0');
         }
         return builder.append(hex).toString();
+    }
+
+    private static int size(int keyLength) {
+        return 1 << (4 * keyLength);
+    }
+
+    public static Set<String> keySet(int keyLength) {
+        int size = size(keyLength);
+        Set<String> keySet = new HashSet<>(size);
+        for (int i = 0; i < size; i++) {
+            keySet.add(keyOf(i, keyLength));
+        }
+        return keySet;
     }
 }

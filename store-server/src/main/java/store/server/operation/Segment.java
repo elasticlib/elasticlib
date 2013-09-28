@@ -1,15 +1,12 @@
 package store.server.operation;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Date;
 import store.common.Hash;
 import store.server.Uid;
-import store.server.exception.StoreRuntimeException;
 import static store.server.io.ObjectEncoder.encoder;
+import store.server.transaction.Output;
+import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 final class Segment {
 
@@ -28,13 +25,8 @@ final class Segment {
                 .put("OpCode", step.getOpCode().value())
                 .build();
 
-        try (OutputStream outputStream = Files.newOutputStream(path,
-                                                               StandardOpenOption.CREATE,
-                                                               StandardOpenOption.APPEND)) {
-            outputStream.write(bytes);
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+        try (Output output = currentTransactionContext().openAppendingOutput(path)) {
+            output.write(bytes);
         }
     }
 }

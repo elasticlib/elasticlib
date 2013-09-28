@@ -1,23 +1,22 @@
 package store.server.io;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
 import static java.nio.ByteBuffer.wrap;
 import java.util.NoSuchElementException;
+import store.server.transaction.Input;
 
 public class StreamDecoder implements Closeable {
 
     private static final int EOF = -1;
-    private final InputStream inputStream;
+    private final Input input;
     private ObjectDecoder next;
     private boolean loaded;
 
-    public StreamDecoder(InputStream inputStream) {
-        this.inputStream = inputStream;
+    public StreamDecoder(Input input) {
+        this.input = input;
     }
 
-    public boolean hasNext() throws IOException {
+    public boolean hasNext() {
         if (!loaded) {
             next = loadNext();
             loaded = true;
@@ -25,7 +24,7 @@ public class StreamDecoder implements Closeable {
         return next != null;
     }
 
-    public ObjectDecoder next() throws IOException {
+    public ObjectDecoder next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -34,11 +33,11 @@ public class StreamDecoder implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
-        inputStream.close();
+    public void close() {
+        input.close();
     }
 
-    private ObjectDecoder loadNext() throws IOException {
+    private ObjectDecoder loadNext() {
         int length = readInt();
         if (length == 0) {
             return null;
@@ -46,22 +45,22 @@ public class StreamDecoder implements Closeable {
         return new ObjectDecoder(readBytes(length));
     }
 
-    private int readInt() throws IOException {
+    private int readInt() {
         byte[] bytes = new byte[4];
-        if (inputStream.read(bytes) == EOF) {
+        if (input.read(bytes) == EOF) {
             return 0;
         }
         if (bytes.length != 4) {
-            throw new IOException("Unexpected end of stream");
+            throw new RuntimeException("Unexpected end of stream");
         }
         return wrap(bytes)
                 .getInt();
     }
 
-    private byte[] readBytes(int length) throws IOException {
+    private byte[] readBytes(int length) {
         byte[] bytes = new byte[length];
-        if (inputStream.read(bytes) != length) {
-            throw new IOException("Unexpected end of stream");
+        if (input.read(bytes) != length) {
+            throw new RuntimeException("Unexpected end of stream");
         }
         return bytes;
     }

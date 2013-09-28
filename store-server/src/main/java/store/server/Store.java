@@ -1,6 +1,5 @@
 package store.server;
 
-import store.server.volume.Volume;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,8 +8,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Hash;
@@ -19,20 +20,21 @@ import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
-import store.server.operation.OperationManager;
+import store.server.history.HistoryManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
+import store.server.volume.Volume;
 
 public class Store {
 
     private final TransactionManager transactionManager;
-    private final OperationManager operationManager;
+    private final HistoryManager historyManager;
     private final List<Volume> volumes;
 
-    private Store(TransactionManager transactionManager, OperationManager operationManager, List<Volume> volumes) {
+    private Store(TransactionManager transactionManager, HistoryManager historyManager, List<Volume> volumes) {
         this.transactionManager = transactionManager;
-        this.operationManager = operationManager;
+        this.historyManager = historyManager;
         this.volumes = volumes;
     }
 
@@ -48,7 +50,7 @@ public class Store {
                 volumes.add(Volume.create(path));
             }
             return new Store(TransactionManager.create(root.resolve("transactions")),
-                             OperationManager.create(root.resolve("operations")),
+                             HistoryManager.create(root.resolve("history")),
                              volumes);
 
         } catch (IOException e) {
@@ -69,8 +71,16 @@ public class Store {
             volumes.add(Volume.open(path));
         }
         return new Store(TransactionManager.open(root.resolve("transactions")),
-                         OperationManager.open(root.resolve("operations")),
+                         HistoryManager.open(root.resolve("history")),
                          volumes);
+    }
+
+    private Set<Uid> volumeUids() {
+        Set<Uid> uids = new HashSet<>();
+        for (Volume volume : volumes) {
+            uids.add(volume.getUid());
+        }
+        return uids;
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {
@@ -80,18 +90,17 @@ public class Store {
             public void apply() {
                 Iterator<Volume> it = volumes.iterator();
                 Volume first = it.next();
-                operationManager.put(first.getUid(), hash);
                 first.put(contentInfo, source);
                 while (it.hasNext()) {
                     Volume next = it.next();
                     try (InputStream inputstream = first.get(hash)) {
-                        operationManager.put(next.getUid(), hash);
                         next.put(contentInfo, inputstream);
 
                     } catch (IOException e) {
                         throw new WriteException(e);
                     }
                 }
+                historyManager.put(hash, volumeUids());
             }
         });
     }
@@ -101,10 +110,9 @@ public class Store {
             @Override
             public void apply() {
                 for (Volume volume : volumes) {
-                    Uid uid = volume.getUid();
-                    operationManager.delete(uid, hash);
                     volume.delete(hash);
                 }
+                historyManager.delete(hash, volumeUids());
             }
         });
     }

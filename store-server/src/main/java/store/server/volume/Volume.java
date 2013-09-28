@@ -1,4 +1,4 @@
-package store.server;
+package store.server.volume;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
@@ -16,9 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import store.common.ContentInfo;
 import store.common.Hash;
+import store.server.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.server.info.InfoManager;
 
 public class Volume {
 
@@ -89,13 +89,18 @@ public class Volume {
         return uid;
     }
 
-    public boolean contains(Hash hash) {
-        return infoManager.contains(hash);
+    public void put(ContentInfo contentInfo, InputStream source) {
+        contentManager.put(contentInfo, source);
+        infoManager.put(contentInfo);
     }
 
-    public void put(ContentInfo contentInfo, InputStream source) {
-        infoManager.put(contentInfo);
-        contentManager.put(contentInfo, source);
+    public void delete(Hash hash) {
+        infoManager.delete(hash);
+        contentManager.delete(hash);
+    }
+
+    public boolean contains(Hash hash) {
+        return infoManager.contains(hash);
     }
 
     public Optional<ContentInfo> info(Hash hash) {
@@ -104,10 +109,5 @@ public class Volume {
 
     public InputStream get(Hash hash) {
         return contentManager.get(hash);
-    }
-
-    public void delete(Hash hash) {
-        infoManager.delete(hash);
-        contentManager.delete(hash);
     }
 }

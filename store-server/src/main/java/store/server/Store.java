@@ -1,5 +1,6 @@
 package store.server;
 
+import store.server.volume.Volume;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;

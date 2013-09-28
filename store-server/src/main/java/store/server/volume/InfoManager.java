@@ -1,9 +1,9 @@
-package store.server.info;
+package store.server.volume;
 
 import com.google.common.base.Optional;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import static java.util.Collections.emptyList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +11,8 @@ import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Hash;
 import store.server.exception.ContentAlreadyStoredException;
+import store.server.exception.InvalidStorePathException;
+import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
 import store.server.io.ObjectDecoder;
 import static store.server.io.ObjectEncoder.encoder;
@@ -18,38 +20,45 @@ import store.server.io.StreamDecoder;
 import store.server.transaction.Output;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-final class Segment {
+class InfoManager {
 
-    private final Path path;
+    private static final int KEY_LENGTH = 2;
+    private final Path root;
 
-    public Segment(Path path) {
-        this.path = path;
+    private InfoManager(final Path root) {
+        this.root = root;
+    }
+
+    public static InfoManager create(Path path) {
+        try {
+            Files.createDirectory(path);
+            return new InfoManager(path);
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
+    }
+
+    public static InfoManager open(Path path) {
+        if (!Files.isDirectory(path)) {
+            throw new InvalidStorePathException();
+        }
+        return new InfoManager(path);
     }
 
     public void put(ContentInfo contentInfo) {
-        if (contains(contentInfo.getHash())) {
+        Hash hash = contentInfo.getHash();
+        if (contains(hash)) {
             throw new ContentAlreadyStoredException();
         }
-        try (Output output = currentTransactionContext().openAppendingOutput(path)) {
+        try (Output output = currentTransactionContext().openAppendingOutput(path(hash))) {
             output.write(bytes(contentInfo));
         }
     }
 
-    public Optional<ContentInfo> get(Hash hash) {
-        for (ContentInfo info : load()) {
-            if (info.getHash().equals(hash)) {
-                return Optional.of(info);
-            }
-        }
-        return Optional.absent();
-    }
-
-    public boolean contains(Hash hash) {
-        return get(hash).isPresent();
-    }
-
     public void delete(Hash hash) {
-        List<ContentInfo> list = load();
+        Path path = path(hash);
+        List<ContentInfo> list = load(path);
         remove(list, hash);
         if (list.isEmpty()) {
             currentTransactionContext().delete(path);
@@ -74,10 +83,25 @@ final class Segment {
         throw new UnknownHashException();
     }
 
-    private List<ContentInfo> load() {
-        if (!Files.exists(path)) {
-            return emptyList();
+    public boolean contains(Hash hash) {
+        return get(hash).isPresent();
+    }
+
+    public Optional<ContentInfo> get(Hash hash) {
+        for (ContentInfo info : load(path(hash))) {
+            if (info.getHash().equals(hash)) {
+                return Optional.of(info);
+            }
         }
+        return Optional.absent();
+    }
+
+    private Path path(Hash hash) {
+        String key = hash.encode().substring(0, KEY_LENGTH);
+        return root.resolve(key);
+    }
+
+    private static List<ContentInfo> load(Path path) {
         List<ContentInfo> list = new LinkedList<>();
         try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
             while (streamDecoder.hasNext()) {

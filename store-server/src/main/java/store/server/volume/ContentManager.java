@@ -1,4 +1,4 @@
-package store.server;
+package store.server.volume;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +8,7 @@ import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
+import store.server.Table;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
@@ -15,7 +16,7 @@ import store.server.exception.WriteException;
 import store.server.transaction.Output;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-public class ContentManager {
+class ContentManager {
 
     private static final int HEAVY_WRITE_THRESHOLD = 1024;
     private static final int KEY_LENGTH = 2;
@@ -78,10 +79,7 @@ public class ContentManager {
     }
 
     private Path path(Hash hash) {
-        return root.resolve(key(hash)).resolve(hash.encode());
-    }
-
-    private static String key(Hash hash) {
-        return hash.encode().substring(0, KEY_LENGTH);
+        String encoded = hash.encode();
+        return root.resolve(encoded.substring(0, KEY_LENGTH)).resolve(encoded);
     }
 }

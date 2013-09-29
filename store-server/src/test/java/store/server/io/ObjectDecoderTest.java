@@ -21,7 +21,7 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeLongTest() {
-        byte[] bytes = array(0x04, // type
+        byte[] bytes = array(0x05, // type
                              0x6C, 0x67, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
@@ -31,14 +31,14 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeMapTest() {
-        byte[] bytes = array(0x07, // type
+        byte[] bytes = array(0x08, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              // value
                              0x00, 0x00, 0x00, 0x1D, // length
-                             0x03, // type
+                             0x04, // type
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, // entry
-                             0x05, // type
+                             0x06, // type
                              0x73, 0x74, 0x72, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, // entry
                              0x02, // type
@@ -56,7 +56,7 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeEmptyMapTest() {
-        byte[] bytes = array(0x07, // type
+        byte[] bytes = array(0x08, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
@@ -66,13 +66,13 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeListTest() {
-        byte[] bytes = array(0x08, // type
+        byte[] bytes = array(0x09, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              // value
                              0x00, 0x00, 0x00, 0x0E, // length
-                             0x03, // type
+                             0x04, // type
                              0x00, 0x00, 0x00, 0x0A, // entry
-                             0x05, // type
+                             0x06, // type
                              0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74); // entry
 
         List<Object> list = new ArrayList<>();
@@ -85,7 +85,7 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeEmptyListTest() {
-        byte[] bytes = array(0x08, // type
+        byte[] bytes = array(0x09, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
@@ -95,10 +95,10 @@ public class ObjectDecoderTest {
 
     @Test
     public void decodeTest() {
-        byte[] bytes = array(0x03, // type
+        byte[] bytes = array(0x04, // type
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, // entry
-                             0x05, // type
+                             0x06, // type
                              0x73, 0x74, 0x72, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, // entry
                              0x02, // type

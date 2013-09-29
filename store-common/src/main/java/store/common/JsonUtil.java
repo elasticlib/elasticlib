@@ -3,12 +3,16 @@ package store.common;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -71,5 +75,46 @@ public final class JsonUtil {
             volumes.add(Paths.get(value.getString()));
         }
         return new Config(root, volumes);
+    }
+
+    public static JsonArray write(List<Event> events) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        for (Event event : events) {
+            builder.add(write(event));
+        }
+        return builder.build();
+    }
+
+    private static JsonObjectBuilder write(Event event) {
+        JsonArrayBuilder uids = createArrayBuilder();
+        for (Uid uid : event.getUids()) {
+            uids.add(uid.encode());
+        }
+        return createObjectBuilder()
+                .add("hash", event.getHash().encode())
+                .add("timestamp", event.getTimestamp().getTime())
+                .add("operation", event.getOperation().name())
+                .add("uids", uids);
+    }
+
+    public static List<Event> readEvents(JsonArray json) {
+        List<Event> list = new ArrayList<>();
+        for (JsonObject object : json.getValuesAs(JsonObject.class)) {
+            list.add(readEvent(object));
+        }
+        return list;
+    }
+
+    private static Event readEvent(JsonObject json) {
+        Set<Uid> uids = new HashSet<>();
+        for (JsonString value : json.getJsonArray("uids").getValuesAs(JsonString.class)) {
+            uids.add(new Uid(value.getString()));
+        }
+        return Event.event()
+                .withHash(new Hash(json.getString("hash")))
+                .withTimestamp(new Date(json.getJsonNumber("timestamp").longValue()))
+                .withOperation(Operation.valueOf(json.getString("operation")))
+                .withUids(uids)
+                .build();
     }
 }

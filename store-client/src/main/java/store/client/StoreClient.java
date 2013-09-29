@@ -8,8 +8,10 @@ import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -33,8 +35,10 @@ import store.common.Config;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
+import store.common.Event;
 import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.write;
 
 public class StoreClient implements Closeable {
@@ -150,6 +154,15 @@ public class StoreClient implements Closeable {
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
+    }
+
+    public List<Event> log() {
+        Response response = target.path("log")
+                .request()
+                .get();
+
+        ensureOk(response);
+        return readEvents(response.readEntity(JsonArray.class));
     }
 
     @Override

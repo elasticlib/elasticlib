@@ -12,6 +12,7 @@ import static store.client.DigestUtil.digest;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Digest;
+import store.common.Event;
 
 public final class App {
 
@@ -94,6 +95,20 @@ public final class App {
                     System.out.println("Length : " + info.getLength());
                     for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
                         System.out.println(entry.getKey() + " : " + entry.getValue());
+                    }
+                }
+            }
+        },
+        LOG {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    for (Event event : client.log()) {
+                        System.out.println("Hash : " + event.getHash());
+                        System.out.println("Timestamp : " + event.getTimestamp());
+                        System.out.println("Operation : " + event.getOperation());
+                        System.out.println("Uids : " + event.getUids());
+                        System.out.println();
                     }
                 }
             }

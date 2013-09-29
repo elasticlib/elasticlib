@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import store.common.ContentInfo;
 import store.common.Hash;
-import store.server.Uid;
+import store.common.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 

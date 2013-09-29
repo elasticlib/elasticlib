@@ -27,6 +27,10 @@ public class ObjectDecoder {
         return (boolean) map.get(key);
     }
 
+    public byte getByte(String key) {
+        return (byte) map.get(key);
+    }
+
     public int getInt(String key) {
         return (int) map.get(key);
     }
@@ -101,6 +105,8 @@ public class ObjectDecoder {
 
                 case BOOLEAN:
                     return decodeBoolean();
+                case BYTE:
+                    return decodeByte();
 
                 case INTEGER:
                     return decodeInt();
@@ -141,6 +147,10 @@ public class ObjectDecoder {
                 default:
                     throw new IllegalArgumentException();
             }
+        }
+
+        private byte decodeByte() {
+            return read();
         }
 
         private int decodeInt() {

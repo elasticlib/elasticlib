@@ -1,4 +1,4 @@
-package store.server;
+package store.common;
 
 import java.security.SecureRandom;
 import store.common.AbstractKey;

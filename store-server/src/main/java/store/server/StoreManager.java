@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
@@ -21,6 +22,7 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import store.common.Config;
 import store.common.ContentInfo;
+import store.common.Event;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.write;
@@ -146,6 +148,15 @@ public final class StoreManager {
             public Void apply(Store store) {
                 store.get(hash, outputStream);
                 return null;
+            }
+        });
+    }
+
+    public List<Event> log() {
+        return readLocked(new Request<List<Event>>() {
+            @Override
+            public List<Event> apply(Store store) {
+                return store.log();
             }
         });
     }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import javax.inject.Singleton;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -88,5 +89,12 @@ public class StoreResource {
                 storeManager.get(hash, outputStream);
             }
         }).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("log")
+    public JsonArray log() {
+        return write(storeManager.log());
     }
 }

@@ -97,6 +97,15 @@ public class TransactionManager {
             throw new ConcurrentModificationException();
         }
         try {
+            return inTransaction(query);
+
+        } finally {
+            lockManager.readUnlock(hash);
+        }
+    }
+
+    public <T> T inTransaction(Query<T> query) {
+        try {
             Session session = filesystem.createSessionForLocalTransaction();
             txContexts.set(new ReadOnlyTransactionContext(session));
             try {
@@ -113,7 +122,6 @@ public class TransactionManager {
 
         } finally {
             txContexts.remove();
-            lockManager.readUnlock(hash);
         }
     }
 }

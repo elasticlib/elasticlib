@@ -14,13 +14,14 @@ import java.util.List;
 import java.util.Set;
 import store.common.Config;
 import store.common.ContentInfo;
+import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
-import store.server.history.HistoryManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
@@ -153,6 +154,15 @@ public class Store {
                     throw new WriteException(e);
                 }
                 return null;
+            }
+        });
+    }
+
+    public List<Event> log() {
+        return transactionManager.inTransaction(new Query< List<Event>>() {
+            @Override
+            public List<Event> apply() {
+                return historyManager.log();
             }
         });
     }

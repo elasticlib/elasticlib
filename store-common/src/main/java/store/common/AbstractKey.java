@@ -3,7 +3,7 @@ package store.common;
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;
 
-public abstract class AbstractKey {
+abstract class AbstractKey {
 
     private final byte[] value;
 

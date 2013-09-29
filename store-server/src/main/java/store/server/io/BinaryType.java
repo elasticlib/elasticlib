@@ -4,12 +4,13 @@ enum BinaryType {
 
     RAW(0x01),
     BOOLEAN(0x02),
-    INTEGER(0x03),
-    LONG(0x04),
-    STRING(0x05),
-    DATE(0x06),
-    MAP(0x07),
-    LIST(0x08);
+    BYTE(0x03),
+    INTEGER(0x04),
+    LONG(0x05),
+    STRING(0x06),
+    DATE(0x07),
+    MAP(0x08),
+    LIST(0x09);
     public final byte value;
 
     private BinaryType(int value) {

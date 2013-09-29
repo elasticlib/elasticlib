@@ -34,6 +34,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    public ObjectEncoder put(String key, byte value) {
+        arrayBuilder.append(BYTE.value)
+                .append(encodeKey(key))
+                .append(value);
+        return this;
+    }
+
     public ObjectEncoder put(String key, int value) {
         arrayBuilder.append(INTEGER.value)
                 .append(encodeKey(key))

@@ -1,5 +1,6 @@
 package store.client;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,6 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import static store.client.ByteLengthFormatter.format;
 import static store.client.DigestUtil.digest;
 import store.common.Config;
 import store.common.ContentInfo;
@@ -91,11 +93,17 @@ public final class App {
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
                     ContentInfo info = client.info(params.get(0));
-                    System.out.println("Hash : " + info.getHash());
-                    System.out.println("Length : " + info.getLength());
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("Size")
+                            .append(comma())
+                            .append(format(info.getLength()));
                     for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
-                        System.out.println(entry.getKey() + " : " + entry.getValue());
+                        builder.append(entry.getKey())
+                                .append(comma())
+                                .append(entry.getValue());
                     }
+                    builder.append(System.lineSeparator());
+                    System.out.println(builder.toString());
                 }
             }
         },
@@ -104,11 +112,26 @@ public final class App {
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
                     for (Event event : client.history()) {
-                        System.out.println("Hash : " + event.getHash());
-                        System.out.println("Timestamp : " + event.getTimestamp());
-                        System.out.println("Operation : " + event.getOperation());
-                        System.out.println("Uids : " + event.getUids());
-                        System.out.println();
+                        StringBuilder builder = new StringBuilder();
+                        builder.append(event.getOperation().toString())
+                                .append(System.lineSeparator())
+                                .append(indent())
+                                .append("Hash")
+                                .append(comma())
+                                .append(event.getHash())
+                                .append(System.lineSeparator())
+                                .append(indent())
+                                .append("Date")
+                                .append(comma())
+                                .append(event.getTimestamp())
+                                .append(System.lineSeparator())
+                                .append(indent())
+                                .append("Volumes")
+                                .append(comma())
+                                .append(Joiner.on(", ").join(event.getUids()))
+                                .append(System.lineSeparator());
+
+                        System.out.println(builder.toString());
                     }
                 }
             }
@@ -117,8 +140,16 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 Digest digest = digest(Paths.get(params.get(0)));
-                System.out.println("Hash : " + digest.getHash());
-                System.out.println("Length : " + digest.getLength());
+                StringBuilder builder = new StringBuilder();
+                builder.append("Hash")
+                        .append(comma())
+                        .append(digest.getHash())
+                        .append(System.lineSeparator())
+                        .append("Size")
+                        .append(comma())
+                        .append(format(digest.getLength()));
+
+                System.out.println(builder.toString());
             }
         };
 
@@ -132,6 +163,14 @@ public final class App {
             }
             return Optional.absent();
         }
+    }
+
+    private static String indent() {
+        return "    ";
+    }
+
+    private static String comma() {
+        return " : ";
     }
 
     private static List<String> params(String[] args) {

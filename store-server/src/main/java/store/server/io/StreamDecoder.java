@@ -10,6 +10,7 @@ public class StreamDecoder implements Closeable {
     private static final int EOF = -1;
     private final Input input;
     private ObjectDecoder next;
+    private long position = 0;
     private boolean loaded;
 
     public StreamDecoder(Input input) {
@@ -18,6 +19,7 @@ public class StreamDecoder implements Closeable {
 
     public boolean hasNext() {
         if (!loaded) {
+            position = input.position();
             next = loadNext();
             loaded = true;
         }
@@ -30,6 +32,10 @@ public class StreamDecoder implements Closeable {
         }
         loaded = false;
         return next;
+    }
+
+    public long position() {
+        return position;
     }
 
     @Override

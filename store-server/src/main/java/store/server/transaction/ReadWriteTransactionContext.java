@@ -20,56 +20,29 @@ final class ReadWriteTransactionContext implements TransactionContext {
     }
 
     @Override
-    public Input openInput(Path path) {
+    public boolean exists(Path path) {
         try {
-            File file = path.toFile();
-            if (!session.fileExists(file, true)) {
-                return EmptyInput.INSTANCE;
-            }
-            return new Input(session.createXAFileInputStream(file, true));
+            return session.fileExists(path.toFile(), true);
 
         } catch (LockingFailedException |
                 NoTransactionAssociatedException |
                 InsufficientPermissionOnFileException |
-                InterruptedException |
-                FileNotExistsException e) {
+                InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Output openTruncatingOutput(Path path) {
-        return openOutput(path, true, false);
-    }
-
-    @Override
-    public Output openAppendingOutput(Path path) {
-        return openOutput(path, false, false);
-    }
-
-    @Override
-    public Output openHeavyWriteOutput(Path path) {
-        return openOutput(path, true, true);
-    }
-
-    private Output openOutput(Path path, boolean truncate, boolean heavyWrite) {
+    public void create(Path path) {
         try {
-            File file = path.toFile();
-            if (!session.fileExists(file, true)) {
-                session.createFile(file, false);
+            session.createFile(path.toFile(), false);
 
-            } else if (truncate) {
-                session.truncateFile(file, 0);
-            }
-            return new Output(session.createXAFileOutputStream(file, heavyWrite));
-
-        } catch (LockingFailedException |
-                NoTransactionAssociatedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException |
+        } catch (FileAlreadyExistsException |
                 FileNotExistsException |
-                FileAlreadyExistsException |
-                FileUnderUseException e) {
+                InsufficientPermissionOnFileException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -86,6 +59,59 @@ final class ReadWriteTransactionContext implements TransactionContext {
                 LockingFailedException |
                 NoTransactionAssociatedException |
                 InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void truncate(Path path, long length) {
+        try {
+            session.truncateFile(path.toFile(), length);
+
+        } catch (FileNotExistsException |
+                InsufficientPermissionOnFileException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Input openInput(Path path) {
+        try {
+            return new Input(session.createXAFileInputStream(path.toFile(), true));
+
+        } catch (LockingFailedException |
+                NoTransactionAssociatedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException |
+                FileNotExistsException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Output openOutput(Path path) {
+        return openOutput(path, false);
+    }
+
+    @Override
+    public Output openHeavyWriteOutput(Path path) {
+        return openOutput(path, true);
+    }
+
+    private Output openOutput(Path path, boolean heavyWrite) {
+        try {
+            File file = path.toFile();
+            return new Output(session.createXAFileOutputStream(file, heavyWrite));
+
+        } catch (LockingFailedException |
+                NoTransactionAssociatedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException |
+                FileNotExistsException |
+                FileUnderUseException e) {
             throw new RuntimeException(e);
         }
     }

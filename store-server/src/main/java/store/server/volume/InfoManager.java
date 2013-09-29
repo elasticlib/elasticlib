@@ -18,6 +18,7 @@ import store.server.io.ObjectDecoder;
 import static store.server.io.ObjectEncoder.encoder;
 import store.server.io.StreamDecoder;
 import store.server.transaction.Output;
+import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 class InfoManager {
@@ -51,32 +52,39 @@ class InfoManager {
         if (contains(hash)) {
             throw new ContentAlreadyStoredException();
         }
-        try (Output output = currentTransactionContext().openAppendingOutput(path(hash))) {
+        Path path = path(hash);
+        TransactionContext txContext = currentTransactionContext();
+        if (!txContext.exists(path)) {
+            txContext.create(path);
+        }
+        try (Output output = txContext.openOutput(path)) {
             output.write(bytes(contentInfo));
         }
     }
 
     public void delete(Hash hash) {
+        TransactionContext txContext = currentTransactionContext();
         Path path = path(hash);
-        List<ContentInfo> list = load(path);
-        remove(list, hash);
-        if (list.isEmpty()) {
-            currentTransactionContext().delete(path);
-
-        } else {
-            try (Output output = currentTransactionContext().openTruncatingOutput(path)) {
-                for (ContentInfo contentInfo : list) {
-                    output.write(bytes(contentInfo));
-                }
-            }
+        if (!txContext.exists(path)) {
+            throw new UnknownHashException();
         }
-    }
-
-    private static void remove(List<ContentInfo> list, Hash hash) {
-        Iterator<ContentInfo> it = list.listIterator();
+        List<Entry> entries = load(path);
+        if (entries.size() == 1 && entries.get(0).getPosition() == 0) {
+            txContext.delete(path);
+            return;
+        }
+        Iterator<Entry> it = entries.iterator();
         while (it.hasNext()) {
-            if (it.next().getHash().equals(hash)) {
-                it.remove();
+            Entry entry = it.next();
+            if (entry.matches(hash)) {
+                txContext.truncate(path, entry.getPosition());
+                if (it.hasNext()) {
+                    try (Output output = txContext.openOutput(path)) {
+                        while (it.hasNext()) {
+                            output.write(bytes(it.next().getInfo()));
+                        }
+                    }
+                }
                 return;
             }
         }
@@ -88,9 +96,13 @@ class InfoManager {
     }
 
     public Optional<ContentInfo> get(Hash hash) {
-        for (ContentInfo info : load(path(hash))) {
-            if (info.getHash().equals(hash)) {
-                return Optional.of(info);
+        Path path = path(hash);
+        if (!currentTransactionContext().exists(path)) {
+            return Optional.absent();
+        }
+        for (Entry entry : load(path)) {
+            if (entry.matches(hash)) {
+                return Optional.of(entry.getInfo());
             }
         }
         return Optional.absent();
@@ -101,26 +113,51 @@ class InfoManager {
         return root.resolve(key);
     }
 
-    private static List<ContentInfo> load(Path path) {
-        List<ContentInfo> list = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
-            while (streamDecoder.hasNext()) {
-                ObjectDecoder objectDecoder = streamDecoder.next();
-                list.add(contentInfo()
-                        .withHash(new Hash(objectDecoder.getRaw("hash")))
-                        .withLength(objectDecoder.getLong("length"))
-                        .withMetadata(objectDecoder.getMap("metadata"))
-                        .build());
-            }
-            return list;
-        }
-    }
-
     private static byte[] bytes(ContentInfo contentInfo) {
         return encoder()
                 .put("hash", contentInfo.getHash().value())
                 .put("length", contentInfo.getLength())
                 .put("metadata", contentInfo.getMetadata())
                 .build();
+    }
+
+    private static List<Entry> load(Path path) {
+        List<Entry> entries = new LinkedList<>();
+        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
+            while (streamDecoder.hasNext()) {
+                ObjectDecoder objectDecoder = streamDecoder.next();
+                ContentInfo info = contentInfo()
+                        .withHash(new Hash(objectDecoder.getRaw("hash")))
+                        .withLength(objectDecoder.getLong("length"))
+                        .withMetadata(objectDecoder.getMap("metadata"))
+                        .build();
+
+                entries.add(new Entry(streamDecoder.position(), info));
+            }
+        }
+        return entries;
+    }
+
+    private static final class Entry {
+
+        private final long position;
+        private final ContentInfo info;
+
+        public Entry(long position, ContentInfo info) {
+            this.position = position;
+            this.info = info;
+        }
+
+        public long getPosition() {
+            return position;
+        }
+
+        public ContentInfo getInfo() {
+            return info;
+        }
+
+        public boolean matches(Hash hash) {
+            return info.getHash().equals(hash);
+        }
     }
 }

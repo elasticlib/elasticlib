@@ -1,6 +1,5 @@
 package store.server.transaction;
 
-import java.io.File;
 import java.nio.file.Path;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.filesystem.exceptions.FileNotExistsException;
@@ -17,13 +16,37 @@ final class ReadOnlyTransactionContext implements TransactionContext {
     }
 
     @Override
+    public boolean exists(Path path) {
+        try {
+            return session.fileExists(path.toFile(), false);
+
+        } catch (LockingFailedException |
+                NoTransactionAssociatedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void create(Path path) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(Path path) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void truncate(Path path, long length) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Input openInput(Path path) {
         try {
-            File file = path.toFile();
-            if (!session.fileExists(file)) {
-                return EmptyInput.INSTANCE;
-            }
-            return new Input(session.createXAFileInputStream(file));
+            return new Input(session.createXAFileInputStream(path.toFile()));
 
         } catch (LockingFailedException |
                 NoTransactionAssociatedException |
@@ -35,22 +58,12 @@ final class ReadOnlyTransactionContext implements TransactionContext {
     }
 
     @Override
-    public Output openTruncatingOutput(Path path) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Output openAppendingOutput(Path path) {
+    public Output openOutput(Path path) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Output openHeavyWriteOutput(Path path) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void delete(Path path) {
         throw new UnsupportedOperationException();
     }
 }

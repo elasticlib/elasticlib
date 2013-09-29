@@ -13,6 +13,7 @@ import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import static store.server.io.ObjectEncoder.encoder;
 import store.server.transaction.Output;
+import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 public class HistoryManager {
@@ -58,7 +59,12 @@ public class HistoryManager {
                 .put("uids", bytes(uids))
                 .build();
 
-        try (Output output = currentTransactionContext().openAppendingOutput(path(hash))) {
+        Path path = path(hash);
+        TransactionContext txContext = currentTransactionContext();
+        if (!txContext.exists(path)) {
+            txContext.create(path);
+        }
+        try (Output output = txContext.openOutput(path(hash))) {
             output.write(bytes);
         }
     }

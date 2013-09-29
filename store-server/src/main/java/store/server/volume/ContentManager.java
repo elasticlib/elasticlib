@@ -14,6 +14,7 @@ import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
+import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 class ContentManager {
@@ -63,11 +64,13 @@ class ContentManager {
     }
 
     private Output openOutput(ContentInfo info) {
+        TransactionContext txContext = currentTransactionContext();
         Path path = path(info.getHash());
+        txContext.create(path);
         if (info.getLength() > HEAVY_WRITE_THRESHOLD) {
-            return currentTransactionContext().openHeavyWriteOutput(path);
+            return txContext.openHeavyWriteOutput(path);
         }
-        return currentTransactionContext().openTruncatingOutput(path);
+        return txContext.openOutput(path);
     }
 
     public InputStream get(Hash hash) {

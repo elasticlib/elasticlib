@@ -99,11 +99,11 @@ public final class App {
                 }
             }
         },
-        LOG {
+        HISTORY {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    for (Event event : client.log()) {
+                    for (Event event : client.history()) {
                         System.out.println("Hash : " + event.getHash());
                         System.out.println("Timestamp : " + event.getTimestamp());
                         System.out.println("Operation : " + event.getOperation());

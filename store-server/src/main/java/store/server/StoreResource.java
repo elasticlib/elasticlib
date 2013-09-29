@@ -93,8 +93,8 @@ public class StoreResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("log")
-    public JsonArray log() {
-        return write(storeManager.log());
+    @Path("history")
+    public JsonArray history() {
+        return write(storeManager.history());
     }
 }

@@ -158,11 +158,11 @@ public class Store {
         });
     }
 
-    public List<Event> log() {
+    public List<Event> history() {
         return transactionManager.inTransaction(new Query< List<Event>>() {
             @Override
             public List<Event> apply() {
-                return historyManager.log();
+                return historyManager.history();
             }
         });
     }

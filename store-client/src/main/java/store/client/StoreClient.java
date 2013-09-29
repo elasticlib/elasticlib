@@ -156,8 +156,8 @@ public class StoreClient implements Closeable {
         }
     }
 
-    public List<Event> log() {
-        Response response = target.path("log")
+    public List<Event> history() {
+        Response response = target.path("history")
                 .request()
                 .get();
 

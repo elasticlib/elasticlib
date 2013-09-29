@@ -152,11 +152,11 @@ public final class StoreManager {
         });
     }
 
-    public List<Event> log() {
+    public List<Event> history() {
         return readLocked(new Request<List<Event>>() {
             @Override
             public List<Event> apply(Store store) {
-                return store.log();
+                return store.history();
             }
         });
     }

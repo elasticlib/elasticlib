@@ -97,7 +97,7 @@ public class HistoryManager {
         return root.resolve(key);
     }
 
-    public List<Event> log() {
+    public List<Event> history() {
         List<Event> events = new LinkedList<>();
         for (String key : keySet(KEY_LENGTH)) {
             Path path = root.resolve(key);

@@ -162,7 +162,7 @@ public class Store {
         return transactionManager.inTransaction(new Query< List<Event>>() {
             @Override
             public List<Event> apply() {
-                return historyManager.history();
+                return historyManager.history(false);
             }
         });
     }

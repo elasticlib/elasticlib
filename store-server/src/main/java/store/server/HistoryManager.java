@@ -97,18 +97,19 @@ public class HistoryManager {
         return root.resolve(key);
     }
 
-    public List<Event> history() {
+    public List<Event> history(boolean chronological) {
         List<Event> events = new LinkedList<>();
+        Sorter sorter = new Sorter(chronological);
         for (String key : keySet(KEY_LENGTH)) {
             Path path = root.resolve(key);
             if (currentTransactionContext().exists(path)) {
-                load(events, path);
+                load(events, path, sorter);
             }
         }
         return events;
     }
 
-    private static List<Event> load(List<Event> events, Path path) {
+    private static List<Event> load(List<Event> events, Path path, Sorter sorter) {
         try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
@@ -122,20 +123,35 @@ public class HistoryManager {
                         .withOperation(Operation.of(objectDecoder.getByte("operation")))
                         .withUids(uids)
                         .build();
-                insert(events, event);
+                insert(events, event, sorter);
             }
         }
         return events;
     }
 
-    private static void insert(List<Event> list, Event item) {
+    private static void insert(List<Event> list, Event item, Sorter sorter) {
         ListIterator<Event> it = list.listIterator();
         while (it.hasNext()) {
-            if (it.next().getTimestamp().after(item.getTimestamp())) {
+            if (!sorter.isOrdered(it.next(), item)) {
                 list.add(it.previousIndex(), item);
                 return;
             }
         }
         list.add(item);
+    }
+
+    private static class Sorter {
+
+        private final boolean chronological;
+
+        public Sorter(boolean chronological) {
+            this.chronological = chronological;
+        }
+
+        public boolean isOrdered(Event e1, Event e2) {
+            Date t1 = e1.getTimestamp();
+            Date t2 = e2.getTimestamp();
+            return chronological ? t1.before(t2) : t1.after(t2);
+        }
     }
 }

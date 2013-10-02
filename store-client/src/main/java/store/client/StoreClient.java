@@ -40,7 +40,8 @@ import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
-import static store.common.JsonUtil.write;
+import static store.common.JsonUtil.writeConfig;
+import static store.common.JsonUtil.writeContentInfo;
 
 public class StoreClient implements Closeable {
 
@@ -78,7 +79,7 @@ public class StoreClient implements Closeable {
     public void create(Config config) {
         ensureOk(target.path("create")
                 .request()
-                .post(entity(write(config), MediaType.APPLICATION_JSON), Response.class));
+                .post(entity(writeConfig(config), MediaType.APPLICATION_JSON), Response.class));
     }
 
     public void drop() {
@@ -109,7 +110,7 @@ public class StoreClient implements Closeable {
                                                               digest.getLength())) {
 
             MultiPart multipart = new FormDataMultiPart()
-                    .field("info", write(info), MediaType.APPLICATION_JSON_TYPE)
+                    .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
                     .bodyPart(new StreamDataBodyPart("source",
                                                      inputStream,
                                                      filepath.getFileName().toString(),

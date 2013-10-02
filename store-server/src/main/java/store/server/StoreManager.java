@@ -25,7 +25,7 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
-import static store.common.JsonUtil.write;
+import static store.common.JsonUtil.writeConfig;
 import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
 import store.server.exception.WriteException;
@@ -211,7 +211,7 @@ public final class StoreManager {
                     Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
                     JsonWriter jsonWriter = Json.createWriter(writer)) {
 
-                jsonWriter.writeObject(write(config));
+                jsonWriter.writeObject(writeConfig(config));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

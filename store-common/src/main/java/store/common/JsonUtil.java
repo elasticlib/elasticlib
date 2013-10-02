@@ -27,7 +27,7 @@ public final class JsonUtil {
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (ContentInfo contentInfo : contentInfos) {
-            builder.add(write(contentInfo));
+            builder.add(writeContentInfo(contentInfo));
         }
         return builder.build();
     }
@@ -40,7 +40,7 @@ public final class JsonUtil {
         return list;
     }
 
-    public static JsonObject write(ContentInfo contentInfo) {
+    public static JsonObject writeContentInfo(ContentInfo contentInfo) {
         return createObjectBuilder()
                 .add("hash", contentInfo.getHash().encode())
                 .add("length", contentInfo.getLength())
@@ -72,7 +72,7 @@ public final class JsonUtil {
         return map;
     }
 
-    public static JsonObject write(Config config) {
+    public static JsonObject writeConfig(Config config) {
         String root = config.getRoot().toAbsolutePath().toString();
         JsonArrayBuilder volumes = createArrayBuilder();
         for (Path path : config.getVolumePaths()) {
@@ -93,15 +93,23 @@ public final class JsonUtil {
         return new Config(root, volumes);
     }
 
-    public static JsonArray write(List<Event> events) {
+    public static JsonArray writeEvents(List<Event> events) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (Event event : events) {
-            builder.add(write(event));
+            builder.add(writeEvent(event));
         }
         return builder.build();
     }
 
-    private static JsonObjectBuilder write(Event event) {
+    public static List<Event> readEvents(JsonArray json) {
+        List<Event> list = new ArrayList<>();
+        for (JsonObject object : json.getValuesAs(JsonObject.class)) {
+            list.add(readEvent(object));
+        }
+        return list;
+    }
+
+    private static JsonObjectBuilder writeEvent(Event event) {
         JsonArrayBuilder uids = createArrayBuilder();
         for (Uid uid : event.getUids()) {
             uids.add(uid.encode());
@@ -111,14 +119,6 @@ public final class JsonUtil {
                 .add("timestamp", event.getTimestamp().getTime())
                 .add("operation", event.getOperation().name())
                 .add("uids", uids);
-    }
-
-    public static List<Event> readEvents(JsonArray json) {
-        List<Event> list = new ArrayList<>();
-        for (JsonObject object : json.getValuesAs(JsonObject.class)) {
-            list.add(readEvent(object));
-        }
-        return list;
     }
 
     private static Event readEvent(JsonObject json) {

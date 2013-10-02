@@ -20,8 +20,9 @@ import store.common.ContentInfo;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
-import static store.common.JsonUtil.write;
+import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeContentInfos;
+import static store.common.JsonUtil.writeEvents;
 
 @Path("/")
 @Singleton
@@ -76,7 +77,7 @@ public class StoreResource {
     @Path("info/{hash}")
     public JsonObject info(@PathParam("hash") String encodedHash) {
         ContentInfo info = storeManager.info(new Hash(encodedHash));
-        return write(info);
+        return writeContentInfo(info);
     }
 
     @GET
@@ -103,6 +104,6 @@ public class StoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("history")
     public JsonArray history() {
-        return write(storeManager.history());
+        return writeEvents(storeManager.history());
     }
 }

@@ -29,6 +29,34 @@ final class ReadOnlyTransactionContext implements TransactionContext {
     }
 
     @Override
+    public String[] listFiles(Path path) {
+        try {
+            return session.listFiles(path.toFile(), false);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InterruptedException |
+                InsufficientPermissionOnFileException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public long fileLength(Path path) {
+        try {
+            return session.getFileLength(path.toFile(), false);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void create(Path path) {
         throw new UnsupportedOperationException();
     }
@@ -59,11 +87,11 @@ final class ReadOnlyTransactionContext implements TransactionContext {
 
     @Override
     public Output openOutput(Path path) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public Output openHeavyWriteOutput(Path path) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

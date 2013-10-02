@@ -21,6 +21,7 @@ import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.write;
+import static store.common.JsonUtil.writeContentInfos;
 
 @Path("/")
 @Singleton
@@ -89,6 +90,13 @@ public class StoreResource {
                 storeManager.get(hash, outputStream);
             }
         }).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("find/{query}")
+    public JsonArray find(@PathParam("query") String query) {
+        return writeContentInfos(storeManager.find(query));
     }
 
     @GET

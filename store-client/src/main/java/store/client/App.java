@@ -93,17 +93,18 @@ public final class App {
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
                     ContentInfo info = client.info(params.get(0));
-                    StringBuilder builder = new StringBuilder();
-                    builder.append("Size")
-                            .append(comma())
-                            .append(format(info.getLength()));
-                    for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
-                        builder.append(entry.getKey())
-                                .append(comma())
-                                .append(entry.getValue());
+                    System.out.println(asString(info));
+                }
+            }
+        },
+        FIND {
+            @Override
+            public void execute(List<String> params) {
+                String query = Joiner.on(" ").join(params);
+                try (StoreClient client = new StoreClient()) {
+                    for (ContentInfo info : client.find(query)) {
+                        System.out.println(asString(info));
                     }
-                    builder.append(System.lineSeparator());
-                    System.out.println(builder.toString());
                 }
             }
         },
@@ -112,26 +113,7 @@ public final class App {
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
                     for (Event event : client.history()) {
-                        StringBuilder builder = new StringBuilder();
-                        builder.append(event.getOperation().toString())
-                                .append(System.lineSeparator())
-                                .append(indent())
-                                .append("Hash")
-                                .append(comma())
-                                .append(event.getHash())
-                                .append(System.lineSeparator())
-                                .append(indent())
-                                .append("Date")
-                                .append(comma())
-                                .append(event.getTimestamp())
-                                .append(System.lineSeparator())
-                                .append(indent())
-                                .append("Volumes")
-                                .append(comma())
-                                .append(Joiner.on(", ").join(event.getUids()))
-                                .append(System.lineSeparator());
-
-                        System.out.println(builder.toString());
+                        System.out.println(asString(event));
                     }
                 }
             }
@@ -140,16 +122,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 Digest digest = digest(Paths.get(params.get(0)));
-                StringBuilder builder = new StringBuilder();
-                builder.append("Hash")
-                        .append(comma())
-                        .append(digest.getHash())
-                        .append(System.lineSeparator())
-                        .append("Size")
-                        .append(comma())
-                        .append(format(digest.getLength()));
-
-                System.out.println(builder.toString());
+                System.out.println(asString(digest));
             }
         };
 
@@ -163,6 +136,58 @@ public final class App {
             }
             return Optional.absent();
         }
+    }
+
+    private static String asString(ContentInfo info) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Hash")
+                .append(comma())
+                .append(info.getHash())
+                .append(System.lineSeparator())
+                .append("Size")
+                .append(comma())
+                .append(format(info.getLength()));
+        for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
+            builder.append(entry.getKey())
+                    .append(comma())
+                    .append(entry.getValue());
+        }
+        builder.append(System.lineSeparator());
+        return builder.toString();
+    }
+
+    private static String asString(Digest digest) {
+        return new StringBuilder()
+                .append("Hash")
+                .append(comma())
+                .append(digest.getHash())
+                .append(System.lineSeparator())
+                .append("Size")
+                .append(comma())
+                .append(format(digest.getLength()))
+                .toString();
+    }
+
+    private static String asString(Event event) {
+        return new StringBuilder()
+                .append(event.getOperation().toString())
+                .append(System.lineSeparator())
+                .append(indent())
+                .append("Hash")
+                .append(comma())
+                .append(event.getHash())
+                .append(System.lineSeparator())
+                .append(indent())
+                .append("Date")
+                .append(comma())
+                .append(event.getTimestamp())
+                .append(System.lineSeparator())
+                .append(indent())
+                .append(event.getUids().size() > 1 ? "Volumes" : "Volume")
+                .append(comma())
+                .append(Joiner.on(", ").join(event.getUids()))
+                .append(System.lineSeparator())
+                .toString();
     }
 
     private static String indent() {

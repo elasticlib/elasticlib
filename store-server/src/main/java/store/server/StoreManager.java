@@ -152,6 +152,15 @@ public final class StoreManager {
         });
     }
 
+    List<ContentInfo> find(final String query) {
+        return readLocked(new Request<List<ContentInfo>>() {
+            @Override
+            public List<ContentInfo> apply(Store store) {
+                return store.find(query);
+            }
+        });
+    }
+
     public List<Event> history() {
         return readLocked(new Request<List<Event>>() {
             @Override

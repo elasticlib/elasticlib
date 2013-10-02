@@ -33,6 +33,34 @@ final class ReadWriteTransactionContext implements TransactionContext {
     }
 
     @Override
+    public String[] listFiles(Path path) {
+        try {
+            return session.listFiles(path.toFile(), true);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InterruptedException |
+                InsufficientPermissionOnFileException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public long fileLength(Path path) {
+        try {
+            return session.getFileLength(path.toFile(), true);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void create(Path path) {
         try {
             session.createFile(path.toFile(), false);

@@ -38,6 +38,7 @@ import store.common.Digest;
 import store.common.Event;
 import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.write;
 
@@ -154,6 +155,16 @@ public class StoreClient implements Closeable {
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
+    }
+
+    public List<ContentInfo> find(String query) {
+        Response response = target.path("find/{query}")
+                .resolveTemplate("query", query)
+                .request()
+                .get();
+
+        ensureOk(response);
+        return readContentInfos(response.readEntity(JsonArray.class));
     }
 
     public List<Event> history() {

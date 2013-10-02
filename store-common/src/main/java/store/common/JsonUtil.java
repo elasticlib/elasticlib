@@ -24,6 +24,22 @@ public final class JsonUtil {
     private JsonUtil() {
     }
 
+    public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        for (ContentInfo contentInfo : contentInfos) {
+            builder.add(write(contentInfo));
+        }
+        return builder.build();
+    }
+
+    public static List<ContentInfo> readContentInfos(JsonArray json) {
+        List<ContentInfo> list = new ArrayList<>();
+        for (JsonObject object : json.getValuesAs(JsonObject.class)) {
+            list.add(readContentInfo(object));
+        }
+        return list;
+    }
+
     public static JsonObject write(ContentInfo contentInfo) {
         return createObjectBuilder()
                 .add("hash", contentInfo.getHash().encode())

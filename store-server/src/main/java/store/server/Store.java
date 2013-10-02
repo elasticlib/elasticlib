@@ -18,10 +18,12 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Uid;
+import store.server.exception.ConcurrentOperationException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
+import store.server.index.IndexManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
@@ -30,11 +32,16 @@ import store.server.volume.Volume;
 public class Store {
 
     private final TransactionManager transactionManager;
+    private final IndexManager indexManager;
     private final HistoryManager historyManager;
     private final List<Volume> volumes;
 
-    private Store(TransactionManager transactionManager, HistoryManager historyManager, List<Volume> volumes) {
+    private Store(TransactionManager transactionManager,
+                  IndexManager indexManager,
+                  HistoryManager historyManager,
+                  List<Volume> volumes) {
         this.transactionManager = transactionManager;
+        this.indexManager = indexManager;
         this.historyManager = historyManager;
         this.volumes = volumes;
     }
@@ -51,6 +58,7 @@ public class Store {
                 volumes.add(Volume.create(path));
             }
             return new Store(TransactionManager.create(root.resolve("transactions")),
+                             IndexManager.create(root.resolve("index")),
                              HistoryManager.create(root.resolve("history")),
                              volumes);
 
@@ -72,6 +80,7 @@ public class Store {
             volumes.add(Volume.open(path));
         }
         return new Store(TransactionManager.open(root.resolve("transactions")),
+                         IndexManager.open(root.resolve("index")),
                          HistoryManager.open(root.resolve("history")),
                          volumes);
     }
@@ -101,6 +110,7 @@ public class Store {
                         throw new WriteException(e);
                     }
                 }
+                indexManager.add(contentInfo);
                 historyManager.put(hash, volumeUids());
             }
         });
@@ -158,8 +168,26 @@ public class Store {
         });
     }
 
+    public List<ContentInfo> find(final String query) {
+        List<Hash> hashes = transactionManager.inTransaction(new Query<List<Hash>>() {
+            @Override
+            public List<Hash> apply() {
+                return indexManager.find(query);
+            }
+        });
+        List<ContentInfo> results = new ArrayList<>(hashes.size());
+        for (Hash hash : hashes) {
+            try {
+                results.add(info(hash));
+
+            } catch (UnknownHashException | ConcurrentOperationException e) {
+            }
+        }
+        return results;
+    }
+
     public List<Event> history() {
-        return transactionManager.inTransaction(new Query< List<Event>>() {
+        return transactionManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {
                 return historyManager.history(false);

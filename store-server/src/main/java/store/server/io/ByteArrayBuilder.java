@@ -33,7 +33,11 @@ class ByteArrayBuilder {
 
     private void ensureCapacity(int capacity) {
         if (array.length < capacity) {
-            array = Arrays.copyOf(array, array.length * 2);
+            int length = array.length;
+            while (length < capacity) {
+                length *= 2;
+            }
+            array = Arrays.copyOf(array, length);
         }
     }
 

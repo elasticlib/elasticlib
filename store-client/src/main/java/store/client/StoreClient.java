@@ -31,6 +31,7 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.DigestUtil.digest;
+import static store.client.MetadataUtil.metadata;
 import store.common.Config;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
@@ -93,6 +94,7 @@ public class StoreClient implements Closeable {
         ContentInfo info = contentInfo()
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
+                .withMetadata(metadata(filepath))
                 .build();
 
         Response response = target.path("contains/{hash}")

@@ -1,6 +1,7 @@
 package store.server.index;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
+import org.apache.tika.Tika;
 import store.common.ContentInfo;
 import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
@@ -56,18 +58,15 @@ public class IndexManager {
         return new IndexManager(path);
     }
 
-    public void add(ContentInfo contentInfo) {
+    public void index(ContentInfo contentInfo, InputStream inputStream) {
         try (IndexWriter writer = new IndexWriter(directory, config)) {
             Document document = new Document();
             document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
-            document.add(new TextField("_all", contentInfo.getHash().encode(), Store.NO));
             document.add(new LongField("length", contentInfo.getLength(), Store.NO));
             for (Entry<String, Object> entry : contentInfo.getMetadata().entrySet()) {
                 document.add(new TextField(entry.getKey(), entry.getValue().toString(), Store.NO));
-                if (entry.getValue() instanceof String) {
-                    document.add(new TextField("_all", entry.getValue().toString(), Store.NO));
-                }
             }
+            document.add(new TextField("content", new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);
             writer.close();
 
@@ -79,7 +78,7 @@ public class IndexManager {
     public List<Hash> find(String query) {
         try (DirectoryReader reader = DirectoryReader.open(directory)) {
             IndexSearcher searcher = new IndexSearcher(reader);
-            QueryParser parser = new QueryParser(Version.LUCENE_44, "_all", analyzer);
+            QueryParser parser = new QueryParser(Version.LUCENE_44, "content", analyzer);
             ScoreDoc[] hits = searcher.search(parser.parse(query), 1000).scoreDocs;
 
             List<Hash> hashes = new ArrayList<>(hits.length);

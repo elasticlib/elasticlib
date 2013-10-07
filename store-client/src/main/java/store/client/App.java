@@ -148,7 +148,8 @@ public final class App {
                 .append(comma())
                 .append(format(info.getLength()));
         for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
-            builder.append(entry.getKey())
+            builder.append(System.lineSeparator())
+                    .append(entry.getKey())
                     .append(comma())
                     .append(entry.getValue());
         }

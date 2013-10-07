@@ -98,20 +98,23 @@ public class Store {
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
-                Iterator<Volume> it = volumes.iterator();
-                Volume first = it.next();
-                first.put(contentInfo, source);
-                while (it.hasNext()) {
-                    Volume next = it.next();
-                    try (InputStream inputstream = first.get(hash)) {
-                        next.put(contentInfo, inputstream);
-
-                    } catch (IOException e) {
-                        throw new WriteException(e);
+                try {
+                    Iterator<Volume> it = volumes.iterator();
+                    Volume first = it.next();
+                    first.put(contentInfo, source);
+                    while (it.hasNext()) {
+                        try (InputStream inputstream = first.get(hash)) {
+                            it.next().put(contentInfo, inputstream);
+                        }
                     }
+                    try (InputStream inputstream = first.get(hash)) {
+                        indexManager.index(contentInfo, inputstream);
+                    }
+                    historyManager.put(hash, volumeUids());
+
+                } catch (IOException e) {
+                    throw new WriteException(e);
                 }
-                indexManager.add(contentInfo);
-                historyManager.put(hash, volumeUids());
             }
         });
     }

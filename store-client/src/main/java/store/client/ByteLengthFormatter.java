@@ -46,7 +46,7 @@ public final class ByteLengthFormatter {
         private final long prefix;
 
         private Unit() {
-            this.prefix = BigInteger.valueOf(1000)
+            this.prefix = BigInteger.valueOf(1024)
                     .pow(ordinal())
                     .longValue();
         }

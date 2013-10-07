@@ -8,13 +8,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
 import static store.client.DigestUtil.digest;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Event;
+import store.common.Properties;
+import store.common.Property;
 
 public final class App {
 
@@ -144,14 +146,18 @@ public final class App {
                 .append(comma())
                 .append(info.getHash())
                 .append(System.lineSeparator())
-                .append("Size")
+                .append("Length")
                 .append(comma())
                 .append(format(info.getLength()));
-        for (Entry<String, Object> entry : info.getMetadata().entrySet()) {
-            builder.append(System.lineSeparator())
-                    .append(entry.getKey())
-                    .append(comma())
-                    .append(entry.getValue());
+
+        Map<String, Object> metadata = info.getMetadata();
+        for (Property property : Properties.list()) {
+            if (metadata.containsKey(property.key())) {
+                builder.append(System.lineSeparator())
+                        .append(property.label())
+                        .append(comma())
+                        .append(metadata.get(property.key()));
+            }
         }
         builder.append(System.lineSeparator());
         return builder.toString();

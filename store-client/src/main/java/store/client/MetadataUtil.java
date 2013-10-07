@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMPDM;
@@ -17,10 +16,11 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import store.common.Metadata.Audio;
-import store.common.Metadata.Common;
-import store.common.Metadata.Image;
-import store.common.Metadata.Text;
+import store.common.Properties.Audio;
+import store.common.Properties.Common;
+import store.common.Properties.Image;
+import store.common.Properties.Text;
+import store.common.Property;
 
 public final class MetadataUtil {
 
@@ -81,14 +81,14 @@ public final class MetadataUtil {
             return extractor.map;
         }
 
-        private void convert(Property tikaKey, String key) {
-            convert(tikaKey.getName(), key);
+        private void convert(org.apache.tika.metadata.Property tikaKey, Property property) {
+            convert(tikaKey.getName(), property);
         }
 
-        private void convert(String tikaKey, String key) {
+        private void convert(String tikaKey, Property property) {
             String value = metadata.get(tikaKey);
             if (value != null) {
-                map.put(key, value);
+                map.put(property.key(), value);
             }
         }
     }

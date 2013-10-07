@@ -17,6 +17,7 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Properties.Common;
 import store.common.Uid;
 import store.server.exception.ConcurrentOperationException;
 import store.server.exception.InvalidStorePathException;
@@ -27,6 +28,7 @@ import store.server.index.IndexManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
+import static store.server.transaction.TransactionManager.currentTransactionContext;
 import store.server.volume.Volume;
 
 public class Store {
@@ -95,20 +97,23 @@ public class Store {
 
     public void put(final ContentInfo contentInfo, final InputStream source) {
         final Hash hash = contentInfo.getHash();
+
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
+                ContentInfo info = contentInfo.with(Common.CAPTURE_DATE.key(),
+                                                    currentTransactionContext().timestamp());
                 try {
                     Iterator<Volume> it = volumes.iterator();
                     Volume first = it.next();
-                    first.put(contentInfo, source);
+                    first.put(info, source);
                     while (it.hasNext()) {
                         try (InputStream inputstream = first.get(hash)) {
-                            it.next().put(contentInfo, inputstream);
+                            it.next().put(info, inputstream);
                         }
                     }
                     try (InputStream inputstream = first.get(hash)) {
-                        indexManager.index(contentInfo, inputstream);
+                        indexManager.index(info, inputstream);
                     }
                     historyManager.put(hash, volumeUids());
 

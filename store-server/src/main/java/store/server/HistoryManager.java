@@ -60,9 +60,11 @@ public class HistoryManager {
     }
 
     private void append(Hash hash, Operation operation, Set<Uid> uids) {
+        TransactionContext txContext = currentTransactionContext();
+
         Event event = event()
                 .withHash(hash)
-                .withTimestamp(new Date())
+                .withTimestamp(txContext.timestamp())
                 .withOperation(operation)
                 .withUids(uids)
                 .build();
@@ -75,7 +77,6 @@ public class HistoryManager {
                 .build();
 
         Path path = path(hash);
-        TransactionContext txContext = currentTransactionContext();
         if (!txContext.exists(path)) {
             txContext.create(path);
         }

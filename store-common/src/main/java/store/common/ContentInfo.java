@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import static java.util.Objects.requireNonNull;
-import store.common.Hash;
 
 public final class ContentInfo {
 
@@ -29,6 +28,15 @@ public final class ContentInfo {
 
     public Map<String, Object> getMetadata() {
         return metadata;
+    }
+
+    public ContentInfo with(String key, Object value) {
+        return contentInfo()
+                .withHash(hash)
+                .withLength(length)
+                .withMetadata(metadata)
+                .with(key, value)
+                .build();
     }
 
     public static ContentInfoBuilder contentInfo() {
@@ -82,6 +90,11 @@ public final class ContentInfo {
 
         public ContentInfoBuilder withMetadata(Map<String, Object> metadata) {
             this.metadata.putAll(metadata);
+            return this;
+        }
+
+        public ContentInfoBuilder with(String key, Object value) {
+            this.metadata.put(key, value);
             return this;
         }
 

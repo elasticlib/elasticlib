@@ -64,6 +64,11 @@ final class ReadOnlyTransactionContext implements TransactionContext {
     }
 
     @Override
+    public void move(Path src, Path dest) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void create(Path path) {
         throw new UnsupportedOperationException();
     }

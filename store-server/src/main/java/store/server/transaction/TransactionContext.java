@@ -13,6 +13,8 @@ public interface TransactionContext {
 
     long fileLength(Path path);
 
+    void move(Path src, Path dest);
+
     void create(Path path);
 
     void delete(Path path);

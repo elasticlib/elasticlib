@@ -68,6 +68,22 @@ final class ReadWriteTransactionContext implements TransactionContext {
     }
 
     @Override
+    public void move(Path src, Path dest) {
+        try {
+            session.moveFile(src.toFile(), dest.toFile());
+
+        } catch (FileAlreadyExistsException |
+                FileNotExistsException |
+                FileUnderUseException |
+                InsufficientPermissionOnFileException |
+                LockingFailedException |
+                NoTransactionAssociatedException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void create(Path path) {
         try {
             session.createFile(path.toFile(), false);

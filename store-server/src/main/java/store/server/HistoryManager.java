@@ -5,17 +5,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 import store.common.Event;
 import static store.common.Event.event;
 import store.common.Hash;
 import store.common.Operation;
 import store.common.Uid;
-import static store.server.Table.keySet;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.io.ObjectDecoder;
@@ -27,16 +26,22 @@ import static store.server.transaction.TransactionManager.currentTransactionCont
 
 public class HistoryManager {
 
-    private static final int KEY_LENGTH = 1;
+    private static final int PAGE_SIZE = 8192;
     private final Path root;
+    private final Path latest;
+    private final Path index;
 
-    private HistoryManager(final Path root) {
+    private HistoryManager(Path root) {
         this.root = root;
+        latest = root.resolve("latest");
+        index = root.resolve("index");
     }
 
     public static HistoryManager create(Path path) {
         try {
             Files.createDirectory(path);
+            Files.createFile(path.resolve("latest"));
+            Files.createFile(path.resolve("index"));
             return new HistoryManager(path);
 
         } catch (IOException e) {
@@ -45,7 +50,9 @@ public class HistoryManager {
     }
 
     public static HistoryManager open(Path path) {
-        if (!Files.isDirectory(path)) {
+        if (!Files.isDirectory(path) ||
+                !Files.exists(path.resolve("latest")) ||
+                !Files.exists(path.resolve("index"))) {
             throw new InvalidStorePathException();
         }
         return new HistoryManager(path);
@@ -61,7 +68,6 @@ public class HistoryManager {
 
     private void append(Hash hash, Operation operation, Set<Uid> uids) {
         TransactionContext txContext = currentTransactionContext();
-
         Event event = event()
                 .withHash(hash)
                 .withTimestamp(txContext.timestamp())
@@ -69,90 +75,124 @@ public class HistoryManager {
                 .withUids(uids)
                 .build();
 
-        byte[] bytes = encoder()
-                .put("hash", event.getHash().value())
-                .put("timestamp", event.getTimestamp())
-                .put("operation", event.getOperation().value())
-                .put("uids", bytes(uids))
-                .build();
+        byte[] bytes = bytes(event);
+        if (txContext.fileLength(latest) + bytes.length > PAGE_SIZE) {
+            Deque<Event> events = loadPage(latest);
+            IndexEntry lastEntry = loadIndex().peekLast();
+            String name = String.valueOf(lastEntry == null ? 1 : Integer.valueOf(lastEntry.name) + 1);
 
-        Path path = path(hash);
-        if (!txContext.exists(path)) {
-            txContext.create(path);
+            txContext.move(latest, root.resolve(name));
+            txContext.create(latest);
+            try (Output output = txContext.openOutput(index)) {
+                output.write(bytes(new IndexEntry(name,
+                                                  events.getFirst().getTimestamp(),
+                                                  events.getLast().getTimestamp())));
+            }
         }
-        try (Output output = txContext.openOutput(path(hash))) {
-            output.write(bytes);
+        try (Output output = txContext.openOutput(latest)) {
+            output.write(bytes(event));
         }
-    }
-
-    private static List<byte[]> bytes(Set<Uid> uids) {
-        List<byte[]> list = new ArrayList<>();
-        for (Uid uid : uids) {
-            list.add(uid.value());
-        }
-        return list;
-    }
-
-    private Path path(Hash hash) {
-        String key = hash.encode().substring(0, KEY_LENGTH);
-        return root.resolve(key);
     }
 
     public List<Event> history(boolean chronological) {
-        List<Event> events = new LinkedList<>();
-        Sorter sorter = new Sorter(chronological);
-        for (String key : keySet(KEY_LENGTH)) {
-            Path path = root.resolve(key);
-            if (currentTransactionContext().exists(path)) {
-                load(events, path, sorter);
-            }
+        LinkedList<Event> events = new LinkedList<>();
+        Deque<Event> latestEvents = loadPage(latest);
+        if (chronological) {
+            addAll(events, latestEvents, chronological);
+        }
+        Deque<IndexEntry> entries = loadIndex();
+        while (!entries.isEmpty()) {
+            IndexEntry entry = chronological ? entries.removeLast() : entries.removeFirst();
+            addAll(events, loadPage(root.resolve(entry.name)), chronological);
+        }
+        if (!chronological) {
+            addAll(events, latestEvents, chronological);
         }
         return events;
     }
 
-    private static List<Event> load(List<Event> events, Path path, Sorter sorter) {
+    private static void addAll(LinkedList<Event> events, Deque<Event> toAdd, boolean chronological) {
+        for (Event event : toAdd) {
+            if (chronological) {
+                events.addLast(event);
+            } else {
+                events.addFirst(event);
+            }
+        }
+    }
+
+    private Deque<Event> loadPage(Path path) {
+        Deque<Event> events = new LinkedList<>();
         try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
             while (streamDecoder.hasNext()) {
-                ObjectDecoder objectDecoder = streamDecoder.next();
-                Set<Uid> uids = new HashSet<>();
-                for (Object raw : objectDecoder.getList("uids")) {
-                    uids.add(new Uid((byte[]) raw));
-                }
-                Event event = event()
-                        .withHash(new Hash(objectDecoder.getRaw("hash")))
-                        .withTimestamp(objectDecoder.getDate("timestamp"))
-                        .withOperation(Operation.of(objectDecoder.getByte("operation")))
-                        .withUids(uids)
-                        .build();
-                insert(events, event, sorter);
+                Event event = readEvent(streamDecoder.next());
+                events.add(event);
             }
         }
         return events;
     }
 
-    private static void insert(List<Event> list, Event item, Sorter sorter) {
-        ListIterator<Event> it = list.listIterator();
-        while (it.hasNext()) {
-            if (!sorter.isOrdered(it.next(), item)) {
-                list.add(it.previousIndex(), item);
-                return;
+    private Deque<IndexEntry> loadIndex() {
+        Deque<IndexEntry> entries = new LinkedList<>();
+        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(index))) {
+            while (streamDecoder.hasNext()) {
+                entries.add(readEntry(streamDecoder.next()));
             }
         }
-        list.add(item);
+        return entries;
     }
 
-    private static class Sorter {
-
-        private final boolean chronological;
-
-        public Sorter(boolean chronological) {
-            this.chronological = chronological;
+    private static byte[] bytes(Event event) {
+        List<byte[]> uids = new ArrayList<>();
+        for (Uid uid : event.getUids()) {
+            uids.add(uid.value());
         }
+        return encoder()
+                .put("hash", event.getHash().value())
+                .put("timestamp", event.getTimestamp())
+                .put("operation", event.getOperation().value())
+                .put("uids", uids)
+                .build();
+    }
 
-        public boolean isOrdered(Event e1, Event e2) {
-            Date t1 = e1.getTimestamp();
-            Date t2 = e2.getTimestamp();
-            return chronological ? t1.before(t2) : t1.after(t2);
+    private static Event readEvent(ObjectDecoder objectDecoder) {
+        Set<Uid> uids = new HashSet<>();
+        for (Object raw : objectDecoder.getList("uids")) {
+            uids.add(new Uid((byte[]) raw));
+        }
+        return event()
+                .withHash(new Hash(objectDecoder.getRaw("hash")))
+                .withTimestamp(objectDecoder.getDate("timestamp"))
+                .withOperation(Operation.of(objectDecoder.getByte("operation")))
+                .withUids(uids)
+                .build();
+    }
+
+    private static byte[] bytes(IndexEntry entry) {
+        return encoder()
+                .put("name", entry.name)
+                .put("first", entry.first)
+                .put("last", entry.last)
+                .build();
+    }
+
+    private IndexEntry readEntry(ObjectDecoder objectDecoder) {
+        String name = objectDecoder.getString("name");
+        Date first = objectDecoder.getDate("first");
+        Date last = objectDecoder.getDate("last");
+        return new IndexEntry(name, first, last);
+    }
+
+    private class IndexEntry {
+
+        public final String name;
+        public final Date first;
+        public final Date last;
+
+        public IndexEntry(String name, Date first, Date last) {
+            this.name = name;
+            this.first = first;
+            this.last = last;
         }
     }
 }

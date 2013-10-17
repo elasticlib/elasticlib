@@ -49,24 +49,29 @@ public class Store {
     }
 
     public static Store create(Config config) {
+        final Path root = config.getRoot();
         try {
-            Path root = config.getRoot();
             Files.createDirectories(root);
             if (!isEmptyDir(root)) {
                 throw new InvalidStorePathException();
             }
-            List<Volume> volumes = new ArrayList<>();
-            for (Path path : config.getVolumePaths()) {
-                volumes.add(Volume.create(path));
-            }
-            return new Store(TransactionManager.create(root.resolve("transactions")),
-                             IndexManager.create(root.resolve("index")),
-                             HistoryManager.create(root.resolve("history")),
-                             volumes);
-
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
         }
+        final List<Volume> volumes = new ArrayList<>();
+        for (Path path : config.getVolumePaths()) {
+            volumes.add(Volume.create(path));
+        }
+        final TransactionManager txManager = TransactionManager.create(root.resolve("transactions"));
+        return txManager.inTransaction(new Query<Store>() {
+            @Override
+            public Store apply() {
+                return new Store(txManager,
+                                 IndexManager.create(root.resolve("index")),
+                                 HistoryManager.create(root.resolve("history")),
+                                 volumes);
+            }
+        });
     }
 
     private static boolean isEmptyDir(Path dir) throws IOException {
@@ -76,15 +81,21 @@ public class Store {
     }
 
     public static Store open(Config config) {
-        Path root = config.getRoot();
-        List<Volume> volumes = new ArrayList<>();
+        final Path root = config.getRoot();
+        final List<Volume> volumes = new ArrayList<>();
         for (Path path : config.getVolumePaths()) {
             volumes.add(Volume.open(path));
         }
-        return new Store(TransactionManager.open(root.resolve("transactions")),
-                         IndexManager.open(root.resolve("index")),
-                         HistoryManager.open(root.resolve("history")),
-                         volumes);
+        final TransactionManager txManager = TransactionManager.open(root.resolve("transactions"));
+        return txManager.inTransaction(new Query<Store>() {
+            @Override
+            public Store apply() {
+                return new Store(txManager,
+                                 IndexManager.open(root.resolve("index")),
+                                 HistoryManager.open(root.resolve("history")),
+                                 volumes);
+            }
+        });
     }
 
     private Set<Uid> volumeUids() {

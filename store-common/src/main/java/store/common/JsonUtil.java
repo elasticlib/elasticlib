@@ -115,6 +115,7 @@ public final class JsonUtil {
             uids.add(uid.encode());
         }
         return createObjectBuilder()
+                .add("id", event.getId())
                 .add("hash", event.getHash().encode())
                 .add("timestamp", event.getTimestamp().getTime())
                 .add("operation", event.getOperation().name())
@@ -127,6 +128,7 @@ public final class JsonUtil {
             uids.add(new Uid(value.getString()));
         }
         return Event.event()
+                .withId(json.getJsonNumber("id").longValue())
                 .withHash(new Hash(json.getString("hash")))
                 .withTimestamp(new Date(json.getJsonNumber("timestamp").longValue()))
                 .withOperation(Operation.valueOf(json.getString("operation")))

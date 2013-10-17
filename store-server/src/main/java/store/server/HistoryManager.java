@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import store.common.Event;
 import static store.common.Event.event;
 import store.common.Hash;
@@ -27,14 +27,28 @@ import static store.server.transaction.TransactionManager.currentTransactionCont
 public class HistoryManager {
 
     private static final int PAGE_SIZE = 8192;
+    private final AtomicLong nextId;
     private final Path root;
     private final Path latest;
     private final Path index;
 
-    private HistoryManager(Path root) {
+    private HistoryManager(Path root) throws IOException {
         this.root = root;
         latest = root.resolve("latest");
         index = root.resolve("index");
+        nextId = new AtomicLong(initNextId());
+    }
+
+    private long initNextId() throws IOException {
+        Deque<Event> latestEvents = loadPage(latest);
+        if (!latestEvents.isEmpty()) {
+            return latestEvents.getLast().getId() + 1;
+        }
+        Deque<IndexEntry> indexEntries = loadIndex();
+        if (!indexEntries.isEmpty()) {
+            return indexEntries.getLast().last + 1;
+        }
+        return 1;
     }
 
     public static HistoryManager create(Path path) {
@@ -55,7 +69,12 @@ public class HistoryManager {
                 !Files.exists(path.resolve("index"))) {
             throw new InvalidStorePathException();
         }
-        return new HistoryManager(path);
+        try {
+            return new HistoryManager(path);
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
     }
 
     public void put(Hash hash, Set<Uid> uids) {
@@ -69,6 +88,7 @@ public class HistoryManager {
     private void append(Hash hash, Operation operation, Set<Uid> uids) {
         TransactionContext txContext = currentTransactionContext();
         Event event = event()
+                .withId(nextId.getAndIncrement())
                 .withHash(hash)
                 .withTimestamp(txContext.timestamp())
                 .withOperation(operation)
@@ -85,8 +105,8 @@ public class HistoryManager {
             txContext.create(latest);
             try (Output output = txContext.openOutput(index)) {
                 output.write(bytes(new IndexEntry(name,
-                                                  events.getFirst().getTimestamp(),
-                                                  events.getLast().getTimestamp())));
+                                                  events.getFirst().getId(),
+                                                  events.getLast().getId())));
             }
         }
         try (Output output = txContext.openOutput(latest)) {
@@ -148,6 +168,7 @@ public class HistoryManager {
             uids.add(uid.value());
         }
         return encoder()
+                .put("id", event.getId())
                 .put("hash", event.getHash().value())
                 .put("timestamp", event.getTimestamp())
                 .put("operation", event.getOperation().value())
@@ -161,6 +182,7 @@ public class HistoryManager {
             uids.add(new Uid((byte[]) raw));
         }
         return event()
+                .withId(objectDecoder.getLong("id"))
                 .withHash(new Hash(objectDecoder.getRaw("hash")))
                 .withTimestamp(objectDecoder.getDate("timestamp"))
                 .withOperation(Operation.of(objectDecoder.getByte("operation")))
@@ -178,18 +200,18 @@ public class HistoryManager {
 
     private IndexEntry readEntry(ObjectDecoder objectDecoder) {
         String name = objectDecoder.getString("name");
-        Date first = objectDecoder.getDate("first");
-        Date last = objectDecoder.getDate("last");
+        long first = objectDecoder.getLong("first");
+        long last = objectDecoder.getLong("last");
         return new IndexEntry(name, first, last);
     }
 
     private class IndexEntry {
 
         public final String name;
-        public final Date first;
-        public final Date last;
+        public final long first;
+        public final long last;
 
-        public IndexEntry(String name, Date first, Date last) {
+        public IndexEntry(String name, long first, long last) {
             this.name = name;
             this.first = first;
             this.last = last;

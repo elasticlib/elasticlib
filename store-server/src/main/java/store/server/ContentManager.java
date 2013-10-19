@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +17,7 @@ import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-class ContentManager {
+public class ContentManager {
 
     private static final int HEAVY_WRITE_THRESHOLD = 1024;
     private static final int KEY_LENGTH = 2;

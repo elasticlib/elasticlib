@@ -41,7 +41,7 @@ public final class StoreManager {
         this.home = home;
         Optional<Config> config = loadConfig();
         if (config.isPresent()) {
-            store = Optional.of(Store.open(config.get()));
+            store = Optional.of(Store.open(config.get().getRoot()));
         } else {
             store = Optional.absent();
         }
@@ -53,7 +53,7 @@ public final class StoreManager {
             if (store.isPresent()) {
                 throw new StoreAlreadyExists();
             }
-            store = Optional.of(Store.create(config));
+            store = Optional.of(Store.create(config.getRoot()));
             saveConfig(config);
 
         } finally {
@@ -68,9 +68,6 @@ public final class StoreManager {
                 throw new NoStoreException();
             }
             Config config = loadConfig().get();
-            for (Path volume : config.getVolumePaths()) {
-                recursiveDelete(volume);
-            }
             recursiveDelete(config.getRoot());
             Files.delete(home.resolve(CONFIG_PATH));
             store = Optional.absent();

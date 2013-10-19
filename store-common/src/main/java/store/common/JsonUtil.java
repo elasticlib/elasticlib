@@ -5,18 +5,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.json.JsonString;
 import static store.common.ContentInfo.contentInfo;
 
 public final class JsonUtil {
@@ -73,24 +70,13 @@ public final class JsonUtil {
     }
 
     public static JsonObject writeConfig(Config config) {
-        String root = config.getRoot().toAbsolutePath().toString();
-        JsonArrayBuilder volumes = createArrayBuilder();
-        for (Path path : config.getVolumePaths()) {
-            volumes.add(path.toAbsolutePath().toString());
-        }
         return createObjectBuilder()
-                .add("root", root)
-                .add("volumes", volumes)
+                .add("root", config.getRoot().toAbsolutePath().toString())
                 .build();
     }
 
     public static Config readConfig(JsonObject json) {
-        Path root = Paths.get(json.getString("root"));
-        List<Path> volumes = new ArrayList<>();
-        for (JsonString value : json.getJsonArray("volumes").getValuesAs(JsonString.class)) {
-            volumes.add(Paths.get(value.getString()));
-        }
-        return new Config(root, volumes);
+        return new Config(Paths.get(json.getString("root")));
     }
 
     public static JsonArray writeEvents(List<Event> events) {
@@ -110,29 +96,19 @@ public final class JsonUtil {
     }
 
     private static JsonObjectBuilder writeEvent(Event event) {
-        JsonArrayBuilder uids = createArrayBuilder();
-        for (Uid uid : event.getUids()) {
-            uids.add(uid.encode());
-        }
         return createObjectBuilder()
                 .add("seq", event.getSeq())
                 .add("hash", event.getHash().encode())
                 .add("timestamp", event.getTimestamp().getTime())
-                .add("operation", event.getOperation().name())
-                .add("uids", uids);
+                .add("operation", event.getOperation().name());
     }
 
     private static Event readEvent(JsonObject json) {
-        Set<Uid> uids = new HashSet<>();
-        for (JsonString value : json.getJsonArray("uids").getValuesAs(JsonString.class)) {
-            uids.add(new Uid(value.getString()));
-        }
         return Event.event()
                 .withSeq(json.getJsonNumber("seq").longValue())
                 .withHash(new Hash(json.getString("hash")))
                 .withTimestamp(new Date(json.getJsonNumber("timestamp").longValue()))
                 .withOperation(Operation.valueOf(json.getString("operation")))
-                .withUids(uids)
                 .build();
     }
 }

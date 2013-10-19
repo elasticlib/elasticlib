@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-class InfoManager {
+public class InfoManager {
 
     private static final int KEY_LENGTH = 2;
     private final Path root;

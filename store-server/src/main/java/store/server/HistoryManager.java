@@ -5,16 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import store.common.Event;
 import static store.common.Event.event;
 import store.common.Hash;
 import store.common.Operation;
-import store.common.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.io.ObjectDecoder;
@@ -77,22 +74,21 @@ public class HistoryManager {
         }
     }
 
-    public void put(Hash hash, Set<Uid> uids) {
-        append(hash, Operation.PUT, uids);
+    public void put(Hash hash) {
+        append(hash, Operation.PUT);
     }
 
-    public void delete(Hash hash, Set<Uid> uids) {
-        append(hash, Operation.DELETE, uids);
+    public void delete(Hash hash) {
+        append(hash, Operation.DELETE);
     }
 
-    private void append(Hash hash, Operation operation, Set<Uid> uids) {
+    private void append(Hash hash, Operation operation) {
         TransactionContext txContext = currentTransactionContext();
         Event event = event()
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
                 .withTimestamp(txContext.timestamp())
                 .withOperation(operation)
-                .withUids(uids)
                 .build();
 
         byte[] bytes = bytes(event);
@@ -220,30 +216,20 @@ public class HistoryManager {
     }
 
     private static byte[] bytes(Event event) {
-        List<byte[]> uids = new ArrayList<>();
-        for (Uid uid : event.getUids()) {
-            uids.add(uid.value());
-        }
         return encoder()
                 .put("seq", event.getSeq())
                 .put("hash", event.getHash().value())
                 .put("timestamp", event.getTimestamp())
                 .put("operation", event.getOperation().value())
-                .put("uids", uids)
                 .build();
     }
 
     private static Event readEvent(ObjectDecoder objectDecoder) {
-        Set<Uid> uids = new HashSet<>();
-        for (Object raw : objectDecoder.getList("uids")) {
-            uids.add(new Uid((byte[]) raw));
-        }
         return event()
                 .withSeq(objectDecoder.getLong("seq"))
                 .withHash(new Hash(objectDecoder.getRaw("hash")))
                 .withTimestamp(objectDecoder.getDate("timestamp"))
                 .withOperation(Operation.of(objectDecoder.getByte("operation")))
-                .withUids(uids)
                 .build();
     }
 

@@ -2,11 +2,8 @@ package store.client;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
@@ -46,15 +43,8 @@ public final class App {
         CREATE {
             @Override
             public void execute(List<String> params) {
-                Iterator<String> it = params.iterator();
-                Path root = Paths.get(it.next());
-                List<Path> volumes = new ArrayList<>();
-                while (it.hasNext()) {
-                    volumes.add(Paths.get(it.next()));
-                }
-                Config config = new Config(root, volumes);
                 try (StoreClient client = new StoreClient()) {
-                    client.create(config);
+                    client.create(new Config(Paths.get(params.get(0))));
                 }
             }
         },
@@ -194,11 +184,6 @@ public final class App {
                 .append("Date")
                 .append(comma())
                 .append(event.getTimestamp())
-                .append(System.lineSeparator())
-                .append(indent())
-                .append(event.getUids().size() > 1 ? "Volumes" : "Volume")
-                .append(comma())
-                .append(Joiner.on(", ").join(event.getUids()))
                 .append(System.lineSeparator())
                 .toString();
     }

@@ -27,7 +27,7 @@ import static store.server.transaction.TransactionManager.currentTransactionCont
 public class HistoryManager {
 
     private static final int PAGE_SIZE = 8192;
-    private final AtomicLong nextId;
+    private final AtomicLong nextSeq;
     private final Path root;
     private final Path latest;
     private final Path index;
@@ -36,13 +36,13 @@ public class HistoryManager {
         this.root = root;
         latest = root.resolve("latest");
         index = root.resolve("index");
-        nextId = new AtomicLong(initNextId());
+        nextSeq = new AtomicLong(initNextSeq());
     }
 
-    private long initNextId() throws IOException {
+    private long initNextSeq() throws IOException {
         Deque<Event> latestEvents = loadPage(latest);
         if (!latestEvents.isEmpty()) {
-            return latestEvents.getLast().getId() + 1;
+            return latestEvents.getLast().getSeq() + 1;
         }
         Deque<IndexEntry> indexEntries = loadIndex();
         if (!indexEntries.isEmpty()) {
@@ -88,7 +88,7 @@ public class HistoryManager {
     private void append(Hash hash, Operation operation, Set<Uid> uids) {
         TransactionContext txContext = currentTransactionContext();
         Event event = event()
-                .withId(nextId.getAndIncrement())
+                .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
                 .withTimestamp(txContext.timestamp())
                 .withOperation(operation)
@@ -105,8 +105,8 @@ public class HistoryManager {
             txContext.create(latest);
             try (Output output = txContext.openOutput(index)) {
                 output.write(bytes(new IndexEntry(name,
-                                                  events.getFirst().getId(),
-                                                  events.getLast().getId())));
+                                                  events.getFirst().getSeq(),
+                                                  events.getLast().getSeq())));
             }
         }
         try (Output output = txContext.openOutput(latest)) {
@@ -169,15 +169,15 @@ public class HistoryManager {
             while (!toAdd.isEmpty() && !isFull()) {
                 if (chronological) {
                     Event event = toAdd.removeFirst();
-                    if (event.getId() > cursor) {
-                        cursor = event.getId();
+                    if (event.getSeq() > cursor) {
+                        cursor = event.getSeq();
                         remainder--;
                         events.add(event);
                     }
                 } else {
                     Event event = toAdd.removeLast();
-                    if (event.getId() < cursor) {
-                        cursor = event.getId();
+                    if (event.getSeq() < cursor) {
+                        cursor = event.getSeq();
                         remainder--;
                         events.add(event);
                     }
@@ -225,7 +225,7 @@ public class HistoryManager {
             uids.add(uid.value());
         }
         return encoder()
-                .put("id", event.getId())
+                .put("seq", event.getSeq())
                 .put("hash", event.getHash().value())
                 .put("timestamp", event.getTimestamp())
                 .put("operation", event.getOperation().value())
@@ -239,7 +239,7 @@ public class HistoryManager {
             uids.add(new Uid((byte[]) raw));
         }
         return event()
-                .withId(objectDecoder.getLong("id"))
+                .withSeq(objectDecoder.getLong("seq"))
                 .withHash(new Hash(objectDecoder.getRaw("hash")))
                 .withTimestamp(objectDecoder.getDate("timestamp"))
                 .withOperation(Operation.of(objectDecoder.getByte("operation")))

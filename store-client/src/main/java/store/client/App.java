@@ -119,7 +119,7 @@ public final class App {
                     do {
                         events = client.history(false, cursor, 20);
                         for (Event event : events) {
-                            cursor = event.getId();
+                            cursor = event.getSeq();
                             System.out.println(asString(event));
                         }
                     } while (!events.isEmpty() && cursor > 1);

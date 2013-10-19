@@ -6,22 +6,22 @@ import java.util.Set;
 
 public class Event {
 
-    private final long id;
+    private final long seq;
     private final Hash hash;
     private final Date timestamp;
     private final Operation operation;
     private final Set<Uid> uids;
 
     private Event(EventBuilder builder) {
-        this.id = builder.id;
+        this.seq = builder.seq;
         this.hash = builder.hash;
         this.timestamp = builder.timestamp;
         this.operation = builder.operation;
         this.uids = builder.uids;
     }
 
-    public long getId() {
-        return id;
+    public long getSeq() {
+        return seq;
     }
 
     public Hash getHash() {
@@ -46,7 +46,7 @@ public class Event {
 
     public static class EventBuilder {
 
-        private Long id;
+        private Long seq;
         private Hash hash;
         private Date timestamp;
         private Operation operation;
@@ -55,8 +55,8 @@ public class Event {
         private EventBuilder() {
         }
 
-        public EventBuilder withId(long id) {
-            this.id = id;
+        public EventBuilder withSeq(long seq) {
+            this.seq = seq;
             return this;
         }
 

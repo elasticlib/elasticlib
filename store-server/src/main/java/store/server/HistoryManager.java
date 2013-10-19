@@ -114,30 +114,87 @@ public class HistoryManager {
         }
     }
 
-    public List<Event> history(boolean chronological) {
-        LinkedList<Event> events = new LinkedList<>();
-        Deque<Event> latestEvents = loadPage(latest);
+    public List<Event> history(boolean chronological, long first, int number) {
+        Collector collector = new Collector(chronological, first, number);
         if (chronological) {
-            addAll(events, latestEvents, chronological);
+            return chronologicalHistory(collector);
         }
-        Deque<IndexEntry> entries = loadIndex();
-        while (!entries.isEmpty()) {
-            IndexEntry entry = chronological ? entries.removeLast() : entries.removeFirst();
-            addAll(events, loadPage(root.resolve(entry.name)), chronological);
-        }
-        if (!chronological) {
-            addAll(events, latestEvents, chronological);
-        }
-        return events;
+        return anteChronologicalHistory(collector);
     }
 
-    private static void addAll(LinkedList<Event> events, Deque<Event> toAdd, boolean chronological) {
-        for (Event event : toAdd) {
-            if (chronological) {
-                events.addLast(event);
-            } else {
-                events.addFirst(event);
+    private List<Event> chronologicalHistory(Collector collector) {
+        Deque<Event> latestEvents = loadPage(latest);
+        Deque<IndexEntry> entries = loadIndex();
+        while (!entries.isEmpty() && !collector.isFull()) {
+            IndexEntry entry = entries.removeFirst();
+            if (entry.last > collector.cursor) {
+                collector.addAll(loadPage(root.resolve(entry.name)));
             }
+        }
+        collector.addAll(latestEvents);
+        return collector.getEvents();
+    }
+
+    private List<Event> anteChronologicalHistory(Collector collector) {
+        Deque<Event> latestEvents = loadPage(latest);
+        collector.addAll(latestEvents);
+        if (collector.isFull()) {
+            return collector.getEvents();
+        }
+        Deque<IndexEntry> entries = loadIndex();
+        while (!entries.isEmpty() && !collector.isFull()) {
+            IndexEntry entry = entries.removeLast();
+            if (entry.first < collector.cursor) {
+                collector.addAll(loadPage(root.resolve(entry.name)));
+            }
+        }
+        return collector.getEvents();
+    }
+
+    private static class Collector {
+
+        private final List<Event> events;
+        private final boolean chronological;
+        private long cursor;
+        private int remainder;
+
+        public Collector(boolean chronological, long first, int number) {
+            events = new ArrayList<>(number);
+            this.chronological = chronological;
+            this.cursor = first;
+            this.remainder = number;
+        }
+
+        public void addAll(Deque<Event> toAdd) {
+            while (!toAdd.isEmpty() && !isFull()) {
+                if (chronological) {
+                    Event event = toAdd.removeFirst();
+                    if (event.getId() > cursor) {
+                        cursor = event.getId();
+                        remainder--;
+                        events.add(event);
+                    }
+                } else {
+                    Event event = toAdd.removeLast();
+                    if (event.getId() < cursor) {
+                        cursor = event.getId();
+                        remainder--;
+                        events.add(event);
+                    }
+                }
+            }
+        }
+
+        public long cursor() {
+            return cursor;
+        }
+
+        public boolean isFull() {
+            return remainder == 0;
+        }
+
+        public List<Event> getEvents() {
+            return events;
         }
     }
 

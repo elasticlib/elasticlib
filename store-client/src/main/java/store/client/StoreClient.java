@@ -170,8 +170,11 @@ public class StoreClient implements Closeable {
         return readContentInfos(response.readEntity(JsonArray.class));
     }
 
-    public List<Event> history() {
-        Response response = target.path("history")
+    public List<Event> history(boolean chronological, long first, int number) {
+        Response response = target.path("history/{chronological}/{first}/{number}")
+                .resolveTemplate("chronological", chronological)
+                .resolveTemplate("first", first)
+                .resolveTemplate("number", number)
                 .request()
                 .get();
 

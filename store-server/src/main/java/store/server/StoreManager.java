@@ -161,11 +161,11 @@ public final class StoreManager {
         });
     }
 
-    public List<Event> history() {
+    public List<Event> history(final boolean chronological, final long first, final int number) {
         return readLocked(new Request<List<Event>>() {
             @Override
             public List<Event> apply(Store store) {
-                return store.history();
+                return store.history(chronological, first, number);
             }
         });
     }

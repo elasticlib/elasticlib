@@ -205,11 +205,11 @@ public class Store {
         return results;
     }
 
-    public List<Event> history() {
+    public List<Event> history(final boolean chronological, final long first, final int number) {
         return transactionManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {
-                return historyManager.history(false);
+                return historyManager.history(chronological, first, number);
             }
         });
     }

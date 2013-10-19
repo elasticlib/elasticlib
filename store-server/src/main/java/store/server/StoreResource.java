@@ -102,8 +102,10 @@ public class StoreResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("history")
-    public JsonArray history() {
-        return writeEvents(storeManager.history());
+    @Path("history/{chronological}/{first}/{number}")
+    public JsonArray history(@PathParam("chronological") boolean chronological,
+                             @PathParam("first") long first,
+                             @PathParam("number") int number) {
+        return writeEvents(storeManager.history(chronological, first, number));
     }
 }

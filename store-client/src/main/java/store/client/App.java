@@ -114,9 +114,15 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    for (Event event : client.history()) {
-                        System.out.println(asString(event));
-                    }
+                    long cursor = Long.MAX_VALUE;
+                    List<Event> events;
+                    do {
+                        events = client.history(false, cursor, 20);
+                        for (Event event : events) {
+                            cursor = event.getId();
+                            System.out.println(asString(event));
+                        }
+                    } while (!events.isEmpty() && cursor > 1);
                 }
             }
         },

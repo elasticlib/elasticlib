@@ -31,7 +31,21 @@ public class Input extends InputStream {
     @Override
     public int read(byte[] bytes, int offset, int length) {
         try {
-            return delegate.read(bytes, offset, length);
+            int pos = delegate.read(bytes, offset, length);
+            if (pos == -1) {
+                return pos;
+            }
+            while (pos != length) {
+                if (pos > length) {
+                    throw new RuntimeException();
+                }
+                int ret = delegate.read(bytes, offset + pos, length - pos);
+                if (ret == -1) {
+                    return pos;
+                }
+                pos += ret;
+            }
+            return pos;
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             throw new RuntimeException(e);

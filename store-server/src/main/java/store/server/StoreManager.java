@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.FileVisitResult;
@@ -14,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -26,8 +29,10 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
+import store.server.exception.ConcurrentOperationException;
 import store.server.exception.NoStoreException;
 import store.server.exception.StoreAlreadyExists;
+import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
 
 public final class StoreManager {
@@ -36,14 +41,18 @@ public final class StoreManager {
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Optional<Store> store;
+    private Optional<Index> index;
 
     public StoreManager(Path home) {
         this.home = home;
         Optional<Config> config = loadConfig();
         if (config.isPresent()) {
-            store = Optional.of(Store.open(config.get().getRoot()));
+            Path root = config.get().getRoot();
+            store = Optional.of(Store.open(root.resolve("store")));
+            index = Optional.of(Index.open(root.resolve("index")));
         } else {
             store = Optional.absent();
+            index = Optional.absent();
         }
     }
 
@@ -53,7 +62,9 @@ public final class StoreManager {
             if (store.isPresent()) {
                 throw new StoreAlreadyExists();
             }
-            store = Optional.of(Store.create(config.getRoot()));
+            Path root = config.getRoot();
+            store = Optional.of(Store.create(root.resolve("store")));
+            index = Optional.of(Index.create(root.resolve("index")));
             saveConfig(config);
 
         } finally {
@@ -67,8 +78,7 @@ public final class StoreManager {
             if (!store.isPresent()) {
                 throw new NoStoreException();
             }
-            Config config = loadConfig().get();
-            recursiveDelete(config.getRoot());
+            recursiveDelete(loadConfig().get().getRoot());
             Files.delete(home.resolve(CONFIG_PATH));
             store = Optional.absent();
 
@@ -104,8 +114,24 @@ public final class StoreManager {
     public void put(final ContentInfo contentInfo, final InputStream source) {
         readLocked(new Request<Void>() {
             @Override
-            public Void apply(Store store) {
+            public Void apply(final Store store) {
                 store.put(contentInfo, source);
+                try (PipedInputStream in = new PipedInputStream()) {
+                    new Thread(new Runnable() {
+                        public void run() {
+                            try (PipedOutputStream out = new PipedOutputStream(in)) {
+                                store.get(contentInfo.getHash(), out);
+
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }).start();
+                    index.get().put(contentInfo, in);
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 return null;
             }
         });
@@ -116,6 +142,7 @@ public final class StoreManager {
             @Override
             public Void apply(Store store) {
                 store.delete(hash);
+                index.get().delete(hash);
                 return null;
             }
         });
@@ -153,7 +180,16 @@ public final class StoreManager {
         return readLocked(new Request<List<ContentInfo>>() {
             @Override
             public List<ContentInfo> apply(Store store) {
-                return store.find(query);
+                List<Hash> hashes = index.get().find(query);
+                List<ContentInfo> results = new ArrayList<>(hashes.size());
+                for (Hash hash : hashes) {
+                    try {
+                        results.add(store.info(hash));
+
+                    } catch (UnknownHashException | ConcurrentOperationException e) {
+                    }
+                }
+                return results;
             }
         });
     }

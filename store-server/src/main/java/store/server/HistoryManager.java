@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class HistoryManager {
         Event event = event()
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
-                .withTimestamp(txContext.timestamp())
+                .withTimestamp(new Date())
                 .withOperation(operation)
                 .build();
 

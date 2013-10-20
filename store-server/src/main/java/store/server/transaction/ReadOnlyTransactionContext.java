@@ -1,7 +1,6 @@
 package store.server.transaction;
 
 import java.nio.file.Path;
-import java.util.Date;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.filesystem.exceptions.FileNotExistsException;
 import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
@@ -11,15 +10,9 @@ import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 final class ReadOnlyTransactionContext implements TransactionContext {
 
     private final Session session;
-    private final Date timestamp = new Date();
 
     public ReadOnlyTransactionContext(Session session) {
         this.session = session;
-    }
-
-    @Override
-    public Date timestamp() {
-        return timestamp;
     }
 
     @Override

@@ -2,7 +2,6 @@ package store.server.transaction;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Date;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.filesystem.exceptions.DirectoryNotEmptyException;
 import org.xadisk.filesystem.exceptions.FileAlreadyExistsException;
@@ -15,15 +14,9 @@ import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 final class ReadWriteTransactionContext implements TransactionContext {
 
     private final Session session;
-    private final Date timestamp = new Date();
 
     public ReadWriteTransactionContext(Session session) {
         this.session = session;
-    }
-
-    @Override
-    public Date timestamp() {
-        return timestamp;
     }
 
     @Override

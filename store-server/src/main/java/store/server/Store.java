@@ -14,43 +14,35 @@ import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
-import store.common.Properties.Common;
 import store.common.Uid;
-import store.server.exception.ConcurrentOperationException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
-import store.server.index.IndexManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
-import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 public class Store {
 
     private final Uid uid;
     private final TransactionManager transactionManager;
-    private final IndexManager indexManager;
     private final HistoryManager historyManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
     private Store(Uid uid,
                   TransactionManager transactionManager,
-                  IndexManager indexManager,
                   HistoryManager historyManager,
                   InfoManager infoManager,
                   ContentManager contentManager) {
         this.uid = uid;
         this.transactionManager = transactionManager;
-        this.indexManager = indexManager;
         this.historyManager = historyManager;
         this.infoManager = infoManager;
         this.contentManager = contentManager;
@@ -73,7 +65,6 @@ public class Store {
                 writeUid(path.resolve("uid"), uid);
                 return new Store(uid,
                                  txManager,
-                                 IndexManager.create(path.resolve("index")),
                                  HistoryManager.create(path.resolve("history")),
                                  InfoManager.create(path.resolve("info")),
                                  ContentManager.create(path.resolve("content")));
@@ -94,7 +85,6 @@ public class Store {
             public Store apply() {
                 return new Store(readUid(path.resolve("uid")),
                                  txManager,
-                                 IndexManager.open(path.resolve("index")),
                                  HistoryManager.open(path.resolve("history")),
                                  InfoManager.open(path.resolve("info")),
                                  ContentManager.open(path.resolve("content")));
@@ -135,19 +125,9 @@ public class Store {
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
-                ContentInfo info = contentInfo.with(Common.CAPTURE_DATE.key(),
-                                                    currentTransactionContext().timestamp());
-                try {
-                    contentManager.put(contentInfo, source);
-                    infoManager.put(contentInfo);
-                    try (InputStream inputstream = contentManager.get(hash)) {
-                        indexManager.index(info, inputstream);
-                    }
-                    historyManager.put(hash);
-
-                } catch (IOException e) {
-                    throw new WriteException(e);
-                }
+                contentManager.put(contentInfo, source);
+                infoManager.put(contentInfo);
+                historyManager.put(hash);
             }
         });
     }
@@ -201,24 +181,6 @@ public class Store {
                 return null;
             }
         });
-    }
-
-    public List<ContentInfo> find(final String query) {
-        List<Hash> hashes = transactionManager.inTransaction(new Query<List<Hash>>() {
-            @Override
-            public List<Hash> apply() {
-                return indexManager.find(query);
-            }
-        });
-        List<ContentInfo> results = new ArrayList<>(hashes.size());
-        for (Hash hash : hashes) {
-            try {
-                results.add(info(hash));
-
-            } catch (UnknownHashException | ConcurrentOperationException e) {
-            }
-        }
-        return results;
     }
 
     public List<Event> history(final boolean chronological, final long first, final int number) {

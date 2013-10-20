@@ -8,6 +8,7 @@ import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,6 +44,7 @@ import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.writeConfig;
 import static store.common.JsonUtil.writeContentInfo;
+import static store.common.Properties.Common.CAPTURE_DATE;
 
 public class StoreClient implements Closeable {
 
@@ -95,6 +97,7 @@ public class StoreClient implements Closeable {
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
                 .withMetadata(metadata(filepath))
+                .with(CAPTURE_DATE.key(), new Date())
                 .build();
 
         Response response = target.path("contains/{hash}")

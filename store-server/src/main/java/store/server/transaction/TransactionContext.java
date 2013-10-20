@@ -1,11 +1,8 @@
 package store.server.transaction;
 
 import java.nio.file.Path;
-import java.util.Date;
 
 public interface TransactionContext {
-
-    Date timestamp();
 
     boolean exists(Path path);
 

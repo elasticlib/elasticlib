@@ -176,7 +176,7 @@ public final class StoreManager {
         });
     }
 
-    List<ContentInfo> find(final String query) {
+    public List<ContentInfo> find(final String query) {
         return readLocked(new Request<List<ContentInfo>>() {
             @Override
             public List<ContentInfo> apply(Store store) {

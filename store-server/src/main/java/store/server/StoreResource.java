@@ -137,32 +137,31 @@ public class StoreResource {
 
     @POST
     @Path("delete/{hash}")
-    public Response delete(@PathParam("hash") String encodedHash) {
-        storeManager.delete(new Hash(encodedHash));
+    public Response delete(@PathParam("hash") Hash hash) {
+        storeManager.delete(hash);
         return Response.ok().build();
     }
 
     @GET
     @Path("contains/{hash}")
-    public Response contains(@PathParam("hash") String encodedHash) {
+    public Response contains(@PathParam("hash") Hash hash) {
         return Response.ok()
-                .entity(storeManager.contains(new Hash(encodedHash)))
+                .entity(storeManager.contains(hash))
                 .build();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("info/{hash}")
-    public JsonObject info(@PathParam("hash") String encodedHash) {
-        ContentInfo info = storeManager.info(new Hash(encodedHash));
+    public JsonObject info(@PathParam("hash") Hash hash) {
+        ContentInfo info = storeManager.info(hash);
         return writeContentInfo(info);
     }
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("get/{hash}")
-    public Response get(@PathParam("hash") String encodedHash) {
-        final Hash hash = new Hash(encodedHash);
+    public Response get(@PathParam("hash") final Hash hash) {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {

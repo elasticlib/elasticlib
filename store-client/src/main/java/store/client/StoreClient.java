@@ -38,6 +38,7 @@ import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
 import store.common.Event;
+import store.common.Hash;
 import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
@@ -75,11 +76,11 @@ public class StoreClient implements Closeable {
                 .build();
     }
 
-    // TODO pourrait retourner la response afin d'inliner les appels
-    private static void ensureOk(Response response) {
+    private Response ensureOk(Response response) {
         if (response.getStatus() != Status.OK.getStatusCode()) {
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }
+        return response;
     }
 
     public void createVolume(Path path) {
@@ -171,9 +172,7 @@ public class StoreClient implements Closeable {
                 .request()
                 .get();
 
-        ensureOk(response);
-        return readConfig(response.readEntity(JsonObject.class));
-
+        return readConfig(ensureOk(response).readEntity(JsonObject.class));
     }
 
     public void put(Path filepath) {
@@ -190,8 +189,7 @@ public class StoreClient implements Closeable {
                 .request()
                 .get();
 
-        ensureOk(response);
-        if (response.readEntity(Boolean.class)) {
+        if (ensureOk(response).readEntity(Boolean.class)) {
             throw new RequestFailedException("This content is already stored");
         }
 
@@ -214,34 +212,30 @@ public class StoreClient implements Closeable {
         }
     }
 
-    // FIXME laisser jersey s'occuper d'encoder les paramètres ! Idem sur les méthodes suivantes
-    public void delete(String encodedHash) {
+    public void delete(Hash hash) {
         ensureOk(target.path("delete/{hash}")
-                .resolveTemplate("hash", encodedHash)
+                .resolveTemplate("hash", hash)
                 .request()
                 .method(POST));
     }
 
-    public ContentInfo info(String encodedHash) {
+    public ContentInfo info(Hash hash) {
         Response response = target.path("info/{hash}")
-                .resolveTemplate("hash", encodedHash)
+                .resolveTemplate("hash", hash)
                 .request()
                 .get();
 
-        ensureOk(response);
-        return readContentInfo(response.readEntity(JsonObject.class));
+        return readContentInfo(ensureOk(response).readEntity(JsonObject.class));
     }
 
-    public void get(String encodedHash) {
+    public void get(Hash hash) {
         Response response = target.path("get/{hash}")
-                .resolveTemplate("hash", encodedHash)
+                .resolveTemplate("hash", hash)
                 .request()
                 .get();
 
-        ensureOk(response);
-
-        try (InputStream inputStream = response.readEntity(InputStream.class);
-                OutputStream outputStream = new DefferedFileOutputStream(Paths.get(encodedHash))) {
+        try (InputStream inputStream = ensureOk(response).readEntity(InputStream.class);
+                OutputStream outputStream = new DefferedFileOutputStream(Paths.get(hash.encode()))) {
             copy(inputStream, outputStream);
 
         } catch (IOException e) {
@@ -255,8 +249,7 @@ public class StoreClient implements Closeable {
                 .request()
                 .get();
 
-        ensureOk(response);
-        return readContentInfos(response.readEntity(JsonArray.class));
+        return readContentInfos(ensureOk(response).readEntity(JsonArray.class));
     }
 
     public List<Event> history(boolean chronological, long first, int number) {
@@ -267,8 +260,7 @@ public class StoreClient implements Closeable {
                 .request()
                 .get();
 
-        ensureOk(response);
-        return readEvents(response.readEntity(JsonArray.class));
+        return readEvents(ensureOk(response).readEntity(JsonArray.class));
     }
 
     @Override

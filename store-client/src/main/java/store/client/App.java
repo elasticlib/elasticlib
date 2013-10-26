@@ -17,6 +17,7 @@ import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Event;
+import store.common.Hash;
 import store.common.Properties;
 import store.common.Property;
 import store.common.Uid;
@@ -174,7 +175,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    client.delete(params.get(0));
+                    client.delete(new Hash(params.get(0)));
                 }
             }
         },
@@ -182,7 +183,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    client.get(params.get(0));
+                    client.get(new Hash(params.get(0)));
                 }
             }
         },
@@ -190,7 +191,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    ContentInfo info = client.info(params.get(0));
+                    ContentInfo info = client.info(new Hash(params.get(0)));
                     System.out.println(asString(info));
                 }
             }

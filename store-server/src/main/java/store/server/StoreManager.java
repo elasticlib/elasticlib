@@ -1,14 +1,11 @@
 package store.server;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.FileVisitResult;
@@ -17,7 +14,10 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
@@ -29,162 +29,303 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
+import store.common.Uid;
 import store.server.exception.ConcurrentOperationException;
-import store.server.exception.NoStoreException;
-import store.server.exception.StoreAlreadyExists;
+import store.server.exception.NoIndexException;
+import store.server.exception.NoVolumeException;
 import store.server.exception.UnknownHashException;
+import store.server.exception.UnknownIndexException;
+import store.server.exception.UnknownVolumeException;
 import store.server.exception.WriteException;
 
 public final class StoreManager {
 
-    private static final String CONFIG_PATH = "store.config";
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private Optional<Store> store;
-    private Optional<Index> index;
+    private final Config config;
+    private final Map<Uid, Volume> volumes = new HashMap<>();
+    private final Map<Uid, Index> indexes = new HashMap<>();
 
     public StoreManager(Path home) {
         this.home = home;
-        Optional<Config> config = loadConfig();
-        if (config.isPresent()) {
-            Path root = config.get().getRoot();
-            store = Optional.of(Store.open(root.resolve("store")));
-            index = Optional.of(Index.open(root.resolve("index")));
-        } else {
-            store = Optional.absent();
-            index = Optional.absent();
+        config = loadConfig();
+        for (Entry<Uid, Path> entry : config.getVolumes().entrySet()) {
+            Volume volume = Volume.open(entry.getValue());
+            volumes.put(entry.getKey(), volume);
+        }
+        for (Entry<Uid, Path> entry : config.getIndexes().entrySet()) {
+            Index index = Index.open(entry.getValue());
+            indexes.put(entry.getKey(), index);
         }
     }
 
-    public void create(Config config) {
+    public void createVolume(Path path) {
         lock.writeLock().lock();
         try {
-            if (store.isPresent()) {
-                throw new StoreAlreadyExists();
-            }
-            Path root = config.getRoot();
-            store = Optional.of(Store.create(root.resolve("store")));
-            index = Optional.of(Index.create(root.resolve("index")));
-            saveConfig(config);
+            Uid uid = Uid.random();
+            Volume volume = Volume.create(path);
+            config.addVolume(uid, path);
+            saveConfig();
+            volumes.put(uid, volume);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void drop() {
+    public void dropVolume(Uid uid) {
         lock.writeLock().lock();
         try {
-            if (!store.isPresent()) {
-                throw new NoStoreException();
+            if (!config.getVolumes().containsKey(uid)) {
+                throw new UnknownVolumeException();
             }
-            recursiveDelete(loadConfig().get().getRoot());
-            Files.delete(home.resolve(CONFIG_PATH));
-            store = Optional.absent();
+            Path path = config.getVolumes().get(uid);
+            Map<Uid, Path> indexesToDrop = new HashMap<>();
+            for (Uid indexId : config.getIndexes(uid)) {
+                indexesToDrop.put(indexId, config.getIndexes().get(indexId));
+            }
 
+            config.removeVolume(uid);
+            saveConfig();
+
+            volumes.remove(uid).close();
+            recursiveDelete(path);
+            for (Entry<Uid, Path> entry : indexesToDrop.entrySet()) {
+                indexes.remove(entry.getKey());
+                recursiveDelete(entry.getValue());
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void createIndex(Path path, Uid volumeId) {
+        lock.writeLock().lock();
+        try {
+            Uid uid = Uid.random();
+            Index index = Index.create(path);
+            config.addIndex(uid, path, volumeId);
+            saveConfig();
+            indexes.put(uid, index);
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void dropIndex(Uid uid) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getIndexes().containsKey(uid)) {
+                throw new UnknownIndexException();
+            }
+            Path path = config.getIndexes().get(uid);
+            config.removeIndex(uid);
+            saveConfig();
+            recursiveDelete(path);
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private static void recursiveDelete(Path path) {
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                    if (e == null) {
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+
+                    } else {
+                        throw e;
+                    }
+                }
+            });
         } catch (IOException e) {
             throw new WriteException(e);
+        }
+    }
+
+    public void setWrite(Uid uid) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getVolumes().containsKey(uid)) {
+                throw new UnknownVolumeException();
+            }
+            config.setWrite(uid);
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+
+    }
+
+    public void unsetWrite() {
+        lock.writeLock().lock();
+        try {
+            config.unsetWrite();
+            saveConfig();
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    private static void recursiveDelete(Path path) throws IOException {
-        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
+    public void setRead(Uid uid) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getVolumes().containsKey(uid)) {
+                throw new UnknownVolumeException();
             }
+            config.setRead(uid);
+            saveConfig();
 
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                if (e == null) {
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 
-                } else {
-                    throw e;
-                }
+    public void unsetRead() {
+        lock.writeLock().lock();
+        try {
+            config.unsetRead();
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void setSearch(Uid uid) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getIndexes().containsKey(uid)) {
+                throw new UnknownIndexException();
             }
-        });
+            config.setSearch(uid);
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void unsetSearch() {
+        lock.writeLock().lock();
+        try {
+            config.unsetSearch();
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void sync(Uid source, Uid destination) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getVolumes().containsKey(source) || !config.getVolumes().containsKey(destination)) {
+                throw new UnknownVolumeException();
+            }
+            config.sync(source, destination);
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void unsync(Uid source, Uid destination) {
+        lock.writeLock().lock();
+        try {
+            if (!config.getVolumes().containsKey(source) || !config.getVolumes().containsKey(destination)) {
+                throw new UnknownVolumeException();
+            }
+            config.unsync(source, destination);
+            saveConfig();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public Config config() {
+        lock.readLock().lock();
+        try {
+            return config;
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {
-        readLocked(new Request<Void>() {
+        readLocked(new Command() {
             @Override
-            public Void apply(final Store store) {
-                store.put(contentInfo, source);
-                try (PipedInputStream in = new PipedInputStream()) {
-                    new Thread(new Runnable() {
-                        public void run() {
-                            try (PipedOutputStream out = new PipedOutputStream(in)) {
-                                store.get(contentInfo.getHash(), out);
-
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    }).start();
-                    index.get().put(contentInfo, in);
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                return null;
+            public void apply(Volume volume) {
+                volume.put(contentInfo, source);
             }
         });
     }
 
     public void delete(final Hash hash) {
-        readLocked(new Request<Void>() {
+        readLocked(new Command() {
             @Override
-            public Void apply(Store store) {
-                store.delete(hash);
-                index.get().delete(hash);
-                return null;
+            public void apply(Volume volume) {
+                volume.delete(hash);
             }
         });
     }
 
     public boolean contains(final Hash hash) {
-        return readLocked(new Request<Boolean>() {
+        return readLocked(new Query<Boolean>() {
             @Override
-            public Boolean apply(Store store) {
-                return store.contains(hash);
+            public Boolean apply(Volume volume) {
+                return volume.contains(hash);
             }
         });
     }
 
     public ContentInfo info(final Hash hash) {
-        return readLocked(new Request<ContentInfo>() {
+        return readLocked(new Query<ContentInfo>() {
             @Override
-            public ContentInfo apply(Store store) {
-                return store.info(hash);
+            public ContentInfo apply(Volume volume) {
+                return volume.info(hash);
             }
         });
     }
 
     public void get(final Hash hash, final OutputStream outputStream) {
-        readLocked(new Request<Void>() {
+        readLocked(new Query<Void>() {
             @Override
-            public Void apply(Store store) {
-                store.get(hash, outputStream);
+            public Void apply(Volume volume) {
+                volume.get(hash, outputStream);
                 return null;
             }
         });
     }
 
     public List<ContentInfo> find(final String query) {
-        return readLocked(new Request<List<ContentInfo>>() {
+        return readLocked(new Query<List<ContentInfo>>() {
             @Override
-            public List<ContentInfo> apply(Store store) {
-                List<Hash> hashes = index.get().find(query);
+            public List<ContentInfo> apply(Volume volume) {
+                if (!config.getSearch().isPresent()) {
+                    throw new NoIndexException();
+                }
+                List<Hash> hashes = indexes.get(config.getSearch().get()).find(query);
                 List<ContentInfo> results = new ArrayList<>(hashes.size());
                 for (Hash hash : hashes) {
                     try {
-                        results.add(store.info(hash));
+                        results.add(volume.info(hash));
 
                     } catch (UnknownHashException | ConcurrentOperationException e) {
                     }
@@ -195,51 +336,69 @@ public final class StoreManager {
     }
 
     public List<Event> history(final boolean chronological, final long first, final int number) {
-        return readLocked(new Request<List<Event>>() {
+        return readLocked(new Query<List<Event>>() {
             @Override
-            public List<Event> apply(Store store) {
-                return store.history(chronological, first, number);
+            public List<Event> apply(Volume volume) {
+                return volume.history(chronological, first, number);
             }
         });
     }
 
-    private <T> T readLocked(Request<T> request) {
+    private void readLocked(Command command) {
         lock.readLock().lock();
         try {
-            if (!store.isPresent()) {
-                throw new NoStoreException();
+            if (!config.getWrite().isPresent()) {
+                throw new NoVolumeException();
             }
-            return request.apply(store.get());
+            command.apply(volumes.get(config.getWrite().get()));
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private interface Request<T> {
+    private interface Command {
 
-        T apply(Store store);
+        void apply(Volume volume);
     }
 
-    private Optional<Config> loadConfig() {
-        Path path = home.resolve(CONFIG_PATH);
+    private <T> T readLocked(Query<T> query) {
+        lock.readLock().lock();
+        try {
+            if (!config.getRead().isPresent()) {
+                throw new NoVolumeException();
+            }
+            return query.apply(volumes.get(config.getRead().get()));
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private interface Query<T> {
+
+        T apply(Volume volume);
+    }
+
+    private Config loadConfig() {
+        Path path = home.resolve("config");
         if (!Files.exists(path)) {
-            return Optional.absent();
+            return new Config();
         }
         try (InputStream inputStream = Files.newInputStream(path);
                 Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
                 JsonReader jsonReader = Json.createReader(reader)) {
 
-            return Optional.of(readConfig(jsonReader.readObject()));
+            return readConfig(jsonReader.readObject());
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void saveConfig(Config config) {
+    private void saveConfig() {
         try {
-            Path path = home.resolve(CONFIG_PATH);
+            Path path = home.resolve("config");
             try (OutputStream outputStream = Files.newOutputStream(path);
                     Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
                     JsonWriter jsonWriter = Json.createWriter(writer)) {

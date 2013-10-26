@@ -1,16 +1,9 @@
 package store.server;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +12,6 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
-import store.common.Uid;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
@@ -28,27 +20,24 @@ import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
 
-public class Store {
+public class Volume {
 
-    private final Uid uid;
     private final TransactionManager transactionManager;
     private final HistoryManager historyManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Store(Uid uid,
-                  TransactionManager transactionManager,
-                  HistoryManager historyManager,
-                  InfoManager infoManager,
-                  ContentManager contentManager) {
-        this.uid = uid;
+    private Volume(TransactionManager transactionManager,
+                   HistoryManager historyManager,
+                   InfoManager infoManager,
+                   ContentManager contentManager) {
         this.transactionManager = transactionManager;
         this.historyManager = historyManager;
         this.infoManager = infoManager;
         this.contentManager = contentManager;
     }
 
-    public static Store create(final Path path) {
+    public static Volume create(final Path path) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -57,17 +46,14 @@ public class Store {
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
         }
-        final Uid uid = Uid.random();
         final TransactionManager txManager = TransactionManager.create(path.resolve("transactions"));
-        return txManager.inTransaction(new Query<Store>() {
+        return txManager.inTransaction(new Query<Volume>() {
             @Override
-            public Store apply() {
-                writeUid(path.resolve("uid"), uid);
-                return new Store(uid,
-                                 txManager,
-                                 HistoryManager.create(path.resolve("history")),
-                                 InfoManager.create(path.resolve("info")),
-                                 ContentManager.create(path.resolve("content")));
+            public Volume apply() {
+                return new Volume(txManager,
+                                  HistoryManager.create(path.resolve("history")),
+                                  InfoManager.create(path.resolve("info")),
+                                  ContentManager.create(path.resolve("content")));
             }
         });
     }
@@ -78,46 +64,21 @@ public class Store {
         }
     }
 
-    public static Store open(final Path path) {
+    public static Volume open(final Path path) {
         final TransactionManager txManager = TransactionManager.open(path.resolve("transactions"));
-        return txManager.inTransaction(new Query<Store>() {
+        return txManager.inTransaction(new Query<Volume>() {
             @Override
-            public Store apply() {
-                return new Store(readUid(path.resolve("uid")),
-                                 txManager,
-                                 HistoryManager.open(path.resolve("history")),
-                                 InfoManager.open(path.resolve("info")),
-                                 ContentManager.open(path.resolve("content")));
+            public Volume apply() {
+                return new Volume(txManager,
+                                  HistoryManager.open(path.resolve("history")),
+                                  InfoManager.open(path.resolve("info")),
+                                  ContentManager.open(path.resolve("content")));
             }
         });
     }
 
-    private static void writeUid(Path path, Uid uid) {
-        try (OutputStream outputStream = Files.newOutputStream(path);
-                Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
-                BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
-
-            bufferedWriter.write(uid.toString());
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
-    }
-
-    private static Uid readUid(Path path) {
-        try (InputStream inputStream = Files.newInputStream(path);
-                Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
-                BufferedReader bufferedReader = new BufferedReader(reader)) {
-
-            return new Uid(bufferedReader.readLine());
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
-    }
-
-    public Uid getUid() {
-        return uid;
+    public void close() {
+        transactionManager.close();
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {

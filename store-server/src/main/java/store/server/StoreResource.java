@@ -3,6 +3,7 @@ package store.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import javax.inject.Singleton;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -18,11 +19,12 @@ import javax.ws.rs.core.StreamingOutput;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.ContentInfo;
 import store.common.Hash;
-import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.writeConfig;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeContentInfos;
 import static store.common.JsonUtil.writeEvents;
+import store.common.Uid;
 
 @Path("/")
 @Singleton
@@ -35,18 +37,94 @@ public class StoreResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("create")
-    public Response create(JsonObject json) {
-        storeManager.create(readConfig(json));
+    @Path("createVolume/{path}")
+    public Response createVolume(@PathParam("path") String path) {
+        storeManager.createVolume(Paths.get(path));
         return Response.ok().build();
     }
 
     @POST
-    @Path("drop")
-    public Response drop() {
-        storeManager.drop();
+    @Path("dropVolume/{uid}")
+    public Response dropVolume(@PathParam("uid") Uid uid) {
+        storeManager.dropVolume(uid);
         return Response.ok().build();
+    }
+
+    @POST
+    @Path("createIndex/{path}/{uid}")
+    public Response createIndex(@PathParam("path") String path, @PathParam("uid") Uid volumeId) {
+        storeManager.createIndex(Paths.get(path), volumeId);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("dropIndex/{uid}")
+    public Response dropIndex(@PathParam("uid") Uid uid) {
+        storeManager.dropIndex(uid);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("setWrite/{uid}")
+    public Response setWrite(@PathParam("uid") Uid uid) {
+        storeManager.setWrite(uid);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("unsetWrite")
+    public Response unsetWrite() {
+        storeManager.unsetWrite();
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("setRead/{uid}")
+    public Response setRead(@PathParam("uid") Uid uid) {
+        storeManager.setRead(uid);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("unsetRead")
+    public Response unsetRead() {
+        storeManager.unsetRead();
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("setSearch/{uid}")
+    public Response setSearch(@PathParam("uid") Uid uid) {
+        storeManager.setSearch(uid);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("unsetSearch")
+    public Response unsetSearch() {
+        storeManager.unsetSearch();
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("sync/{source}/{destination}")
+    public Response sync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
+        storeManager.sync(source, destination);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("unsync/{source}/{destination}")
+    public Response unsync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
+        storeManager.unsync(source, destination);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("config")
+    public JsonObject config() {
+        return writeConfig(storeManager.config());
     }
 
     @POST

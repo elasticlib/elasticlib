@@ -1,6 +1,7 @@
 package store.server.transaction;
 
 import java.io.IOException;
+import static java.lang.Runtime.getRuntime;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ConcurrentModificationException;
@@ -19,10 +20,21 @@ public class TransactionManager {
     private static final ThreadLocal<TransactionContext> txContexts = new ThreadLocal<>();
     private final LockManager lockManager = new LockManager();
     private final XAFileSystem filesystem;
+    private final Thread shutdownHook = new Thread() {
+        @Override
+        public void run() {
+            try {
+                filesystem.shutdown();
+
+            } catch (IOException e) {
+                throw new StoreRuntimeException(e);
+            }
+        }
+    };
 
     private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
-        StandaloneFileSystemConfiguration config = new StandaloneFileSystemConfiguration(dir, "instance");
+        StandaloneFileSystemConfiguration config = new StandaloneFileSystemConfiguration(dir, dir);
         filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
         try {
             filesystem.waitForBootup(-1);
@@ -30,17 +42,7 @@ public class TransactionManager {
         } catch (InterruptedException e) {
             throw new StoreRuntimeException(e);
         }
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    filesystem.shutdown();
-
-                } catch (IOException e) {
-                    throw new StoreRuntimeException(e);
-                }
-            }
-        });
+        getRuntime().addShutdownHook(shutdownHook);
     }
 
     public static TransactionManager create(Path path) {
@@ -58,6 +60,16 @@ public class TransactionManager {
             throw new InvalidStorePathException();
         }
         return new TransactionManager(path);
+    }
+
+    public void close() {
+        try {
+            filesystem.shutdown();
+
+        } catch (IOException e) {
+            throw new StoreRuntimeException(e);
+        }
+        getRuntime().removeShutdownHook(shutdownHook);
     }
 
     public static TransactionContext currentTransactionContext() {

@@ -39,15 +39,17 @@ import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
 import store.common.Event;
 import static store.common.IoUtil.copy;
+import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
-import static store.common.JsonUtil.writeConfig;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.Properties.Common.CAPTURE_DATE;
+import store.common.Uid;
 
 public class StoreClient implements Closeable {
 
+    private static final String POST = "POST";
     private final Client client;
     private final WebTarget target;
 
@@ -73,22 +75,105 @@ public class StoreClient implements Closeable {
                 .build();
     }
 
+    // TODO pourrait retourner la response afin d'inliner les appels
     private static void ensureOk(Response response) {
         if (response.getStatus() != Status.OK.getStatusCode()) {
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }
     }
 
-    public void create(Config config) {
-        ensureOk(target.path("create")
+    public void createVolume(Path path) {
+        ensureOk(target.path("createVolume/{path}")
+                .resolveTemplate("path", path.toAbsolutePath())
                 .request()
-                .post(entity(writeConfig(config), MediaType.APPLICATION_JSON), Response.class));
+                .method(POST));
     }
 
-    public void drop() {
-        ensureOk(target.path("drop")
+    public void dropVolume(Uid uid) {
+        ensureOk(target.path("dropVolume/{uid}")
+                .resolveTemplate("uid", uid)
                 .request()
-                .method("POST"));
+                .method(POST));
+    }
+
+    public void createIndex(Path path, Uid volumeId) {
+        ensureOk(target.path("createIndex/{path}/{uid}")
+                .resolveTemplate("path", path.toAbsolutePath())
+                .resolveTemplate("uid", volumeId)
+                .request()
+                .method(POST));
+    }
+
+    public void dropIndex(Uid uid) {
+        ensureOk(target.path("dropIndex/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
+    public void setWrite(Uid uid) {
+        ensureOk(target.path("setWrite/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
+    public void unsetWrite() {
+        ensureOk(target.path("unsetWrite")
+                .request()
+                .method(POST));
+    }
+
+    public void setRead(Uid uid) {
+        ensureOk(target.path("setRead/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
+    public void unsetRead() {
+        ensureOk(target.path("unsetRead")
+                .request()
+                .method(POST));
+    }
+
+    public void setSearch(Uid uid) {
+        ensureOk(target.path("setSearch/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
+    public void unsetSearch() {
+        ensureOk(target.path("unsetSearch")
+                .request()
+                .method(POST));
+    }
+
+    public void sync(Uid source, Uid destination) {
+        ensureOk(target.path("sync/{source}/{destination}")
+                .resolveTemplate("source", source)
+                .resolveTemplate("destination", destination)
+                .request()
+                .method(POST));
+    }
+
+    public void unsync(Uid source, Uid destination) {
+        ensureOk(target.path("unsync/{source}/{destination}")
+                .resolveTemplate("source", source)
+                .resolveTemplate("destination", destination)
+                .request()
+                .method(POST));
+    }
+
+    public Config config() {
+        Response response = target.path("config")
+                .request()
+                .get();
+
+        ensureOk(response);
+        return readConfig(response.readEntity(JsonObject.class));
+
     }
 
     public void put(Path filepath) {
@@ -129,11 +214,12 @@ public class StoreClient implements Closeable {
         }
     }
 
+    // FIXME laisser jersey s'occuper d'encoder les paramètres ! Idem sur les méthodes suivantes
     public void delete(String encodedHash) {
         ensureOk(target.path("delete/{hash}")
                 .resolveTemplate("hash", encodedHash)
                 .request()
-                .method("POST"));
+                .method(POST));
     }
 
     public ContentInfo info(String encodedHash) {

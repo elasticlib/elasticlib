@@ -38,8 +38,8 @@ public class Index {
     private final Analyzer analyzer;
     private final IndexWriterConfig config;
 
-    public Index(Path root) throws IOException {
-        directory = FSDirectory.open(root.toFile(), new SingleInstanceLockFactory());
+    public Index(Path path) throws IOException {
+        directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer(Version.LUCENE_44);
         config = new IndexWriterConfig(Version.LUCENE_44, analyzer);
     }

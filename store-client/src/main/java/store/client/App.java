@@ -2,10 +2,15 @@ package store.client;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.base.Splitter;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import static store.client.ByteLengthFormatter.format;
 import static store.client.DigestUtil.digest;
 import store.common.Config;
@@ -14,6 +19,7 @@ import store.common.Digest;
 import store.common.Event;
 import store.common.Properties;
 import store.common.Property;
+import store.common.Uid;
 
 public final class App {
 
@@ -25,13 +31,15 @@ public final class App {
             System.out.println("Syntax : store command params...");
             return;
         }
-        Optional<Command> command = Command.of(args[0]);
-        if (!command.isPresent()) {
-            System.out.println("Unsupported command : " + args[0]);
+        List<String> argList = Arrays.asList(args);
+        Optional<Command> OptCommand = Command.of(argList);
+        if (!OptCommand.isPresent()) {
+            System.out.println("Unsupported command !"); // TODO print help
             return;
         }
         try {
-            command.get().execute(params(args));
+            Command command = OptCommand.get();
+            command.execute(command.params(argList));
 
         } catch (RequestFailedException e) {
             System.out.println(e.getMessage());
@@ -40,19 +48,117 @@ public final class App {
 
     private static enum Command {
 
-        CREATE {
+        CREATE_VOLUME {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    client.create(new Config(Paths.get(params.get(0))));
+                    client.createVolume(Paths.get(params.get(0)));
                 }
             }
         },
-        DROP {
+        DROP_VOLUME {
             @Override
             public void execute(List<String> params) {
                 try (StoreClient client = new StoreClient()) {
-                    client.drop();
+                    client.dropVolume(new Uid(params.get(0)));
+                }
+            }
+        },
+        CREATE_INDEX {
+            @Override
+            public List<String> params(List<String> argList) {
+                List<String> params = new ArrayList<>(super.params(argList));
+                if (params.get(1).equalsIgnoreCase("on")) {
+                    params.remove(1);
+                }
+                return params;
+            }
+
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.createIndex(Paths.get(params.get(0)), new Uid(params.get(1)));
+                }
+            }
+        },
+        DROP_INDEX {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.dropIndex(new Uid(params.get(0)));
+                }
+            }
+        },
+        SET_WRITE {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.setWrite(new Uid(params.get(0)));
+                }
+            }
+        },
+        UNSET_WRITE {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.unsetWrite();
+                }
+            }
+        },
+        SET_READ {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.setRead(new Uid(params.get(0)));
+                }
+            }
+        },
+        UNSET_READ {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.unsetRead();
+                }
+            }
+        },
+        SET_SEARCH {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.setSearch(new Uid(params.get(0)));
+                }
+            }
+        },
+        UNSET_SEARCH {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.unsetSearch();
+                }
+            }
+        },
+        SYNC {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.sync(new Uid(params.get(0)), new Uid(params.get(1)));
+                }
+            }
+        },
+        UNSYNC {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.unsync(new Uid(params.get(0)), new Uid(params.get(1)));
+                }
+            }
+        },
+        CONFIG {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    Config config = client.config();
+                    System.out.println(asString(config));
                 }
             }
         },
@@ -126,14 +232,67 @@ public final class App {
 
         public abstract void execute(List<String> params);
 
-        public static Optional<Command> of(String arg0) {
+        public static Optional<Command> of(List<String> argList) {
             for (Command command : Command.values()) {
-                if (command.name().equalsIgnoreCase(arg0)) {
+                if (command.matches(argList)) {
                     return Optional.of(command);
                 }
             }
             return Optional.absent();
         }
+
+        private boolean matches(List<String> argList) {
+            Iterator<String> it = argList.iterator();
+            for (String part : Splitter.on("_").split(name())) {
+                if (!it.hasNext() || !it.next().equalsIgnoreCase(part)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public List<String> params(List<String> argList) {
+            if (name().contains("_")) {
+                return argList.subList(2, argList.size());
+            }
+            return argList.subList(1, argList.size());
+        }
+    }
+
+    private static String asString(Config config) {
+        StringBuilder builder = new StringBuilder();
+        for (Entry<Uid, Path> entry : config.getVolumes().entrySet()) {
+            Uid uid = entry.getKey();
+            boolean read = config.getRead().isPresent() && config.getRead().get().equals(uid);
+            boolean write = config.getWrite().isPresent() && config.getWrite().get().equals(uid);
+            builder.append("v")
+                    .append(read ? "r" : "-")
+                    .append(write ? "w" : "-")
+                    .append("- ")
+                    .append(uid)
+                    .append(" ")
+                    .append(entry.getValue())
+                    .append(System.lineSeparator());
+
+            for (Uid destinationId : config.getSync(uid)) {
+                builder.append(indent())
+                        .append(indent())
+                        .append(destinationId)
+                        .append(System.lineSeparator());
+            }
+        }
+        for (Entry<Uid, Path> entry : config.getIndexes().entrySet()) {
+            Uid uid = entry.getKey();
+            boolean search = config.getSearch().isPresent() && config.getSearch().get().equals(uid);
+            builder.append("i--")
+                    .append(search ? "s" : "-")
+                    .append(" ")
+                    .append(uid)
+                    .append(" ")
+                    .append(entry.getValue())
+                    .append(System.lineSeparator());
+        }
+        return builder.toString();
     }
 
     private static String asString(ContentInfo info) {
@@ -194,9 +353,5 @@ public final class App {
 
     private static String comma() {
         return " : ";
-    }
-
-    private static List<String> params(String[] args) {
-        return Arrays.asList(args).subList(1, args.length);
     }
 }

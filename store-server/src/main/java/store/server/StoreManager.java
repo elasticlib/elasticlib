@@ -94,7 +94,7 @@ public final class StoreManager {
             config.removeVolume(uid);
             saveConfig();
 
-            agentManager.close(uid);
+            agentManager.drop(uid);
             volumes.remove(uid).stop();
 
             recursiveDelete(path);
@@ -270,9 +270,11 @@ public final class StoreManager {
 
     public void start(Uid uid) {
         volume(uid).start();
+        agentManager.start(uid);
     }
 
     public void stop(Uid uid) {
+        agentManager.stop(uid);
         volume(uid).stop();
     }
 
@@ -287,11 +289,15 @@ public final class StoreManager {
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
-        writeVolume().put(contentInfo, source);
+        Entry<Uid, Volume> writeVolume = writeVolume();
+        writeVolume.getValue().put(contentInfo, source);
+        agentManager.signal(writeVolume.getKey());
     }
 
     public void delete(Hash hash) {
-        writeVolume().delete(hash);
+        Entry<Uid, Volume> writeVolume = writeVolume();
+        writeVolume.getValue().delete(hash);
+        agentManager.signal(writeVolume.getKey());
     }
 
     public boolean contains(Hash hash) {
@@ -336,13 +342,14 @@ public final class StoreManager {
         }
     }
 
-    private Volume writeVolume() {
+    private Entry<Uid, Volume> writeVolume() {
         lock.readLock().lock();
         try {
             if (!config.getRead().isPresent()) {
                 throw new NoVolumeException();
             }
-            return volumes.get(config.getWrite().get());
+            Uid uid = config.getWrite().get();
+            return new ImmutableEntry<>(uid, volumes.get(uid));
 
         } finally {
             lock.readLock().unlock();

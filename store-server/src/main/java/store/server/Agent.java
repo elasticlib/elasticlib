@@ -1,7 +1,6 @@
 package store.server;
 
 import com.google.common.base.Optional;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -13,9 +12,15 @@ import store.common.Event;
 import store.common.Hash;
 import store.common.Operation;
 import store.common.Uid;
+import store.server.exception.ConcurrentOperationException;
+import store.server.exception.ContentAlreadyStoredException;
+import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.StoreException;
+import store.server.exception.UnknownHashException;
+import store.server.exception.VolumeClosedException;
+import store.server.exception.WriteException;
 
-public class Agent implements Closeable {
+public class Agent {
 
     private final AgentManager agentManager;
     private final Uid destinationId;
@@ -24,7 +29,7 @@ public class Agent implements Closeable {
     private final List<Event> events;
     private long cursor;
     private boolean signaled;
-    private boolean closed;
+    private boolean stoped;
     private boolean running;
 
     public Agent(AgentManager agentManager, Uid destinationId, Volume source, Volume destination) {
@@ -35,17 +40,21 @@ public class Agent implements Closeable {
         events = new ArrayList<>();
     }
 
-    @Override
-    public synchronized void close() {
-        closed = true;
+    public synchronized void start() {
+        stoped = false;
+        signal();
     }
 
-    private synchronized boolean isClosed() {
-        return closed;
+    public synchronized void stop() {
+        stoped = true;
+    }
+
+    private synchronized boolean isStoped() {
+        return stoped;
     }
 
     public synchronized void signal() {
-        if (closed) {
+        if (stoped) {
             return;
         }
         signaled = true;
@@ -68,10 +77,10 @@ public class Agent implements Closeable {
     }
 
     private Optional<Event> next() {
-        clearSignal();
-        if (isClosed()) {
+        if (isStoped()) {
             return Optional.absent();
         }
+        clearSignal();
         updateEvents();
         if (events.isEmpty()) {
             return Optional.absent();
@@ -95,7 +104,7 @@ public class Agent implements Closeable {
                     Event next = it.next();
                     if (next.getHash().equals(event.getHash()) && next.getOperation() == Operation.DELETE) {
                         events.remove(pos);
-                        events.remove(nextIndex);
+                        events.remove(nextIndex - 1);
                         pos--;
                         break;
                     }
@@ -105,6 +114,8 @@ public class Agent implements Closeable {
     }
 
     private class AgentThread extends Thread {
+
+        private int attempt = 1;
 
         @Override
         public void run() {
@@ -129,24 +140,48 @@ public class Agent implements Closeable {
                 }
                 agentManager.signal(destinationId);
 
-            } catch (StoreException e) {
+            } catch (ConcurrentOperationException e) {
+                try {
+                    Thread.sleep(attempt > 10 ? 10000 : 1000 * attempt);
+                    attempt++;
+                    process(event);
+
+                } catch (InterruptedException interrupt) {
+                    throw new RuntimeException(interrupt);
+                }
+            } catch (UnknownHashException | VolumeClosedException e) {
                 events.add(0, event);
+            } finally {
+                attempt = 1;
             }
         }
 
         private void put(Hash hash) {
             ContentInfo info = source.info(hash);
             try (PipedInputStream in = new PipedInputStream()) {
-                new PipeWriterThread(in, hash).start();
-                destination.put(info, in);
+                PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
+                try {
+                    pipeWriter.start();
+                    destination.put(info, in);
 
+                } catch (IntegrityCheckingFailedException | WriteException e) {
+                    pipeWriter.throwCauseIfAny();
+                    throw e;
+                } catch (ContentAlreadyStoredException e) {
+                    // Ok
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
         private void delete(Hash hash) {
-            destination.delete(hash);
+            try {
+                destination.delete(hash);
+
+            } catch (UnknownHashException e) {
+                // Ok
+            }
         }
     }
 
@@ -154,6 +189,7 @@ public class Agent implements Closeable {
 
         private final PipedInputStream in;
         private final Hash hash;
+        private StoreException storeException;
 
         public PipeWriterThread(PipedInputStream in, Hash hash) {
             this.in = in;
@@ -165,8 +201,19 @@ public class Agent implements Closeable {
             try (PipedOutputStream out = new PipedOutputStream(in)) {
                 source.get(hash, out);
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (UnknownHashException |
+                    ConcurrentOperationException |
+                    VolumeClosedException e) {
+                storeException = e;
+
+            } catch (Throwable e) {
+                // Ignore it
+            }
+        }
+
+        public void throwCauseIfAny() throws StoreException {
+            if (storeException != null) {
+                throw storeException;
             }
         }
     }

@@ -1,8 +1,9 @@
 package store.server;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.common.Uid;
@@ -20,7 +21,7 @@ public class AgentManager {
         }
         Agent agent = new Agent(this, destinationId, source, destination);
         agents.get(sourceId).put(destinationId, agent);
-        agent.signal();
+        agent.start();
     }
 
     public synchronized void unsync(Uid sourceId, Uid destinationId) {
@@ -29,32 +30,48 @@ public class AgentManager {
         }
         Agent agent = agents.get(sourceId).remove(destinationId);
         if (agent != null) {
-            agent.close();
+            agent.stop();
         }
         if (agents.get(sourceId).isEmpty()) {
             agents.remove(sourceId);
         }
     }
 
-    public synchronized void close(Uid uid) {
+    public synchronized void start(Uid uid) {
+        for (Agent agent : agents(uid)) {
+            agent.start();
+        }
+    }
+
+    public synchronized void stop(Uid uid) {
+        for (Agent agent : agents(uid)) {
+            agent.stop();
+        }
+    }
+
+    private Collection<Agent> agents(Uid uid) {
+        Collection<Agent> collection = new ArrayList<>();
         if (agents.containsKey(uid)) {
-            for (Agent agent : agents.get(uid).values()) {
-                agent.close();
-            }
-            agents.remove(uid);
+            collection.addAll(agents.get(uid).values());
         }
-        List<Uid> toBeRemoved = new ArrayList<>();
-        for (Entry<Uid, Map<Uid, Agent>> entry : agents.entrySet()) {
-            Agent agent = entry.getValue().remove(uid);
-            if (agent != null) {
-                agent.close();
+        for (Map<Uid, Agent> map : agents.values()) {
+            if (map.containsKey(uid)) {
+                collection.add(map.get(uid));
             }
+        }
+        return collection;
+    }
+
+    public synchronized void drop(Uid uid) {
+        stop(uid);
+        agents.remove(uid);
+        Iterator<Entry<Uid, Map<Uid, Agent>>> iterator = agents.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Entry<Uid, Map<Uid, Agent>> entry = iterator.next();
+            entry.getValue().remove(uid);
             if (entry.getValue().isEmpty()) {
-                toBeRemoved.add(entry.getKey());
+                iterator.remove();
             }
-        }
-        for (Uid key : toBeRemoved) {
-            agents.remove(key);
         }
     }
 

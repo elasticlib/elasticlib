@@ -1,10 +1,12 @@
 package store.server;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import store.common.Hash;
 
-public abstract class Table<T> {
+public abstract class Table<T> implements Iterable<T> {
 
     private final int keyLength;
     private final Object[] buckets;
@@ -47,5 +49,33 @@ public abstract class Table<T> {
             keySet.add(keyOf(i, keyLength));
         }
         return keySet;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private int pos = 0;
+
+            @Override
+            public boolean hasNext() {
+                return pos < buckets.length;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public T next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                T next = (T) buckets[pos];
+                pos++;
+                return next;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

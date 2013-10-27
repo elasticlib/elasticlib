@@ -4,12 +4,15 @@ import java.io.OutputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileOutputStream;
 import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
+import store.server.exception.VolumeClosedException;
 
 public class Output extends OutputStream {
 
+    private final TransactionContext txContext;
     private final XAFileOutputStream delegate;
 
-    public Output(XAFileOutputStream delegate) {
+    public Output(TransactionContext txContext, XAFileOutputStream delegate) {
+        this.txContext = txContext;
         this.delegate = delegate;
     }
 
@@ -19,6 +22,9 @@ public class Output extends OutputStream {
             delegate.write(b);
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -34,6 +40,9 @@ public class Output extends OutputStream {
             delegate.write(bytes, offset, length);
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -44,6 +53,9 @@ public class Output extends OutputStream {
             delegate.flush();
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -54,6 +66,9 @@ public class Output extends OutputStream {
             delegate.close();
 
         } catch (NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }

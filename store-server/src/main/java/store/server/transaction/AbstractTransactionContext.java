@@ -1,27 +1,60 @@
 package store.server.transaction;
 
-import java.io.File;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.xadisk.bridge.proxies.interfaces.Session;
-import org.xadisk.filesystem.exceptions.DirectoryNotEmptyException;
-import org.xadisk.filesystem.exceptions.FileAlreadyExistsException;
 import org.xadisk.filesystem.exceptions.FileNotExistsException;
-import org.xadisk.filesystem.exceptions.FileUnderUseException;
 import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.VolumeClosedException;
 
-final class ReadWriteTransactionContext extends AbstractTransactionContext {
+public abstract class AbstractTransactionContext implements TransactionContext {
 
-    public ReadWriteTransactionContext(Session session) {
-        super(session, true);
+    final Session session;
+    final AtomicBoolean closed = new AtomicBoolean(false);
+    private final boolean lockExclusively;
+
+    public AbstractTransactionContext(Session session, boolean lockExclusively) {
+        this.session = session;
+        this.lockExclusively = lockExclusively;
     }
 
     @Override
-    public void move(Path src, Path dest) {
+    public final void commit() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
         try {
-            session.moveFile(src.toFile(), dest.toFile());
+            session.commit();
+
+        } catch (NoTransactionAssociatedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public final void close() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            session.rollback();
+
+        } catch (NoTransactionAssociatedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public final boolean isClosed() {
+        return closed.get();
+    }
+
+    @Override
+    public final boolean exists(Path path) {
+        try {
+            return session.fileExists(path.toFile(), lockExclusively);
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
@@ -29,61 +62,17 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             }
             throw new RuntimeException(e);
 
-        } catch (FileAlreadyExistsException |
-                FileNotExistsException |
-                FileUnderUseException |
+        } catch (LockingFailedException |
                 InsufficientPermissionOnFileException |
-                LockingFailedException |
                 InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void create(Path path) {
+    public final String[] listFiles(Path path) {
         try {
-            session.createFile(path.toFile(), false);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new VolumeClosedException();
-            }
-            throw new RuntimeException(e);
-
-        } catch (FileAlreadyExistsException |
-                FileNotExistsException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void delete(Path path) {
-        try {
-            session.deleteFile(path.toFile());
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new VolumeClosedException();
-            }
-            throw new RuntimeException(e);
-
-        } catch (DirectoryNotEmptyException |
-                FileNotExistsException |
-                FileUnderUseException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void truncate(Path path, long length) {
-        try {
-            session.truncateFile(path.toFile(), length);
+            return session.listFiles(path.toFile(), lockExclusively);
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
@@ -92,27 +81,36 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             throw new RuntimeException(e);
 
         } catch (FileNotExistsException |
-                InsufficientPermissionOnFileException |
                 LockingFailedException |
+                InterruptedException |
+                InsufficientPermissionOnFileException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public final long fileLength(Path path) {
+        try {
+            return session.getFileLength(path.toFile(), lockExclusively);
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new VolumeClosedException();
+            }
+            throw new RuntimeException(e);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                InsufficientPermissionOnFileException |
                 InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Output openOutput(Path path) {
-        return openOutput(path, false);
-    }
-
-    @Override
-    public Output openHeavyWriteOutput(Path path) {
-        return openOutput(path, true);
-    }
-
-    private Output openOutput(Path path, boolean heavyWrite) {
+    public final Input openInput(Path path) {
         try {
-            File file = path.toFile();
-            return new Output(this, session.createXAFileOutputStream(file, heavyWrite));
+            return new Input(this, session.createXAFileInputStream(path.toFile(), lockExclusively));
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
@@ -123,8 +121,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
         } catch (LockingFailedException |
                 InsufficientPermissionOnFileException |
                 InterruptedException |
-                FileNotExistsException |
-                FileUnderUseException e) {
+                FileNotExistsException e) {
             throw new RuntimeException(e);
         }
     }

@@ -4,46 +4,42 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystem;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
-import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
+import store.server.exception.VolumeClosedException;
 import store.server.lock.LockManager;
 
 public class TransactionManager {
 
-    private static final ThreadLocal<TransactionContext> txContexts = new ThreadLocal<>();
+    private static final ThreadLocal<TransactionContext> currentTxContext = new ThreadLocal<>();
+    private final StandaloneFileSystemConfiguration config;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final LockManager lockManager = new LockManager();
-    private final XAFileSystem filesystem;
-    private final Thread shutdownHook = new Thread() {
-        @Override
-        public void run() {
-            try {
-                filesystem.shutdown();
-
-            } catch (IOException e) {
-                throw new StoreRuntimeException(e);
-            }
-        }
-    };
+    private final List<TransactionContext> txContexts = new ArrayList<>();
+    private XAFileSystem filesystem;
+    private boolean started;
 
     private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
-        StandaloneFileSystemConfiguration config = new StandaloneFileSystemConfiguration(dir, dir);
+        config = new StandaloneFileSystemConfiguration(dir, dir);
         config.setTransactionTimeout(-1);
-        filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
-        try {
-            filesystem.waitForBootup(-1);
-
-        } catch (InterruptedException e) {
-            throw new StoreRuntimeException(e);
-        }
-        getRuntime().addShutdownHook(shutdownHook);
+        getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                stop();
+            }
+        });
+        start();
     }
 
     public static TransactionManager create(Path path) {
@@ -63,18 +59,68 @@ public class TransactionManager {
         return new TransactionManager(path);
     }
 
-    public void close() {
+    public void start() {
+        lock.writeLock().lock();
         try {
+            if (started) {
+                return;
+            }
+            filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
+            filesystem.waitForBootup(-1);
+            started = true;
+
+        } catch (InterruptedException e) {
+            throw new StoreRuntimeException(e);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void stop() {
+        lock.writeLock().lock();
+        try {
+            if (!started) {
+                return;
+            }
+            for (TransactionContext context : txContexts) {
+                context.close();
+            }
+            txContexts.clear();
+            lockManager.clear();
             filesystem.shutdown();
+            started = false;
 
         } catch (IOException e) {
             throw new StoreRuntimeException(e);
+        } finally {
+            lock.writeLock().unlock();
         }
-        getRuntime().removeShutdownHook(shutdownHook);
+    }
+
+    private TransactionContext createTransactionContext(boolean readOnly) {
+        lock.readLock().lock();
+        try {
+            if (!started) {
+                throw new VolumeClosedException();
+            }
+            Session session = filesystem.createSessionForLocalTransaction();
+            TransactionContext txContext;
+            if (readOnly) {
+                txContext = new ReadOnlyTransactionContext(session);
+            } else {
+                txContext = new ReadWriteTransactionContext(session);
+            }
+            txContexts.add(txContext);
+            currentTxContext.set(txContext);
+            return txContext;
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public static TransactionContext currentTransactionContext() {
-        TransactionContext txContext = txContexts.get();
+        TransactionContext txContext = currentTxContext.get();
         if (txContext == null) {
             throw new IllegalStateException("No current transaction");
         }
@@ -85,22 +131,15 @@ public class TransactionManager {
         if (!lockManager.writeLock(hash)) {
             throw new ConcurrentModificationException();
         }
+        TransactionContext txContext = createTransactionContext(false);
         try {
-            Session session = filesystem.createSessionForLocalTransaction();
-            txContexts.set(new ReadWriteTransactionContext(session));
-            try {
-                command.apply();
-                session.commit();
-
-            } catch (Throwable e) {
-                session.rollback();
-                throw e;
-            }
-        } catch (NoTransactionAssociatedException e) {
-            throw new RuntimeException(e);
+            command.apply();
+            txContext.commit();
 
         } finally {
-            txContexts.remove();
+            txContext.close();
+            txContexts.remove(txContext);
+            currentTxContext.remove();
             lockManager.writeUnlock(hash);
         }
     }
@@ -118,23 +157,16 @@ public class TransactionManager {
     }
 
     public <T> T inTransaction(Query<T> query) {
+        TransactionContext txContext = createTransactionContext(true);
         try {
-            Session session = filesystem.createSessionForLocalTransaction();
-            txContexts.set(new ReadOnlyTransactionContext(session));
-            try {
-                T response = query.apply();
-                session.commit();
-                return response;
-
-            } catch (Throwable e) {
-                session.rollback();
-                throw e;
-            }
-        } catch (NoTransactionAssociatedException e) {
-            throw new StoreRuntimeException(e);
+            T response = query.apply();
+            txContext.commit();
+            return response;
 
         } finally {
-            txContexts.remove();
+            txContext.close();
+            txContexts.remove(txContext);
+            currentTxContext.remove();
         }
     }
 }

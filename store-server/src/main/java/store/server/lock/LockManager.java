@@ -32,4 +32,10 @@ public class LockManager {
     public void readUnlock(Hash hash) {
         segments.get(hash).readUnlock(hash);
     }
+
+    public void clear() {
+        for (Segment segment : segments) {
+            segment.clear();
+        }
+    }
 }

@@ -42,4 +42,9 @@ final class Segment {
             }
         }
     }
+
+    public synchronized void clear() {
+        read.clear();
+        write.clear();
+    }
 }

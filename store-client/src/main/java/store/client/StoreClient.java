@@ -167,6 +167,20 @@ public class StoreClient implements Closeable {
                 .method(POST));
     }
 
+    public void start(Uid uid) {
+        ensureOk(target.path("start/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
+    public void stop(Uid uid) {
+        ensureOk(target.path("stop/{uid}")
+                .resolveTemplate("uid", uid)
+                .request()
+                .method(POST));
+    }
+
     public Config config() {
         Response response = target.path("config")
                 .request()

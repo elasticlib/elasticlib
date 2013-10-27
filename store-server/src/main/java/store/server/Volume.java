@@ -77,8 +77,12 @@ public class Volume {
         });
     }
 
-    public void close() {
-        transactionManager.close();
+    public void start() {
+        transactionManager.start();
+    }
+
+    public void stop() {
+        transactionManager.stop();
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {

@@ -4,12 +4,15 @@ import java.io.InputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
 import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
+import store.server.exception.VolumeClosedException;
 
 public class Input extends InputStream {
 
+    private final TransactionContext txContext;
     private final XAFileInputStream delegate;
 
-    public Input(XAFileInputStream delegate) {
+    public Input(TransactionContext txContext, XAFileInputStream delegate) {
+        this.txContext = txContext;
         this.delegate = delegate;
     }
 
@@ -19,6 +22,9 @@ public class Input extends InputStream {
             return delegate.read();
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -48,6 +54,9 @@ public class Input extends InputStream {
             return pos;
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -58,6 +67,9 @@ public class Input extends InputStream {
             return delegate.skip(n);
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -68,6 +80,9 @@ public class Input extends InputStream {
             return delegate.available();
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -81,6 +96,9 @@ public class Input extends InputStream {
             delegate.position(n);
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }
@@ -106,6 +124,9 @@ public class Input extends InputStream {
             delegate.close();
 
         } catch (NoTransactionAssociatedException e) {
+            if (txContext.isClosed()) {
+                throw new VolumeClosedException();
+            }
             throw new RuntimeException(e);
         }
     }

@@ -95,7 +95,7 @@ public final class StoreManager {
             saveConfig();
 
             agentManager.close(uid);
-            volumes.remove(uid).close();
+            volumes.remove(uid).stop();
 
             recursiveDelete(path);
             for (Entry<Uid, Path> entry : indexesToDrop.entrySet()) {
@@ -268,6 +268,14 @@ public final class StoreManager {
         }
     }
 
+    public void start(Uid uid) {
+        volume(uid).start();
+    }
+
+    public void stop(Uid uid) {
+        volume(uid).stop();
+    }
+
     public Config config() {
         lock.readLock().lock();
         try {
@@ -313,6 +321,19 @@ public final class StoreManager {
 
     public List<Event> history(final boolean chronological, final long first, final int number) {
         return readVolume().history(chronological, first, number);
+    }
+
+    private Volume volume(Uid uid) {
+        lock.readLock().lock();
+        try {
+            if (!volumes.containsKey(uid)) {
+                throw new NoVolumeException(); // FIXME il faudrait faire des exceptions plus adaptées !
+            }
+            return volumes.get(uid);
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     private Volume writeVolume() {

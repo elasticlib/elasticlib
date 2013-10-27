@@ -154,6 +154,22 @@ public final class App {
                 }
             }
         },
+        START {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.start(new Uid(params.get(0)));
+                }
+            }
+        },
+        STOP {
+            @Override
+            public void execute(List<String> params) {
+                try (StoreClient client = new StoreClient()) {
+                    client.stop(new Uid(params.get(0)));
+                }
+            }
+        },
         CONFIG {
             @Override
             public void execute(List<String> params) {

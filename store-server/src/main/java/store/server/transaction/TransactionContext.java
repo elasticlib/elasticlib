@@ -4,6 +4,12 @@ import java.nio.file.Path;
 
 public interface TransactionContext {
 
+    void commit();
+
+    void close();
+
+    boolean isClosed();
+
     boolean exists(Path path);
 
     String[] listFiles(Path path);

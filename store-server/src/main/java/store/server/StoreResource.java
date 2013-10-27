@@ -120,6 +120,20 @@ public class StoreResource {
         return Response.ok().build();
     }
 
+    @POST
+    @Path("start/{uid}")
+    public Response start(@PathParam("uid") Uid uid) {
+        storeManager.start(uid);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("stop/{uid}")
+    public Response stop(@PathParam("uid") Uid uid) {
+        storeManager.stop(uid);
+        return Response.ok().build();
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("config")

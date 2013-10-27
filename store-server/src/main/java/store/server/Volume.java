@@ -90,8 +90,8 @@ public class Volume {
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
-                contentManager.put(contentInfo, source);
                 infoManager.put(contentInfo);
+                contentManager.put(contentInfo, source);
                 historyManager.put(hash);
             }
         });

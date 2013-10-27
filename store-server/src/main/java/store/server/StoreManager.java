@@ -43,6 +43,7 @@ public final class StoreManager {
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
+    private final AgentManager agentManager = new AgentManager();
     private final Map<Uid, Volume> volumes = new HashMap<>();
     private final Map<Uid, Index> indexes = new HashMap<>();
 
@@ -56,6 +57,11 @@ public final class StoreManager {
         for (Entry<Uid, Path> entry : config.getIndexes().entrySet()) {
             Index index = Index.open(entry.getValue());
             indexes.put(entry.getKey(), index);
+        }
+        for (Uid sourceId : config.getVolumes().keySet()) {
+            for (Uid destinationId : config.getSync(sourceId)) {
+                agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
+            }
         }
     }
 
@@ -88,7 +94,9 @@ public final class StoreManager {
             config.removeVolume(uid);
             saveConfig();
 
+            agentManager.close(uid);
             volumes.remove(uid).close();
+
             recursiveDelete(path);
             for (Entry<Uid, Path> entry : indexesToDrop.entrySet()) {
                 indexes.remove(entry.getKey());
@@ -230,28 +238,30 @@ public final class StoreManager {
         }
     }
 
-    public void sync(Uid source, Uid destination) {
+    public void sync(Uid sourceId, Uid destinationId) {
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(source) || !config.getVolumes().containsKey(destination)) {
+            if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
                 throw new UnknownVolumeException();
             }
-            config.sync(source, destination);
+            config.sync(sourceId, destinationId);
             saveConfig();
+            agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void unsync(Uid source, Uid destination) {
+    public void unsync(Uid sourceId, Uid destinationId) {
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(source) || !config.getVolumes().containsKey(destination)) {
+            if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
                 throw new UnknownVolumeException();
             }
-            config.unsync(source, destination);
+            config.unsync(sourceId, destinationId);
             saveConfig();
+            agentManager.unsync(sourceId, destinationId);
 
         } finally {
             lock.writeLock().unlock();
@@ -351,6 +361,7 @@ public final class StoreManager {
                 throw new NoVolumeException();
             }
             command.apply(volumes.get(config.getWrite().get()));
+            agentManager.signal(config.getWrite().get());
 
         } finally {
             lock.readLock().unlock();

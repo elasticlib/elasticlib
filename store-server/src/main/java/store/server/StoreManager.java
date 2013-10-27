@@ -278,117 +278,80 @@ public final class StoreManager {
         }
     }
 
-    public void put(final ContentInfo contentInfo, final InputStream source) {
-        readLocked(new Command() {
-            @Override
-            public void apply(Volume volume) {
-                volume.put(contentInfo, source);
-            }
-        });
+    public void put(ContentInfo contentInfo, InputStream source) {
+        writeVolume().put(contentInfo, source);
     }
 
-    public void delete(final Hash hash) {
-        readLocked(new Command() {
-            @Override
-            public void apply(Volume volume) {
-                volume.delete(hash);
-            }
-        });
+    public void delete(Hash hash) {
+        writeVolume().delete(hash);
     }
 
-    public boolean contains(final Hash hash) {
-        return readLocked(new Query<Boolean>() {
-            @Override
-            public Boolean apply(Volume volume) {
-                return volume.contains(hash);
-            }
-        });
+    public boolean contains(Hash hash) {
+        return readVolume().contains(hash);
     }
 
-    public ContentInfo info(final Hash hash) {
-        return readLocked(new Query<ContentInfo>() {
-            @Override
-            public ContentInfo apply(Volume volume) {
-                return volume.info(hash);
-            }
-        });
+    public ContentInfo info(Hash hash) {
+        return readVolume().info(hash);
     }
 
-    public void get(final Hash hash, final OutputStream outputStream) {
-        readLocked(new Query<Void>() {
-            @Override
-            public Void apply(Volume volume) {
-                volume.get(hash, outputStream);
-                return null;
-            }
-        });
+    public void get(Hash hash, OutputStream outputStream) {
+        readVolume().get(hash, outputStream);
     }
 
-    public List<ContentInfo> find(final String query) {
-        return readLocked(new Query<List<ContentInfo>>() {
-            @Override
-            public List<ContentInfo> apply(Volume volume) {
-                if (!config.getSearch().isPresent()) {
-                    throw new NoIndexException();
-                }
-                List<Hash> hashes = indexes.get(config.getSearch().get()).find(query);
-                List<ContentInfo> results = new ArrayList<>(hashes.size());
-                for (Hash hash : hashes) {
-                    try {
-                        results.add(volume.info(hash));
+    public List<ContentInfo> find(String query) {
+        List<Hash> hashes = index().find(query);
+        List<ContentInfo> results = new ArrayList<>(hashes.size());
+        for (Hash hash : hashes) {
+            try {
+                results.add(info(hash));
 
-                    } catch (UnknownHashException | ConcurrentOperationException e) {
-                    }
-                }
-                return results;
+            } catch (UnknownHashException | ConcurrentOperationException e) {
             }
-        });
+        }
+        return results;
     }
 
     public List<Event> history(final boolean chronological, final long first, final int number) {
-        return readLocked(new Query<List<Event>>() {
-            @Override
-            public List<Event> apply(Volume volume) {
-                return volume.history(chronological, first, number);
-            }
-        });
+        return readVolume().history(chronological, first, number);
     }
 
-    private void readLocked(Command command) {
-        lock.readLock().lock();
-        try {
-            if (!config.getWrite().isPresent()) {
-                throw new NoVolumeException();
-            }
-            command.apply(volumes.get(config.getWrite().get()));
-            agentManager.signal(config.getWrite().get());
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private interface Command {
-
-        void apply(Volume volume);
-    }
-
-    private <T> T readLocked(Query<T> query) {
+    private Volume writeVolume() {
         lock.readLock().lock();
         try {
             if (!config.getRead().isPresent()) {
                 throw new NoVolumeException();
             }
-            return query.apply(volumes.get(config.getRead().get()));
+            return volumes.get(config.getWrite().get());
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private interface Query<T> {
+    private Volume readVolume() {
+        lock.readLock().lock();
+        try {
+            if (!config.getRead().isPresent()) {
+                throw new NoVolumeException();
+            }
+            return volumes.get(config.getRead().get());
 
-        T apply(Volume volume);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private Index index() {
+        lock.readLock().lock();
+        try {
+            if (!config.getSearch().isPresent()) {
+                throw new NoIndexException();
+            }
+            return indexes.get(config.getSearch().get());
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     private Config loadConfig() {

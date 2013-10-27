@@ -1,4 +1,4 @@
-package store.server;
+package store.server.lock;
 
 import java.util.HashSet;
 import java.util.Iterator;

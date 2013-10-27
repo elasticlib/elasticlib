@@ -1,4 +1,4 @@
-package store.server;
+package store.server.agent;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import store.common.Event;
 import store.common.Hash;
 import store.common.Operation;
 import store.common.Uid;
+import store.server.volume.Volume;
 import store.server.exception.ConcurrentOperationException;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;

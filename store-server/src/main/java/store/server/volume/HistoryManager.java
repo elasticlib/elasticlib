@@ -1,4 +1,4 @@
-package store.server;
+package store.server.volume;
 
 import java.io.IOException;
 import java.nio.file.Files;

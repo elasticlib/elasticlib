@@ -30,6 +30,7 @@ import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.common.Uid;
+import store.server.agent.AgentManager;
 import store.server.exception.ConcurrentOperationException;
 import store.server.exception.NoIndexException;
 import store.server.exception.NoVolumeException;
@@ -37,6 +38,7 @@ import store.server.exception.UnknownHashException;
 import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
 import store.server.exception.WriteException;
+import store.server.volume.Volume;
 
 public final class StoreManager {
 
@@ -409,6 +411,32 @@ public final class StoreManager {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static final class ImmutableEntry<K, V> implements Entry<K, V> {
+
+        private final K key;
+        private final V value;
+
+        public ImmutableEntry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public K getKey() {
+            return key;
+        }
+
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public V setValue(V value) {
+            throw new UnsupportedOperationException();
         }
     }
 }

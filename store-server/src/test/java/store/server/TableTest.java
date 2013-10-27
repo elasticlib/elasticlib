@@ -1,5 +1,6 @@
 package store.server;
 
+import store.server.lock.Table;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.Hash;

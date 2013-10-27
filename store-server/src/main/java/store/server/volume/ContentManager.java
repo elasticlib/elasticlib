@@ -1,4 +1,4 @@
-package store.server;
+package store.server.volume;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +8,8 @@ import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
-import store.server.Table;
+import store.server.lock.Table;
+import store.server.lock.Table;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;

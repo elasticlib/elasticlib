@@ -35,6 +35,7 @@ public class TransactionManager {
     private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
         StandaloneFileSystemConfiguration config = new StandaloneFileSystemConfiguration(dir, dir);
+        config.setTransactionTimeout(-1);
         filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
         try {
             filesystem.waitForBootup(-1);

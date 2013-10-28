@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.common.Uid;
+import store.server.Index;
 import store.server.volume.Volume;
 
 public class AgentManager {
@@ -14,13 +15,20 @@ public class AgentManager {
     private final Map<Uid, Map<Uid, Agent>> agents = new HashMap<>();
 
     public synchronized void sync(Uid sourceId, Volume source, Uid destinationId, Volume destination) {
+        sync(sourceId, destinationId, new SyncAgent(this, destinationId, source, destination));
+    }
+
+    public synchronized void sync(Uid sourceId, Volume source, Uid destinationId, Index destination) {
+        sync(sourceId, destinationId, new IndexAgent(source, destination));
+    }
+
+    private void sync(Uid sourceId, Uid destinationId, Agent agent) {
         if (!agents.containsKey(sourceId)) {
             agents.put(sourceId, new HashMap<Uid, Agent>());
         }
         if (agents.get(sourceId).containsKey(destinationId)) {
             return;
         }
-        Agent agent = new Agent(this, destinationId, source, destination);
         agents.get(sourceId).put(destinationId, agent);
         agent.start();
     }

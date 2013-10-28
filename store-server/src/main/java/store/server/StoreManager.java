@@ -62,7 +62,11 @@ public final class StoreManager {
         }
         for (Uid sourceId : config.getVolumes().keySet()) {
             for (Uid destinationId : config.getSync(sourceId)) {
-                agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
+                if (volumes.containsKey(destinationId)) {
+                    agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
+                } else {
+                    agentManager.sync(sourceId, volumes.get(sourceId), destinationId, indexes.get(destinationId));
+                }
             }
         }
     }
@@ -117,6 +121,7 @@ public final class StoreManager {
             config.addIndex(uid, path, volumeId);
             saveConfig();
             indexes.put(uid, index);
+            agentManager.sync(volumeId, volumes.get(volumeId), uid, index);
 
         } finally {
             lock.writeLock().unlock();
@@ -132,6 +137,8 @@ public final class StoreManager {
             Path path = config.getIndexes().get(uid);
             config.removeIndex(uid);
             saveConfig();
+            agentManager.drop(uid);
+            indexes.remove(uid);
             recursiveDelete(path);
 
         } finally {

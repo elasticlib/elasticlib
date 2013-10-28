@@ -22,6 +22,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.SingleInstanceLockFactory;
@@ -86,6 +87,21 @@ public class Index {
         try (IndexWriter writer = new IndexWriter(directory, config)) {
             writer.deleteDocuments(new Term("hash", hash.encode()));
 
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean contains(Hash hash) {
+        try {
+            if (directory.listAll().length == 0) {
+                return false;
+            }
+            try (DirectoryReader reader = DirectoryReader.open(directory)) {
+                IndexSearcher searcher = new IndexSearcher(reader);
+                TermQuery query = new TermQuery(new Term("hash", hash.encode()));
+                return searcher.search(query, 1).totalHits > 0;
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

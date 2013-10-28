@@ -7,11 +7,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import static java.util.Collections.singleton;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
@@ -70,10 +70,10 @@ public class Index {
     public void put(ContentInfo contentInfo, InputStream inputStream) {
         try (IndexWriter writer = new IndexWriter(directory, config)) {
             Document document = new Document();
-            document.add(new TextField("hash", contentInfo.getHash().encode(), Field.Store.YES));
-            document.add(new LongField("length", contentInfo.getLength(), Field.Store.NO));
-            for (Map.Entry<String, Object> entry : contentInfo.getMetadata().entrySet()) {
-                document.add(new TextField(entry.getKey(), entry.getValue().toString(), Field.Store.NO));
+            document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
+            document.add(new LongField("length", contentInfo.getLength(), Store.NO));
+            for (Entry<String, Object> entry : contentInfo.getMetadata().entrySet()) {
+                document.add(new TextField(entry.getKey(), entry.getValue().toString(), Store.NO));
             }
             document.add(new TextField("content", new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);

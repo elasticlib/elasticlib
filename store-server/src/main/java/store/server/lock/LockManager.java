@@ -16,25 +16,19 @@ public class LockManager {
         };
     }
 
-    public boolean writeLock(Hash hash) {
-        return segments.get(hash).writeLock(hash);
+    public void writeLock(Hash hash) {
+        segments.get(hash).writeLock(hash);
     }
 
     public void writeUnlock(Hash hash) {
         segments.get(hash).writeUnlock(hash);
     }
 
-    public boolean readLock(Hash hash) {
-        return segments.get(hash).readLock(hash);
+    public void readLock(Hash hash) {
+        segments.get(hash).readLock(hash);
     }
 
     public void readUnlock(Hash hash) {
         segments.get(hash).readUnlock(hash);
-    }
-
-    public void clear() {
-        for (Segment segment : segments) {
-            segment.clear();
-        }
     }
 }

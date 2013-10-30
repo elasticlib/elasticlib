@@ -6,7 +6,6 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import store.common.Uid;
-import store.server.exception.ConcurrentOperationException;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.UnknownHashException;
@@ -34,8 +33,6 @@ public class SyncAgent extends Agent {
 
     private class VolumeAgentThread extends AgentThread {
 
-        private int attempt = 1;
-
         @Override
         protected boolean process(Event event) {
             try {
@@ -50,20 +47,8 @@ public class SyncAgent extends Agent {
                 agentManager.signal(destinationId);
                 return true;
 
-            } catch (ConcurrentOperationException e) {
-                try {
-                    Thread.sleep(attempt > 10 ? 10000 : 1000 * attempt);
-                    attempt++;
-                    return process(event);
-
-                } catch (InterruptedException interrupt) {
-                    throw new RuntimeException(interrupt);
-                }
             } catch (UnknownHashException | VolumeClosedException e) {
                 return false;
-
-            } finally {
-                attempt = 1;
             }
         }
 

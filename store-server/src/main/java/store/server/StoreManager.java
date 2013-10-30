@@ -31,7 +31,6 @@ import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.common.Uid;
 import store.server.agent.AgentManager;
-import store.server.exception.ConcurrentOperationException;
 import store.server.exception.NoIndexException;
 import store.server.exception.NoVolumeException;
 import store.server.exception.UnknownHashException;
@@ -328,7 +327,7 @@ public final class StoreManager {
             try {
                 results.add(info(hash));
 
-            } catch (UnknownHashException | ConcurrentOperationException e) {
+            } catch (UnknownHashException e) {
             }
         }
         return results;

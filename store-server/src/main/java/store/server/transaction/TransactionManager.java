@@ -5,7 +5,6 @@ import static java.lang.Runtime.getRuntime;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -86,7 +85,6 @@ public class TransactionManager {
                 context.close();
             }
             txContexts.clear();
-            lockManager.clear();
             filesystem.shutdown();
             started = false;
 
@@ -110,9 +108,20 @@ public class TransactionManager {
             } else {
                 txContext = new ReadWriteTransactionContext(session);
             }
-            txContexts.add(txContext);
             currentTxContext.set(txContext);
+            txContexts.add(txContext);
             return txContext;
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private void remove(TransactionContext txContext) {
+        lock.readLock().lock();
+        try {
+            currentTxContext.remove();
+            txContexts.remove(txContext);
 
         } finally {
             lock.readLock().unlock();
@@ -128,26 +137,24 @@ public class TransactionManager {
     }
 
     public void inTransaction(Hash hash, Command command) {
-        if (!lockManager.writeLock(hash)) {
-            throw new ConcurrentModificationException();
-        }
-        TransactionContext txContext = createTransactionContext(false);
+        lockManager.writeLock(hash);
         try {
-            command.apply();
-            txContext.commit();
+            TransactionContext txContext = createTransactionContext(false);
+            try {
+                command.apply();
+                txContext.commit();
 
+            } finally {
+                txContext.close();
+                remove(txContext);
+            }
         } finally {
-            txContext.close();
-            txContexts.remove(txContext);
-            currentTxContext.remove();
             lockManager.writeUnlock(hash);
         }
     }
 
     public <T> T inTransaction(Hash hash, Query<T> query) {
-        if (!lockManager.readLock(hash)) {
-            throw new ConcurrentModificationException();
-        }
+        lockManager.readLock(hash);
         try {
             return inTransaction(query);
 
@@ -165,8 +172,7 @@ public class TransactionManager {
 
         } finally {
             txContext.close();
-            txContexts.remove(txContext);
-            currentTxContext.remove();
+            remove(txContext);
         }
     }
 }

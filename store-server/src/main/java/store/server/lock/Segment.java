@@ -4,47 +4,86 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import store.common.Hash;
 
 final class Segment {
 
+    private final Lock lock = new ReentrantLock(true);
+    private final Condition readable = lock.newCondition();
+    private final Condition writable = lock.newCondition();
     private final Map<Hash, Counter> read = new HashMap<>();
     private final Set<Hash> write = new HashSet<>();
 
-    public synchronized boolean writeLock(Hash hash) {
-        if (write.contains(hash) || read.containsKey(hash)) {
-            return false;
-        }
-        return write.add(hash);
-    }
-
-    public synchronized void writeUnlock(Hash hash) {
-        write.remove(hash);
-    }
-
-    public synchronized boolean readLock(Hash hash) {
-        if (write.contains(hash)) {
-            return false;
-        }
-        if (!read.containsKey(hash)) {
-            read.put(hash, new Counter());
-        }
-        read.get(hash).increment();
-        return true;
-    }
-
-    public synchronized void readUnlock(Hash hash) {
-        Counter counter = read.get(hash);
-        if (counter != null) {
-            counter.decrement();
-            if (counter.value() == 0) {
-                read.remove(hash);
+    public void writeLock(Hash hash) {
+        lock.lock();
+        try {
+            while (write.contains(hash) || read.containsKey(hash)) {
+                writable.awaitUninterruptibly();
             }
+            write.add(hash);
+
+        } finally {
+            lock.unlock();
         }
     }
 
-    public synchronized void clear() {
-        read.clear();
-        write.clear();
+    public void writeUnlock(Hash hash) {
+        lock.lock();
+        try {
+            write.remove(hash);
+            writable.signal();
+            readable.signalAll();
+
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void readLock(Hash hash) {
+        lock.lock();
+        try {
+            while (write.contains(hash)) {
+                readable.awaitUninterruptibly();
+            }
+            if (!read.containsKey(hash)) {
+                read.put(hash, new Counter());
+            }
+            read.get(hash).increment();
+
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void readUnlock(Hash hash) {
+        lock.lock();
+        try {
+            Counter counter = read.get(hash);
+            if (counter != null) {
+                counter.decrement();
+                if (counter.value() == 0) {
+                    read.remove(hash);
+                }
+            }
+            writable.signal();
+            readable.signalAll();
+
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void clear() {
+        lock.lock();
+        try {
+            read.clear();
+            write.clear();
+
+        } finally {
+            lock.unlock();
+        }
     }
 }

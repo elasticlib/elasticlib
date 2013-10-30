@@ -9,7 +9,6 @@ import java.util.ListIterator;
 import store.common.Event;
 import store.common.Hash;
 import store.common.Operation;
-import store.server.exception.ConcurrentOperationException;
 import store.server.exception.StoreException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.VolumeClosedException;
@@ -139,9 +138,7 @@ public abstract class Agent {
             try (PipedOutputStream out = new PipedOutputStream(in)) {
                 volume.get(hash, out);
 
-            } catch (UnknownHashException |
-                    ConcurrentOperationException |
-                    VolumeClosedException e) {
+            } catch (UnknownHashException | VolumeClosedException e) {
                 storeException = e;
 
             } catch (Throwable e) {

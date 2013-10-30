@@ -8,7 +8,6 @@ import store.common.Hash;
 import static store.common.Operation.DELETE;
 import static store.common.Operation.PUT;
 import store.server.Index;
-import store.server.exception.ConcurrentOperationException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.VolumeClosedException;
 import store.server.volume.Volume;
@@ -29,8 +28,6 @@ public class IndexAgent extends Agent {
 
     private class IndexAgentThread extends AgentThread {
 
-        private int attempt = 1;
-
         @Override
         protected boolean process(Event event) {
             try {
@@ -44,20 +41,8 @@ public class IndexAgent extends Agent {
                 }
                 return true;
 
-            } catch (ConcurrentOperationException e) {
-                try {
-                    Thread.sleep(attempt > 10 ? 10000 : 1000 * attempt);
-                    attempt++;
-                    return process(event);
-
-                } catch (InterruptedException interrupt) {
-                    throw new RuntimeException(interrupt);
-                }
             } catch (UnknownHashException | VolumeClosedException e) {
                 return false;
-
-            } finally {
-                attempt = 1;
             }
         }
 

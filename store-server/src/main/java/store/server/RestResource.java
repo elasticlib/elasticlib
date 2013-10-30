@@ -28,109 +28,109 @@ import store.common.Uid;
 
 @Path("/")
 @Singleton
-public class StoreResource {
+public class RestResource {
 
-    private final StoreManager storeManager;
+    private final Repository repository;
 
-    public StoreResource(StoreManager storeManager) {
-        this.storeManager = storeManager;
+    public RestResource(Repository repository) {
+        this.repository = repository;
     }
 
     @POST
     @Path("createVolume/{path}")
     public Response createVolume(@PathParam("path") String path) {
-        storeManager.createVolume(Paths.get(path));
+        repository.createVolume(Paths.get(path));
         return Response.ok().build();
     }
 
     @POST
     @Path("dropVolume/{uid}")
     public Response dropVolume(@PathParam("uid") Uid uid) {
-        storeManager.dropVolume(uid);
+        repository.dropVolume(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("createIndex/{path}/{uid}")
     public Response createIndex(@PathParam("path") String path, @PathParam("uid") Uid volumeId) {
-        storeManager.createIndex(Paths.get(path), volumeId);
+        repository.createIndex(Paths.get(path), volumeId);
         return Response.ok().build();
     }
 
     @POST
     @Path("dropIndex/{uid}")
     public Response dropIndex(@PathParam("uid") Uid uid) {
-        storeManager.dropIndex(uid);
+        repository.dropIndex(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("setWrite/{uid}")
     public Response setWrite(@PathParam("uid") Uid uid) {
-        storeManager.setWrite(uid);
+        repository.setWrite(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("unsetWrite")
     public Response unsetWrite() {
-        storeManager.unsetWrite();
+        repository.unsetWrite();
         return Response.ok().build();
     }
 
     @POST
     @Path("setRead/{uid}")
     public Response setRead(@PathParam("uid") Uid uid) {
-        storeManager.setRead(uid);
+        repository.setRead(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("unsetRead")
     public Response unsetRead() {
-        storeManager.unsetRead();
+        repository.unsetRead();
         return Response.ok().build();
     }
 
     @POST
     @Path("setSearch/{uid}")
     public Response setSearch(@PathParam("uid") Uid uid) {
-        storeManager.setSearch(uid);
+        repository.setSearch(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("unsetSearch")
     public Response unsetSearch() {
-        storeManager.unsetSearch();
+        repository.unsetSearch();
         return Response.ok().build();
     }
 
     @POST
     @Path("sync/{source}/{destination}")
     public Response sync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
-        storeManager.sync(source, destination);
+        repository.sync(source, destination);
         return Response.ok().build();
     }
 
     @POST
     @Path("unsync/{source}/{destination}")
     public Response unsync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
-        storeManager.unsync(source, destination);
+        repository.unsync(source, destination);
         return Response.ok().build();
     }
 
     @POST
     @Path("start/{uid}")
     public Response start(@PathParam("uid") Uid uid) {
-        storeManager.start(uid);
+        repository.start(uid);
         return Response.ok().build();
     }
 
     @POST
     @Path("stop/{uid}")
     public Response stop(@PathParam("uid") Uid uid) {
-        storeManager.stop(uid);
+        repository.stop(uid);
         return Response.ok().build();
     }
 
@@ -138,21 +138,21 @@ public class StoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("config")
     public JsonObject config() {
-        return writeConfig(storeManager.config());
+        return writeConfig(repository.config());
     }
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("put")
     public Response put(@FormDataParam("info") JsonObject json, @FormDataParam("source") InputStream inputStream) {
-        storeManager.put(readContentInfo(json), inputStream);
+        repository.put(readContentInfo(json), inputStream);
         return Response.ok().build();
     }
 
     @POST
     @Path("delete/{hash}")
     public Response delete(@PathParam("hash") Hash hash) {
-        storeManager.delete(hash);
+        repository.delete(hash);
         return Response.ok().build();
     }
 
@@ -160,7 +160,7 @@ public class StoreResource {
     @Path("contains/{hash}")
     public Response contains(@PathParam("hash") Hash hash) {
         return Response.ok()
-                .entity(storeManager.contains(hash))
+                .entity(repository.contains(hash))
                 .build();
     }
 
@@ -168,7 +168,7 @@ public class StoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("info/{hash}")
     public JsonObject info(@PathParam("hash") Hash hash) {
-        ContentInfo info = storeManager.info(hash);
+        ContentInfo info = repository.info(hash);
         return writeContentInfo(info);
     }
 
@@ -179,7 +179,7 @@ public class StoreResource {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {
-                storeManager.get(hash, outputStream);
+                repository.get(hash, outputStream);
             }
         }).build();
     }
@@ -188,7 +188,7 @@ public class StoreResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("find/{query}")
     public JsonArray find(@PathParam("query") String query) {
-        return writeContentInfos(storeManager.find(query));
+        return writeContentInfos(repository.find(query));
     }
 
     @GET
@@ -197,6 +197,6 @@ public class StoreResource {
     public JsonArray history(@PathParam("chronological") boolean chronological,
                              @PathParam("first") long first,
                              @PathParam("number") int number) {
-        return writeEvents(storeManager.history(chronological, first, number));
+        return writeEvents(repository.history(chronological, first, number));
     }
 }

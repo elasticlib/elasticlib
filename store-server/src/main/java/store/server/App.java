@@ -11,11 +11,11 @@ public final class App {
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            System.out.println("Syntax : serve STORE_HOME");
+            System.out.println("Syntax : serve <home>");
             return;
         }
         Path home = Paths.get(args[0]);
-        new StoreServer(home).start();
+        new Server(home).start();
         currentThread().join();
     }
 }

@@ -52,7 +52,7 @@ public final class App {
         CREATE_VOLUME {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.createVolume(Paths.get(params.get(0)));
                 }
             }
@@ -60,7 +60,7 @@ public final class App {
         DROP_VOLUME {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.dropVolume(new Uid(params.get(0)));
                 }
             }
@@ -77,7 +77,7 @@ public final class App {
 
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.createIndex(Paths.get(params.get(0)), new Uid(params.get(1)));
                 }
             }
@@ -85,7 +85,7 @@ public final class App {
         DROP_INDEX {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.dropIndex(new Uid(params.get(0)));
                 }
             }
@@ -93,7 +93,7 @@ public final class App {
         SET_WRITE {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.setWrite(new Uid(params.get(0)));
                 }
             }
@@ -101,7 +101,7 @@ public final class App {
         UNSET_WRITE {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.unsetWrite();
                 }
             }
@@ -109,7 +109,7 @@ public final class App {
         SET_READ {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.setRead(new Uid(params.get(0)));
                 }
             }
@@ -117,7 +117,7 @@ public final class App {
         UNSET_READ {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.unsetRead();
                 }
             }
@@ -125,7 +125,7 @@ public final class App {
         SET_SEARCH {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.setSearch(new Uid(params.get(0)));
                 }
             }
@@ -133,7 +133,7 @@ public final class App {
         UNSET_SEARCH {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.unsetSearch();
                 }
             }
@@ -141,7 +141,7 @@ public final class App {
         SYNC {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.sync(new Uid(params.get(0)), new Uid(params.get(1)));
                 }
             }
@@ -149,7 +149,7 @@ public final class App {
         UNSYNC {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.unsync(new Uid(params.get(0)), new Uid(params.get(1)));
                 }
             }
@@ -157,7 +157,7 @@ public final class App {
         START {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.start(new Uid(params.get(0)));
                 }
             }
@@ -165,7 +165,7 @@ public final class App {
         STOP {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.stop(new Uid(params.get(0)));
                 }
             }
@@ -173,7 +173,7 @@ public final class App {
         CONFIG {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     Config config = client.config();
                     System.out.println(asString(config));
                 }
@@ -182,7 +182,7 @@ public final class App {
         PUT {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.put(Paths.get(params.get(0)));
                 }
             }
@@ -190,7 +190,7 @@ public final class App {
         DELETE {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.delete(new Hash(params.get(0)));
                 }
             }
@@ -198,7 +198,7 @@ public final class App {
         GET {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     client.get(new Hash(params.get(0)));
                 }
             }
@@ -206,7 +206,7 @@ public final class App {
         INFO {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     ContentInfo info = client.info(new Hash(params.get(0)));
                     System.out.println(asString(info));
                 }
@@ -216,7 +216,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 String query = Joiner.on(" ").join(params);
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     for (ContentInfo info : client.find(query)) {
                         System.out.println(asString(info));
                     }
@@ -226,7 +226,7 @@ public final class App {
         HISTORY {
             @Override
             public void execute(List<String> params) {
-                try (StoreClient client = new StoreClient()) {
+                try (RestClient client = new RestClient()) {
                     long cursor = Long.MAX_VALUE;
                     List<Event> events;
                     do {

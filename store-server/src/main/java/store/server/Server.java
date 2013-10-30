@@ -1,6 +1,7 @@
 package store.server;
 
 import java.io.IOException;
+import static java.lang.Runtime.getRuntime;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.logging.Logger;
@@ -12,19 +13,19 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
 
-public class StoreServer {
+public class Server {
 
     private final HttpServer httpServer;
 
-    public StoreServer(Path home) {
+    public Server(Path home) {
         ResourceConfig resourceConfig = new ResourceConfig()
                 .register(MultiPartFeature.class)
-                .register(new StoreResource(new StoreManager(home)))
+                .register(new RestResource(new Repository(home)))
                 .register(new LoggingFilter(Logger.getGlobal(), false));
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 httpServer.stop();

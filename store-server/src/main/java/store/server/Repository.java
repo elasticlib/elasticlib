@@ -39,7 +39,7 @@ import store.server.exception.UnknownVolumeException;
 import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
-public final class StoreManager {
+public final class Repository {
 
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -48,7 +48,7 @@ public final class StoreManager {
     private final Map<Uid, Volume> volumes = new HashMap<>();
     private final Map<Uid, Index> indexes = new HashMap<>();
 
-    public StoreManager(Path home) {
+    public Repository(Path home) {
         this.home = home;
         config = loadConfig();
         for (Entry<Uid, Path> entry : config.getVolumes().entrySet()) {

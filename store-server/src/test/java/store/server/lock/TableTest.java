@@ -1,9 +1,9 @@
-package store.server;
+package store.server.lock;
 
-import store.server.lock.Table;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.Hash;
+import store.server.lock.Table;
 
 public class TableTest {
 

@@ -14,7 +14,7 @@ import store.server.exception.UnknownHashException;
 import store.server.exception.VolumeClosedException;
 import store.server.volume.Volume;
 
-public abstract class Agent {
+abstract class Agent {
 
     protected final Volume volume;
     private final List<Event> events;

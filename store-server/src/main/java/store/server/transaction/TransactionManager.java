@@ -18,6 +18,9 @@ import store.server.exception.StoreRuntimeException;
 import store.server.exception.VolumeClosedException;
 import store.server.lock.LockManager;
 
+/**
+ * Manages transactions within a volume.
+ */
 public class TransactionManager {
 
     private static final ThreadLocal<TransactionContext> currentTxContext = new ThreadLocal<>();

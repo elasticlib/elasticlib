@@ -48,12 +48,18 @@ import static store.common.JsonUtil.writeContentInfo;
 import static store.common.Properties.Common.CAPTURE_DATE;
 import store.common.Uid;
 
+/**
+ * REST Client.
+ */
 public class RestClient implements Closeable {
 
     private static final String POST = "POST";
     private final Client client;
     private final WebTarget target;
 
+    /**
+     * Constructor.
+     */
     public RestClient() {
         Logger logger = Logger.getGlobal();
         logger.setLevel(Level.OFF);

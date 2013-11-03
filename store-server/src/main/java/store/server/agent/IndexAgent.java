@@ -12,7 +12,7 @@ import store.server.exception.UnknownHashException;
 import store.server.exception.VolumeClosedException;
 import store.server.volume.Volume;
 
-public class IndexAgent extends Agent {
+class IndexAgent extends Agent {
 
     private final Index index;
 

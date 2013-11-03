@@ -34,13 +34,16 @@ import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 
+/**
+ * A Lucene index on a volume.
+ */
 public class Index {
 
     private final Directory directory;
     private final Analyzer analyzer;
     private final IndexWriterConfig config;
 
-    public Index(Path path) throws IOException {
+    private Index(Path path) throws IOException {
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer(Version.LUCENE_44);
         config = new IndexWriterConfig(Version.LUCENE_44, analyzer);

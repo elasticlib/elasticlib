@@ -26,12 +26,20 @@ import static store.common.JsonUtil.writeContentInfos;
 import static store.common.JsonUtil.writeEvents;
 import store.common.Uid;
 
+/**
+ * REST resource on a repository.
+ */
 @Path("/")
 @Singleton
 public class RestResource {
 
     private final Repository repository;
 
+    /**
+     * Constructor.
+     *
+     * @param repository The repository.
+     */
     public RestResource(Repository repository) {
         this.repository = repository;
     }

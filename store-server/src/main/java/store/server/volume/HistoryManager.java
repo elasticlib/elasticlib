@@ -22,7 +22,7 @@ import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-public class HistoryManager {
+class HistoryManager {
 
     private static final int PAGE_SIZE = 8192;
     private final AtomicLong nextSeq;

@@ -13,7 +13,7 @@ import store.server.exception.VolumeClosedException;
 import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
-public class SyncAgent extends Agent {
+class SyncAgent extends Agent {
 
     private final AgentManager agentManager;
     private final Uid destinationId;

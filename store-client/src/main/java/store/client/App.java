@@ -22,11 +22,19 @@ import store.common.Properties;
 import store.common.Property;
 import store.common.Uid;
 
+/**
+ * Client starting.
+ */
 public final class App {
 
     private App() {
     }
 
+    /**
+     * Main method.
+     *
+     * @param args Command line arguments.
+     */
     public static void main(String[] args) {
         if (args.length == 0) {
             System.out.println("Syntax : store command params...");

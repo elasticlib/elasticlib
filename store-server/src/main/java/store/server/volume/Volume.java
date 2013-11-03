@@ -20,6 +20,10 @@ import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
 
+/**
+ * A volume. Store contents with their metadata. Each volume also maintains an history log. All read/write operations on
+ * a volume are transactionnal.
+ */
 public class Volume {
 
     private final TransactionManager transactionManager;

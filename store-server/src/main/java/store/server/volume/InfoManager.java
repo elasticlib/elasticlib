@@ -21,7 +21,7 @@ import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-public class InfoManager {
+class InfoManager {
 
     private static final int KEY_LENGTH = 2;
     private final Path root;

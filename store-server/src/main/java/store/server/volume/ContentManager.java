@@ -9,7 +9,6 @@ import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
 import store.server.lock.Table;
-import store.server.lock.Table;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
@@ -18,7 +17,7 @@ import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
-public class ContentManager {
+class ContentManager {
 
     private static final int HEAVY_WRITE_THRESHOLD = 1024;
     private static final int KEY_LENGTH = 2;

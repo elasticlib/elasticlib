@@ -10,6 +10,9 @@ import store.common.Uid;
 import store.server.Index;
 import store.server.volume.Volume;
 
+/**
+ * Manage replication agents on volumes and indexes within a repository.
+ */
 public class AgentManager {
 
     private final Map<Uid, Map<Uid, Agent>> agents = new HashMap<>();

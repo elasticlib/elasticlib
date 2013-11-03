@@ -39,6 +39,9 @@ import store.server.exception.UnknownVolumeException;
 import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
+/**
+ * Represents a repository, which is a consistent set of volumes and indexes, with asynchronous replication support.
+ */
 public final class Repository {
 
     private final Path home;
@@ -48,6 +51,11 @@ public final class Repository {
     private final Map<Uid, Volume> volumes = new HashMap<>();
     private final Map<Uid, Index> indexes = new HashMap<>();
 
+    /**
+     * Constructor.
+     *
+     * @param home The repository home directory.
+     */
     public Repository(Path home) {
         this.home = home;
         config = loadConfig();

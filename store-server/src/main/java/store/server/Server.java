@@ -13,10 +13,18 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
 
+/**
+ * A Standalone HTTP server. Expose a REST resource on a repository.
+ */
 public class Server {
 
     private final HttpServer httpServer;
 
+    /**
+     * Constructor.
+     *
+     * @param home Path to repository's home-directory.
+     */
     public Server(Path home) {
         ResourceConfig resourceConfig = new ResourceConfig()
                 .register(MultiPartFeature.class)
@@ -40,6 +48,9 @@ public class Server {
                 .build();
     }
 
+    /**
+     * Starts the server.
+     */
     public void start() {
         try {
             httpServer.start();

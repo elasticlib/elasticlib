@@ -6,7 +6,12 @@ import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
 
-public class BlockingTransactionManager extends TransactionManager {
+/**
+ * A wrapping transaction manager providing a hook to block execution during a transaction for testing purpose.
+ *
+ * @author Guillaume Masclet (guillaume.masclet@gadz.org)
+ */
+class BlockingTransactionManager extends TransactionManager {
 
     private boolean ready;
     private boolean proceed;
@@ -15,6 +20,9 @@ public class BlockingTransactionManager extends TransactionManager {
         super(path);
     }
 
+    /**
+     * Waits until at least a thread has started a transaction and is ready to proceed.
+     */
     public synchronized void awaitReady() {
         while (!ready) {
             try {
@@ -25,6 +33,9 @@ public class BlockingTransactionManager extends TransactionManager {
         }
     }
 
+    /**
+     * Unblocks waiting threads, if any.
+     */
     public synchronized void proceed() {
         proceed = true;
         notifyAll();

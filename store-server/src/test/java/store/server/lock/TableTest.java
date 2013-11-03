@@ -3,8 +3,10 @@ package store.server.lock;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.Hash;
-import store.server.lock.Table;
 
+/**
+ * Unit tests.
+ */
 public class TableTest {
 
     private static final char[] ALPHABET = new char[]{'0', '1', '2', '3',
@@ -12,9 +14,12 @@ public class TableTest {
                                                       '8', '9', 'a', 'b',
                                                       'c', 'd', 'e', 'f'};
 
+    /**
+     * Test.
+     */
     @Test
-    public void createAndGetTest() {
-        Table table = new Table<String>(2) {
+    public void createAndGet() {
+        Table<String> table = new Table<String>(2) {
             @Override
             protected String initialValue(String key) {
                 return key;

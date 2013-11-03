@@ -11,6 +11,9 @@ import org.testng.annotations.Test;
 import store.common.Hash;
 import static store.server.TestUtil.recursiveDelete;
 
+/**
+ * Unit tests.
+ */
 @Test(singleThreaded = true)
 public class IndexTest {
 
@@ -19,46 +22,79 @@ public class IndexTest {
     private Path path;
     private Index index;
 
+    /**
+     * Initialization.
+     *
+     * @throws IOException If an IO error occurs.
+     */
     @BeforeClass
     public void init() throws IOException {
         path = Files.createTempDirectory(this.getClass().getName());
     }
 
+    /**
+     * Clean up.
+     *
+     * @throws IOException If an IO error occurs.
+     */
     @AfterClass
     public void cleanUp() throws IOException {
         recursiveDelete(path);
     }
 
+    /**
+     * Test.
+     */
     @Test
     public void create() {
         index = Index.create(path.resolve("index"));
     }
 
+    /**
+     * Test.
+     */
     @Test(dependsOnMethods = "create")
     public void findUnknown() {
         assertThat(index.find("UNKNOWN")).isEmpty();
     }
 
+    /**
+     * Test.
+     */
     @Test(dependsOnMethods = "create")
     public void containsUnknown() {
         assertThat(index.contains(UNKNOWN_HASH)).isFalse();
     }
 
+    /**
+     * Test.
+     */
     @Test(dependsOnMethods = "create")
     public void deleteUnknown() {
         index.delete(UNKNOWN_HASH);
     }
 
+    /**
+     * Test.
+     */
     @Test(groups = "emptyRead", dependsOnMethods = "create")
     public void findOnEmptyIndex() {
         assertThat(index.find("lorem")).isEmpty();
     }
 
+    /**
+     * Test.
+     */
     @Test(groups = "emptyRead", dependsOnMethods = "create")
     public void containsOnEmptyIndex() {
         assertThat(index.contains(LOREM_IPSUM.getHash())).isFalse();
     }
 
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
     @Test(dependsOnGroups = "emptyRead")
     public void put() throws IOException {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
@@ -66,16 +102,25 @@ public class IndexTest {
         }
     }
 
+    /**
+     * Test.
+     */
     @Test(groups = "read", dependsOnMethods = "put")
     public void find() {
         assertThat(index.find("lorem")).hasSize(1);
     }
 
+    /**
+     * Test.
+     */
     @Test(groups = "read", dependsOnMethods = "put")
     public void contains() {
         assertThat(index.contains(LOREM_IPSUM.getHash())).isTrue();
     }
 
+    /**
+     * Test.
+     */
     @Test(dependsOnGroups = "read")
     public void delete() {
         index.delete(LOREM_IPSUM.getHash());

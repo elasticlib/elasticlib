@@ -11,11 +11,19 @@ import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
 
+/**
+ * Represents a test content.
+ */
 public final class Content {
 
     private final byte[] bytes;
     private final Digest digest;
 
+    /**
+     * Constructor. Loads the actual resource from the classpath.
+     *
+     * @param filename Resource filename.
+     */
     public Content(String filename) {
         try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -27,18 +35,30 @@ public final class Content {
         }
     }
 
+    /**
+     * @return An input stream on this content.
+     */
     public InputStream getInputStream() {
         return new ByteArrayInputStream(bytes);
     }
 
+    /**
+     * @return This content as a byte array.
+     */
     public byte[] getBytes() {
         return bytes;
     }
 
+    /**
+     * @return This content's hash.
+     */
     public Hash getHash() {
         return digest.getHash();
     }
 
+    /**
+     * @return Info on this content.
+     */
     public ContentInfo getInfo() {
         return contentInfo()
                 .withLength(digest.getLength())

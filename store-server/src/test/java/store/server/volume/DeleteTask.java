@@ -3,7 +3,7 @@ package store.server.volume;
 import store.common.Hash;
 import store.server.Content;
 
-public class DeleteTask extends Task {
+class DeleteTask extends Task {
 
     private final Volume volume;
     private final Hash hash;

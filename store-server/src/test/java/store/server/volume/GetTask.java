@@ -5,7 +5,7 @@ import java.io.IOException;
 import static org.fest.assertions.api.Assertions.assertThat;
 import store.server.Content;
 
-public class GetTask extends Task {
+class GetTask extends Task {
 
     private final Volume volume;
     private final Content content;

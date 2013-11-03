@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import store.server.Content;
 
-public class PutTask extends Task {
+class PutTask extends Task {
 
     private final Volume volume;
     private final Content content;

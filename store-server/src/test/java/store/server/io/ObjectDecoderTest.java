@@ -7,10 +7,16 @@ import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 
+/**
+ * Unit tests.
+ */
 public class ObjectDecoderTest {
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeBooleanTest() {
+    public void decodeBoolean() {
         byte[] bytes = array(0x02, // type
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                              0x01); // value
@@ -19,8 +25,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getBoolean("bool")).isEqualTo(true);
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeLongTest() {
+    public void decodeLong() {
         byte[] bytes = array(0x05, // type
                              0x6C, 0x67, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
@@ -29,8 +38,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getLong("lg")).isEqualTo(1432897L);
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeMapTest() {
+    public void decodeMap() {
         byte[] bytes = array(0x08, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              // value
@@ -54,8 +66,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getMap("map")).isEqualTo(map);
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeEmptyMapTest() {
+    public void decodeEmptyMap() {
         byte[] bytes = array(0x08, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
@@ -64,8 +79,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getMap("map")).isEmpty();
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeListTest() {
+    public void decodeList() {
         byte[] bytes = array(0x09, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              // value
@@ -83,8 +101,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getList("list")).isEqualTo(list);
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeEmptyListTest() {
+    public void decodeEmptyList() {
         byte[] bytes = array(0x09, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
@@ -93,8 +114,11 @@ public class ObjectDecoderTest {
         assertThat(decoder.getList("list")).isEmpty();
     }
 
+    /**
+     * Test.
+     */
     @Test
-    public void decodeTest() {
+    public void decode() {
         byte[] bytes = array(0x04, // type
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, // entry

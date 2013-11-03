@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import store.server.Content;
 
-public class PutWithFailureTask extends Task {
+class PutWithFailureTask extends Task {
 
     private final Volume volume;
     private final Content content;

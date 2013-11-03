@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.Map.Entry;
@@ -108,18 +109,22 @@ public class Index {
     }
 
     public List<Hash> find(String query) {
-        try (DirectoryReader reader = DirectoryReader.open(directory)) {
-            IndexSearcher searcher = new IndexSearcher(reader);
-            QueryParser parser = new QueryParser(Version.LUCENE_44, "content", analyzer);
-            ScoreDoc[] hits = searcher.search(parser.parse(query), 1000).scoreDocs;
-
-            List<Hash> hashes = new ArrayList<>(hits.length);
-            for (ScoreDoc hit : hits) {
-                Document document = searcher.doc(hit.doc, singleton("hash"));
-                hashes.add(new Hash(document.getValues("hash")[0]));
+        try {
+            if (directory.listAll().length == 0) {
+                return emptyList();
             }
-            return hashes;
+            try (DirectoryReader reader = DirectoryReader.open(directory)) {
+                IndexSearcher searcher = new IndexSearcher(reader);
+                QueryParser parser = new QueryParser(Version.LUCENE_44, "content", analyzer);
+                ScoreDoc[] hits = searcher.search(parser.parse(query), 1000).scoreDocs;
 
+                List<Hash> hashes = new ArrayList<>(hits.length);
+                for (ScoreDoc hit : hits) {
+                    Document document = searcher.doc(hit.doc, singleton("hash"));
+                    hashes.add(new Hash(document.getValues("hash")[0]));
+                }
+                return hashes;
+            }
         } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }

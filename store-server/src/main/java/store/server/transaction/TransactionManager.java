@@ -28,7 +28,7 @@ public class TransactionManager {
     private XAFileSystem filesystem;
     private boolean started;
 
-    private TransactionManager(Path path) {
+    protected TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
         config = new StandaloneFileSystemConfiguration(dir, dir);
         config.setTransactionTimeout(-1);

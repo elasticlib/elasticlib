@@ -156,7 +156,7 @@ public class HistoryManager {
         private int remainder;
 
         public Collector(boolean chronological, long first, int number) {
-            events = new ArrayList<>(number);
+            events = new ArrayList<>();
             this.chronological = chronological;
             this.cursor = first;
             this.remainder = number;

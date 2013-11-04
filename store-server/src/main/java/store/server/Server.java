@@ -4,7 +4,6 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.logging.Logger;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -29,7 +28,7 @@ public class Server {
         ResourceConfig resourceConfig = new ResourceConfig()
                 .register(MultiPartFeature.class)
                 .register(new RestResource(new Repository(home)))
-                .register(new LoggingFilter(Logger.getGlobal(), false));
+                .register(new LoggingFilter());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 

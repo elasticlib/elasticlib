@@ -23,6 +23,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Event;
@@ -44,6 +46,7 @@ import store.server.volume.Volume;
  */
 public final class Repository {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
@@ -79,6 +82,7 @@ public final class Repository {
     }
 
     public void createVolume(Path path) {
+        LOG.info("Creating volume at {}", path);
         lock.writeLock().lock();
         try {
             Uid uid = Uid.random();
@@ -93,6 +97,7 @@ public final class Repository {
     }
 
     public void dropVolume(Uid uid) {
+        LOG.info("Dropping volume {}", uid);
         lock.writeLock().lock();
         try {
             if (!config.getVolumes().containsKey(uid)) {
@@ -121,6 +126,7 @@ public final class Repository {
     }
 
     public void createIndex(Path path, Uid volumeId) {
+        LOG.info("Creating index on {} at {}", volumeId, path);
         lock.writeLock().lock();
         try {
             Uid uid = Uid.random();
@@ -136,6 +142,7 @@ public final class Repository {
     }
 
     public void dropIndex(Uid uid) {
+        LOG.info("Dropping index {}", uid);
         lock.writeLock().lock();
         try {
             if (!config.getIndexes().containsKey(uid)) {
@@ -179,6 +186,7 @@ public final class Repository {
     }
 
     public void setWrite(Uid uid) {
+        LOG.info("Setting write on {}", uid);
         lock.writeLock().lock();
         try {
             if (!config.getVolumes().containsKey(uid)) {
@@ -194,6 +202,7 @@ public final class Repository {
     }
 
     public void unsetWrite() {
+        LOG.info("Unsetting write");
         lock.writeLock().lock();
         try {
             config.unsetWrite();
@@ -205,6 +214,7 @@ public final class Repository {
     }
 
     public void setRead(Uid uid) {
+        LOG.info("Setting read on {}", uid);
         lock.writeLock().lock();
         try {
             if (!config.getVolumes().containsKey(uid)) {
@@ -219,6 +229,7 @@ public final class Repository {
     }
 
     public void unsetRead() {
+        LOG.info("Unsetting read");
         lock.writeLock().lock();
         try {
             config.unsetRead();
@@ -230,6 +241,7 @@ public final class Repository {
     }
 
     public void setSearch(Uid uid) {
+        LOG.info("Setting search on {}", uid);
         lock.writeLock().lock();
         try {
             if (!config.getIndexes().containsKey(uid)) {
@@ -244,6 +256,7 @@ public final class Repository {
     }
 
     public void unsetSearch() {
+        LOG.info("Unsetting search");
         lock.writeLock().lock();
         try {
             config.unsetSearch();
@@ -255,6 +268,7 @@ public final class Repository {
     }
 
     public void sync(Uid sourceId, Uid destinationId) {
+        LOG.info("Syncing {} >> {}", sourceId, destinationId);
         lock.writeLock().lock();
         try {
             if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
@@ -270,6 +284,7 @@ public final class Repository {
     }
 
     public void unsync(Uid sourceId, Uid destinationId) {
+        LOG.info("Unsyncing {} >> {}", sourceId, destinationId);
         lock.writeLock().lock();
         try {
             if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
@@ -285,16 +300,19 @@ public final class Repository {
     }
 
     public void start(Uid uid) {
+        LOG.info("Starting {}", uid);
         volume(uid).start();
         agentManager.start(uid);
     }
 
     public void stop(Uid uid) {
+        LOG.info("Stopping {}", uid);
         agentManager.stop(uid);
         volume(uid).stop();
     }
 
     public Config config() {
+        LOG.info("Returning config");
         lock.readLock().lock();
         try {
             return config;
@@ -305,30 +323,36 @@ public final class Repository {
     }
 
     public void put(ContentInfo contentInfo, InputStream source) {
+        LOG.info("Putting {}", contentInfo.getHash());
         Entry<Uid, Volume> writeVolume = writeVolume();
         writeVolume.getValue().put(contentInfo, source);
         agentManager.signal(writeVolume.getKey());
     }
 
     public void delete(Hash hash) {
+        LOG.info("Deleting {}", hash);
         Entry<Uid, Volume> writeVolume = writeVolume();
         writeVolume.getValue().delete(hash);
         agentManager.signal(writeVolume.getKey());
     }
 
     public boolean contains(Hash hash) {
+        LOG.info("Returning contains {}", hash);
         return readVolume().contains(hash);
     }
 
     public ContentInfo info(Hash hash) {
+        LOG.info("Returning info {}", hash);
         return readVolume().info(hash);
     }
 
     public void get(Hash hash, OutputStream outputStream) {
+        LOG.info("Getting {}", hash);
         readVolume().get(hash, outputStream);
     }
 
     public List<ContentInfo> find(String query) {
+        LOG.info("Finding {}", query);
         List<Hash> hashes = index().find(query);
         List<ContentInfo> results = new ArrayList<>(hashes.size());
         for (Hash hash : hashes) {
@@ -342,6 +366,7 @@ public final class Repository {
     }
 
     public List<Event> history(final boolean chronological, final long first, final int number) {
+        LOG.info("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
         return readVolume().history(chronological, first, number);
     }
 

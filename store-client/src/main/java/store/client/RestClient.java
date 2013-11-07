@@ -46,7 +46,6 @@ import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.Properties.Common.CAPTURE_DATE;
-import store.common.Uid;
 
 /**
  * REST Client.
@@ -96,31 +95,31 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void dropVolume(Uid uid) {
-        ensureOk(target.path("dropVolume/{uid}")
-                .resolveTemplate("uid", uid)
+    public void dropVolume(String name) {
+        ensureOk(target.path("dropVolume/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
 
-    public void createIndex(Path path, Uid volumeId) {
-        ensureOk(target.path("createIndex/{path}/{uid}")
+    public void createIndex(Path path, String volumeName) {
+        ensureOk(target.path("createIndex/{path}/{name}")
                 .resolveTemplate("path", path.toAbsolutePath())
-                .resolveTemplate("uid", volumeId)
+                .resolveTemplate("name", volumeName)
                 .request()
                 .method(POST));
     }
 
-    public void dropIndex(Uid uid) {
-        ensureOk(target.path("dropIndex/{uid}")
-                .resolveTemplate("uid", uid)
+    public void dropIndex(String name) {
+        ensureOk(target.path("dropIndex/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
 
-    public void setWrite(Uid uid) {
-        ensureOk(target.path("setWrite/{uid}")
-                .resolveTemplate("uid", uid)
+    public void setWrite(String name) {
+        ensureOk(target.path("setWrite/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
@@ -131,9 +130,9 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void setRead(Uid uid) {
-        ensureOk(target.path("setRead/{uid}")
-                .resolveTemplate("uid", uid)
+    public void setRead(String name) {
+        ensureOk(target.path("setRead/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
@@ -144,9 +143,9 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void setSearch(Uid uid) {
-        ensureOk(target.path("setSearch/{uid}")
-                .resolveTemplate("uid", uid)
+    public void setSearch(String name) {
+        ensureOk(target.path("setSearch/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
@@ -157,7 +156,7 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void sync(Uid source, Uid destination) {
+    public void sync(String source, String destination) {
         ensureOk(target.path("sync/{source}/{destination}")
                 .resolveTemplate("source", source)
                 .resolveTemplate("destination", destination)
@@ -165,7 +164,7 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void unsync(Uid source, Uid destination) {
+    public void unsync(String source, String destination) {
         ensureOk(target.path("unsync/{source}/{destination}")
                 .resolveTemplate("source", source)
                 .resolveTemplate("destination", destination)
@@ -173,16 +172,16 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void start(Uid uid) {
-        ensureOk(target.path("start/{uid}")
-                .resolveTemplate("uid", uid)
+    public void start(String name) {
+        ensureOk(target.path("start/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }
 
-    public void stop(Uid uid) {
-        ensureOk(target.path("stop/{uid}")
-                .resolveTemplate("uid", uid)
+    public void stop(String name) {
+        ensureOk(target.path("stop/{name}")
+                .resolveTemplate("name", name)
                 .request()
                 .method(POST));
     }

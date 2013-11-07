@@ -39,11 +39,13 @@ import store.server.exception.StoreRuntimeException;
  */
 public class Index {
 
+    private final Path path;
     private final Directory directory;
     private final Analyzer analyzer;
     private final IndexWriterConfig config;
 
     private Index(Path path) throws IOException {
+        this.path = path;
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer(Version.LUCENE_44);
         config = new IndexWriterConfig(Version.LUCENE_44, analyzer);
@@ -69,6 +71,14 @@ public class Index {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public String getName() {
+        return path.getFileName().toString();
+    }
+
+    public Path getPath() {
+        return path;
     }
 
     public void put(ContentInfo contentInfo, InputStream inputStream) {

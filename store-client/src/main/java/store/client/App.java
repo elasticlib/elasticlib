@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import static store.client.ByteLengthFormatter.format;
 import static store.client.DigestUtil.digest;
 import store.common.Config;
@@ -20,7 +19,6 @@ import store.common.Event;
 import store.common.Hash;
 import store.common.Properties;
 import store.common.Property;
-import store.common.Uid;
 
 /**
  * Client starting.
@@ -69,7 +67,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.dropVolume(new Uid(params.get(0)));
+                    client.dropVolume(params.get(0));
                 }
             }
         },
@@ -86,7 +84,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.createIndex(Paths.get(params.get(0)), new Uid(params.get(1)));
+                    client.createIndex(Paths.get(params.get(0)), params.get(1));
                 }
             }
         },
@@ -94,7 +92,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.dropIndex(new Uid(params.get(0)));
+                    client.dropIndex(params.get(0));
                 }
             }
         },
@@ -102,7 +100,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.setWrite(new Uid(params.get(0)));
+                    client.setWrite(params.get(0));
                 }
             }
         },
@@ -118,7 +116,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.setRead(new Uid(params.get(0)));
+                    client.setRead(params.get(0));
                 }
             }
         },
@@ -134,7 +132,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.setSearch(new Uid(params.get(0)));
+                    client.setSearch(params.get(0));
                 }
             }
         },
@@ -150,7 +148,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.sync(new Uid(params.get(0)), new Uid(params.get(1)));
+                    client.sync(params.get(0), params.get(1));
                 }
             }
         },
@@ -158,7 +156,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.unsync(new Uid(params.get(0)), new Uid(params.get(1)));
+                    client.unsync(params.get(0), params.get(1));
                 }
             }
         },
@@ -166,7 +164,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.start(new Uid(params.get(0)));
+                    client.start(params.get(0));
                 }
             }
         },
@@ -174,7 +172,7 @@ public final class App {
             @Override
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
-                    client.stop(new Uid(params.get(0)));
+                    client.stop(params.get(0));
                 }
             }
         },
@@ -286,35 +284,31 @@ public final class App {
 
     private static String asString(Config config) {
         StringBuilder builder = new StringBuilder();
-        for (Entry<Uid, Path> entry : config.getVolumes().entrySet()) {
-            Uid uid = entry.getKey();
-            boolean read = config.getRead().isPresent() && config.getRead().get().equals(uid);
-            boolean write = config.getWrite().isPresent() && config.getWrite().get().equals(uid);
+        for (Path path : config.getVolumes()) {
+            String name = path.getFileName().toString();
+            boolean read = config.getRead().isPresent() && config.getRead().get().equals(name);
+            boolean write = config.getWrite().isPresent() && config.getWrite().get().equals(name);
             builder.append("v")
                     .append(read ? "r" : "-")
                     .append(write ? "w" : "-")
                     .append("- ")
-                    .append(uid)
-                    .append(" ")
-                    .append(entry.getValue())
+                    .append(path)
                     .append(System.lineSeparator());
 
-            for (Uid destinationId : config.getSync(uid)) {
+            for (String destination : config.getSync(name)) {
                 builder.append(indent())
                         .append(indent())
-                        .append(destinationId)
+                        .append(destination)
                         .append(System.lineSeparator());
             }
         }
-        for (Entry<Uid, Path> entry : config.getIndexes().entrySet()) {
-            Uid uid = entry.getKey();
-            boolean search = config.getSearch().isPresent() && config.getSearch().get().equals(uid);
+        for (Path path : config.getIndexes()) {
+            String name = path.getFileName().toString();
+            boolean search = config.getSearch().isPresent() && config.getSearch().get().equals(name);
             builder.append("i--")
                     .append(search ? "s" : "-")
                     .append(" ")
-                    .append(uid)
-                    .append(" ")
-                    .append(entry.getValue())
+                    .append(path)
                     .append(System.lineSeparator());
         }
         return builder.toString();

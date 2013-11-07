@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import store.common.Uid;
 import store.server.Index;
 import store.server.volume.Volume;
 
@@ -15,83 +14,83 @@ import store.server.volume.Volume;
  */
 public class AgentManager {
 
-    private final Map<Uid, Map<Uid, Agent>> agents = new HashMap<>();
+    private final Map<String, Map<String, Agent>> agents = new HashMap<>();
 
-    public synchronized void sync(Uid sourceId, Volume source, Uid destinationId, Volume destination) {
-        sync(sourceId, destinationId, new SyncAgent(this, destinationId, source, destination));
+    public synchronized void sync(Volume source, Volume destination) {
+        sync(source.getName(), destination.getName(), new SyncAgent(this, source, destination));
     }
 
-    public synchronized void sync(Uid sourceId, Volume source, Uid destinationId, Index destination) {
-        sync(sourceId, destinationId, new IndexAgent(source, destination));
+    public synchronized void sync(Volume source, Index destination) {
+        sync(source.getName(), destination.getName(), new IndexAgent(source, destination));
     }
 
-    private void sync(Uid sourceId, Uid destinationId, Agent agent) {
-        if (!agents.containsKey(sourceId)) {
-            agents.put(sourceId, new HashMap<Uid, Agent>());
+    private void sync(String source, String destination, Agent agent) {
+        if (!agents.containsKey(source)) {
+            agents.put(source, new HashMap<String, Agent>());
         }
-        if (agents.get(sourceId).containsKey(destinationId)) {
+        if (agents.get(source).containsKey(destination)) {
             return;
         }
-        agents.get(sourceId).put(destinationId, agent);
+        agents.get(source).put(destination, agent);
         agent.start();
     }
 
-    public synchronized void unsync(Uid sourceId, Uid destinationId) {
-        if (!agents.containsKey(sourceId)) {
+    public synchronized void unsync(String source, String destination) {
+        if (!agents.containsKey(source)) {
             return;
         }
-        Agent agent = agents.get(sourceId).remove(destinationId);
+        Agent agent = agents.get(source).remove(destination);
         if (agent != null) {
             agent.stop();
         }
-        if (agents.get(sourceId).isEmpty()) {
-            agents.remove(sourceId);
+        if (agents.get(source).isEmpty()) {
+            agents.remove(source);
         }
     }
 
-    public synchronized void start(Uid uid) {
-        for (Agent agent : agents(uid)) {
+    public synchronized void start(String name) {
+        for (Agent agent : agents(name)) {
             agent.start();
         }
     }
 
-    public synchronized void stop(Uid uid) {
-        for (Agent agent : agents(uid)) {
+    public synchronized void stop(String name) {
+        for (Agent agent : agents(name)) {
             agent.stop();
         }
     }
 
-    private Collection<Agent> agents(Uid uid) {
+    private Collection<Agent> agents(String name) {
         Collection<Agent> collection = new ArrayList<>();
-        if (agents.containsKey(uid)) {
-            collection.addAll(agents.get(uid).values());
+        if (agents.containsKey(name)) {
+            collection.addAll(agents.get(name).values());
         }
-        for (Map<Uid, Agent> map : agents.values()) {
-            if (map.containsKey(uid)) {
-                collection.add(map.get(uid));
+        for (Map<String, Agent> map : agents.values()) {
+            if (map.containsKey(name)) {
+                collection.add(map.get(name));
             }
         }
         return collection;
     }
 
-    public synchronized void drop(Uid uid) {
-        stop(uid);
-        agents.remove(uid);
-        Iterator<Entry<Uid, Map<Uid, Agent>>> iterator = agents.entrySet().iterator();
+    public synchronized void drop(String name) {
+        stop(name);
+        agents.remove(name);
+        Iterator<Entry<String, Map<String, Agent>>> iterator = agents.entrySet().iterator();
         while (iterator.hasNext()) {
-            Entry<Uid, Map<Uid, Agent>> entry = iterator.next();
-            entry.getValue().remove(uid);
+            Entry<String, Map<String, Agent>> entry = iterator.next();
+            entry.getValue().remove(name);
             if (entry.getValue().isEmpty()) {
                 iterator.remove();
             }
         }
     }
 
-    public synchronized void signal(Uid uid) {
-        if (!agents.containsKey(uid)) {
+    public synchronized void signal(String name) {
+        if (!agents.containsKey(name)) {
             return;
         }
-        for (Agent agent : agents.get(uid).values()) {
+        for (Agent agent : agents.get(name).values()) {
             agent.signal();
         }
     }

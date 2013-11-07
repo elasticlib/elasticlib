@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
@@ -31,7 +31,6 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
-import store.common.Uid;
 import store.server.agent.AgentManager;
 import store.server.exception.NoIndexException;
 import store.server.exception.NoVolumeException;
@@ -51,8 +50,8 @@ public final class Repository {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
     private final AgentManager agentManager = new AgentManager();
-    private final Map<Uid, Volume> volumes = new HashMap<>();
-    private final Map<Uid, Index> indexes = new HashMap<>();
+    private final Map<String, Volume> volumes = new HashMap<>();
+    private final Map<String, Index> indexes = new HashMap<>();
 
     /**
      * Constructor.
@@ -62,20 +61,20 @@ public final class Repository {
     public Repository(Path home) {
         this.home = home;
         config = loadConfig();
-        for (Entry<Uid, Path> entry : config.getVolumes().entrySet()) {
-            Volume volume = Volume.open(entry.getValue());
-            volumes.put(entry.getKey(), volume);
+        for (Path path : config.getVolumes()) {
+            Volume volume = Volume.open(path);
+            volumes.put(volume.getName(), volume);
         }
-        for (Entry<Uid, Path> entry : config.getIndexes().entrySet()) {
-            Index index = Index.open(entry.getValue());
-            indexes.put(entry.getKey(), index);
+        for (Path path : config.getIndexes()) {
+            Index index = Index.open(path);
+            indexes.put(index.getName(), index);
         }
-        for (Uid sourceId : config.getVolumes().keySet()) {
-            for (Uid destinationId : config.getSync(sourceId)) {
-                if (volumes.containsKey(destinationId)) {
-                    agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
+        for (Volume volume : volumes.values()) {
+            for (String destination : config.getSync(volume.getName())) {
+                if (volumes.containsKey(destination)) {
+                    agentManager.sync(volume, volumes.get(destination));
                 } else {
-                    agentManager.sync(sourceId, volumes.get(sourceId), destinationId, indexes.get(destinationId));
+                    agentManager.sync(volume, indexes.get(destination));
                 }
             }
         }
@@ -85,74 +84,69 @@ public final class Repository {
         LOG.info("Creating volume at {}", path);
         lock.writeLock().lock();
         try {
-            Uid uid = Uid.random();
             Volume volume = Volume.create(path);
-            config.addVolume(uid, path);
+            config.addVolume(path);
             saveConfig();
-            volumes.put(uid, volume);
+            volumes.put(volume.getName(), volume);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void dropVolume(Uid uid) {
-        LOG.info("Dropping volume {}", uid);
+    public void dropVolume(String name) {
+        LOG.info("Dropping volume {}", name);
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(uid)) {
+            if (!volumes.containsKey(name)) {
                 throw new UnknownVolumeException();
             }
-            Path path = config.getVolumes().get(uid);
-            Map<Uid, Path> indexesToDrop = new HashMap<>();
-            for (Uid indexId : config.getIndexes(uid)) {
-                indexesToDrop.put(indexId, config.getIndexes().get(indexId));
-            }
+            Path path = volumes.get(name).getPath();
+            Set<String> indexesToDrop = config.getIndexes(name);
 
-            config.removeVolume(uid);
+            config.removeVolume(name);
             saveConfig();
 
-            agentManager.drop(uid);
-            volumes.remove(uid).stop();
+            agentManager.drop(name);
+            volumes.remove(name).stop();
 
             recursiveDelete(path);
-            for (Entry<Uid, Path> entry : indexesToDrop.entrySet()) {
-                indexes.remove(entry.getKey());
-                recursiveDelete(entry.getValue());
+            for (String indexName : indexesToDrop) {
+                Index index = indexes.remove(indexName);
+                recursiveDelete(index.getPath());
             }
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void createIndex(Path path, Uid volumeId) {
-        LOG.info("Creating index on {} at {}", volumeId, path);
+    public void createIndex(Path path, String volumeName) {
+        LOG.info("Creating index at {} on {}", path, volumeName);
         lock.writeLock().lock();
         try {
-            Uid uid = Uid.random();
             Index index = Index.create(path);
-            config.addIndex(uid, path, volumeId);
+            config.addIndex(path, volumeName);
             saveConfig();
-            indexes.put(uid, index);
-            agentManager.sync(volumeId, volumes.get(volumeId), uid, index);
+            indexes.put(index.getName(), index);
+            agentManager.sync(volumes.get(volumeName), index);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void dropIndex(Uid uid) {
-        LOG.info("Dropping index {}", uid);
+    public void dropIndex(String name) {
+        LOG.info("Dropping index {}", name);
         lock.writeLock().lock();
         try {
-            if (!config.getIndexes().containsKey(uid)) {
+            if (!indexes.containsKey(name)) {
                 throw new UnknownIndexException();
             }
-            Path path = config.getIndexes().get(uid);
-            config.removeIndex(uid);
+            Path path = indexes.get(name).getPath();
+            config.removeIndex(name);
             saveConfig();
-            agentManager.drop(uid);
-            indexes.remove(uid);
+            agentManager.drop(name);
+            indexes.remove(name);
             recursiveDelete(path);
 
         } finally {
@@ -185,14 +179,14 @@ public final class Repository {
         }
     }
 
-    public void setWrite(Uid uid) {
-        LOG.info("Setting write on {}", uid);
+    public void setWrite(String name) {
+        LOG.info("Setting write on {}", name);
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(uid)) {
+            if (!volumes.containsKey(name)) {
                 throw new UnknownVolumeException();
             }
-            config.setWrite(uid);
+            config.setWrite(name);
             saveConfig();
 
         } finally {
@@ -213,14 +207,14 @@ public final class Repository {
         }
     }
 
-    public void setRead(Uid uid) {
-        LOG.info("Setting read on {}", uid);
+    public void setRead(String name) {
+        LOG.info("Setting read on {}", name);
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(uid)) {
+            if (!volumes.containsKey(name)) {
                 throw new UnknownVolumeException();
             }
-            config.setRead(uid);
+            config.setRead(name);
             saveConfig();
 
         } finally {
@@ -240,14 +234,14 @@ public final class Repository {
         }
     }
 
-    public void setSearch(Uid uid) {
-        LOG.info("Setting search on {}", uid);
+    public void setSearch(String name) {
+        LOG.info("Setting search on {}", name);
         lock.writeLock().lock();
         try {
-            if (!config.getIndexes().containsKey(uid)) {
+            if (!indexes.containsKey(name)) {
                 throw new UnknownIndexException();
             }
-            config.setSearch(uid);
+            config.setSearch(name);
             saveConfig();
 
         } finally {
@@ -267,48 +261,48 @@ public final class Repository {
         }
     }
 
-    public void sync(Uid sourceId, Uid destinationId) {
-        LOG.info("Syncing {} >> {}", sourceId, destinationId);
+    public void sync(String source, String destination) {
+        LOG.info("Syncing {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
+            if (!volumes.containsKey(source) || !volumes.containsKey(destination)) {
                 throw new UnknownVolumeException();
             }
-            config.sync(sourceId, destinationId);
+            config.sync(source, destination);
             saveConfig();
-            agentManager.sync(sourceId, volumes.get(sourceId), destinationId, volumes.get(destinationId));
+            agentManager.sync(volumes.get(source), volumes.get(destination));
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void unsync(Uid sourceId, Uid destinationId) {
-        LOG.info("Unsyncing {} >> {}", sourceId, destinationId);
+    public void unsync(String source, String destination) {
+        LOG.info("Unsyncing {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
-            if (!config.getVolumes().containsKey(sourceId) || !config.getVolumes().containsKey(destinationId)) {
+            if (!volumes.containsKey(source) || !volumes.containsKey(destination)) {
                 throw new UnknownVolumeException();
             }
-            config.unsync(sourceId, destinationId);
+            config.unsync(source, destination);
             saveConfig();
-            agentManager.unsync(sourceId, destinationId);
+            agentManager.unsync(source, destination);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void start(Uid uid) {
-        LOG.info("Starting {}", uid);
-        volume(uid).start();
-        agentManager.start(uid);
+    public void start(String name) {
+        LOG.info("Starting {}", name);
+        volume(name).start();
+        agentManager.start(name);
     }
 
-    public void stop(Uid uid) {
-        LOG.info("Stopping {}", uid);
-        agentManager.stop(uid);
-        volume(uid).stop();
+    public void stop(String name) {
+        LOG.info("Stopping {}", name);
+        agentManager.stop(name);
+        volume(name).stop();
     }
 
     public Config config() {
@@ -324,16 +318,16 @@ public final class Repository {
 
     public void put(ContentInfo contentInfo, InputStream source) {
         LOG.info("Putting {}", contentInfo.getHash());
-        Entry<Uid, Volume> writeVolume = writeVolume();
-        writeVolume.getValue().put(contentInfo, source);
-        agentManager.signal(writeVolume.getKey());
+        Volume writeVolume = writeVolume();
+        writeVolume.put(contentInfo, source);
+        agentManager.signal(writeVolume.getName());
     }
 
     public void delete(Hash hash) {
         LOG.info("Deleting {}", hash);
-        Entry<Uid, Volume> writeVolume = writeVolume();
-        writeVolume.getValue().delete(hash);
-        agentManager.signal(writeVolume.getKey());
+        Volume writeVolume = writeVolume();
+        writeVolume.delete(hash);
+        agentManager.signal(writeVolume.getName());
     }
 
     public boolean contains(Hash hash) {
@@ -370,27 +364,26 @@ public final class Repository {
         return readVolume().history(chronological, first, number);
     }
 
-    private Volume volume(Uid uid) {
+    private Volume volume(String name) {
         lock.readLock().lock();
         try {
-            if (!volumes.containsKey(uid)) {
+            if (!volumes.containsKey(name)) {
                 throw new NoVolumeException(); // FIXME il faudrait faire des exceptions plus adaptées !
             }
-            return volumes.get(uid);
+            return volumes.get(name);
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private Entry<Uid, Volume> writeVolume() {
+    private Volume writeVolume() {
         lock.readLock().lock();
         try {
             if (!config.getRead().isPresent()) {
                 throw new NoVolumeException();
             }
-            Uid uid = config.getWrite().get();
-            return new ImmutableEntry<>(uid, volumes.get(uid));
+            return volumes.get(config.getWrite().get());
 
         } finally {
             lock.readLock().unlock();
@@ -450,32 +443,6 @@ public final class Repository {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private static final class ImmutableEntry<K, V> implements Entry<K, V> {
-
-        private final K key;
-        private final V value;
-
-        public ImmutableEntry(K key, V value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public K getKey() {
-            return key;
-        }
-
-        @Override
-        public V getValue() {
-            return value;
-        }
-
-        @Override
-        public V setValue(V value) {
-            throw new UnsupportedOperationException();
         }
     }
 }

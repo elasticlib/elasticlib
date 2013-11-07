@@ -26,15 +26,18 @@ import store.server.transaction.TransactionManager;
  */
 public class Volume {
 
+    private final Path path;
     private final TransactionManager transactionManager;
     private final HistoryManager historyManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Volume(TransactionManager transactionManager,
+    private Volume(Path path,
+                   TransactionManager transactionManager,
                    HistoryManager historyManager,
                    InfoManager infoManager,
                    ContentManager contentManager) {
+        this.path = path;
         this.transactionManager = transactionManager;
         this.historyManager = historyManager;
         this.infoManager = infoManager;
@@ -54,7 +57,8 @@ public class Volume {
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(txManager,
+                return new Volume(path,
+                                  txManager,
                                   HistoryManager.create(path.resolve("history")),
                                   InfoManager.create(path.resolve("info")),
                                   ContentManager.create(path.resolve("content")));
@@ -73,12 +77,21 @@ public class Volume {
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(txManager,
+                return new Volume(path,
+                                  txManager,
                                   HistoryManager.open(path.resolve("history")),
                                   InfoManager.open(path.resolve("info")),
                                   ContentManager.open(path.resolve("content")));
             }
         });
+    }
+
+    public String getName() {
+        return path.getFileName().toString();
+    }
+
+    public Path getPath() {
+        return path;
     }
 
     public void start() {

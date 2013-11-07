@@ -24,7 +24,6 @@ import static store.common.JsonUtil.writeConfig;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeContentInfos;
 import static store.common.JsonUtil.writeEvents;
-import store.common.Uid;
 
 /**
  * REST resource on a repository.
@@ -52,30 +51,30 @@ public class RestResource {
     }
 
     @POST
-    @Path("dropVolume/{uid}")
-    public Response dropVolume(@PathParam("uid") Uid uid) {
-        repository.dropVolume(uid);
+    @Path("dropVolume/{name}")
+    public Response dropVolume(@PathParam("name") String name) {
+        repository.dropVolume(name);
         return Response.ok().build();
     }
 
     @POST
-    @Path("createIndex/{path}/{uid}")
-    public Response createIndex(@PathParam("path") String path, @PathParam("uid") Uid volumeId) {
-        repository.createIndex(Paths.get(path), volumeId);
+    @Path("createIndex/{path}/{name}")
+    public Response createIndex(@PathParam("path") String path, @PathParam("name") String volumeName) {
+        repository.createIndex(Paths.get(path), volumeName);
         return Response.ok().build();
     }
 
     @POST
-    @Path("dropIndex/{uid}")
-    public Response dropIndex(@PathParam("uid") Uid uid) {
-        repository.dropIndex(uid);
+    @Path("dropIndex/{name}")
+    public Response dropIndex(@PathParam("name") String name) {
+        repository.dropIndex(name);
         return Response.ok().build();
     }
 
     @POST
-    @Path("setWrite/{uid}")
-    public Response setWrite(@PathParam("uid") Uid uid) {
-        repository.setWrite(uid);
+    @Path("setWrite/{name}")
+    public Response setWrite(@PathParam("name") String name) {
+        repository.setWrite(name);
         return Response.ok().build();
     }
 
@@ -87,9 +86,9 @@ public class RestResource {
     }
 
     @POST
-    @Path("setRead/{uid}")
-    public Response setRead(@PathParam("uid") Uid uid) {
-        repository.setRead(uid);
+    @Path("setRead/{name}")
+    public Response setRead(@PathParam("name") String name) {
+        repository.setRead(name);
         return Response.ok().build();
     }
 
@@ -101,9 +100,9 @@ public class RestResource {
     }
 
     @POST
-    @Path("setSearch/{uid}")
-    public Response setSearch(@PathParam("uid") Uid uid) {
-        repository.setSearch(uid);
+    @Path("setSearch/{name}")
+    public Response setSearch(@PathParam("name") String name) {
+        repository.setSearch(name);
         return Response.ok().build();
     }
 
@@ -116,29 +115,29 @@ public class RestResource {
 
     @POST
     @Path("sync/{source}/{destination}")
-    public Response sync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
+    public Response sync(@PathParam("source") String source, @PathParam("destination") String destination) {
         repository.sync(source, destination);
         return Response.ok().build();
     }
 
     @POST
     @Path("unsync/{source}/{destination}")
-    public Response unsync(@PathParam("source") Uid source, @PathParam("destination") Uid destination) {
+    public Response unsync(@PathParam("source") String source, @PathParam("destination") String destination) {
         repository.unsync(source, destination);
         return Response.ok().build();
     }
 
     @POST
-    @Path("start/{uid}")
-    public Response start(@PathParam("uid") Uid uid) {
-        repository.start(uid);
+    @Path("start/{name}")
+    public Response start(@PathParam("name") String name) {
+        repository.start(name);
         return Response.ok().build();
     }
 
     @POST
-    @Path("stop/{uid}")
-    public Response stop(@PathParam("uid") Uid uid) {
-        repository.stop(uid);
+    @Path("stop/{name}")
+    public Response stop(@PathParam("name") String name) {
+        repository.stop(name);
         return Response.ok().build();
     }
 

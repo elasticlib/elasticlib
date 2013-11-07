@@ -76,83 +76,84 @@ public final class JsonUtil {
 
     public static JsonObject writeConfig(Config config) {
         return createObjectBuilder()
-                .add("volumes", writeUidMap(config.getVolumes()))
-                .add("indexes", writeUidMap(config.getIndexes()))
-                .add("write", writeOptionalUid(config.getWrite()))
-                .add("read", writeOptionalUid(config.getRead()))
-                .add("search", writeOptionalUid(config.getSearch()))
+                .add("volumes", writePaths(config.getVolumes()))
+                .add("indexes", writePaths(config.getIndexes()))
+                .add("write", writeOptionalString(config.getWrite()))
+                .add("read", writeOptionalString(config.getRead()))
+                .add("search", writeOptionalString(config.getSearch()))
                 .add("sync", writeSync(config))
                 .build();
     }
 
-    private static JsonObjectBuilder writeUidMap(Map<Uid, Path> map) {
-        JsonObjectBuilder json = createObjectBuilder();
-        for (Entry<Uid, Path> entry : map.entrySet()) {
-            json.add(entry.getKey().encode(), entry.getValue().toString());
+    private static JsonArrayBuilder writePaths(List<Path> paths) {
+        JsonArrayBuilder array = createArrayBuilder();
+        for (Path path : paths) {
+            array.add(path.toString());
         }
-        return json;
+        return array;
     }
 
-    private static JsonArrayBuilder writeOptionalUid(Optional<Uid> primary) {
-        if (primary.isPresent()) {
-            return createArrayBuilder().add(primary.get().encode());
+    private static JsonArrayBuilder writeOptionalString(Optional<String> optional) {
+        if (optional.isPresent()) {
+            return createArrayBuilder().add(optional.get());
         }
         return createArrayBuilder();
     }
 
     private static JsonObjectBuilder writeSync(Config config) {
         JsonObjectBuilder json = createObjectBuilder();
-        for (Uid source : config.getVolumes().keySet()) {
-            Set<Uid> destinations = config.getSync(source);
+        for (Path sourcePath : config.getVolumes()) {
+            String source = sourcePath.getFileName().toString();
+            Set<String> destinations = config.getSync(source);
             if (!destinations.isEmpty()) {
                 JsonArrayBuilder array = createArrayBuilder();
-                for (Uid uid : destinations) {
-                    array.add(uid.encode());
+                for (String destination : destinations) {
+                    array.add(destination);
                 }
-                json.add(source.encode(), array);
+                json.add(source, array);
             }
         }
         return json;
     }
 
     public static Config readConfig(JsonObject json) {
-        return new Config(readUidMap(json.getJsonObject("volumes")),
-                          readUidMap(json.getJsonObject("indexes")),
-                          readOptionalUid(json.getJsonArray("write")),
-                          readOptionalUid(json.getJsonArray("read")),
-                          readOptionalUid(json.getJsonArray("search")),
+        return new Config(readPaths(json.getJsonArray("volumes")),
+                          readPaths(json.getJsonArray("indexes")),
+                          readOptionalString(json.getJsonArray("write")),
+                          readOptionalString(json.getJsonArray("read")),
+                          readOptionalString(json.getJsonArray("search")),
                           readSync(json.getJsonObject("sync")));
     }
 
-    private static Map<Uid, Path> readUidMap(JsonObject json) {
-        Map<Uid, Path> map = new LinkedHashMap<>();
-        for (String key : json.keySet()) {
-            map.put(new Uid(key), Paths.get(json.getString(key)));
+    private static List<Path> readPaths(JsonArray array) {
+        List<Path> paths = new ArrayList<>();
+        for (JsonString key : array.getValuesAs(JsonString.class)) {
+            paths.add(Paths.get(key.getString()));
         }
-        return map;
+        return paths;
     }
 
-    private static Optional<Uid> readOptionalUid(JsonArray array) {
+    private static Optional<String> readOptionalString(JsonArray array) {
         if (array.isEmpty()) {
             return Optional.absent();
         }
-        return Optional.of(new Uid(array.getString(0)));
+        return Optional.of(array.getString(0));
     }
 
-    private static Map<Uid, Set<Uid>> readSync(JsonObject json) {
-        Map<Uid, Set<Uid>> map = new LinkedHashMap<>();
+    private static Map<String, Set<String>> readSync(JsonObject json) {
+        Map<String, Set<String>> map = new LinkedHashMap<>();
         for (String key : json.keySet()) {
-            map.put(new Uid(key), readUids(json.getJsonArray(key)));
+            map.put(key, readStrings(json.getJsonArray(key)));
         }
         return map;
     }
 
-    private static Set<Uid> readUids(JsonArray array) {
-        Set<Uid> uids = new LinkedHashSet<>();
+    private static Set<String> readStrings(JsonArray array) {
+        Set<String> strings = new LinkedHashSet<>();
         for (JsonString object : array.getValuesAs(JsonString.class)) {
-            uids.add(new Uid(object.getString()));
+            strings.add(object.getString());
         }
-        return uids;
+        return strings;
     }
 
     public static JsonArray writeEvents(List<Event> events) {

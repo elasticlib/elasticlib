@@ -5,7 +5,6 @@ import java.io.PipedInputStream;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
-import store.common.Uid;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.UnknownHashException;
@@ -16,13 +15,11 @@ import store.server.volume.Volume;
 class SyncAgent extends Agent {
 
     private final AgentManager agentManager;
-    private final Uid destinationId;
     private final Volume destination;
 
-    public SyncAgent(AgentManager agentManager, Uid destinationId, Volume source, Volume destination) {
+    public SyncAgent(AgentManager agentManager, Volume source, Volume destination) {
         super(source);
         this.agentManager = agentManager;
-        this.destinationId = destinationId;
         this.destination = destination;
     }
 
@@ -44,7 +41,7 @@ class SyncAgent extends Agent {
                         delete(event.getHash());
                         break;
                 }
-                agentManager.signal(destinationId);
+                agentManager.signal(destination.getName());
                 return true;
 
             } catch (UnknownHashException | VolumeClosedException e) {

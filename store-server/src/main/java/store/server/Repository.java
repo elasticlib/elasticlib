@@ -32,11 +32,13 @@ import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.server.agent.AgentManager;
+import store.server.exception.IndexAlreadyExistsException;
 import store.server.exception.NoIndexException;
 import store.server.exception.NoVolumeException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
+import store.server.exception.VolumeAlreadyExistsException;
 import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
@@ -84,6 +86,9 @@ public final class Repository {
         LOG.info("Creating volume at {}", path);
         lock.writeLock().lock();
         try {
+            if (volumes.containsKey(path.getFileName().toString())) {
+                throw new VolumeAlreadyExistsException();
+            }
             Volume volume = Volume.create(path);
             config.addVolume(path);
             saveConfig();
@@ -124,6 +129,9 @@ public final class Repository {
         LOG.info("Creating index at {} on {}", path, volumeName);
         lock.writeLock().lock();
         try {
+            if (indexes.containsKey(path.getFileName().toString())) {
+                throw new IndexAlreadyExistsException();
+            }
             Index index = Index.create(path);
             config.addIndex(path, volumeName);
             saveConfig();

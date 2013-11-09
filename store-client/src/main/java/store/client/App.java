@@ -3,7 +3,6 @@ package store.client;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
 import static store.client.DigestUtil.digest;
-import store.common.Config;
 import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Event;
@@ -96,54 +94,6 @@ public final class App {
                 }
             }
         },
-        SET_WRITE {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.setWrite(params.get(0));
-                }
-            }
-        },
-        UNSET_WRITE {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.unsetWrite();
-                }
-            }
-        },
-        SET_READ {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.setRead(params.get(0));
-                }
-            }
-        },
-        UNSET_READ {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.unsetRead();
-                }
-            }
-        },
-        SET_SEARCH {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.setSearch(params.get(0));
-                }
-            }
-        },
-        UNSET_SEARCH {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.unsetSearch();
-                }
-            }
-        },
         SYNC {
             @Override
             public void execute(List<String> params) {
@@ -173,15 +123,6 @@ public final class App {
             public void execute(List<String> params) {
                 try (RestClient client = new RestClient()) {
                     client.stop(params.get(0));
-                }
-            }
-        },
-        CONFIG {
-            @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    Config config = client.config();
-                    System.out.println(asString(config));
                 }
             }
         },
@@ -280,38 +221,6 @@ public final class App {
             }
             return argList.subList(1, argList.size());
         }
-    }
-
-    private static String asString(Config config) {
-        StringBuilder builder = new StringBuilder();
-        for (Path path : config.getVolumes()) {
-            String name = path.getFileName().toString();
-            boolean read = config.getRead().isPresent() && config.getRead().get().equals(name);
-            boolean write = config.getWrite().isPresent() && config.getWrite().get().equals(name);
-            builder.append("v")
-                    .append(read ? "r" : "-")
-                    .append(write ? "w" : "-")
-                    .append("- ")
-                    .append(path)
-                    .append(System.lineSeparator());
-
-            for (String destination : config.getSync(name)) {
-                builder.append(indent())
-                        .append(indent())
-                        .append(destination)
-                        .append(System.lineSeparator());
-            }
-        }
-        for (Path path : config.getIndexes()) {
-            String name = path.getFileName().toString();
-            boolean search = config.getSearch().isPresent() && config.getSearch().get().equals(name);
-            builder.append("i--")
-                    .append(search ? "s" : "-")
-                    .append(" ")
-                    .append(path)
-                    .append(System.lineSeparator());
-        }
-        return builder.toString();
     }
 
     private static String asString(ContentInfo info) {

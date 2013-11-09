@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,6 @@ import store.server.agent.AgentManager;
 import store.server.exception.IndexAlreadyExistsException;
 import store.server.exception.NoIndexException;
 import store.server.exception.NoVolumeException;
-import store.server.exception.UnknownHashException;
 import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
 import store.server.exception.VolumeAlreadyExistsException;
@@ -187,88 +185,6 @@ public final class Repository {
         }
     }
 
-    public void setWrite(String name) {
-        LOG.info("Setting write on {}", name);
-        lock.writeLock().lock();
-        try {
-            if (!volumes.containsKey(name)) {
-                throw new UnknownVolumeException();
-            }
-            config.setWrite(name);
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-
-    }
-
-    public void unsetWrite() {
-        LOG.info("Unsetting write");
-        lock.writeLock().lock();
-        try {
-            config.unsetWrite();
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void setRead(String name) {
-        LOG.info("Setting read on {}", name);
-        lock.writeLock().lock();
-        try {
-            if (!volumes.containsKey(name)) {
-                throw new UnknownVolumeException();
-            }
-            config.setRead(name);
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void unsetRead() {
-        LOG.info("Unsetting read");
-        lock.writeLock().lock();
-        try {
-            config.unsetRead();
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void setSearch(String name) {
-        LOG.info("Setting search on {}", name);
-        lock.writeLock().lock();
-        try {
-            if (!indexes.containsKey(name)) {
-                throw new UnknownIndexException();
-            }
-            config.setSearch(name);
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void unsetSearch() {
-        LOG.info("Unsetting search");
-        lock.writeLock().lock();
-        try {
-            config.unsetSearch();
-            saveConfig();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
     public void sync(String source, String destination) {
         LOG.info("Syncing {} >> {}", source, destination);
         lock.writeLock().lock();
@@ -324,52 +240,36 @@ public final class Repository {
         }
     }
 
-    public void put(ContentInfo contentInfo, InputStream source) {
+    public void put(String name, ContentInfo contentInfo, InputStream source) {
         LOG.info("Putting {}", contentInfo.getHash());
-        Volume writeVolume = writeVolume();
-        writeVolume.put(contentInfo, source);
-        agentManager.signal(writeVolume.getName());
+        volume(name).put(contentInfo, source);
+        agentManager.signal(name);
     }
 
-    public void delete(Hash hash) {
+    public void delete(String name, Hash hash) {
         LOG.info("Deleting {}", hash);
-        Volume writeVolume = writeVolume();
-        writeVolume.delete(hash);
-        agentManager.signal(writeVolume.getName());
+        volume(name).delete(hash);
+        agentManager.signal(name);
     }
 
-    public boolean contains(Hash hash) {
-        LOG.info("Returning contains {}", hash);
-        return readVolume().contains(hash);
-    }
-
-    public ContentInfo info(Hash hash) {
+    public ContentInfo info(String name, Hash hash) {
         LOG.info("Returning info {}", hash);
-        return readVolume().info(hash);
+        return volume(name).info(hash);
     }
 
-    public void get(Hash hash, OutputStream outputStream) {
+    public void get(String name, Hash hash, OutputStream outputStream) {
         LOG.info("Getting {}", hash);
-        readVolume().get(hash, outputStream);
+        volume(name).get(hash, outputStream);
     }
 
-    public List<ContentInfo> find(String query) {
+    public List<Hash> find(String name, String query) {
         LOG.info("Finding {}", query);
-        List<Hash> hashes = index().find(query);
-        List<ContentInfo> results = new ArrayList<>(hashes.size());
-        for (Hash hash : hashes) {
-            try {
-                results.add(info(hash));
-
-            } catch (UnknownHashException e) {
-            }
-        }
-        return results;
+        return index(name).find(query);
     }
 
-    public List<Event> history(final boolean chronological, final long first, final int number) {
+    public List<Event> history(String name, boolean chronological, long first, int number) {
         LOG.info("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
-        return readVolume().history(chronological, first, number);
+        return volume(name).history(chronological, first, number);
     }
 
     private Volume volume(String name) {
@@ -385,39 +285,13 @@ public final class Repository {
         }
     }
 
-    private Volume writeVolume() {
+    private Index index(String name) {
         lock.readLock().lock();
         try {
-            if (!config.getRead().isPresent()) {
-                throw new NoVolumeException();
-            }
-            return volumes.get(config.getWrite().get());
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private Volume readVolume() {
-        lock.readLock().lock();
-        try {
-            if (!config.getRead().isPresent()) {
-                throw new NoVolumeException();
-            }
-            return volumes.get(config.getRead().get());
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private Index index() {
-        lock.readLock().lock();
-        try {
-            if (!config.getSearch().isPresent()) {
+            if (!indexes.containsKey(name)) {
                 throw new NoIndexException();
             }
-            return indexes.get(config.getSearch().get());
+            return indexes.get(name);
 
         } finally {
             lock.readLock().unlock();

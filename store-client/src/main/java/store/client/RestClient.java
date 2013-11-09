@@ -33,14 +33,12 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.DigestUtil.digest;
 import static store.client.MetadataUtil.metadata;
-import store.common.Config;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
-import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
@@ -117,45 +115,6 @@ public class RestClient implements Closeable {
                 .method(POST));
     }
 
-    public void setWrite(String name) {
-        ensureOk(target.path("setWrite/{name}")
-                .resolveTemplate("name", name)
-                .request()
-                .method(POST));
-    }
-
-    public void unsetWrite() {
-        ensureOk(target.path("unsetWrite")
-                .request()
-                .method(POST));
-    }
-
-    public void setRead(String name) {
-        ensureOk(target.path("setRead/{name}")
-                .resolveTemplate("name", name)
-                .request()
-                .method(POST));
-    }
-
-    public void unsetRead() {
-        ensureOk(target.path("unsetRead")
-                .request()
-                .method(POST));
-    }
-
-    public void setSearch(String name) {
-        ensureOk(target.path("setSearch/{name}")
-                .resolveTemplate("name", name)
-                .request()
-                .method(POST));
-    }
-
-    public void unsetSearch() {
-        ensureOk(target.path("unsetSearch")
-                .request()
-                .method(POST));
-    }
-
     public void sync(String source, String destination) {
         ensureOk(target.path("sync/{source}/{destination}")
                 .resolveTemplate("source", source)
@@ -184,14 +143,6 @@ public class RestClient implements Closeable {
                 .resolveTemplate("name", name)
                 .request()
                 .method(POST));
-    }
-
-    public Config config() {
-        Response response = target.path("config")
-                .request()
-                .get();
-
-        return readConfig(ensureOk(response).readEntity(JsonObject.class));
     }
 
     public void put(Path filepath) {

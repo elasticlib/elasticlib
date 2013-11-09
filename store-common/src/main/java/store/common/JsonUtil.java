@@ -1,6 +1,5 @@
 package store.common;
 
-import com.google.common.base.Optional;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -78,9 +77,6 @@ public final class JsonUtil {
         return createObjectBuilder()
                 .add("volumes", writePaths(config.getVolumes()))
                 .add("indexes", writePaths(config.getIndexes()))
-                .add("write", writeOptionalString(config.getWrite()))
-                .add("read", writeOptionalString(config.getRead()))
-                .add("search", writeOptionalString(config.getSearch()))
                 .add("sync", writeSync(config))
                 .build();
     }
@@ -91,13 +87,6 @@ public final class JsonUtil {
             array.add(path.toString());
         }
         return array;
-    }
-
-    private static JsonArrayBuilder writeOptionalString(Optional<String> optional) {
-        if (optional.isPresent()) {
-            return createArrayBuilder().add(optional.get());
-        }
-        return createArrayBuilder();
     }
 
     private static JsonObjectBuilder writeSync(Config config) {
@@ -119,9 +108,6 @@ public final class JsonUtil {
     public static Config readConfig(JsonObject json) {
         return new Config(readPaths(json.getJsonArray("volumes")),
                           readPaths(json.getJsonArray("indexes")),
-                          readOptionalString(json.getJsonArray("write")),
-                          readOptionalString(json.getJsonArray("read")),
-                          readOptionalString(json.getJsonArray("search")),
                           readSync(json.getJsonObject("sync")));
     }
 
@@ -131,13 +117,6 @@ public final class JsonUtil {
             paths.add(Paths.get(key.getString()));
         }
         return paths;
-    }
-
-    private static Optional<String> readOptionalString(JsonArray array) {
-        if (array.isEmpty()) {
-            return Optional.absent();
-        }
-        return Optional.of(array.getString(0));
     }
 
     private static Map<String, Set<String>> readSync(JsonObject json) {

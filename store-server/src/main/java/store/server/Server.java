@@ -11,6 +11,9 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
+import store.server.resources.IndexesResource;
+import store.server.resources.ReplicationsResource;
+import store.server.resources.VolumesResource;
 
 /**
  * A Standalone HTTP server. Expose a REST resource on a repository.
@@ -25,9 +28,12 @@ public class Server {
      * @param home Path to repository's home-directory.
      */
     public Server(Path home) {
+        Repository repository = new Repository(home);
         ResourceConfig resourceConfig = new ResourceConfig()
                 .register(MultiPartFeature.class)
-                .register(new RestResource(new Repository(home)))
+                .register(new IndexesResource(repository))
+                .register(new ReplicationsResource(repository))
+                .register(new VolumesResource(repository))
                 .register(new LoggingFilter());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);

@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -22,6 +23,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import store.common.Hash;
 import store.server.Repository;
+import store.server.exception.UnknownIndexException;
 
 @Path("indexes")
 public class IndexesResource {
@@ -63,30 +65,33 @@ public class IndexesResource {
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateIndex(@PathParam("name") String name, JsonObject json) {
-        // TODO this is a stub
+        // Le status d'un index est immutable (pour l'instant).
         return Response.status(NOT_IMPLEMENTED).build();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listIndexes() {
-        // TODO this is a stub
-        return Json.createArrayBuilder().build();
+        JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (java.nio.file.Path path : repository.config().getIndexes()) {
+            builder.add(path.getFileName().toString());
+        }
+        return builder.build();
     }
 
     @GET
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject getIndex(@PathParam("name") String name) {
-        // TODO this is a stub
-        return Json.createObjectBuilder().build();
-    }
-
-    @HEAD
-    @Path("{name}")
-    public Response containsIndex(@PathParam("name") String name) {
-        // TODO this is a stub
-        return Response.status(NOT_IMPLEMENTED).build();
+        for (java.nio.file.Path path : repository.config().getVolumes()) {
+            if (path.getFileName().toString().equals(name)) {
+                return Json.createObjectBuilder()
+                        .add("name", name)
+                        .add("path", path.toString())
+                        .build();
+            }
+        }
+        throw new UnknownIndexException();
     }
 
     @POST

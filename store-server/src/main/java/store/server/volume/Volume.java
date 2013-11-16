@@ -94,6 +94,10 @@ public class Volume {
         return path;
     }
 
+    public Status getStatus() {
+        return new Status(path, transactionManager.isStarted());
+    }
+
     public void start() {
         transactionManager.start();
     }

@@ -98,6 +98,16 @@ public class TransactionManager {
         }
     }
 
+    public boolean isStarted() {
+        lock.readLock().lock();
+        try {
+            return started;
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     private TransactionContext createTransactionContext(boolean readOnly) {
         lock.readLock().lock();
         try {

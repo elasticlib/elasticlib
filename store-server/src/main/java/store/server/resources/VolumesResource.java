@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.file.Paths;
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -28,6 +29,7 @@ import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeEvents;
 import store.server.Repository;
+import store.server.volume.Status;
 
 @Path("volumes")
 public class VolumesResource {
@@ -69,40 +71,51 @@ public class VolumesResource {
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateVolume(@PathParam("name") String name, JsonObject json) {
-        switch (json.getString("command")) {
-            case "start":
-                repository.start(name);
-                return Response.ok().build();
+        if (!hasBooleanValue(json, "started")) {
+            return Response.status(BAD_REQUEST).build();
+        }
+        if (json.getBoolean("started")) {
+            repository.start(name);
+        } else {
+            repository.stop(name);
+        }
+        return Response.ok().build();
+    }
 
-            case "stop":
-                repository.stop(name);
-                return Response.ok().build();
+    private static boolean hasBooleanValue(JsonObject json, String key) {
+        if (!json.containsKey(key)) {
+            return false;
+        }
+        switch (json.get(key).getValueType()) {
+            case TRUE:
+            case FALSE:
+                return true;
 
             default:
-                return Response.status(BAD_REQUEST).build();
+                return false;
         }
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listVolumes() {
-        // TODO this is a stub
-        return Json.createArrayBuilder().build();
+        JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (java.nio.file.Path path : repository.config().getVolumes()) {
+            builder.add(path.getFileName().toString());
+        }
+        return builder.build();
     }
 
     @GET
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject getVolume(@PathParam("name") String name) {
-        // TODO this is a stub
-        return Json.createObjectBuilder().build();
-    }
-
-    @HEAD
-    @Path("{name}")
-    public Response containsVolume(@PathParam("name") String name) {
-        // TODO retourne un header HTTP afin de savoir si le volume existe (404 s'il est inconnu)
-        return Response.status(NOT_IMPLEMENTED).build();
+        Status status = repository.volumeStatus(name);
+        return Json.createObjectBuilder()
+                .add("name", name)
+                .add("path", status.getPath().toString())
+                .add("started", status.isStarted())
+                .build();
     }
 
     @POST

@@ -1,5 +1,6 @@
 package store.server;
 
+import store.server.volume.Status;
 import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.InputStream;
@@ -238,6 +239,11 @@ public final class Repository {
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    public Status volumeStatus(String name) {
+        LOG.info("Returning {} status", name);
+        return volume(name).getStatus();
     }
 
     public void put(String name, ContentInfo contentInfo, InputStream source) {

@@ -10,6 +10,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.Hash;
@@ -41,6 +43,13 @@ public class VolumesResource {
         this.repository = repository;
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createVolume(JsonObject json) {
+        repository.createVolume(Paths.get(json.getString("path")));
+        return Response.status(CREATED).build();
+    }
+
     @PUT
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -51,7 +60,6 @@ public class VolumesResource {
 
     @DELETE
     @Path("{name}")
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response dropVolume(@PathParam("name") String name) {
         repository.dropVolume(name);
         return Response.ok().build();
@@ -60,7 +68,7 @@ public class VolumesResource {
     @POST
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response execute(@PathParam("name") String name, JsonObject json) {
+    public Response updateVolume(@PathParam("name") String name, JsonObject json) {
         switch (json.getString("command")) {
             case "start":
                 repository.start(name);
@@ -78,38 +86,86 @@ public class VolumesResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listVolumes() {
-        return Json.createArrayBuilder().build(); // TODO this is a stub
+        // TODO this is a stub
+        return Json.createArrayBuilder().build();
     }
 
-    @PUT
-    @Path("{name}/{hash}")
+    @GET
+    @Path("{name}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonObject getVolume(@PathParam("name") String name) {
+        // TODO this is a stub
+        return Json.createObjectBuilder().build();
+    }
+
+    @HEAD
+    @Path("{name}")
+    public Response containsVolume(@PathParam("name") String name) {
+        // TODO retourne un header HTTP afin de savoir si le volume existe (404 s'il est inconnu)
+        return Response.status(NOT_IMPLEMENTED).build();
+    }
+
+    @POST
+    @Path("{name}/content")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response put(@PathParam("name") String name,
-                        @PathParam("hash") Hash hash,
-                        @FormDataParam("info") JsonObject json,
-                        @FormDataParam("source") InputStream inputStream) {
-        // En fait le hash ne sert à rien ici : redondant avec le contentInfo :(
+    public Response postContent(@PathParam("name") String name,
+                                @FormDataParam("info") JsonObject json,
+                                @FormDataParam("content") InputStream inputStream) {
+
+        //
+        // FIXME : Soucis avec cette méthode
+        // - flexibilité : on est obligé de calculer le hash/length côté client - a priori KO pour un upload HTML/JS.
+        // - UX : parce lecture et digest une fois avant l'upload.
+        // - UX/perfs : parce Jersey-multipart impose la mise en tampon du body sur disque alors que c'est inutile ici.
+        //
+        // SOLUTION :
+        // - Rendre la part "info" facultative. Si elle n'est pas fournie, faire le digest et l'extraction côté serveur.
+        // - Avoir un multipartReader ad-hoc qui fournisse le contentInfo systématiquement et qui streame l'inputstream.
+        //      * Si info fourni dans le multipart. Ne cache rien sur disque, suppose que l'info est la 1re part, et
+        //        lit l'info à la volée. Filtre le boundary de fin de l'entité. Lance un IOException si pas de boundary
+        //        de fin.
+        //
+        //      * Si pas d'info, cache le content sur disque en calculant au passage le digest et les métadonnées.
+        //
+        //      * Quoi qu'il arrive, console les métadonnées avec le filename/content-type lu dans les headers de la
+        //        part du content.
+        //
+        // Soucis résiduels :
+        // - Si on cache sur disque, on devra ensuite faire une autre recopie vers le volume. On aimerait pouvoir cacher
+        //   directement sur la partition du volume et faire un simple move dans un second temps.
+        //
+        // - Mine de rien, l'implé Jersey gère un paquet de chose. Prévoir pas mal de soucis liés à la réinvention
+        //   de la roue. Envisager de réutiliser tout ou partie de le leur implé !?
+        //
+
         repository.put(name, readContentInfo(json), inputStream);
         return Response.status(CREATED).build();
     }
 
-    @DELETE
-    @Path("{name}/{hash}")
+    @PUT
+    @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response delete(@PathParam("name") String name, @PathParam("hash") Hash hash) {
+    public Response putContent(@PathParam("name") String name,
+                               @PathParam("hash") Hash hash,
+                               @FormDataParam("info") JsonObject json,
+                               @FormDataParam("content") InputStream inputStream) {
+
+        // TODO à implémenter
+        return Response.status(NOT_IMPLEMENTED).build();
+    }
+
+    @DELETE
+    @Path("{name}/content/{hash}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response deleteContent(@PathParam("name") String name, @PathParam("hash") Hash hash) {
         repository.delete(name, hash);
         return Response.ok().build();
     }
 
     @GET
-    @Path("{name}/{hash}/info")
-    public JsonObject info(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
-        return writeContentInfo(repository.info(name, hash));
-    }
-
-    @GET
-    @Path("{name}/{hash}/content")
-    public Response get(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
+    @Path("{name}/content/{hash}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response getContent(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {
@@ -118,10 +174,38 @@ public class VolumesResource {
         }).build();
     }
 
+    @HEAD
+    @Path("{name}/content/{hash}")
+    public Response containsContent(@PathParam("name") String name, @PathParam("hash") final Hash hash) {
+        // TODO retourne un header HTTP afin de savoir si le contenu existe (404 s'il est inconnu)
+        return Response.status(NOT_IMPLEMENTED).build();
+    }
+
+    @POST
+    @Path("{name}/info")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateInfo(@PathParam("name") String name, JsonObject json) {
+        // TODO à implémenter en vue de la mise à jour
+        return Response.status(NOT_IMPLEMENTED).build();
+    }
+
+    @GET
+    @Path("{name}/info/{hash}")
+    public JsonObject getInfo(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
+        return writeContentInfo(repository.info(name, hash));
+    }
+
+    @HEAD
+    @Path("{name}/info/{hash}")
+    public Response containsInfo(@PathParam("name") String name, @PathParam("hash") final Hash hash) {
+        // TODO retourne un header HTTP afin de savoir si le contenu existe (404 s'il est inconnu)
+        return Response.status(NOT_IMPLEMENTED).build();
+    }
+
     @POST
     @Path("{name}/log")
     public JsonArray log(@PathParam("name") final String name, JsonObject json) {
-        // On pourrait aussi le faire en GET avec des queryParams
+        // On devrait aussi le faire en GET avec des queryParams
         return writeEvents(repository.history(name,
                                               json.getBoolean("reverse"),
                                               json.getJsonNumber("from").longValue(),

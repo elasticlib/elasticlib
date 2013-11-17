@@ -12,7 +12,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -189,13 +188,6 @@ public class VolumesResource {
         }).build();
     }
 
-    @HEAD
-    @Path("{name}/content/{hash}")
-    public Response containsContent(@PathParam("name") String name, @PathParam("hash") final Hash hash) {
-        // TODO retourne un header HTTP afin de savoir si le contenu existe (404 s'il est inconnu)
-        return Response.status(NOT_IMPLEMENTED).build();
-    }
-
     @POST
     @Path("{name}/info")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -208,13 +200,6 @@ public class VolumesResource {
     @Path("{name}/info/{hash}")
     public JsonObject getInfo(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
         return writeContentInfo(repository.info(name, hash));
-    }
-
-    @HEAD
-    @Path("{name}/info/{hash}")
-    public Response containsInfo(@PathParam("name") String name, @PathParam("hash") final Hash hash) {
-        // TODO retourne un header HTTP afin de savoir si le contenu existe (404 s'il est inconnu)
-        return Response.status(NOT_IMPLEMENTED).build();
     }
 
     @GET

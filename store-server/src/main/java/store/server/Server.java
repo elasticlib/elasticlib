@@ -31,6 +31,8 @@ public class Server {
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources")
                 .register(MultiPartFeature.class)
+                .register(JsonBodyReader.class)
+                .register(JsonBodyWriter.class)
                 .register(new HttpExceptionMapper())
                 .register(new LoggingFilter())
                 .register(bindings());

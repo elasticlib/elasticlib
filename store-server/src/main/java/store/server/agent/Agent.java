@@ -11,7 +11,7 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.exception.StoreException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeClosedException;
+import store.server.exception.VolumeNotStartedException;
 import store.server.volume.Volume;
 
 abstract class Agent {
@@ -138,7 +138,7 @@ abstract class Agent {
             try (PipedOutputStream out = new PipedOutputStream(in)) {
                 volume.get(hash, out);
 
-            } catch (UnknownHashException | VolumeClosedException e) {
+            } catch (UnknownHashException | VolumeNotStartedException e) {
                 storeException = e;
 
             } catch (Throwable e) {

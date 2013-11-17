@@ -32,8 +32,6 @@ import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.server.agent.AgentManager;
 import store.server.exception.IndexAlreadyExistsException;
-import store.server.exception.NoIndexException;
-import store.server.exception.NoVolumeException;
 import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
 import store.server.exception.VolumeAlreadyExistsException;
@@ -282,7 +280,7 @@ public final class Repository {
         lock.readLock().lock();
         try {
             if (!volumes.containsKey(name)) {
-                throw new NoVolumeException(); // FIXME il faudrait faire des exceptions plus adaptées !
+                throw new UnknownVolumeException();
             }
             return volumes.get(name);
 
@@ -295,7 +293,7 @@ public final class Repository {
         lock.readLock().lock();
         try {
             if (!indexes.containsKey(name)) {
-                throw new NoIndexException();
+                throw new UnknownIndexException();
             }
             return indexes.get(name);
 

@@ -4,7 +4,7 @@ import java.io.InputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
 import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.VolumeClosedException;
+import store.server.exception.VolumeNotStartedException;
 
 public class Input extends InputStream {
 
@@ -23,7 +23,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -55,7 +55,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -68,7 +68,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -81,7 +81,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -97,7 +97,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -125,7 +125,7 @@ public class Input extends InputStream {
 
         } catch (NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeClosedException();
+                throw new VolumeNotStartedException();
             }
             throw new RuntimeException(e);
         }

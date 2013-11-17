@@ -9,7 +9,7 @@ import static store.common.Operation.DELETE;
 import static store.common.Operation.PUT;
 import store.server.Index;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeClosedException;
+import store.server.exception.VolumeNotStartedException;
 import store.server.volume.Volume;
 
 class IndexAgent extends Agent {
@@ -41,7 +41,7 @@ class IndexAgent extends Agent {
                 }
                 return true;
 
-            } catch (UnknownHashException | VolumeClosedException e) {
+            } catch (UnknownHashException | VolumeNotStartedException e) {
                 return false;
             }
         }

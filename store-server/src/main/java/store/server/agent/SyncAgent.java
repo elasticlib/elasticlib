@@ -8,7 +8,7 @@ import store.common.Hash;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeClosedException;
+import store.server.exception.VolumeNotStartedException;
 import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
@@ -44,7 +44,7 @@ class SyncAgent extends Agent {
                 agentManager.signal(destination.getName());
                 return true;
 
-            } catch (UnknownHashException | VolumeClosedException e) {
+            } catch (UnknownHashException | VolumeNotStartedException e) {
                 return false;
             }
         }

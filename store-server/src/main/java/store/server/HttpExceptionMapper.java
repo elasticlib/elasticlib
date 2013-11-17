@@ -13,13 +13,11 @@ import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IndexAlreadyExistsException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
-import store.server.exception.NoIndexException;
-import store.server.exception.NoVolumeException;
 import store.server.exception.StoreException;
 import store.server.exception.UnknownHashException;
 import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
-import store.server.exception.VolumeClosedException;
+import store.server.exception.VolumeNotStartedException;
 import store.server.exception.WriteException;
 
 /**
@@ -38,13 +36,11 @@ public class HttpExceptionMapper implements ExceptionMapper<StoreException> {
         MAPPING.put(IntegrityCheckingFailedException.class, PRECONDITION_FAILED);
         MAPPING.put(InvalidStorePathException.class, PRECONDITION_FAILED);
 
-        MAPPING.put(NoIndexException.class, NOT_FOUND);
-        MAPPING.put(NoVolumeException.class, NOT_FOUND);
         MAPPING.put(UnknownHashException.class, NOT_FOUND);
         MAPPING.put(UnknownIndexException.class, NOT_FOUND);
         MAPPING.put(UnknownVolumeException.class, NOT_FOUND);
 
-        MAPPING.put(VolumeClosedException.class, SERVICE_UNAVAILABLE);
+        MAPPING.put(VolumeNotStartedException.class, SERVICE_UNAVAILABLE);
 
         MAPPING.put(WriteException.class, INTERNAL_SERVER_ERROR);
     }

@@ -10,6 +10,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
@@ -17,6 +18,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -215,13 +217,19 @@ public class VolumesResource {
         return Response.status(NOT_IMPLEMENTED).build();
     }
 
-    @POST
-    @Path("{name}/log")
-    public JsonArray log(@PathParam("name") final String name, JsonObject json) {
-        // On devrait aussi le faire en GET avec des queryParams
-        return writeEvents(repository.history(name,
-                                              json.getBoolean("reverse"),
-                                              json.getJsonNumber("from").longValue(),
-                                              json.getInt("size")));
+    @GET
+    @Path("{name}/history")
+    public JsonArray history(@PathParam("name") final String name,
+                             @QueryParam("sort") @DefaultValue("desc") String sort,
+                             @QueryParam("from") Long from,
+                             @QueryParam("size") @DefaultValue("20") int size) {
+
+        if (!sort.equals("asc") && !sort.equals("desc")) {
+            throw new IllegalArgumentException(); // FIXME should response a 400
+        }
+        if (from == null) {
+            from = sort.equals("asc") ? 0 : Long.MAX_VALUE;
+        }
+        return writeEvents(repository.history(name, sort.equals("asc"), from, size));
     }
 }

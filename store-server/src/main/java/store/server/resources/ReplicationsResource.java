@@ -1,5 +1,6 @@
 package store.server.resources;
 
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -16,16 +17,8 @@ import store.server.Repository;
 @Path("replications")
 public class ReplicationsResource {
 
-    private final Repository repository;
-
-    /**
-     * Constructor.
-     *
-     * @param repository The repository.
-     */
-    public ReplicationsResource(Repository repository) {
-        this.repository = repository;
-    }
+    @Inject
+    private Repository repository;
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)

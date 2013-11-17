@@ -3,6 +3,7 @@ package store.server.resources;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.List;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -28,16 +29,8 @@ import store.server.exception.UnknownIndexException;
 @Path("indexes")
 public class IndexesResource {
 
-    private final Repository repository;
-
-    /**
-     * Constructor.
-     *
-     * @param repository The repository.
-     */
-    public IndexesResource(Repository repository) {
-        this.repository = repository;
-    }
+    @Inject
+    private Repository repository;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

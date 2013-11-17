@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -35,16 +36,8 @@ import store.server.volume.Status;
 @Path("volumes")
 public class VolumesResource {
 
-    private final Repository repository;
-
-    /**
-     * Constructor.
-     *
-     * @param repository The repository.
-     */
-    public VolumesResource(Repository repository) {
-        this.repository = repository;
-    }
+    @Inject
+    private Repository repository;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

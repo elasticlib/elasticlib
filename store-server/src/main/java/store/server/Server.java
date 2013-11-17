@@ -6,14 +6,12 @@ import java.net.URI;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
-import store.server.resources.IndexesResource;
-import store.server.resources.ReplicationsResource;
-import store.server.resources.VolumesResource;
 
 /**
  * A Standalone HTTP server. Expose a REST resource on a repository.
@@ -21,6 +19,7 @@ import store.server.resources.VolumesResource;
 public class Server {
 
     private final HttpServer httpServer;
+    private final Path home;
 
     /**
      * Constructor.
@@ -28,14 +27,13 @@ public class Server {
      * @param home Path to repository's home-directory.
      */
     public Server(Path home) {
-        Repository repository = new Repository(home);
+        this.home = home;
         ResourceConfig resourceConfig = new ResourceConfig()
+                .packages("store.server.resources")
                 .register(MultiPartFeature.class)
-                .register(new IndexesResource(repository))
-                .register(new ReplicationsResource(repository))
-                .register(new VolumesResource(repository))
                 .register(new HttpExceptionMapper())
-                .register(new LoggingFilter());
+                .register(new LoggingFilter())
+                .register(bindings());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);
 
@@ -52,6 +50,15 @@ public class Server {
                 .host("localhost")
                 .port(port)
                 .build();
+    }
+
+    private AbstractBinder bindings() {
+        return new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(new Repository(home)).to(Repository.class);
+            }
+        };
     }
 
     /**

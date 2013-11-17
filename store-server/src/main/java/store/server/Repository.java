@@ -1,6 +1,5 @@
 package store.server;
 
-import store.server.volume.Status;
 import com.google.common.base.Charsets;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +38,7 @@ import store.server.exception.UnknownIndexException;
 import store.server.exception.UnknownVolumeException;
 import store.server.exception.VolumeAlreadyExistsException;
 import store.server.exception.WriteException;
+import store.server.volume.Status;
 import store.server.volume.Volume;
 
 /**

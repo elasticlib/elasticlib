@@ -29,11 +29,9 @@ public class Server {
     public Server(Path home) {
         this.home = home;
         ResourceConfig resourceConfig = new ResourceConfig()
-                .packages("store.server.resources")
+                .packages("store.server.resources",
+                          "store.server.providers")
                 .register(MultiPartFeature.class)
-                .register(JsonBodyReader.class)
-                .register(JsonBodyWriter.class)
-                .register(new HttpExceptionMapper())
                 .register(new LoggingFilter())
                 .register(bindings());
 

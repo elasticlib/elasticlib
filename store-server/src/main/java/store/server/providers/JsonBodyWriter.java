@@ -1,4 +1,4 @@
-package store.server;
+package store.server.providers;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,10 +18,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
 
 /**
  * Custom JSON body writer. Nicely format output if request contains query parameter "pretty=true".
  */
+@Provider
 @Produces({"application/json", "text/json", "*/*"})
 public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
 

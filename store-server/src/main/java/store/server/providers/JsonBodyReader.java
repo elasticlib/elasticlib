@@ -1,4 +1,4 @@
-package store.server;
+package store.server.providers;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +13,12 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.Provider;
 
 /**
  * JSON body reader.
  */
+@Provider
 @Consumes({"application/json", "text/json", "*/*"})
 public class JsonBodyReader implements MessageBodyReader<JsonStructure> {
 

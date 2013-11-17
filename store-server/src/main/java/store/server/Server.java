@@ -34,6 +34,7 @@ public class Server {
                 .register(new IndexesResource(repository))
                 .register(new ReplicationsResource(repository))
                 .register(new VolumesResource(repository))
+                .register(new HttpExceptionMapper())
                 .register(new LoggingFilter());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(localhost(8080), resourceConfig, false);

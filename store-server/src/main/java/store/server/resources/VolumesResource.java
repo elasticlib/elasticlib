@@ -20,7 +20,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
@@ -30,6 +29,7 @@ import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeEvents;
 import store.server.Repository;
+import store.server.exception.BadRequestException;
 import store.server.volume.Status;
 
 @Path("volumes")
@@ -73,7 +73,7 @@ public class VolumesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateVolume(@PathParam("name") String name, JsonObject json) {
         if (!hasBooleanValue(json, "started")) {
-            return Response.status(BAD_REQUEST).build();
+            throw new BadRequestException();
         }
         if (json.getBoolean("started")) {
             repository.start(name);
@@ -210,7 +210,7 @@ public class VolumesResource {
                              @QueryParam("size") @DefaultValue("20") int size) {
 
         if (!sort.equals("asc") && !sort.equals("desc")) {
-            throw new IllegalArgumentException(); // FIXME should response a 400
+            throw new BadRequestException();
         }
         if (from == null) {
             from = sort.equals("asc") ? 0 : Long.MAX_VALUE;

@@ -198,13 +198,13 @@ public class VolumesResource {
 
     @GET
     @Path("{name}/info/{hash}")
-    public JsonObject getInfo(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
+    public JsonObject getInfo(@PathParam("name") String name, @PathParam("hash") Hash hash) {
         return writeContentInfo(repository.info(name, hash));
     }
 
     @GET
     @Path("{name}/history")
-    public JsonArray history(@PathParam("name") final String name,
+    public JsonArray history(@PathParam("name") String name,
                              @QueryParam("sort") @DefaultValue("desc") String sort,
                              @QueryParam("from") Long from,
                              @QueryParam("size") @DefaultValue("20") int size) {

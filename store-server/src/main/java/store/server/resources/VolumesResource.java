@@ -19,11 +19,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.Hash;
 import static store.common.JsonUtil.readContentInfo;
@@ -38,12 +40,17 @@ public class VolumesResource {
 
     @Inject
     private Repository repository;
+    @Context
+    private UriInfo uriInfo;
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createVolume(JsonObject json) {
-        repository.createVolume(Paths.get(json.getString("path")));
-        return Response.status(CREATED).build();
+        java.nio.file.Path path = Paths.get(json.getString("path"));
+        repository.createVolume(path);
+        return Response
+                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(path.getFileName().toString()).build())
+                .build();
     }
 
     @PUT
@@ -51,7 +58,7 @@ public class VolumesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createVolume(@PathParam("name") String name, JsonObject json) {
         repository.createVolume(Paths.get(json.getString("path")).resolve(name));
-        return Response.status(CREATED).build();
+        return Response.created(uriInfo.getRequestUri()).build();
     }
 
     @DELETE
@@ -146,7 +153,9 @@ public class VolumesResource {
         //
 
         repository.put(name, readContentInfo(json), inputStream);
-        return Response.status(CREATED).build();
+        return Response
+                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(json.getString("hash")).build())
+                .build();
     }
 
     @PUT

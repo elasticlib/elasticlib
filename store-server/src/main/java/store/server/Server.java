@@ -14,7 +14,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
 
 /**
- * A Standalone HTTP server. Expose a REST resource on a repository.
+ * A Standalone HTTP server.
  */
 public class Server {
 

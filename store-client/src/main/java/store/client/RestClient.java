@@ -32,7 +32,6 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.DigestUtil.digest;
-import static store.client.MetadataUtil.metadata;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Digest;
@@ -43,6 +42,7 @@ import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.writeContentInfo;
+import static store.common.MetadataUtil.metadata;
 import static store.common.Properties.Common.CAPTURE_DATE;
 
 /**
@@ -169,7 +169,7 @@ public class RestClient implements Closeable {
 
             MultiPart multipart = new FormDataMultiPart()
                     .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
-                    .bodyPart(new StreamDataBodyPart("source",
+                    .bodyPart(new StreamDataBodyPart("content",
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));

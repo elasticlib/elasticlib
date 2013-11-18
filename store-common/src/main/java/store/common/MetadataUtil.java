@@ -1,4 +1,4 @@
-package store.client;
+package store.common;
 
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -20,7 +20,6 @@ import store.common.Properties.Audio;
 import store.common.Properties.Common;
 import store.common.Properties.Image;
 import store.common.Properties.Text;
-import store.common.Property;
 
 public final class MetadataUtil {
 

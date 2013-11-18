@@ -9,7 +9,6 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import store.server.exception.StoreRuntimeException;
 
@@ -31,7 +30,6 @@ public class Server {
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
                           "store.server.providers")
-                .register(MultiPartFeature.class)
                 .register(new LoggingFilter())
                 .register(bindings());
 

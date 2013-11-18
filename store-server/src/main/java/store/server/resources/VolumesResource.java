@@ -26,13 +26,15 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import store.common.Hash;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeEvents;
 import store.server.Repository;
 import store.server.exception.BadRequestException;
+import store.server.exception.WriteException;
+import store.server.multipart.BodyPart;
+import store.server.multipart.FormDataMultipart;
 import store.server.volume.Status;
 
 @Path("volumes")
@@ -122,50 +124,24 @@ public class VolumesResource {
     @POST
     @Path("{name}/content")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postContent(@PathParam("name") String name,
-                                @FormDataParam("info") JsonObject json,
-                                @FormDataParam("content") InputStream inputStream) {
+    public Response postContent(@PathParam("name") String name, FormDataMultipart formData) {
+        JsonObject json = formData.next("info").getAsJsonObject();
+        BodyPart content = formData.next("content");
+        try (InputStream inputStream = content.getAsInputStream()) {
+            repository.put(name, readContentInfo(json), inputStream);
+            return Response
+                    .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(json.getString("hash")).build())
+                    .build();
 
-        //
-        // FIXME : Soucis avec cette méthode
-        // - flexibilité : on est obligé de calculer le hash/length côté client - a priori KO pour un upload HTML/JS.
-        // - UX : parce lecture et digest une fois avant l'upload.
-        // - UX/perfs : parce Jersey-multipart impose la mise en tampon du body sur disque alors que c'est inutile ici.
-        //
-        // SOLUTION :
-        // - Rendre la part "info" facultative. Si elle n'est pas fournie, faire le digest et l'extraction côté serveur.
-        // - Avoir un multipartReader ad-hoc qui fournisse le contentInfo systématiquement et qui streame l'inputstream.
-        //      * Si info fourni dans le multipart. Ne cache rien sur disque, suppose que l'info est la 1re part, et
-        //        lit l'info à la volée. Filtre le boundary de fin de l'entité. Lance un IOException si pas de boundary
-        //        de fin.
-        //
-        //      * Si pas d'info, cache le content sur disque en calculant au passage le digest et les métadonnées.
-        //
-        //      * Quoi qu'il arrive, console les métadonnées avec le filename/content-type lu dans les headers de la
-        //        part du content.
-        //
-        // Soucis résiduels :
-        // - Si on cache sur disque, on devra ensuite faire une autre recopie vers le volume. On aimerait pouvoir cacher
-        //   directement sur la partition du volume et faire un simple move dans un second temps.
-        //
-        // - Mine de rien, l'implé Jersey gère un paquet de chose. Prévoir pas mal de soucis liés à la réinvention
-        //   de la roue. Envisager de réutiliser tout ou partie de le leur implé !?
-        //
-
-        repository.put(name, readContentInfo(json), inputStream);
-        return Response
-                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(json.getString("hash")).build())
-                .build();
+        } catch (IOException e) {
+            throw new WriteException(e);
+        }
     }
 
     @PUT
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response putContent(@PathParam("name") String name,
-                               @PathParam("hash") Hash hash,
-                               @FormDataParam("info") JsonObject json,
-                               @FormDataParam("content") InputStream inputStream) {
-
+    public Response putContent(@PathParam("name") String name, @PathParam("hash") Hash hash, FormDataMultipart formData) {
         // TODO à implémenter
         return Response.status(NOT_IMPLEMENTED).build();
     }

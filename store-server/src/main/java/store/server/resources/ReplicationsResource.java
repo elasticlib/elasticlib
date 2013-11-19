@@ -84,9 +84,10 @@ public class ReplicationsResource {
      * @return HTTP response
      */
     @DELETE
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response dropReplication(@QueryParam("source") String source, @QueryParam("target") String target) {
-        // TODO check that query parameters have actually been supplied.
+    public Response deleteReplication(@QueryParam("source") String source, @QueryParam("target") String target) {
+        if (source == null || target == null) {
+            throw new BadRequestException();
+        }
         repository.unsync(source, target);
         return Response.ok().build();
     }

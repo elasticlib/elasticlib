@@ -1,5 +1,6 @@
 package store.server.resources;
 
+import java.net.URI;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -10,9 +11,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import static javax.ws.rs.core.Response.Status.CREATED;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import static store.common.JsonUtil.hasStringValue;
 import store.server.Repository;
 import store.server.exception.BadRequestException;
@@ -25,6 +28,8 @@ public class ReplicationsResource {
 
     @Inject
     private Repository repository;
+    @Context
+    private UriInfo uriInfo;
 
     /**
      * Create a new replication.
@@ -47,9 +52,16 @@ public class ReplicationsResource {
         if (!hasStringValue(json, "source") || !hasStringValue(json, "target")) {
             throw new BadRequestException();
         }
-        repository.sync(json.getString("source"), json.getString("target"));
-        // TODO should return the location !
-        return Response.status(CREATED).build();
+        String source = json.getString("source");
+        String target = json.getString("target");
+        repository.sync(source, target);
+        URI location = UriBuilder
+                .fromUri(uriInfo.getRequestUri())
+                .queryParam("source", source)
+                .queryParam("target", target)
+                .build();
+
+        return Response.created(location).build();
     }
 
     /**

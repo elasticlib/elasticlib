@@ -54,7 +54,7 @@ import static store.common.Properties.Common.CAPTURE_DATE;
 public class RestClient implements Closeable {
 
     private final Client client;
-    private final WebTarget target;
+    private final WebTarget resource;
     private String volume;
 
     /**
@@ -72,7 +72,7 @@ public class RestClient implements Closeable {
                 .register(new LoggingFilter(logger, true));
 
         client = ClientBuilder.newClient(clientConfig);
-        target = client.target(localhost(8080));
+        resource = client.target(localhost(8080));
     }
 
     private static URI localhost(int port) {
@@ -107,13 +107,13 @@ public class RestClient implements Closeable {
                 .add("path", path.toAbsolutePath().toString())
                 .build();
 
-        ensureSuccess(target.path("volumes")
+        ensureSuccess(resource.path("volumes")
                 .request()
                 .post(Entity.json(json)));
     }
 
     public void dropVolume(String name) {
-        ensureSuccess(target.path("volumes/{name}")
+        ensureSuccess(resource.path("volumes/{name}")
                 .resolveTemplate("name", name)
                 .request()
                 .delete());
@@ -125,33 +125,33 @@ public class RestClient implements Closeable {
                 .add("volume", volumeName)
                 .build();
 
-        ensureSuccess(target.path("indexes")
+        ensureSuccess(resource.path("indexes")
                 .request()
                 .post(Entity.json(json)));
     }
 
     public void dropIndex(String name) {
-        ensureSuccess(target.path("indexes/{name}")
+        ensureSuccess(resource.path("indexes/{name}")
                 .resolveTemplate("name", name)
                 .request()
                 .delete());
     }
 
-    public void sync(String source, String destination) {
+    public void sync(String source, String target) {
         JsonObject json = createObjectBuilder()
                 .add("source", source)
-                .add("destination", destination)
+                .add("target", target)
                 .build();
 
-        ensureSuccess(target.path("replications")
+        ensureSuccess(resource.path("replications")
                 .request()
                 .post(Entity.json(json)));
     }
 
-    public void unsync(String source, String destination) {
-        ensureSuccess(target.path("replications")
+    public void unsync(String source, String target) {
+        ensureSuccess(resource.path("replications")
                 .queryParam("source", source)
-                .queryParam("destination", destination)
+                .queryParam("target", target)
                 .request()
                 .delete());
     }
@@ -169,7 +169,7 @@ public class RestClient implements Closeable {
                 .add("started", value)
                 .build();
 
-        ensureSuccess(target.path("volumes/{name}")
+        ensureSuccess(resource.path("volumes/{name}")
                 .resolveTemplate("name", name)
                 .request()
                 .post(Entity.json(json)));
@@ -184,7 +184,7 @@ public class RestClient implements Closeable {
                 .with(CAPTURE_DATE.key(), new Date())
                 .build();
 
-        Response response = target.path("volumes/{name}/info/{hash}")
+        Response response = resource.path("volumes/{name}/info/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", digest.getHash())
                 .request()
@@ -204,7 +204,7 @@ public class RestClient implements Closeable {
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            ensureSuccess(target.path("volumes/{name}/content")
+            ensureSuccess(resource.path("volumes/{name}/content")
                     .resolveTemplate("name", volume)
                     .request()
                     .post(entity(multipart, addBoundary(multipart.getMediaType()))));
@@ -215,7 +215,7 @@ public class RestClient implements Closeable {
     }
 
     public void delete(Hash hash) {
-        ensureSuccess(target.path("volumes/{name}/content/{hash}")
+        ensureSuccess(resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
@@ -223,7 +223,7 @@ public class RestClient implements Closeable {
     }
 
     public ContentInfo info(Hash hash) {
-        Response response = target.path("volumes/{name}/info/{hash}")
+        Response response = resource.path("volumes/{name}/info/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
@@ -233,7 +233,7 @@ public class RestClient implements Closeable {
     }
 
     public void get(Hash hash) {
-        Response response = target.path("volumes/{name}/content/{hash}")
+        Response response = resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
@@ -254,7 +254,7 @@ public class RestClient implements Closeable {
 
     public List<Event> history(long from, int size) {
         // TODO add ASC / DESC support
-        Response response = target.path("volumes/{name}/history")
+        Response response = resource.path("volumes/{name}/history")
                 .resolveTemplate("name", volume)
                 .queryParam("from", from)
                 .queryParam("size", size)

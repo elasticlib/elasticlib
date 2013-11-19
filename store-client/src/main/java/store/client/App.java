@@ -3,9 +3,10 @@ package store.client;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,22 +33,29 @@ public final class App {
      * @param args Command line arguments.
      */
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("Syntax : store command params...");
-            return;
-        }
-        List<String> argList = Arrays.asList(args);
-        Optional<Command> OptCommand = Command.of(argList);
-        if (!OptCommand.isPresent()) {
-            System.out.println("Unsupported command !"); // TODO print help
-            return;
-        }
-        try {
-            Command command = OptCommand.get();
-            command.execute(command.params(argList));
+        try (Session session = new Session()) {
+            String line;
+            while ((line = session.getConsoleReader().readLine()) != null) {
+                if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
+                    break;
+                }
+                List<String> argList = Lists.newArrayList(Splitter.on(" ").trimResults().split(line));
+                Optional<Command> OptCommand = Command.of(argList);
+                if (!OptCommand.isPresent()) {
+                    session.out().println("Unsupported command !"); // TODO print help
+                    session.out().flush();
+                } else {
+                    try {
+                        Command command = OptCommand.get();
+                        command.execute(session, command.params(argList));
 
-        } catch (RequestFailedException e) {
-            System.out.println(e.getMessage());
+                    } catch (RequestFailedException e) {
+                        session.out().println(e.getMessage());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -55,18 +63,14 @@ public final class App {
 
         CREATE_VOLUME {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.createVolume(Paths.get(params.get(0)));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().createVolume(Paths.get(params.get(0)));
             }
         },
         DROP_VOLUME {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.dropVolume(params.get(0));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().dropVolume(params.get(0));
             }
         },
         CREATE_INDEX {
@@ -80,121 +84,103 @@ public final class App {
             }
 
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.createIndex(Paths.get(params.get(0)), params.get(1));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().createIndex(Paths.get(params.get(0)), params.get(1));
             }
         },
         DROP_INDEX {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.dropIndex(params.get(0));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().dropIndex(params.get(0));
             }
         },
         SYNC {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.sync(params.get(0), params.get(1));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().sync(params.get(0), params.get(1));
             }
         },
         UNSYNC {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.unsync(params.get(0), params.get(1));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().unsync(params.get(0), params.get(1));
             }
         },
         START {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.start(params.get(0));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().start(params.get(0));
             }
         },
         STOP {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.stop(params.get(0));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().stop(params.get(0));
             }
         },
         PUT {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.put(Paths.get(params.get(0)));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().put(Paths.get(params.get(0)));
             }
         },
         DELETE {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.delete(new Hash(params.get(0)));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().delete(new Hash(params.get(0)));
             }
         },
         GET {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    client.get(new Hash(params.get(0)));
-                }
+            public void execute(Session session, List<String> params) {
+                session.getRestClient().get(new Hash(params.get(0)));
             }
         },
         INFO {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    ContentInfo info = client.info(new Hash(params.get(0)));
-                    System.out.println(asString(info));
-                }
+            public void execute(Session session, List<String> params) {
+                ContentInfo info = session.getRestClient().info(new Hash(params.get(0)));
+                session.out().println(asString(info));
             }
         },
         FIND {
             @Override
-            public void execute(List<String> params) {
+            public void execute(Session session, List<String> params) {
                 String query = Joiner.on(" ").join(params);
-                try (RestClient client = new RestClient()) {
-                    for (ContentInfo info : client.find(query)) {
-                        System.out.println(asString(info));
-                    }
+                for (ContentInfo info : session.getRestClient().find(query)) {
+                    session.out().println(asString(info));
                 }
             }
         },
         HISTORY {
             @Override
-            public void execute(List<String> params) {
-                try (RestClient client = new RestClient()) {
-                    long cursor = Long.MAX_VALUE;
-                    List<Event> events;
-                    do {
-                        events = client.history(false, cursor, 20);
-                        for (Event event : events) {
-                            cursor = event.getSeq();
-                            System.out.println(asString(event));
-                        }
-                    } while (!events.isEmpty() && cursor > 1);
-                }
+            public void execute(Session session, List<String> params) {
+                long cursor = Long.MAX_VALUE;
+                List<Event> events;
+                do {
+                    events = session.getRestClient().history(cursor, 20);
+                    for (Event event : events) {
+                        cursor = event.getSeq();
+                        session.out().println(asString(event));
+                    }
+                } while (!events.isEmpty() && cursor > 1);
             }
         },
         DIGEST {
             @Override
-            public void execute(List<String> params) {
+            public void execute(Session session, List<String> params) {
                 Digest digest = digest(Paths.get(params.get(0)));
-                System.out.println(asString(digest));
+                session.out().println(asString(digest));
+            }
+        },
+        SET_VOLUME {
+            @Override
+            public void execute(Session session, List<String> params) {
+                session.setVolume(params.get(0));
             }
         };
 
-        public abstract void execute(List<String> params);
+        public abstract void execute(Session session, List<String> params);
 
         public static Optional<Command> of(List<String> argList) {
             for (Command command : Command.values()) {

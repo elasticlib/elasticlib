@@ -1,5 +1,6 @@
 package store.client;
 
+import com.google.common.base.Joiner;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,14 +9,17 @@ import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import static javax.ws.rs.client.Entity.entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -39,7 +43,6 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readContentInfo;
-import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.MetadataUtil.metadata;
@@ -50,9 +53,9 @@ import static store.common.Properties.Common.CAPTURE_DATE;
  */
 public class RestClient implements Closeable {
 
-    private static final String POST = "POST";
     private final Client client;
     private final WebTarget target;
+    private String volume;
 
     /**
      * Constructor.
@@ -79,70 +82,97 @@ public class RestClient implements Closeable {
                 .build();
     }
 
-    private Response ensureOk(Response response) {
-        if (response.getStatus() != Status.OK.getStatusCode()) {
+    public String getVolume() {
+        return volume;
+    }
+
+    public void setVolume(String volume) {
+        this.volume = volume;
+    }
+
+    private Response ensureSuccess(Response response) {
+        if (response.getStatus() >= 300) {
+            if (response.hasEntity() && response.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+                String reason = response.getStatusInfo().getReasonPhrase();
+                String message = response.readEntity(JsonObject.class).getString("error");
+                throw new RequestFailedException(Joiner.on(" - ").join(reason, message));
+            }
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }
         return response;
     }
 
     public void createVolume(Path path) {
-        ensureOk(target.path("createVolume/{path}")
-                .resolveTemplate("path", path.toAbsolutePath())
+        JsonObject json = createObjectBuilder()
+                .add("path", path.toAbsolutePath().toString())
+                .build();
+
+        ensureSuccess(target.path("volumes")
                 .request()
-                .method(POST));
+                .post(Entity.json(json)));
     }
 
     public void dropVolume(String name) {
-        ensureOk(target.path("dropVolume/{name}")
+        ensureSuccess(target.path("volumes/{name}")
                 .resolveTemplate("name", name)
                 .request()
-                .method(POST));
+                .delete());
     }
 
     public void createIndex(Path path, String volumeName) {
-        ensureOk(target.path("createIndex/{path}/{name}")
-                .resolveTemplate("path", path.toAbsolutePath())
-                .resolveTemplate("name", volumeName)
+        JsonObject json = createObjectBuilder()
+                .add("path", path.toAbsolutePath().toString())
+                .add("volume", volumeName)
+                .build();
+
+        ensureSuccess(target.path("indexes")
                 .request()
-                .method(POST));
+                .post(Entity.json(json)));
     }
 
     public void dropIndex(String name) {
-        ensureOk(target.path("dropIndex/{name}")
+        ensureSuccess(target.path("indexes/{name}")
                 .resolveTemplate("name", name)
                 .request()
-                .method(POST));
+                .delete());
     }
 
     public void sync(String source, String destination) {
-        ensureOk(target.path("sync/{source}/{destination}")
-                .resolveTemplate("source", source)
-                .resolveTemplate("destination", destination)
+        JsonObject json = createObjectBuilder()
+                .add("source", source)
+                .add("destination", destination)
+                .build();
+
+        ensureSuccess(target.path("replications")
                 .request()
-                .method(POST));
+                .post(Entity.json(json)));
     }
 
     public void unsync(String source, String destination) {
-        ensureOk(target.path("unsync/{source}/{destination}")
-                .resolveTemplate("source", source)
-                .resolveTemplate("destination", destination)
+        ensureSuccess(target.path("replications")
+                .queryParam("source", source)
+                .queryParam("destination", destination)
                 .request()
-                .method(POST));
+                .delete());
     }
 
     public void start(String name) {
-        ensureOk(target.path("start/{name}")
-                .resolveTemplate("name", name)
-                .request()
-                .method(POST));
+        setStarted(name, true);
     }
 
     public void stop(String name) {
-        ensureOk(target.path("stop/{name}")
+        setStarted(name, false);
+    }
+
+    public void setStarted(String name, boolean value) {
+        JsonObject json = createObjectBuilder()
+                .add("started", value)
+                .build();
+
+        ensureSuccess(target.path("volumes/{name}")
                 .resolveTemplate("name", name)
                 .request()
-                .method(POST));
+                .post(Entity.json(json)));
     }
 
     public void put(Path filepath) {
@@ -154,12 +184,13 @@ public class RestClient implements Closeable {
                 .with(CAPTURE_DATE.key(), new Date())
                 .build();
 
-        Response response = target.path("contains/{hash}")
+        Response response = target.path("volumes/{name}/info/{hash}")
+                .resolveTemplate("name", volume)
                 .resolveTemplate("hash", digest.getHash())
                 .request()
-                .get();
+                .head();
 
-        if (ensureOk(response).readEntity(Boolean.class)) {
+        if (response.getStatus() == Status.OK.getStatusCode()) {
             throw new RequestFailedException("This content is already stored");
         }
 
@@ -173,7 +204,8 @@ public class RestClient implements Closeable {
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            ensureOk(target.path("put")
+            ensureSuccess(target.path("volumes/{name}/content")
+                    .resolveTemplate("name", volume)
                     .request()
                     .post(entity(multipart, addBoundary(multipart.getMediaType()))));
 
@@ -183,28 +215,31 @@ public class RestClient implements Closeable {
     }
 
     public void delete(Hash hash) {
-        ensureOk(target.path("delete/{hash}")
+        ensureSuccess(target.path("volumes/{name}/content/{hash}")
+                .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
-                .method(POST));
+                .delete());
     }
 
     public ContentInfo info(Hash hash) {
-        Response response = target.path("info/{hash}")
+        Response response = target.path("volumes/{name}/info/{hash}")
+                .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
                 .get();
 
-        return readContentInfo(ensureOk(response).readEntity(JsonObject.class));
+        return readContentInfo(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
     public void get(Hash hash) {
-        Response response = target.path("get/{hash}")
+        Response response = target.path("volumes/{name}/content/{hash}")
+                .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
                 .request()
                 .get();
 
-        try (InputStream inputStream = ensureOk(response).readEntity(InputStream.class);
+        try (InputStream inputStream = ensureSuccess(response).readEntity(InputStream.class);
                 OutputStream outputStream = new DefferedFileOutputStream(Paths.get(hash.encode()))) {
             copy(inputStream, outputStream);
 
@@ -214,23 +249,19 @@ public class RestClient implements Closeable {
     }
 
     public List<ContentInfo> find(String query) {
-        Response response = target.path("find/{query}")
-                .resolveTemplate("query", query)
-                .request()
-                .get();
-
-        return readContentInfos(ensureOk(response).readEntity(JsonArray.class));
+        return Collections.emptyList(); // TODO this is a stub !
     }
 
-    public List<Event> history(boolean chronological, long first, int number) {
-        Response response = target.path("history/{chronological}/{first}/{number}")
-                .resolveTemplate("chronological", chronological)
-                .resolveTemplate("first", first)
-                .resolveTemplate("number", number)
+    public List<Event> history(long from, int size) {
+        // TODO add ASC / DESC support
+        Response response = target.path("volumes/{name}/history")
+                .resolveTemplate("name", volume)
+                .queryParam("from", from)
+                .queryParam("size", size)
                 .request()
                 .get();
 
-        return readEvents(ensureOk(response).readEntity(JsonArray.class));
+        return readEvents(ensureSuccess(response).readEntity(JsonArray.class));
     }
 
     @Override

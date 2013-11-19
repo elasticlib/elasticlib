@@ -1,5 +1,8 @@
 package store.server.multipart;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.NoSuchElementException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -12,8 +15,9 @@ import store.server.exception.BadRequestException;
  * A read-only multi-part entity. Intended to be accessed in a streaming fashion in order to avoid the entity to be
  * written in a temporary file.
  */
-public class Multipart {
+public class Multipart implements Closeable {
 
+    private final InputStream entity;
     private final MIMEMessage mimeMessage;
     private int index;
     private boolean loaded;
@@ -21,10 +25,12 @@ public class Multipart {
     /**
      * Constructor.
      *
-     * @param mimeMessage Lower-level MIME message.
+     * @param entity Raw entity.
+     * @param boundary MIME boundary.
      */
-    public Multipart(MIMEMessage mimeMessage) {
-        this.mimeMessage = mimeMessage;
+    public Multipart(InputStream entity, String boundary) {
+        this.mimeMessage = new MIMEMessage(entity, boundary);
+        this.entity = entity;
     }
 
     /**
@@ -55,7 +61,7 @@ public class Multipart {
 
     protected final String contentDispositionHeader(MIMEPart mimePart) {
         for (Header header : mimePart.getAllHeaders()) {
-            if (header.getValue().equalsIgnoreCase("Content-Disposition")) {
+            if (header.getName().equalsIgnoreCase("Content-Disposition")) {
                 return header.getValue();
             }
         }
@@ -78,5 +84,10 @@ public class Multipart {
         } catch (ParseException e) {
             throw new BadRequestException();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        entity.close();
     }
 }

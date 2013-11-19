@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
@@ -12,8 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 import static org.glassfish.jersey.message.internal.MediaTypes.typeEqual;
-import org.jvnet.mimepull.MIMEConfig;
-import org.jvnet.mimepull.MIMEMessage;
+import org.glassfish.jersey.server.CloseableService;
 import store.server.multipart.FormDataMultipart;
 import store.server.multipart.Multipart;
 
@@ -24,7 +24,8 @@ import store.server.multipart.Multipart;
 @Consumes("multipart/*")
 public class MultipartReader implements MessageBodyReader<Multipart> {
 
-    private final MIMEConfig mimeConfig = new MIMEConfig();
+    @Inject
+    private javax.inject.Provider<CloseableService> closeableServiceProvider;
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -39,17 +40,26 @@ public class MultipartReader implements MessageBodyReader<Multipart> {
                               MultivaluedMap<String, String> httpHeaders,
                               InputStream entityStream) throws IOException, WebApplicationException {
 
-        MIMEMessage mimeMessage = new MIMEMessage(entityStream,
-                                                  mediaType.getParameters().get("boundary"),
-                                                  mimeConfig);
+        // Multipart implements Closeable and is responsible for closing entity inputStream.
+        // This prevents Jersey runtime from closing entity inputStream directly when returning from this method,
+        // which would break latter use of the returned multipart.
+        Multipart multipart = newMultipart(mediaType, httpHeaders, entityStream);
+        closeableServiceProvider.get().add(multipart);
+        return multipart;
+    }
 
+    private Multipart newMultipart(MediaType mediaType,
+                                   MultivaluedMap<String, String> httpHeaders,
+                                   InputStream entityStream) {
+
+        String boundary = mediaType.getParameters().get("boundary");
         if (typeEqual(mediaType, MediaType.MULTIPART_FORM_DATA_TYPE)) {
             // see if the User-Agent header corresponds to some version of MS Internet Explorer
             // if so, need to set fileNameFix to true to handle issue http://java.net/jira/browse/JERSEY-759
             String userAgent = httpHeaders.getFirst(HttpHeaders.USER_AGENT);
             boolean fileNameFix = userAgent != null && userAgent.contains(" MSIE ");
-            return new FormDataMultipart(mimeMessage, fileNameFix);
+            return new FormDataMultipart(entityStream, boundary, fileNameFix);
         }
-        return new Multipart(mimeMessage);
+        return new Multipart(entityStream, boundary);
     }
 }

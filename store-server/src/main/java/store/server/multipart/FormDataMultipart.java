@@ -1,8 +1,8 @@
 package store.server.multipart;
 
+import java.io.InputStream;
 import java.text.ParseException;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.jvnet.mimepull.MIMEMessage;
 import org.jvnet.mimepull.MIMEPart;
 import store.server.exception.BadRequestException;
 
@@ -16,11 +16,12 @@ public class FormDataMultipart extends Multipart {
     /**
      * Constructor.
      *
-     * @param mimeMessage Lower-level MIME message.
+     * @param entity Raw entity.
+     * @param boundary MIME boundary.
      * @param fileNameFix A hint intended for Jersey's content-disposition parser.
      */
-    public FormDataMultipart(MIMEMessage mimeMessage, boolean fileNameFix) {
-        super(mimeMessage);
+    public FormDataMultipart(InputStream entity, String boundary, boolean fileNameFix) {
+        super(entity, boundary);
         this.fileNameFix = fileNameFix;
     }
 
@@ -49,7 +50,7 @@ public class FormDataMultipart extends Multipart {
             throw new BadRequestException();
         }
         FormDataBodyPart part = next();
-        if (part.getName().equals(expectedName)) {
+        if (!part.getName().equals(expectedName)) {
             throw new BadRequestException();
         }
         return part;

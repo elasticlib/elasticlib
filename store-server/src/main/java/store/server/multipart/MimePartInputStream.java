@@ -4,6 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.jvnet.mimepull.MIMEPart;
 
+/**
+ * Wraps the MIME part inputStream. Provides a customized close() method which triggers MIME part closing, behind the
+ * scenes. In fact, this is not very important because :<br>
+ * - Entity inputStream is closed by the multipart.<br>
+ * - MIME parts are not expected to create temporary files and therefore, they do not hold any resource.
+ */
 class MimePartInputStream extends InputStream {
 
     private final MIMEPart mimePart;

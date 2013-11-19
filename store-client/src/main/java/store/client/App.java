@@ -94,28 +94,28 @@ public final class App {
                 session.getRestClient().dropIndex(params.get(0));
             }
         },
-        SYNC {
+        CREATE_REPLICATION {
             @Override
             public void execute(Session session, List<String> params) {
-                session.getRestClient().sync(params.get(0), params.get(1));
+                session.getRestClient().createReplication(params.get(0), params.get(1));
             }
         },
-        UNSYNC {
+        DROP_REPLICATION {
             @Override
             public void execute(Session session, List<String> params) {
-                session.getRestClient().unsync(params.get(0), params.get(1));
+                session.getRestClient().dropReplication(params.get(0), params.get(1));
             }
         },
         START {
             @Override
             public void execute(Session session, List<String> params) {
-                session.getRestClient().start(params.get(0));
+                session.getRestClient().start();
             }
         },
         STOP {
             @Override
             public void execute(Session session, List<String> params) {
-                session.getRestClient().stop(params.get(0));
+                session.getRestClient().stop();
             }
         },
         PUT {
@@ -177,6 +177,12 @@ public final class App {
             @Override
             public void execute(Session session, List<String> params) {
                 session.setVolume(params.get(0));
+            }
+        },
+        UNSET_VOLUME {
+            @Override
+            public void execute(Session session, List<String> params) {
+                session.unsetVolume();
             }
         };
 

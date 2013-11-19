@@ -7,6 +7,7 @@ import jline.console.ConsoleReader;
 
 public class Session implements Closeable {
 
+    private static final String PROMPT = "> ";
     private final RestClient restClient;
     private final ConsoleReader consoleReader;
     private final PrintWriter out;
@@ -14,13 +15,18 @@ public class Session implements Closeable {
     public Session() throws IOException {
         restClient = new RestClient();
         consoleReader = new ConsoleReader();
-        consoleReader.setPrompt("$ ");
+        consoleReader.setPrompt(PROMPT);
         out = new PrintWriter(consoleReader.getOutput());
+    }
+
+    public void unsetVolume() {
+        restClient.unsetVolume();
+        consoleReader.setPrompt(PROMPT);
     }
 
     public void setVolume(String name) {
         restClient.setVolume(name);
-        consoleReader.setPrompt(name + "$ ");
+        consoleReader.setPrompt(name + PROMPT);
     }
 
     public RestClient getRestClient() {

@@ -82,12 +82,18 @@ public class RestClient implements Closeable {
                 .build();
     }
 
-    public String getVolume() {
-        return volume;
+    public void unsetVolume() {
+        this.volume = null;
     }
 
     public void setVolume(String volume) {
         this.volume = volume;
+    }
+
+    private void ensureVolumeIsSet() {
+        if (volume == null) {
+            throw new RequestFailedException("Please select a volume");
+        }
     }
 
     private Response ensureSuccess(Response response) {
@@ -137,7 +143,7 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public void sync(String source, String target) {
+    public void createReplication(String source, String target) {
         JsonObject json = createObjectBuilder()
                 .add("source", source)
                 .add("target", target)
@@ -148,7 +154,7 @@ public class RestClient implements Closeable {
                 .post(Entity.json(json)));
     }
 
-    public void unsync(String source, String target) {
+    public void dropReplication(String source, String target) {
         ensureSuccess(resource.path("replications")
                 .queryParam("source", source)
                 .queryParam("target", target)
@@ -156,26 +162,28 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public void start(String name) {
-        setStarted(name, true);
+    public void start() {
+        setStarted(true);
     }
 
-    public void stop(String name) {
-        setStarted(name, false);
+    public void stop() {
+        setStarted(false);
     }
 
-    public void setStarted(String name, boolean value) {
+    public void setStarted(boolean value) {
+        ensureVolumeIsSet();
         JsonObject json = createObjectBuilder()
                 .add("started", value)
                 .build();
 
         ensureSuccess(resource.path("volumes/{name}")
-                .resolveTemplate("name", name)
+                .resolveTemplate("name", volume)
                 .request()
                 .post(Entity.json(json)));
     }
 
     public void put(Path filepath) {
+        ensureVolumeIsSet();
         Digest digest = digest(filepath);
         ContentInfo info = contentInfo()
                 .withHash(digest.getHash())
@@ -215,6 +223,7 @@ public class RestClient implements Closeable {
     }
 
     public void delete(Hash hash) {
+        ensureVolumeIsSet();
         ensureSuccess(resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -223,6 +232,7 @@ public class RestClient implements Closeable {
     }
 
     public ContentInfo info(Hash hash) {
+        ensureVolumeIsSet();
         Response response = resource.path("volumes/{name}/info/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -233,6 +243,7 @@ public class RestClient implements Closeable {
     }
 
     public void get(Hash hash) {
+        ensureVolumeIsSet();
         Response response = resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -249,11 +260,13 @@ public class RestClient implements Closeable {
     }
 
     public List<ContentInfo> find(String query) {
+        ensureVolumeIsSet();
         return Collections.emptyList(); // TODO this is a stub !
     }
 
     public List<Event> history(long from, int size) {
         // TODO add ASC / DESC support
+        ensureVolumeIsSet();
         Response response = resource.path("volumes/{name}/history")
                 .resolveTemplate("name", volume)
                 .queryParam("from", from)

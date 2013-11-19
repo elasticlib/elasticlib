@@ -9,6 +9,7 @@ import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.logging.Logger;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -108,6 +110,14 @@ public class RestClient implements Closeable {
         return response;
     }
 
+    private static List<String> asStringList(JsonArray array) {
+        List<String> list = new ArrayList<>();
+        for (JsonString value : array.getValuesAs(JsonString.class)) {
+            list.add(value.getString());
+        }
+        return list;
+    }
+
     public void createVolume(Path path) {
         JsonObject json = createObjectBuilder()
                 .add("path", path.toAbsolutePath().toString())
@@ -123,6 +133,14 @@ public class RestClient implements Closeable {
                 .resolveTemplate("name", name)
                 .request()
                 .delete());
+    }
+
+    public List<String> listVolumes() {
+        Response response = ensureSuccess(resource.path("volumes")
+                .request()
+                .get());
+
+        return asStringList(response.readEntity(JsonArray.class));
     }
 
     public void createIndex(Path path, String volumeName) {
@@ -141,6 +159,14 @@ public class RestClient implements Closeable {
                 .resolveTemplate("name", name)
                 .request()
                 .delete());
+    }
+
+    public List<String> listIndexes() {
+        Response response = ensureSuccess(resource.path("indexes")
+                .request()
+                .get());
+
+        return asStringList(response.readEntity(JsonArray.class));
     }
 
     public void createReplication(String source, String target) {

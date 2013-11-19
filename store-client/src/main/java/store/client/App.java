@@ -73,6 +73,13 @@ public final class App {
                 session.getRestClient().dropVolume(params.get(0));
             }
         },
+        VOLUMES {
+            @Override
+            public void execute(Session session, List<String> params) {
+                List<String> volumes = session.getRestClient().listVolumes();
+                session.out().println(Joiner.on(System.lineSeparator()).join(volumes));
+            }
+        },
         CREATE_INDEX {
             @Override
             public List<String> params(List<String> argList) {
@@ -92,6 +99,13 @@ public final class App {
             @Override
             public void execute(Session session, List<String> params) {
                 session.getRestClient().dropIndex(params.get(0));
+            }
+        },
+        INDEXES {
+            @Override
+            public void execute(Session session, List<String> params) {
+                List<String> indexes = session.getRestClient().listIndexes();
+                session.out().println(Joiner.on(System.lineSeparator()).join(indexes));
             }
         },
         CREATE_REPLICATION {

@@ -4,18 +4,21 @@ import java.net.URI;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import store.common.Config;
 import static store.common.JsonUtil.hasStringValue;
 import store.server.Repository;
 import store.server.exception.BadRequestException;
@@ -88,8 +91,28 @@ public class ReplicationsResource {
         return Response.ok().build();
     }
 
+    /**
+     * List existing replications.
+     * <p>
+     * Output:<br>
+     * - Array of replications.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     *
+     * @return output JSON data
+     */
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
-        return Json.createArrayBuilder().build(); // TODO this is a stub
+        JsonArrayBuilder builder = Json.createArrayBuilder();
+        Config config = repository.config();
+        for (java.nio.file.Path path : config.getVolumes()) {
+            String source = path.getFileName().toString();
+            for (String target : config.getSync(source)) {
+                builder.add(Json.createObjectBuilder().add("source", source).add("target", target));
+            }
+        }
+        return builder.build();
     }
 }

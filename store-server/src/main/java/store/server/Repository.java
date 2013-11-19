@@ -129,6 +129,9 @@ public final class Repository {
             if (indexes.containsKey(path.getFileName().toString())) {
                 throw new IndexAlreadyExistsException();
             }
+            if (!volumes.containsKey(volumeName)) {
+                throw new UnknownVolumeException();
+            }
             Index index = Index.create(path);
             config.addIndex(path, volumeName);
             saveConfig();

@@ -25,9 +25,14 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Hash;
+import static store.common.JsonUtil.hasStringValue;
 import store.server.Repository;
+import store.server.exception.BadRequestException;
 import store.server.exception.UnknownIndexException;
 
+/**
+ * Indexes REST resource.
+ */
 @Path("indexes")
 public class IndexesResource {
 
@@ -36,9 +41,28 @@ public class IndexesResource {
     @Context
     private UriInfo uriInfo;
 
+    /**
+     * Create a new index.
+     * <p>
+     * Input:<br>
+     * - path (String): Index path on file system. Index name is the last part of this path.<br>
+     * - volume (String): Indexed volume name.
+     * <p>
+     * Response:<br>
+     * - 201 CREATED: Operation succeeded.<br>
+     * - 400 BAD REQUEST: Invalid JSON data.<br>
+     * - 404 NOT FOUND: Volume was not found.<br>
+     * - 412 PRECONDITION FAILED: Index could not be created at supplied path.
+     *
+     * @param json input JSON data
+     * @return HTTP response
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createIndex(JsonObject json) {
+        if (!hasStringValue(json, "path") || !hasStringValue(json, "volume")) {
+            throw new BadRequestException();
+        }
         java.nio.file.Path path = Paths.get(json.getString("path"));
         repository.createIndex(path, json.getString("volume"));
         return Response
@@ -46,14 +70,35 @@ public class IndexesResource {
                 .build();
     }
 
+    /**
+     * Create a new index.
+     *
+     * @see createIndex(JsonObject)
+     * @param name index name
+     * @param json input JSON data
+     * @return HTTP response
+     */
     @PUT
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createIndex(@PathParam("name") String name, JsonObject json) {
+        if (!hasStringValue(json, "path") || !hasStringValue(json, "volume")) {
+            throw new BadRequestException();
+        }
         repository.createIndex(Paths.get(json.getString("path")).resolve(name), json.getString("volume"));
         return Response.created(uriInfo.getRequestUri()).build();
     }
 
+    /**
+     * Delete an index.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: index was not found.
+     *
+     * @param name index name
+     * @return HTTP response
+     */
     @DELETE
     @Path("{name}")
     public Response dropIndex(@PathParam("name") String name) {
@@ -61,6 +106,13 @@ public class IndexesResource {
         return Response.ok().build();
     }
 
+    /**
+     * Update an index.
+     *
+     * @param name index name
+     * @param json input JSON data
+     * @return HTTP response
+     */
     @POST
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -69,6 +121,17 @@ public class IndexesResource {
         return Response.status(NOT_IMPLEMENTED).build();
     }
 
+    /**
+     * List existing indexes.
+     * <p>
+     * Output:<br>
+     * - Array of index names.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     *
+     * @return output JSON data
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listIndexes() {
@@ -79,6 +142,20 @@ public class IndexesResource {
         return builder.build();
     }
 
+    /**
+     * Get info about an index.
+     * <p>
+     * Output:<br>
+     * - name (String): Index name.<br>
+     * - path (String): Index path on file system.<br>
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Index was not found.
+     *
+     * @param name index name
+     * @return output JSON data
+     */
     @GET
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -124,6 +201,20 @@ public class IndexesResource {
         return Response.status(NOT_IMPLEMENTED).build();
     }
 
+    /**
+     * Find indexed contents matching supplied query.
+     * <p>
+     * Output:<br>
+     * - Array of content hashes.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Index was not found.
+     *
+     * @param name index name
+     * @param query Query
+     * @return output JSON data
+     */
     @GET
     @Path("{name}/docs")
     @Produces(MediaType.APPLICATION_JSON)

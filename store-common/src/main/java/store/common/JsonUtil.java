@@ -18,11 +18,35 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
+import static javax.json.JsonValue.ValueType.FALSE;
+import static javax.json.JsonValue.ValueType.STRING;
+import static javax.json.JsonValue.ValueType.TRUE;
 import static store.common.ContentInfo.contentInfo;
 
 public final class JsonUtil {
 
     private JsonUtil() {
+    }
+
+    public static boolean hasStringValue(JsonObject json, String key) {
+        if (!json.containsKey(key)) {
+            return false;
+        }
+        return json.get(key).getValueType() == STRING;
+    }
+
+    public static boolean hasBooleanValue(JsonObject json, String key) {
+        if (!json.containsKey(key)) {
+            return false;
+        }
+        switch (json.get(key).getValueType()) {
+            case TRUE:
+            case FALSE:
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {

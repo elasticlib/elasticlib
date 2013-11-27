@@ -141,7 +141,7 @@ abstract class Agent {
             } catch (UnknownHashException | VolumeNotStartedException e) {
                 storeException = e;
 
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 // Ignore it
             }
         }

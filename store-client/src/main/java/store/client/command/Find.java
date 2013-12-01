@@ -1,0 +1,31 @@
+package store.client.command;
+
+import java.util.Arrays;
+import static java.util.Collections.singletonList;
+import java.util.List;
+import store.client.Session;
+import store.client.Type;
+import static store.client.Type.INDEX;
+import static store.client.Type.QUERY;
+import static store.client.Type.VOLUME;
+
+class Find extends AbstractCommand {
+
+    @Override
+    public List<Type> env() {
+        return Arrays.asList(VOLUME, INDEX);
+    }
+
+    @Override
+    public List<Type> args() {
+        return singletonList(QUERY);
+    }
+
+    @Override
+    public void execute(Session session, List<String> args) {
+        String volume = session.getVolume();
+        String index = session.getIndex();
+        String query = args.get(1);
+        session.getRestClient().find(volume, index, query);
+    }
+}

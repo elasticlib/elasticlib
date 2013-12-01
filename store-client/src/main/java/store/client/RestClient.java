@@ -57,7 +57,6 @@ public class RestClient implements Closeable {
 
     private final Client client;
     private final WebTarget resource;
-    private String volume;
 
     /**
      * Constructor.
@@ -82,20 +81,6 @@ public class RestClient implements Closeable {
                 .host("localhost")
                 .port(port)
                 .build();
-    }
-
-    public void unsetVolume() {
-        this.volume = null;
-    }
-
-    public void setVolume(String volume) {
-        this.volume = volume;
-    }
-
-    private void ensureVolumeIsSet() {
-        if (volume == null) {
-            throw new RequestFailedException("Please select a volume");
-        }
     }
 
     private Response ensureSuccess(Response response) {
@@ -188,16 +173,15 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public void start() {
-        setStarted(true);
+    public void start(String volume) {
+        setStarted(volume, true);
     }
 
-    public void stop() {
-        setStarted(false);
+    public void stop(String volume) {
+        setStarted(volume, false);
     }
 
-    public void setStarted(boolean value) {
-        ensureVolumeIsSet();
+    private void setStarted(String volume, boolean value) {
         JsonObject json = createObjectBuilder()
                 .add("started", value)
                 .build();
@@ -208,8 +192,7 @@ public class RestClient implements Closeable {
                 .post(Entity.json(json)));
     }
 
-    public void put(Path filepath) {
-        ensureVolumeIsSet();
+    public void put(String volume, Path filepath) {
         Digest digest = digest(filepath);
         ContentInfo info = contentInfo()
                 .withHash(digest.getHash())
@@ -248,8 +231,7 @@ public class RestClient implements Closeable {
         }
     }
 
-    public void delete(Hash hash) {
-        ensureVolumeIsSet();
+    public void delete(String volume, Hash hash) {
         ensureSuccess(resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -257,8 +239,7 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public ContentInfo info(Hash hash) {
-        ensureVolumeIsSet();
+    public ContentInfo info(String volume, Hash hash) {
         Response response = resource.path("volumes/{name}/info/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -268,8 +249,7 @@ public class RestClient implements Closeable {
         return readContentInfo(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
-    public void get(Hash hash) {
-        ensureVolumeIsSet();
+    public void get(String volume, Hash hash) {
         Response response = resource.path("volumes/{name}/content/{hash}")
                 .resolveTemplate("name", volume)
                 .resolveTemplate("hash", hash)
@@ -285,16 +265,14 @@ public class RestClient implements Closeable {
         }
     }
 
-    public List<ContentInfo> find(String query) {
-        ensureVolumeIsSet();
+    public List<ContentInfo> find(String volume, String index, String query) {
         return Collections.emptyList(); // TODO this is a stub !
     }
 
-    public List<Event> history(long from, int size) {
-        // TODO add ASC / DESC support
-        ensureVolumeIsSet();
+    public List<Event> history(String volume, boolean asc, long from, int size) {
         Response response = resource.path("volumes/{name}/history")
                 .resolveTemplate("name", volume)
+                .queryParam("sort", asc ? "asc" : "desc")
                 .queryParam("from", from)
                 .queryParam("size", size)
                 .request()

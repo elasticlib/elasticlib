@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import store.client.Session;
 import store.client.Type;
 import static store.client.Type.PATH;
@@ -22,7 +23,7 @@ class Put extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         String volume = session.getVolume();
         Path path = Paths.get(args.get(1));
         session.getRestClient().put(volume, path);

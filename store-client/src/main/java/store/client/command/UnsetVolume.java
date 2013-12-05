@@ -2,6 +2,7 @@ package store.client.command;
 
 import java.util.Collections;
 import java.util.List;
+import store.client.Display;
 import store.client.Session;
 import store.client.Type;
 
@@ -18,7 +19,8 @@ class UnsetVolume extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         session.unsetVolume();
+        display.resetPrompt();
     }
 }

@@ -2,6 +2,7 @@ package store.client.command;
 
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
 import store.client.Type;
@@ -22,7 +23,7 @@ class History extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         String volume = session.getVolume();
         long cursor = Long.MAX_VALUE;
         List<Event> events;
@@ -30,7 +31,7 @@ class History extends AbstractCommand {
             events = session.getRestClient().history(volume, false, cursor, 20);
             for (Event event : events) {
                 cursor = event.getSeq();
-                session.out().println(asString(event));
+                display.print(asString(event));
             }
         } while (!events.isEmpty() && cursor > 1);
     }

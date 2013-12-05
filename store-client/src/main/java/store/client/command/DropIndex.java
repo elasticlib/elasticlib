@@ -3,6 +3,7 @@ package store.client.command;
 import java.util.Collections;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import store.client.Session;
 import store.client.Type;
 import static store.client.Type.INDEX;
@@ -20,7 +21,7 @@ class DropIndex extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         session.getRestClient().dropIndex(args.get(2));
     }
 }

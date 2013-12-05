@@ -3,6 +3,7 @@ package store.client.command;
 import java.util.Collections;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
 import store.client.Type;
@@ -23,10 +24,10 @@ class Info extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         String volume = session.getVolume();
         Hash hash = new Hash(args.get(1));
         ContentInfo info = session.getRestClient().info(volume, hash);
-        session.out().println(asString(info));
+        display.print(asString(info));
     }
 }

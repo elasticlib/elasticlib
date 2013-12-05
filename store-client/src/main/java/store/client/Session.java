@@ -1,37 +1,26 @@
 package store.client;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.PrintWriter;
-import jline.console.ConsoleReader;
 
 /**
  * A command line session. Keep everything that need to survive across sussessive command invocations.
  */
 public class Session implements Closeable {
 
-    private static final String PROMPT = "> ";
     private final RestClient restClient;
-    private final ConsoleReader consoleReader;
-    private final PrintWriter out;
     private String volume;
     private String index;
 
-    public Session() throws IOException {
+    public Session() {
         restClient = new RestClient();
-        consoleReader = new ConsoleReader();
-        consoleReader.setPrompt(PROMPT);
-        out = new PrintWriter(consoleReader.getOutput());
     }
 
     public void setVolume(String volume) {
         this.volume = volume;
-        consoleReader.setPrompt(volume + PROMPT);
     }
 
     public void unsetVolume() {
         volume = null;
-        consoleReader.setPrompt(PROMPT);
     }
 
     public String getVolume() {
@@ -52,14 +41,6 @@ public class Session implements Closeable {
 
     public RestClient getRestClient() {
         return restClient;
-    }
-
-    public ConsoleReader getConsoleReader() {
-        return consoleReader;
-    }
-
-    public PrintWriter out() {
-        return out;
     }
 
     @Override

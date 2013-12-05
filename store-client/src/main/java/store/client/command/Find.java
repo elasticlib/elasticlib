@@ -3,6 +3,7 @@ package store.client.command;
 import java.util.Arrays;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import store.client.Session;
 import store.client.Type;
 import static store.client.Type.INDEX;
@@ -22,7 +23,7 @@ class Find extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> args) {
         String volume = session.getVolume();
         String index = session.getIndex();
         String query = args.get(1);

@@ -3,6 +3,7 @@ package store.client.command;
 import java.util.Collections;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import store.client.Display;
 import store.client.Session;
 import store.client.Type;
 import static store.client.Type.VOLUME;
@@ -20,7 +21,9 @@ class SetVolume extends AbstractCommand {
     }
 
     @Override
-    public void execute(Session session, List<String> args) {
-        session.setVolume(args.get(2));
+    public void execute(Display display, Session session, List<String> args) {
+        String volume = args.get(2);
+        session.setVolume(volume);
+        display.setPrompt(volume);
     }
 }

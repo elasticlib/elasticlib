@@ -78,7 +78,7 @@ public final class CommandParser implements Completer {
         if (buffer.length() != cursor) {
             return 0;
         }
-        List<String> argList = Lists.newArrayList(Splitter.on(" ").trimResults().split(buffer));
+        List<String> argList = Lists.newArrayList(Splitter.on(" ").trimResults().omitEmptyStrings().split(buffer));
         String argLine = Joiner.on("_").join(Lists.transform(argList, new Function<String, String>() {
             @Override
             public String apply(String input) {

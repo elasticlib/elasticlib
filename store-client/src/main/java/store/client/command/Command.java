@@ -3,7 +3,6 @@ package store.client.command;
 import java.util.List;
 import store.client.Display;
 import store.client.Session;
-import store.client.Type;
 
 /**
  * A command.

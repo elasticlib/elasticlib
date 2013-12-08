@@ -5,9 +5,8 @@ import java.util.List;
 import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
-import store.client.Type;
-import static store.client.Type.HASH;
-import static store.client.Type.VOLUME;
+import static store.client.command.Type.HASH;
+import static store.client.command.Type.VOLUME;
 import store.common.Event;
 
 class History extends AbstractCommand {

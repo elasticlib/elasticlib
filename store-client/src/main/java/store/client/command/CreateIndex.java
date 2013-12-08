@@ -6,9 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import store.client.Display;
 import store.client.Session;
-import store.client.Type;
-import static store.client.Type.PATH;
-import static store.client.Type.VOLUME;
+import static store.client.command.Type.PATH;
+import static store.client.command.Type.VOLUME;
 
 class CreateIndex extends AbstractCommand {
 

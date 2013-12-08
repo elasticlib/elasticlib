@@ -5,8 +5,7 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 import store.client.Display;
 import store.client.Session;
-import store.client.Type;
-import static store.client.Type.VOLUME;
+import static store.client.command.Type.VOLUME;
 
 class SetVolume extends AbstractCommand {
 

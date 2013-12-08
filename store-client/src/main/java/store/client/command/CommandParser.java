@@ -14,8 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import jline.console.completer.Completer;
 import store.client.Session;
-import store.client.Type;
-import static store.client.Type.VOLUME;
+import static store.client.command.Type.VOLUME;
 
 /**
  * Provide actual command implementations.

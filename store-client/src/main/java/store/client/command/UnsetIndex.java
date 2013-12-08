@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import store.client.Display;
 import store.client.Session;
-import store.client.Type;
 
 class UnsetIndex extends AbstractCommand {
 

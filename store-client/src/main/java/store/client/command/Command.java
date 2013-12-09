@@ -15,14 +15,13 @@ public interface Command {
     String name();
 
     /**
-     * @return Expected environment for this command.
+     * Complete the supplied arg line.
+     *
+     * @param session Current Session.
+     * @param args Arguments (Excluding command name)
+     * @return A list of candidates for completion
      */
-    List<Type> env();
-
-    /**
-     * @return Expected arguments for this command.
-     */
-    List<Type> args();
+    List<String> complete(Session session, List<String> args);
 
     /**
      * Execute the command.

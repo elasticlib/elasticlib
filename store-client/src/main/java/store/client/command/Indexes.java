@@ -1,7 +1,6 @@
 package store.client.command;
 
 import com.google.common.base.Joiner;
-import java.util.Collections;
 import java.util.List;
 import store.client.Display;
 import store.client.Session;
@@ -9,13 +8,8 @@ import store.client.Session;
 class Indexes extends AbstractCommand {
 
     @Override
-    public List<Type> env() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Type> args() {
-        return Collections.emptyList();
+    public List<String> complete(Session session, List<String> args) {
+        return completeImpl(session, args);
     }
 
     @Override

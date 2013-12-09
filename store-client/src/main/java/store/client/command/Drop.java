@@ -1,0 +1,41 @@
+package store.client.command;
+
+import static java.util.Arrays.asList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import store.client.Display;
+import store.client.Session;
+
+class Drop extends AbstractCommand {
+
+    @Override
+    public List<String> complete(Session session, List<String> args) {
+        Map<String, List<Type>> syntax = new HashMap<>();
+        syntax.put(VOLUME, asList(Type.VOLUME));
+        syntax.put(INDEX, asList(Type.INDEX));
+        syntax.put(REPLICATION, asList(Type.VOLUME, Type.VOLUME));
+
+        return completeImpl(session, args, syntax);
+    }
+
+    @Override
+    public void execute(Display display, Session session, List<String> args) {
+        switch (args.get(1).toUpperCase()) {
+            case VOLUME:
+                session.getRestClient().dropVolume(args.get(2));
+                break;
+
+            case INDEX:
+                session.getRestClient().dropIndex(args.get(2));
+                break;
+
+            case REPLICATION:
+                session.getRestClient().dropReplication(args.get(2), args.get(3));
+                break;
+
+            default:
+                throw new IllegalArgumentException(args.get(1));
+        }
+    }
+}

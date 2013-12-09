@@ -1,34 +1,21 @@
 package store.client.command;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.newArrayList;
-import java.util.Collections;
-import static java.util.Collections.emptyList;
-import java.util.Iterator;
 import java.util.List;
 import jline.console.completer.Completer;
 import store.client.Session;
-import static store.client.command.Type.VOLUME;
 
 /**
  * Provide actual command implementations.
  */
 public final class CommandParser implements Completer {
 
-    private static final Command[] COMMANDS = new Command[]{new CreateVolume(),
-                                                            new DropVolume(),
+    private static final Command[] COMMANDS = new Command[]{new Create(),
+                                                            new Drop(),
                                                             new Volumes(),
-                                                            new CreateIndex(),
-                                                            new DropIndex(),
                                                             new Indexes(),
-                                                            new CreateReplication(),
-                                                            new DropReplication(),
                                                             new Start(),
                                                             new Stop(),
                                                             new Put(),
@@ -37,12 +24,15 @@ public final class CommandParser implements Completer {
                                                             new Info(),
                                                             new Find(),
                                                             new History(),
-                                                            new SetVolume(),
-                                                            new UnsetVolume(),
-                                                            new SetIndex(),
-                                                            new UnsetIndex()};
+                                                            new Set(),
+                                                            new Unset()};
     private final Session session;
 
+    /**
+     * Constructor.
+     *
+     * @param session Session to inject.
+     */
     public CommandParser(Session session) {
         this.session = session;
     }
@@ -55,21 +45,11 @@ public final class CommandParser implements Completer {
      */
     public Optional<Command> command(List<String> argList) {
         for (Command command : COMMANDS) {
-            if (startWith(command, argList)) {
+            if (!argList.isEmpty() && argList.get(0).equalsIgnoreCase(command.name())) {
                 return Optional.of(command);
             }
         }
         return Optional.absent();
-    }
-
-    private static boolean startWith(Command command, List<String> argList) {
-        Iterator<String> it = argList.iterator();
-        for (String part : Splitter.on("_").split(command.name())) {
-            if (!it.hasNext() || !it.next().equalsIgnoreCase(part)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override
@@ -77,71 +57,41 @@ public final class CommandParser implements Completer {
         if (buffer.length() != cursor) {
             return 0;
         }
-        List<String> argList = Lists.newArrayList(Splitter.on(" ").trimResults().omitEmptyStrings().split(buffer));
-        String argLine = Joiner.on("_").join(Lists.transform(argList, new Function<String, String>() {
-            @Override
-            public String apply(String input) {
-                return input.toUpperCase();
-            }
-        }));
+        List<String> argList = newArrayList(Splitter
+                .on(" ")
+                .trimResults()
+                .omitEmptyStrings()
+                .split(buffer));
+
+        if (buffer.isEmpty() || buffer.endsWith(" ")) {
+            argList.add("");
+        }
+
         for (Command command : COMMANDS) {
-            String commandLabel = command.name().toLowerCase().replaceAll("_", " ");
-            if (!argLine.equals(command.name()) && command.name().startsWith(argLine)) {
-                candidates.add(commandLabel);
-            }
-            if (!argLine.equals(command.name()) && argLine.startsWith(command.name())) {
-                List<Type> types = command.args();
-                List<String> values = args(command, argList);
-                if (values.size() <= types.size()) {
-                    int index = values.size() - 1;
-                    List<String> completers = completers(types.get(index), values.get(index));
-                    Collections.sort(completers);
-                    values.add(0, commandLabel);
-                    for (String completer : completers) {
-                        values.set(index + 1, completer);
-                        candidates.add(Joiner.on(" ").join(values));
-                    }
+            String firstArg = argList.get(0).toLowerCase();
+            String commandLabel = command.name().toLowerCase();
+            if (argList.size() == 1) {
+                if (commandLabel.equals(firstArg)) {
+                    candidates.add(" ");
+
+                } else if (commandLabel.startsWith(firstArg)) {
+                    candidates.add(commandLabel);
                 }
-            }
-            if (argLine.equals(command.name()) && !command.args().isEmpty()) {
-                List<String> completers = completers(command.args().get(0), "");
-                for (String completer : completers) {
-                    candidates.add(Joiner.on(" ").join(commandLabel, completer));
-                }
+            } else if (firstArg.equals(commandLabel)) {
+                candidates.addAll(command.complete(session, argList.subList(1, argList.size())));
             }
         }
-        return 0;
-    }
 
-    private static List<String> args(Command command, List<String> argList) {
-        int parts = 0;
-        Iterator<String> it = Splitter.on("_").split(command.name()).iterator();
-        while (it.hasNext()) {
-            it.next();
-            parts++;
+        if (candidates.isEmpty()) {
+            return 0;
         }
-        return argList.subList(parts, argList.size());
-    }
-
-    private List<String> completers(Type type, String value) {
-        switch (type) {
-            case VOLUME:
-                return filterStartWith(session.getRestClient().listVolumes(), value);
-
-            case INDEX:
-                return filterStartWith(session.getRestClient().listIndexes(), value);
-
-            default:
-                return emptyList();
+        if (buffer.isEmpty() || buffer.endsWith(" ") || (candidates.size() == 1 && candidates.get(0).equals(" "))) {
+            return buffer.length();
         }
-    }
-
-    private List<String> filterStartWith(List<String> list, final String item) {
-        return newArrayList(Iterables.filter(list, new Predicate<String>() {
-            @Override
-            public boolean apply(String input) {
-                return input.startsWith(item);
-            }
-        }));
+        int i = 0;
+        for (String arg : argList) {
+            i = buffer.indexOf(arg, i);
+        }
+        return i;
     }
 }

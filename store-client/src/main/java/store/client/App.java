@@ -31,9 +31,6 @@ public final class App {
             consoleReader.addCompleter(parser);
             String line;
             while ((line = consoleReader.readLine()) != null) {
-                if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
-                    break;
-                }
                 List<String> argList = Lists.newArrayList(Splitter.on(" ").trimResults().split(line));
                 Optional<Command> OptCommand = parser.command(argList);
                 if (!OptCommand.isPresent()) {

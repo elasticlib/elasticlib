@@ -1,6 +1,5 @@
 package store.client.command;
 
-import static com.google.common.base.CaseFormat.*;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Lists.newArrayList;
@@ -22,7 +21,7 @@ abstract class AbstractCommand implements Command {
 
     @Override
     public String name() {
-        return UPPER_CAMEL.to(UPPER_UNDERSCORE, getClass().getSimpleName());
+        return getClass().getSimpleName().toLowerCase();
     }
 
     protected static List<String> completeImpl(Session session, List<String> args, Map<String, List<Type>> syntax) {

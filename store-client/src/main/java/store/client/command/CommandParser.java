@@ -61,8 +61,11 @@ public final class CommandParser implements Completer {
      */
     public void execute(String buffer) {
         List<String> argList = argList(buffer);
+        if (argList.isEmpty()) {
+            return;
+        }
         for (Command command : COMMANDS) {
-            if (!argList.isEmpty() && argList.get(0).equalsIgnoreCase(command.name())) {
+            if (argList.get(0).equalsIgnoreCase(command.name())) {
                 try {
                     command.execute(display, session, argList);
 

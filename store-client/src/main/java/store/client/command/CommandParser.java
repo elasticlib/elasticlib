@@ -1,6 +1,5 @@
 package store.client.command;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.Arrays;
@@ -8,6 +7,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import jline.console.completer.Completer;
+import store.client.Display;
+import store.client.RequestFailedException;
 import store.client.Session;
 
 /**
@@ -39,30 +40,39 @@ public final class CommandParser implements Completer {
             }
         });
     }
+    private final Display display;
     private final Session session;
 
     /**
      * Constructor.
      *
+     * @param display Display to inject.
      * @param session Session to inject.
      */
-    public CommandParser(Session session) {
+    public CommandParser(Display display, Session session) {
+        this.display = display;
         this.session = session;
     }
 
     /**
-     * Provide command matching the supplied command-line argument list.
+     * Parse and execute supplied command-line buffer.
      *
-     * @param argList Command-line argument list.
-     * @return Matching command if any.
+     * @param buffer Command-line buffer.
      */
-    public Optional<Command> command(List<String> argList) {
+    public void execute(String buffer) {
+        List<String> argList = argList(buffer);
         for (Command command : COMMANDS) {
             if (!argList.isEmpty() && argList.get(0).equalsIgnoreCase(command.name())) {
-                return Optional.of(command);
+                try {
+                    command.execute(display, session, argList);
+
+                } catch (RequestFailedException e) {
+                    display.print(e.getMessage());
+                }
+                return;
             }
         }
-        return Optional.absent();
+        display.print("Unsupported command !");  // TODO print help
     }
 
     @Override
@@ -70,12 +80,7 @@ public final class CommandParser implements Completer {
         if (buffer.length() != cursor) {
             return 0;
         }
-        List<String> argList = newArrayList(Splitter
-                .on(" ")
-                .trimResults()
-                .omitEmptyStrings()
-                .split(buffer));
-
+        List<String> argList = argList(buffer);
         if (buffer.isEmpty() || buffer.endsWith(" ")) {
             argList.add("");
         }
@@ -105,5 +110,13 @@ public final class CommandParser implements Completer {
             i = buffer.indexOf(arg, i);
         }
         return i;
+    }
+
+    private static List<String> argList(String buffer) {
+        return newArrayList(Splitter
+                .on(" ")
+                .trimResults()
+                .omitEmptyStrings()
+                .split(buffer));
     }
 }

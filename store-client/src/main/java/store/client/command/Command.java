@@ -7,7 +7,7 @@ import store.client.Session;
 /**
  * A command.
  */
-public interface Command {
+interface Command {
 
     /**
      * @return This command name.

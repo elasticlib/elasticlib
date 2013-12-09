@@ -7,6 +7,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import store.client.Display;
 import store.client.RestClient;
 import store.client.Session;
 
@@ -21,10 +22,11 @@ public class CommandParserTest {
         RestClient restClient = mock(RestClient.class);
         when(restClient.listVolumes()).thenReturn(asList("primary", "secondary"));
 
+        Display display = mock(Display.class);
         Session session = mock(Session.class);
         when(session.getRestClient()).thenReturn(restClient);
 
-        parser = new CommandParser(session);
+        parser = new CommandParser(display, session);
     }
 
     /**

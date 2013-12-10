@@ -24,7 +24,7 @@ class Drop extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        switch (params.get(0).toUpperCase()) {
+        switch (params.get(0).toLowerCase()) {
             case VOLUME:
                 session.getRestClient().dropVolume(params.get(1));
                 break;

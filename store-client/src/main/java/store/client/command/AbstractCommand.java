@@ -1,5 +1,6 @@
 package store.client.command;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -8,13 +9,16 @@ import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import store.client.Session;
 import static store.client.command.Type.VOLUME;
 
 abstract class AbstractCommand implements Command {
 
+    private static String USAGE = "Usage:";
     static final String VOLUME = "volume";
     static final String INDEX = "index";
     static final String REPLICATION = "replication";
@@ -22,6 +26,42 @@ abstract class AbstractCommand implements Command {
     @Override
     public String name() {
         return getClass().getSimpleName().toLowerCase();
+    }
+
+    @Override
+    public String usage() {
+        String name = name();
+        Map<String, List<Type>> syntax = syntax();
+        if (syntax.isEmpty()) {
+            return Joiner.on(" ").join(USAGE, name);
+        }
+        if (syntax.size() == 1) {
+            return Joiner.on(" ").join(USAGE, name, format(getOnlyElement(syntax.values())));
+        }
+        StringBuilder builder = new StringBuilder();
+        Iterator<Entry<String, List<Type>>> it = syntax.entrySet().iterator();
+        Entry<String, List<Type>> entry = it.next();
+        builder.append(Joiner.on(" ").join(USAGE,
+                                           name,
+                                           entry.getKey(),
+                                           format(entry.getValue())));
+        while (it.hasNext()) {
+            entry = it.next();
+            builder.append(System.lineSeparator())
+                    .append(Joiner.on(" ").join("      ",
+                                                name,
+                                                entry.getKey(),
+                                                format(entry.getValue())));
+        }
+        return builder.toString();
+    }
+
+    private static String format(List<Type> types) {
+        StringBuilder builder = new StringBuilder();
+        for (Type type : types) {
+            builder.append(type.name()).append(" ");
+        }
+        return builder.deleteCharAt(builder.length() - 1).toString();
     }
 
     @Override

@@ -75,7 +75,7 @@ public final class CommandParser implements Completer {
                         display.print(e.getMessage());
                     }
                 } else {
-                    display.print("Invalid syntax !");  // TODO print command usage
+                    display.print(command.usage());
                 }
                 return;
             }

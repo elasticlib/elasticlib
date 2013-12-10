@@ -1,7 +1,7 @@
 package store.client.command;
 
 import static java.util.Arrays.asList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
@@ -9,7 +9,7 @@ import store.client.Session;
 
 class Set extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = new HashMap<>();
+    private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
 
     {
         syntax.put(VOLUME, asList(Type.VOLUME));

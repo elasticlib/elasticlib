@@ -1,7 +1,7 @@
 package store.client.command;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
@@ -9,7 +9,7 @@ import store.client.Session;
 
 class Unset extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = new HashMap<>();
+    private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
 
     {
         syntax.put(VOLUME, Collections.<Type>emptyList());

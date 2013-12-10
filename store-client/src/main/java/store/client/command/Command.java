@@ -16,6 +16,12 @@ interface Command {
     String name();
 
     /**
+     *
+     * @return Human readable command syntax.
+     */
+    String usage();
+
+    /**
      * @return This command syntax.
      */
     Map<String, List<Type>> syntax();

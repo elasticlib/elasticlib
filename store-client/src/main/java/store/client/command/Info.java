@@ -20,6 +20,11 @@ class Info extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Print info about an existing content in current volume";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         Hash hash = new Hash(params.get(0));

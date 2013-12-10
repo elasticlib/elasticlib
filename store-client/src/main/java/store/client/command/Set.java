@@ -22,6 +22,11 @@ class Set extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Set a session variable";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case VOLUME:

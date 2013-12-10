@@ -16,6 +16,11 @@ interface Command {
     String name();
 
     /**
+     * @return Description of this command.
+     */
+    String description();
+
+    /**
      *
      * @return Human readable command syntax.
      */

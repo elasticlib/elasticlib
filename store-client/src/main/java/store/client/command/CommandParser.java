@@ -80,7 +80,25 @@ public final class CommandParser implements Completer {
                 return;
             }
         }
-        display.print("Unsupported command !");  // TODO print help
+        display.print(help());
+    }
+
+    private String help() {
+        StringBuilder builder = new StringBuilder();
+        for (Command command : COMMANDS) {
+            builder.append(tabulate(command.name(), 12))
+                    .append(command.description())
+                    .append(System.lineSeparator());
+        }
+        return builder.deleteCharAt(builder.length() - 1).toString();
+    }
+
+    private static String tabulate(String value, int size) {
+        StringBuilder builder = new StringBuilder(value);
+        for (int i = 0; i < size - value.length(); i++) {
+            builder.append(' ');
+        }
+        return builder.toString();
     }
 
     @Override

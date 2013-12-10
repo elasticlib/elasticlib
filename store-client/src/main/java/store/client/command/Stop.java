@@ -14,6 +14,11 @@ class Stop extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Stop a volume";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         session.getRestClient().stop(params.get(0));
     }

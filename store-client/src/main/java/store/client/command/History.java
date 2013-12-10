@@ -16,6 +16,11 @@ class History extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Print current volume history";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         long cursor = Long.MAX_VALUE;

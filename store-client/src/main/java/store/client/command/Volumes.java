@@ -15,6 +15,11 @@ class Volumes extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "List existing volumes";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         List<String> volumes = session.getRestClient().listVolumes();
         display.print(Joiner.on(System.lineSeparator()).join(volumes));

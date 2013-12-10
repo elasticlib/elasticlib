@@ -17,6 +17,11 @@ class Find extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Search contents in current index";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         String index = session.getIndex();

@@ -22,6 +22,11 @@ class Unset extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Unset a session variable";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case VOLUME:

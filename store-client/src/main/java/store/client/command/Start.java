@@ -14,6 +14,11 @@ class Start extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Start a volume";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         session.getRestClient().start(params.get(0));
     }

@@ -18,6 +18,11 @@ class Get extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Get an existing content from current volume";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         Hash hash = new Hash(params.get(0));

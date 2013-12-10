@@ -14,6 +14,11 @@ class Quit extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "Leave this console";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         session.close();
         System.exit(0);

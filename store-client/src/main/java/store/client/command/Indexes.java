@@ -15,6 +15,11 @@ class Indexes extends AbstractCommand {
     }
 
     @Override
+    public String description() {
+        return "List existing indexes";
+    }
+
+    @Override
     public void execute(Display display, Session session, List<String> params) {
         List<String> volumes = session.getRestClient().listIndexes();
         display.print(Joiner.on(System.lineSeparator()).join(volumes));

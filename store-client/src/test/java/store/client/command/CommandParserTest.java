@@ -30,7 +30,7 @@ public class CommandParserTest {
     }
 
     /**
-     * Data provider
+     * Data provider.
      *
      * @return Test data.
      */

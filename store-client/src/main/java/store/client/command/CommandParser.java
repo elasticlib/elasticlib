@@ -1,6 +1,7 @@
 package store.client.command;
 
 import com.google.common.base.Splitter;
+import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -133,9 +134,9 @@ public final class CommandParser implements Completer {
         }
         int i = 0;
         for (String arg : argList) {
-            i = buffer.indexOf(arg, i);
+            i = buffer.indexOf(arg, i) + arg.length();
         }
-        return i;
+        return i - getLast(argList).length();
     }
 
     private static List<String> argList(String buffer) {

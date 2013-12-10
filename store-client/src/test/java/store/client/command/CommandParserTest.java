@@ -45,7 +45,8 @@ public class CommandParserTest {
             {"set volume ", 11, asList("primary", "secondary"), 11},
             {"set volume p", 12, asList("primary"), 11},
             {"set volume primary", 18, asList(" "), 18},
-            {"set volume primary ", 19, asList(), 0}
+            {"set volume primary ", 19, asList(), 0},
+            {"create re", 9, asList("replication"), 7}
         };
     }
 

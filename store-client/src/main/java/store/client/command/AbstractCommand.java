@@ -26,14 +26,11 @@ abstract class AbstractCommand implements Command {
     @Override
     public List<String> complete(Session session, List<String> params) {
         Map<String, List<Type>> syntax = syntax();
-        if (syntax.isEmpty()) {
-            return complete(session, params, Collections.<Type>emptyList());
+        if (syntax.isEmpty() || params.isEmpty()) {
+            return emptyList();
         }
         if (syntax.size() == 1) {
             return complete(session, params, syntax.values().iterator().next());
-        }
-        if (params.isEmpty()) {
-            return emptyList();
         }
         String keyword = params.get(0).toLowerCase();
         if (params.size() == 1) {

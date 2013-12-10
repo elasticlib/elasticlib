@@ -1,6 +1,9 @@
 package store.client.command;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import java.util.List;
+import java.util.Map;
 import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
@@ -9,9 +12,11 @@ import store.common.Hash;
 
 class Info extends AbstractCommand {
 
+    private final Map<String, List<Type>> syntax = singletonMap("", singletonList(Type.HASH));
+
     @Override
-    public List<String> complete(Session session, List<String> args) {
-        return completeImpl(session, args, Type.HASH);
+    public Map<String, List<Type>> syntax() {
+        return syntax;
     }
 
     @Override

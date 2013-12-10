@@ -1,15 +1,16 @@
 package store.client.command;
 
+import static java.util.Collections.emptyMap;
 import java.util.List;
+import java.util.Map;
 import store.client.Display;
 import store.client.Session;
-import static store.client.command.AbstractCommand.completeImpl;
 
 class Quit extends AbstractCommand {
 
     @Override
-    public List<String> complete(Session session, List<String> args) {
-        return completeImpl(session, args);
+    public Map<String, List<Type>> syntax() {
+        return emptyMap();
     }
 
     @Override

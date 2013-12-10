@@ -10,14 +10,17 @@ import store.client.Session;
 
 class Create extends AbstractCommand {
 
-    @Override
-    public List<String> complete(Session session, List<String> args) {
-        Map<String, List<Type>> syntax = new HashMap<>();
+    private final Map<String, List<Type>> syntax = new HashMap<>();
+
+    {
         syntax.put(VOLUME, asList(Type.PATH));
         syntax.put(INDEX, asList(Type.PATH, Type.VOLUME));
         syntax.put(REPLICATION, asList(Type.VOLUME, Type.VOLUME));
+    }
 
-        return completeImpl(session, args, syntax);
+    @Override
+    public Map<String, List<Type>> syntax() {
+        return syntax;
     }
 
     @Override

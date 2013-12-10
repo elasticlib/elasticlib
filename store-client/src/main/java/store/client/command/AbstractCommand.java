@@ -3,7 +3,6 @@ package store.client.command;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Lists.newArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
@@ -24,7 +23,15 @@ abstract class AbstractCommand implements Command {
         return getClass().getSimpleName().toLowerCase();
     }
 
-    protected static List<String> completeImpl(Session session, List<String> args, Map<String, List<Type>> syntax) {
+    @Override
+    public List<String> complete(Session session, List<String> args) {
+        Map<String, List<Type>> syntax = syntax();
+        if (syntax.isEmpty()) {
+            return complete(session, args, Collections.<Type>emptyList());
+        }
+        if (syntax.size() == 1) {
+            return complete(session, args, syntax.values().iterator().next());
+        }
         if (args.isEmpty()) {
             return emptyList();
         }
@@ -36,14 +43,10 @@ abstract class AbstractCommand implements Command {
         if (!syntax.containsKey(keyword)) {
             return emptyList();
         }
-        return completeImpl(session, params, syntax.get(keyword));
+        return complete(session, params, syntax.get(keyword));
     }
 
-    protected static List<String> completeImpl(Session session, List<String> params, Type... types) {
-        return completeImpl(session, params, Arrays.asList(types));
-    }
-
-    private static List<String> completeImpl(Session session, List<String> params, List<Type> types) {
+    private static List<String> complete(Session session, List<String> params, List<Type> types) {
         if (params.size() > types.size()) {
             return emptyList();
         }

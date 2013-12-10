@@ -1,6 +1,7 @@
 package store.client.command;
 
 import java.util.List;
+import java.util.Map;
 import store.client.Display;
 import store.client.Session;
 
@@ -13,6 +14,11 @@ interface Command {
      * @return This command name.
      */
     String name();
+
+    /**
+     * @return This command syntax.
+     */
+    Map<String, List<Type>> syntax();
 
     /**
      * Complete the supplied arg line.

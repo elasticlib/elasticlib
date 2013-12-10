@@ -9,13 +9,16 @@ import store.client.Session;
 
 class Set extends AbstractCommand {
 
-    @Override
-    public List<String> complete(Session session, List<String> args) {
-        Map<String, List<Type>> syntax = new HashMap<>();
+    private final Map<String, List<Type>> syntax = new HashMap<>();
+
+    {
         syntax.put(VOLUME, asList(Type.VOLUME));
         syntax.put(INDEX, asList(Type.INDEX));
+    }
 
-        return completeImpl(session, args, syntax);
+    @Override
+    public Map<String, List<Type>> syntax() {
+        return syntax;
     }
 
     @Override

@@ -9,14 +9,17 @@ import store.client.Session;
 
 class Drop extends AbstractCommand {
 
-    @Override
-    public List<String> complete(Session session, List<String> args) {
-        Map<String, List<Type>> syntax = new HashMap<>();
+    private final Map<String, List<Type>> syntax = new HashMap<>();
+
+    {
         syntax.put(VOLUME, asList(Type.VOLUME));
         syntax.put(INDEX, asList(Type.INDEX));
         syntax.put(REPLICATION, asList(Type.VOLUME, Type.VOLUME));
+    }
 
-        return completeImpl(session, args, syntax);
+    @Override
+    public Map<String, List<Type>> syntax() {
+        return syntax;
     }
 
     @Override

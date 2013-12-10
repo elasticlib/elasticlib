@@ -22,20 +22,20 @@ class Set extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
-        switch (args.get(1).toLowerCase()) {
+    public void execute(Display display, Session session, List<String> params) {
+        switch (params.get(0).toLowerCase()) {
             case VOLUME:
-                String volume = args.get(2);
+                String volume = params.get(1);
                 session.setVolume(volume);
                 display.setPrompt(volume);
                 break;
 
             case INDEX:
-                session.setIndex(args.get(2));
+                session.setIndex(params.get(1));
                 break;
 
             default:
-                throw new IllegalArgumentException(args.get(1));
+                throw new IllegalArgumentException(params.get(0));
         }
     }
 }

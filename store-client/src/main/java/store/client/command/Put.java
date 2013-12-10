@@ -19,9 +19,9 @@ class Put extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
-        Path path = Paths.get(args.get(1));
+        Path path = Paths.get(params.get(0));
         session.getRestClient().put(volume, path);
     }
 }

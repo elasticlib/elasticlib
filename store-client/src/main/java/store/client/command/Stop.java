@@ -14,7 +14,7 @@ class Stop extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
-        session.getRestClient().stop(args.get(1));
+    public void execute(Display display, Session session, List<String> params) {
+        session.getRestClient().stop(params.get(0));
     }
 }

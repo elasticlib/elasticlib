@@ -17,10 +17,10 @@ class Find extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         String index = session.getIndex();
-        String query = args.get(1);
+        String query = params.get(0);
         session.getRestClient().find(volume, index, query);
     }
 }

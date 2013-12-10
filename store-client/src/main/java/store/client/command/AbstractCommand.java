@@ -24,26 +24,25 @@ abstract class AbstractCommand implements Command {
     }
 
     @Override
-    public List<String> complete(Session session, List<String> args) {
+    public List<String> complete(Session session, List<String> params) {
         Map<String, List<Type>> syntax = syntax();
         if (syntax.isEmpty()) {
-            return complete(session, args, Collections.<Type>emptyList());
+            return complete(session, params, Collections.<Type>emptyList());
         }
         if (syntax.size() == 1) {
-            return complete(session, args, syntax.values().iterator().next());
+            return complete(session, params, syntax.values().iterator().next());
         }
-        if (args.isEmpty()) {
+        if (params.isEmpty()) {
             return emptyList();
         }
-        String keyword = args.get(0).toLowerCase();
-        if (args.size() == 1) {
+        String keyword = params.get(0).toLowerCase();
+        if (params.size() == 1) {
             return filterStartWith(syntax.keySet(), keyword);
         }
-        List<String> params = args.subList(1, args.size());
         if (!syntax.containsKey(keyword)) {
             return emptyList();
         }
-        return complete(session, params, syntax.get(keyword));
+        return complete(session, params.subList(1, params.size()), syntax.get(keyword));
     }
 
     private static List<String> complete(Session session, List<String> params, List<Type> types) {
@@ -64,14 +63,14 @@ abstract class AbstractCommand implements Command {
         }
     }
 
-    private static List<String> filterStartWith(Collection<String> collection, final String arg) {
+    private static List<String> filterStartWith(Collection<String> collection, final String param) {
         List<String> list = newArrayList(Iterables.filter(collection, new Predicate<String>() {
             @Override
             public boolean apply(String input) {
-                return input.startsWith(arg);
+                return input.startsWith(param);
             }
         }));
-        if (list.size() == 1 && list.get(0).equalsIgnoreCase(arg)) {
+        if (list.size() == 1 && list.get(0).equalsIgnoreCase(param)) {
             return singletonList(" ");
         }
         Collections.sort(list);

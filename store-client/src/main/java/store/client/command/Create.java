@@ -24,22 +24,22 @@ class Create extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
-        switch (args.get(1).toLowerCase()) {
+    public void execute(Display display, Session session, List<String> params) {
+        switch (params.get(0).toLowerCase()) {
             case VOLUME:
-                session.getRestClient().createVolume(Paths.get(args.get(2)));
+                session.getRestClient().createVolume(Paths.get(params.get(1)));
                 break;
 
             case INDEX:
-                session.getRestClient().createIndex(Paths.get(args.get(2)), args.get(3));
+                session.getRestClient().createIndex(Paths.get(params.get(1)), params.get(2));
                 break;
 
             case REPLICATION:
-                session.getRestClient().createReplication(args.get(2), args.get(3));
+                session.getRestClient().createReplication(params.get(1), params.get(2));
                 break;
 
             default:
-                throw new IllegalArgumentException(args.get(1));
+                throw new IllegalArgumentException(params.get(0));
         }
     }
 }

@@ -18,9 +18,9 @@ class Get extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
-        Hash hash = new Hash(args.get(1));
+        Hash hash = new Hash(params.get(0));
         session.getRestClient().get(volume, hash);
     }
 }

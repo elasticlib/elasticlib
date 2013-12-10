@@ -23,22 +23,22 @@ class Drop extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
-        switch (args.get(1).toUpperCase()) {
+    public void execute(Display display, Session session, List<String> params) {
+        switch (params.get(0).toUpperCase()) {
             case VOLUME:
-                session.getRestClient().dropVolume(args.get(2));
+                session.getRestClient().dropVolume(params.get(1));
                 break;
 
             case INDEX:
-                session.getRestClient().dropIndex(args.get(2));
+                session.getRestClient().dropIndex(params.get(1));
                 break;
 
             case REPLICATION:
-                session.getRestClient().dropReplication(args.get(2), args.get(3));
+                session.getRestClient().dropReplication(params.get(1), params.get(2));
                 break;
 
             default:
-                throw new IllegalArgumentException(args.get(1));
+                throw new IllegalArgumentException(params.get(0));
         }
     }
 }

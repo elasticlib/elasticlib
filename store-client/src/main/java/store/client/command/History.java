@@ -16,7 +16,7 @@ class History extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> params) {
         String volume = session.getVolume();
         long cursor = Long.MAX_VALUE;
         List<Event> events;

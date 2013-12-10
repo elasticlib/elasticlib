@@ -14,7 +14,7 @@ class Start extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
-        session.getRestClient().start(args.get(1));
+    public void execute(Display display, Session session, List<String> params) {
+        session.getRestClient().start(params.get(0));
     }
 }

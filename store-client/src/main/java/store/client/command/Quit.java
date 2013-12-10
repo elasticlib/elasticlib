@@ -14,7 +14,7 @@ class Quit extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> args) {
+    public void execute(Display display, Session session, List<String> params) {
         session.close();
         System.exit(0);
     }

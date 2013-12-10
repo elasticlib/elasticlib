@@ -67,7 +67,7 @@ public final class CommandParser implements Completer {
         for (Command command : COMMANDS) {
             if (argList.get(0).equalsIgnoreCase(command.name())) {
                 try {
-                    command.execute(display, session, argList);
+                    command.execute(display, session, params(argList));
 
                 } catch (RequestFailedException e) {
                     display.print(e.getMessage());
@@ -98,7 +98,7 @@ public final class CommandParser implements Completer {
                     candidates.add(command.name());
                 }
             } else if (firstArg.equals(command.name())) {
-                candidates.addAll(command.complete(session, argList.subList(1, argList.size())));
+                candidates.addAll(command.complete(session, params(argList)));
             }
         }
 
@@ -121,5 +121,9 @@ public final class CommandParser implements Completer {
                 .trimResults()
                 .omitEmptyStrings()
                 .split(buffer));
+    }
+
+    private static List<String> params(List<String> argList) {
+        return argList.subList(1, argList.size());
     }
 }

@@ -21,13 +21,21 @@ interface Command {
     Map<String, List<Type>> syntax();
 
     /**
-     * Complete the supplied arg line.
+     * Complete the supplied parameters list.
      *
      * @param session Current Session.
      * @param params Parameters (Exclude command name).
      * @return A list of candidates for completion.
      */
     List<String> complete(Session session, List<String> params);
+
+    /**
+     * Validate the supplied parameters list.
+     *
+     * @param params Parameters (Exclude command name).
+     * @return True if parameters list matches command syntax.
+     */
+    boolean isValid(List<String> params);
 
     /**
      * Execute the command.

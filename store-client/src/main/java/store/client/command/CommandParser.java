@@ -66,11 +66,16 @@ public final class CommandParser implements Completer {
         }
         for (Command command : COMMANDS) {
             if (argList.get(0).equalsIgnoreCase(command.name())) {
-                try {
-                    command.execute(display, session, params(argList));
+                List<String> params = params(argList);
+                if (command.isValid(params)) {
+                    try {
+                        command.execute(display, session, params);
 
-                } catch (RequestFailedException e) {
-                    display.print(e.getMessage());
+                    } catch (RequestFailedException e) {
+                        display.print(e.getMessage());
+                    }
+                } else {
+                    display.print("Invalid syntax !");  // TODO print command usage
                 }
                 return;
             }

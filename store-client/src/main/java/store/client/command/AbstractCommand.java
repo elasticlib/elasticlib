@@ -2,6 +2,7 @@ package store.client.command;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,9 +31,9 @@ abstract class AbstractCommand implements Command {
             return emptyList();
         }
         if (syntax.size() == 1) {
-            return complete(session, params, syntax.values().iterator().next());
+            return complete(session, params, getOnlyElement(syntax.values()));
         }
-        String keyword = params.get(0).toLowerCase();
+        String keyword = keyword(params);
         if (params.size() == 1) {
             return filterStartWith(syntax.keySet(), keyword);
         }
@@ -40,6 +41,25 @@ abstract class AbstractCommand implements Command {
             return emptyList();
         }
         return complete(session, params.subList(1, params.size()), syntax.get(keyword));
+    }
+
+    @Override
+    public boolean isValid(List<String> params) {
+        Map<String, List<Type>> syntax = syntax();
+        if (syntax.isEmpty()) {
+            return params.isEmpty();
+        }
+        if (syntax.size() == 1) {
+            return params.size() == getOnlyElement(syntax.values()).size();
+        }
+        if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
+            return false;
+        }
+        return params.size() == syntax.get(keyword(params)).size() + 1;
+    }
+
+    private static String keyword(List<String> params) {
+        return params.get(0).toLowerCase();
     }
 
     private static List<String> complete(Session session, List<String> params, List<Type> types) {

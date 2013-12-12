@@ -1,11 +1,9 @@
 package store.client.command;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Lists.newArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import jline.console.completer.Completer;
 import store.client.Display;
@@ -17,30 +15,6 @@ import store.client.Session;
  */
 public final class CommandParser implements Completer {
 
-    private static final List<Command> COMMANDS = Arrays.<Command>asList(new Create(),
-                                                                         new Drop(),
-                                                                         new Volumes(),
-                                                                         new Indexes(),
-                                                                         new Start(),
-                                                                         new Stop(),
-                                                                         new Put(),
-                                                                         new Delete(),
-                                                                         new Get(),
-                                                                         new Info(),
-                                                                         new Find(),
-                                                                         new History(),
-                                                                         new Set(),
-                                                                         new Unset(),
-                                                                         new Quit());
-
-    static {
-        Collections.sort(COMMANDS, new Comparator<Command>() {
-            @Override
-            public int compare(Command c1, Command c2) {
-                return c1.name().compareTo(c2.name());
-            }
-        });
-    }
     private final Display display;
     private final Session session;
 
@@ -65,41 +39,24 @@ public final class CommandParser implements Completer {
         if (argList.isEmpty()) {
             return;
         }
-        for (Command command : COMMANDS) {
-            if (argList.get(0).equalsIgnoreCase(command.name())) {
-                List<String> params = params(argList);
-                if (command.isValid(params)) {
-                    try {
-                        command.execute(display, session, params);
-
-                    } catch (RequestFailedException e) {
-                        display.print(e.getMessage());
-                    }
-                } else {
-                    display.print(command.usage());
-                }
-                return;
-            }
+        String firstArg = firstArg(argList);
+        Optional<Command> commandOpt = CommandProvider.command(firstArg);
+        if (!commandOpt.isPresent()) {
+            display.print(CommandProvider.help());
+            return;
         }
-        display.print(help());
-    }
-
-    private String help() {
-        StringBuilder builder = new StringBuilder();
-        for (Command command : COMMANDS) {
-            builder.append(tabulate(command.name(), 12))
-                    .append(command.description())
-                    .append(System.lineSeparator());
+        Command command = commandOpt.get();
+        List<String> params = params(argList);
+        if (!command.isValid(params)) {
+            display.print(command.usage());
+            return;
         }
-        return builder.deleteCharAt(builder.length() - 1).toString();
-    }
+        try {
+            command.execute(display, session, params);
 
-    private static String tabulate(String value, int size) {
-        StringBuilder builder = new StringBuilder(value);
-        for (int i = 0; i < size - value.length(); i++) {
-            builder.append(' ');
+        } catch (RequestFailedException e) {
+            display.print(e.getMessage());
         }
-        return builder.toString();
     }
 
     @Override
@@ -112,17 +69,19 @@ public final class CommandParser implements Completer {
             argList.add("");
         }
 
-        for (Command command : COMMANDS) {
-            String firstArg = argList.get(0).toLowerCase();
+        String firstArg = firstArg(argList);
+        Optional<Command> commandOpt = CommandProvider.command(firstArg);
+        if (commandOpt.isPresent()) {
             if (argList.size() == 1) {
-                if (command.name().equals(firstArg)) {
-                    candidates.add(" ");
-
-                } else if (command.name().startsWith(firstArg)) {
+                candidates.add(" ");
+            } else {
+                candidates.addAll(commandOpt.get().complete(session, params(argList)));
+            }
+        } else {
+            for (Command command : CommandProvider.commands()) {
+                if (command.name().startsWith(firstArg)) {
                     candidates.add(command.name());
                 }
-            } else if (firstArg.equals(command.name())) {
-                candidates.addAll(command.complete(session, params(argList)));
             }
         }
 
@@ -145,6 +104,10 @@ public final class CommandParser implements Completer {
                 .trimResults()
                 .omitEmptyStrings()
                 .split(buffer));
+    }
+
+    private static String firstArg(List<String> argList) {
+        return argList.get(0).toLowerCase();
     }
 
     private static List<String> params(List<String> argList) {

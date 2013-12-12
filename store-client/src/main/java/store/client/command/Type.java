@@ -24,5 +24,9 @@ enum Type {
     /**
      * A query.
      */
-    QUERY;
+    QUERY,
+    /**
+     * A command name.
+     */
+    COMMAND;
 }

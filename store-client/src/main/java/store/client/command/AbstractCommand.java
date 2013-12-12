@@ -1,9 +1,11 @@
 package store.client.command;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -114,6 +116,14 @@ abstract class AbstractCommand implements Command {
 
             case INDEX:
                 return filterStartWith(session.getRestClient().listIndexes(), param);
+
+            case COMMAND:
+                return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {
+                    @Override
+                    public String apply(Command command) {
+                        return command.name();
+                    }
+                }), param.toLowerCase());
 
             default:
                 return emptyList();

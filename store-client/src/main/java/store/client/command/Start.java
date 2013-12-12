@@ -9,7 +9,7 @@ import store.client.Session;
 
 class Start extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = singletonMap("", singletonList(Type.HASH));
+    private final Map<String, List<Type>> syntax = singletonMap("", singletonList(Type.VOLUME));
 
     @Override
     public Map<String, List<Type>> syntax() {

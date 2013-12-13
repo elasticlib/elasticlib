@@ -99,11 +99,15 @@ public final class CommandParser implements Completer {
     }
 
     private static List<String> argList(String buffer) {
+        String trimmed = buffer.trim();
+        if (trimmed.startsWith("!")) {
+            trimmed = "! " + trimmed.substring(1);
+        }
         return newArrayList(Splitter
                 .on(" ")
                 .trimResults()
                 .omitEmptyStrings()
-                .split(buffer));
+                .split(trimmed));
     }
 
     private static String firstArg(List<String> argList) {

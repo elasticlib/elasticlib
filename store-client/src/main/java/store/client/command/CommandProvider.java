@@ -23,7 +23,8 @@ final class CommandProvider {
                                                                          new Set(),
                                                                          new Unset(),
                                                                          new Quit(),
-                                                                         new Help());
+                                                                         new Help(),
+                                                                         new OsCommand());
 
     static {
         Collections.sort(COMMANDS, new Comparator<Command>() {

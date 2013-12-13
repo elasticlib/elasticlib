@@ -24,6 +24,7 @@ public final class App {
         try (Session session = new Session()) {
             CommandParser parser = new CommandParser(display, session);
             consoleReader.addCompleter(parser);
+            consoleReader.setExpandEvents(false);
             String buffer;
             while ((buffer = consoleReader.readLine()) != null) {
                 parser.execute(buffer);

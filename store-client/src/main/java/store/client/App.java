@@ -29,6 +29,10 @@ public final class App {
             while ((buffer = consoleReader.readLine()) != null) {
                 parser.execute(buffer);
             }
+        } catch (QuitException e) {
+            // It's ok, just leave cleanly.
+        } finally {
+            consoleReader.shutdown();
         }
     }
 }

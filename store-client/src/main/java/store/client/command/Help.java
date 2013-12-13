@@ -1,12 +1,12 @@
 package store.client.command;
 
-import com.google.common.base.Optional;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.CommandProvider.command;
 
 class Help extends AbstractCommand {
 
@@ -23,20 +23,25 @@ class Help extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> params) {
-        Optional<Command> commandOpt = CommandProvider.command(params.get(0).toLowerCase());
-        if (commandOpt.isPresent()) {
-            display.print(help(commandOpt.get()));
-        } else {
-            display.print(CommandProvider.help());
-        }
+    public boolean isValid(List<String> params) {
+        return true;
     }
 
-    private static String help(Command command) {
-        return new StringBuilder()
+    @Override
+    public void execute(Display display, Session session, List<String> params) {
+        if (params.size() != 1 || !command(first(params)).isPresent()) {
+            display.print(CommandProvider.help());
+            return;
+        }
+        Command command = command(first(params)).get();
+        display.print(new StringBuilder()
                 .append(command.description())
                 .append(System.lineSeparator())
                 .append(command.usage())
-                .toString();
+                .toString());
+    }
+
+    private static String first(List<String> params) {
+        return params.get(0).toLowerCase();
     }
 }

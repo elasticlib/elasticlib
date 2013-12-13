@@ -25,6 +25,8 @@ abstract class AbstractCommand implements Command {
     static final String INDEX = "index";
     static final String REPLICATION = "replication";
 
+    protected abstract Map<String, List<Type>> syntax();
+
     @Override
     public String name() {
         return getClass().getSimpleName().toLowerCase();

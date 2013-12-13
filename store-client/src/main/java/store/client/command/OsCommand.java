@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import store.client.Display;
 import store.client.Session;
 
@@ -25,11 +24,6 @@ class OsCommand implements Command {
     @Override
     public String usage() {
         return "Usage: !OS_COMMAND ARGS...";
-    }
-
-    @Override
-    public Map<String, List<Type>> syntax() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

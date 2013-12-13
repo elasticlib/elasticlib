@@ -10,7 +10,7 @@ import store.client.Session;
 class Volumes extends AbstractCommand {
 
     @Override
-    public Map<String, List<Type>> syntax() {
+    protected Map<String, List<Type>> syntax() {
         return emptyMap();
     }
 

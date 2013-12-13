@@ -13,7 +13,7 @@ class Help extends AbstractCommand {
     private final Map<String, List<Type>> syntax = singletonMap("", singletonList(Type.COMMAND));
 
     @Override
-    public Map<String, List<Type>> syntax() {
+    protected Map<String, List<Type>> syntax() {
         return syntax;
     }
 

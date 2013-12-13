@@ -19,7 +19,7 @@ class Create extends AbstractCommand {
     }
 
     @Override
-    public Map<String, List<Type>> syntax() {
+    protected Map<String, List<Type>> syntax() {
         return syntax;
     }
 

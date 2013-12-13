@@ -11,7 +11,7 @@ import store.common.Event;
 class History extends AbstractCommand {
 
     @Override
-    public Map<String, List<Type>> syntax() {
+    protected Map<String, List<Type>> syntax() {
         return emptyMap();
     }
 

@@ -7,6 +7,12 @@ import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.newArrayList;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
@@ -127,6 +133,9 @@ abstract class AbstractCommand implements Command {
                     }
                 }), param.toLowerCase());
 
+            case PATH:
+                return completePath(param);
+
             default:
                 return emptyList();
         }
@@ -143,6 +152,30 @@ abstract class AbstractCommand implements Command {
             return singletonList(" ");
         }
         Collections.sort(list);
+        return list;
+    }
+
+    private static List<String> completePath(String param) {
+        Path path = Paths.get(param);
+        Path dir = Files.isDirectory(path) ? path : path.getParent();
+        if (dir == null) {
+            dir = path.isAbsolute() ? path.getRoot() : Paths.get(".");
+        }
+        String glob = Files.isDirectory(path) ? "*" : path.getFileName().toString() + "*";
+        List<String> list = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
+            Iterator<Path> it = stream.iterator();
+            while (it.hasNext()) {
+                Path candidate = it.next();
+                if (candidate.startsWith(Paths.get("."))) {
+                    list.add(candidate.toString().substring(2));
+                } else {
+                    list.add(candidate.toString());
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return list;
     }
 }

@@ -32,7 +32,7 @@ import static store.common.JsonUtil.hasStringValue;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.JsonUtil.writeEvents;
-import store.server.Repository;
+import store.server.RepositoryManager;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
@@ -46,7 +46,7 @@ import store.server.volume.Status;
 public class VolumesResource {
 
     @Inject
-    private Repository repository;
+    private RepositoryManager repository;
     @Context
     private UriInfo uriInfo;
 

@@ -26,7 +26,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Hash;
 import static store.common.JsonUtil.hasStringValue;
-import store.server.Repository;
+import store.server.RepositoryManager;
 import store.server.exception.BadRequestException;
 import store.server.exception.UnknownIndexException;
 
@@ -37,7 +37,7 @@ import store.server.exception.UnknownIndexException;
 public class IndexesResource {
 
     @Inject
-    private Repository repository;
+    private RepositoryManager repository;
     @Context
     private UriInfo uriInfo;
 

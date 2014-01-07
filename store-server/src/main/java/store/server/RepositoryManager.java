@@ -40,11 +40,11 @@ import store.server.volume.Status;
 import store.server.volume.Volume;
 
 /**
- * Represents a repository, which is a consistent set of volumes and indexes, with asynchronous replication support.
+ * Manage a consistent set of volumes and indexes, with asynchronous replication support.
  */
-public final class Repository {
+public final class RepositoryManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoryManager.class);
     private final Path home;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
@@ -57,7 +57,7 @@ public final class Repository {
      *
      * @param home The repository home directory.
      */
-    public Repository(Path home) {
+    public RepositoryManager(Path home) {
         this.home = home;
         config = loadConfig();
         for (Path path : config.getVolumes()) {

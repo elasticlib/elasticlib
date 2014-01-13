@@ -49,6 +49,22 @@ public final class JsonUtil {
         }
     }
 
+    public static JsonArray writeHashes(List<Hash> hashes) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        for (Hash hash : hashes) {
+            builder.add(hash.encode());
+        }
+        return builder.build();
+    }
+
+    public static List<Hash> readHashes(JsonArray json) {
+        List<Hash> list = new ArrayList<>();
+        for (JsonString value : json.getValuesAs(JsonString.class)) {
+            list.add(new Hash(value.getString()));
+        }
+        return list;
+    }
+
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (ContentInfo contentInfo : contentInfos) {

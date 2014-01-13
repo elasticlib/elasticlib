@@ -5,7 +5,9 @@ import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
+import static store.client.FormatUtil.asString;
 import store.client.Session;
+import store.common.ContentInfo;
 
 class Find extends AbstractCommand {
 
@@ -25,6 +27,8 @@ class Find extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         String repository = session.getRepository();
         String query = params.get(0);
-        session.getRestClient().find(repository, query);
+        for (ContentInfo info : session.getRestClient().findInfo(repository, query)) {
+            display.print(asString(info));
+        }
     }
 }

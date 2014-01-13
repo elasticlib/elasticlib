@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -27,18 +28,21 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import store.common.ContentInfo;
 import store.common.Hash;
 import static store.common.JsonUtil.hasBooleanValue;
 import static store.common.JsonUtil.hasStringValue;
 import static store.common.JsonUtil.readContentInfo;
 import static store.common.JsonUtil.writeContentInfo;
+import static store.common.JsonUtil.writeContentInfos;
 import static store.common.JsonUtil.writeEvents;
+import static store.common.JsonUtil.writeHashes;
 import store.server.RepositoryManager;
+import store.server.Status;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
-import store.server.Status;
 
 /**
  * Volumes REST resource.
@@ -373,9 +377,35 @@ public class RepositoriesResource {
      * @return output JSON data
      */
     @GET
-    @Path("{name}/docs")
+    @Path("{name}/hashes")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Hash> find(@PathParam("name") String name, @QueryParam("q") String query) {
-        return repository.find(name, query);
+    public JsonArray find(@PathParam("name") String name, @QueryParam("q") String query) {
+        return writeHashes(repository.find(name, query));
+    }
+
+    /**
+     * Find indexed content infos matching supplied query.
+     * <p>
+     * Output:<br>
+     * - Array of content infos.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.
+     *
+     * @param name repository name
+     * @param query Query
+     * @return output JSON data
+     */
+    @GET
+    @Path("{name}/info")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonArray findInfo(@PathParam("name") String name, @QueryParam("q") String query) {
+        List<Hash> hashes = repository.find(name, query);
+        List<ContentInfo> infos = new ArrayList<>(hashes.size());
+        for (Hash hash : repository.find(name, query)) {
+            infos.add(repository.info(name, hash));
+        }
+        return writeContentInfos(infos);
     }
 }

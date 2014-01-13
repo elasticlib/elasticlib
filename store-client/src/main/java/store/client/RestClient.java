@@ -10,7 +10,6 @@ import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -45,7 +44,9 @@ import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import static store.common.JsonUtil.readContentInfo;
+import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
+import static store.common.JsonUtil.readHashes;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.MetadataUtil.metadata;
 import static store.common.Properties.Common.CAPTURE_DATE;
@@ -220,8 +221,24 @@ public class RestClient implements Closeable {
         }
     }
 
-    public List<ContentInfo> find(String repository, String query) {
-        return Collections.emptyList(); // TODO this is a stub !
+    public List<Hash> find(String repository, String query) {
+        Response response = resource.path("repositories/{name}/hashes")
+                .resolveTemplate("name", repository)
+                .queryParam("q", query)
+                .request()
+                .get();
+
+        return readHashes(ensureSuccess(response).readEntity(JsonArray.class));
+    }
+
+    public List<ContentInfo> findInfo(String repository, String query) {
+        Response response = resource.path("repositories/{name}/info")
+                .resolveTemplate("name", repository)
+                .queryParam("q", query)
+                .request()
+                .get();
+
+        return readContentInfos(ensureSuccess(response).readEntity(JsonArray.class));
     }
 
     public List<Event> history(String repository, boolean asc, long from, int size) {

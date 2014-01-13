@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.client.Session;
+import store.common.Hash;
 
 abstract class AbstractCommand implements Command {
 
@@ -114,6 +115,9 @@ abstract class AbstractCommand implements Command {
             case REPOSITORY:
                 return filterStartWith(session.getRestClient().listRepositories(), param);
 
+            case HASH:
+                return filterStartWith(hashes(session, param), param);
+
             case COMMAND:
                 return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {
                     @Override
@@ -128,6 +132,18 @@ abstract class AbstractCommand implements Command {
             default:
                 return emptyList();
         }
+    }
+
+    private static Collection<String> hashes(Session session, String prefix) {
+        if (session.getRepository() == null) {
+            return emptyList();
+        }
+        Collection<String> hashes = new ArrayList<>();
+        for (Hash hash : session.getRestClient().find(session.getRepository(),
+                                                      Joiner.on("").join("hash:", prefix.toLowerCase(), "*"))) {
+            hashes.add(hash.encode());
+        }
+        return hashes;
     }
 
     private static List<String> filterStartWith(Collection<String> collection, final String param) {

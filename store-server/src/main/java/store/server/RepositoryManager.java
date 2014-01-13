@@ -30,8 +30,9 @@ import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.server.agent.AgentManager;
-import store.server.exception.UnknownRepositoryException;
 import store.server.exception.RepositoryAlreadyExistsException;
+import store.server.exception.SelfReplicationException;
+import store.server.exception.UnknownRepositoryException;
 import store.server.exception.WriteException;
 
 /**
@@ -132,6 +133,9 @@ public final class RepositoryManager {
         try {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
                 throw new UnknownRepositoryException();
+            }
+            if (source.equals(destination)) {
+                throw new SelfReplicationException();
             }
             config.sync(source, destination);
             saveConfig();

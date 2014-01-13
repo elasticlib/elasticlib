@@ -4,7 +4,7 @@ import java.io.OutputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileOutputStream;
 import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 
 public class Output extends OutputStream {
 
@@ -23,7 +23,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -41,7 +41,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -54,7 +54,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
         }
@@ -67,7 +67,7 @@ public class Output extends OutputStream {
 
         } catch (NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
         }

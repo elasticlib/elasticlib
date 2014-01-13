@@ -1,30 +1,43 @@
 package store.server.agent;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
+import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
+import store.server.Repository;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;
-import store.server.volume.Volume;
 
 class SyncAgent extends Agent {
 
     private final AgentManager agentManager;
-    private final Volume destination;
+    private final Repository source;
+    private final Repository destination;
 
-    public SyncAgent(AgentManager agentManager, Volume source, Volume destination) {
-        super(source);
+    public SyncAgent(AgentManager agentManager, Repository source, Repository destination) {
         this.agentManager = agentManager;
+        this.source = source;
         this.destination = destination;
     }
 
     @Override
-    protected AgentThread newAgentThread() {
+    List<Event> history(boolean chronological, long first, int number) {
+        return source.history(chronological, first, number);
+    }
+
+    @Override
+    void get(Hash hash, OutputStream outputStream) {
+        source.get(hash, outputStream);
+    }
+
+    @Override
+    AgentThread newAgentThread() {
         return this.new VolumeAgentThread();
     }
 
@@ -44,13 +57,13 @@ class SyncAgent extends Agent {
                 agentManager.signal(destination.getName());
                 return true;
 
-            } catch (UnknownHashException | VolumeNotStartedException e) {
+            } catch (UnknownHashException | RepositoryNotStartedException e) {
                 return false;
             }
         }
 
         private void put(Hash hash) {
-            ContentInfo info = volume.info(hash);
+            ContentInfo info = source.info(hash);
             try (PipedInputStream in = new PipedInputStream()) {
                 PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
                 try {

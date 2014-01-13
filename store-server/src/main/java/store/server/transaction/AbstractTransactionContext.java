@@ -7,7 +7,7 @@ import org.xadisk.filesystem.exceptions.FileNotExistsException;
 import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 
 public abstract class AbstractTransactionContext implements TransactionContext {
 
@@ -58,7 +58,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -76,7 +76,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -95,7 +95,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -114,7 +114,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 

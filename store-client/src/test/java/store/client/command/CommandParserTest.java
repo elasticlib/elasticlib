@@ -20,7 +20,7 @@ public class CommandParserTest {
 
     {
         RestClient restClient = mock(RestClient.class);
-        when(restClient.listVolumes()).thenReturn(asList("primary", "secondary"));
+        when(restClient.listRepositories()).thenReturn(asList("primary", "secondary"));
 
         Display display = mock(Display.class);
         Session session = mock(Session.class);
@@ -37,16 +37,16 @@ public class CommandParserTest {
     @DataProvider(name = "dataProvider")
     public Object[][] dataProvider() {
         return new Object[][]{
-            {"se", 2, asList("set"), 0},
-            {"set", 3, asList(" "), 3},
-            {"set ", 4, asList("index", "volume"), 4},
-            {"set vol", 7, asList("volume"), 4},
-            {"set volume", 10, asList(" "), 10},
-            {"set volume ", 11, asList("primary", "secondary"), 11},
-            {"set volume p", 12, asList("primary"), 11},
-            {"set volume primary", 18, asList(" "), 18},
-            {"set volume primary ", 19, asList(), 0},
-            {"create re", 9, asList("replication"), 7}
+            {"se", asList("set"), 0},
+            {"set", asList(" "), 3},
+            {"set ", asList("repository"), 4},
+            {"set repo", asList("repository"), 4},
+            {"set repository", asList(" "), 14},
+            {"set repository ", asList("primary", "secondary"), 15},
+            {"set repository p", asList("primary"), 15},
+            {"set repository primary", asList(" "), 22},
+            {"set repository primary ", asList(), 0},
+            {"create repli", asList("replication"), 7}
         };
     }
 
@@ -54,14 +54,13 @@ public class CommandParserTest {
      * Test.
      *
      * @param buffer Buffer to complete.
-     * @param cursor Cursor position in the buffer.
      * @param expectedCandidates Expected completion candidates.
      * @param expectedIndex Expected completion index.
      */
     @Test(dataProvider = "dataProvider")
-    public void completeTest(String buffer, int cursor, List<CharSequence> expectedCandidates, int expectedIndex) {
+    public void completeTest(String buffer, List<CharSequence> expectedCandidates, int expectedIndex) {
         List<CharSequence> actualCandidates = new ArrayList<>();
-        int actualIndex = parser.complete(buffer, cursor, actualCandidates);
+        int actualIndex = parser.complete(buffer, buffer.length(), actualCandidates);
 
         assertThat(actualCandidates).isEqualTo(expectedCandidates);
         assertThat(actualIndex).isEqualTo(expectedIndex);

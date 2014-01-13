@@ -1,6 +1,7 @@
 package store.server.agent;
 
 import com.google.common.base.Optional;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
@@ -11,22 +12,15 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.exception.StoreException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeNotStartedException;
-import store.server.volume.Volume;
+import store.server.exception.RepositoryNotStartedException;
 
 abstract class Agent {
 
-    protected final Volume volume;
-    private final List<Event> events;
+    private final List<Event> events = new ArrayList<>();
     private long cursor;
     private boolean signaled;
     private boolean stoped;
     private boolean running;
-
-    public Agent(Volume volume) {
-        this.volume = volume;
-        events = new ArrayList<>();
-    }
 
     public final synchronized void start() {
         stoped = false;
@@ -48,7 +42,7 @@ abstract class Agent {
         }
     }
 
-    private final synchronized boolean isStoped() {
+    private synchronized boolean isStoped() {
         return stoped;
     }
 
@@ -77,11 +71,11 @@ abstract class Agent {
     }
 
     private void updateEvents() {
-        List<Event> chunk = volume.history(true, cursor, 1000);
+        List<Event> chunk = history(true, cursor, 1000);
         while (!chunk.isEmpty()) {
             events.addAll(chunk);
             cursor = chunk.get(chunk.size() - 1).getSeq();
-            chunk = volume.history(true, cursor, 1000);
+            chunk = history(true, cursor, 1000);
         }
         for (int pos = 0; pos < events.size(); pos++) {
             Event event = events.get(pos);
@@ -101,9 +95,13 @@ abstract class Agent {
         }
     }
 
-    protected abstract AgentThread newAgentThread();
+    abstract List<Event> history(boolean chronological, long first, int number);
 
-    protected abstract class AgentThread extends Thread {
+    abstract void get(Hash hash, OutputStream outputStream);
+
+    abstract AgentThread newAgentThread();
+
+    abstract class AgentThread extends Thread {
 
         @Override
         public final void run() {
@@ -136,9 +134,9 @@ abstract class Agent {
         @Override
         public void run() {
             try (PipedOutputStream out = new PipedOutputStream(in)) {
-                volume.get(hash, out);
+                get(hash, out);
 
-            } catch (UnknownHashException | VolumeNotStartedException e) {
+            } catch (UnknownHashException | RepositoryNotStartedException e) {
                 storeException = e;
 
             } catch (Exception e) {

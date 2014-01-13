@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server;
 
 import java.nio.file.Path;
 

@@ -21,7 +21,7 @@ public class CommandTest {
         return new Object[][]{
             {new Quit(), asList()},
             {new Get(), asList("9d0a68c215bfcdc69b2a0f4852ef5d7aa6aa047e")},
-            {new Set(), asList("volume", "primary")}
+            {new Set(), asList("repository", "primary")}
         };
     }
 
@@ -44,8 +44,8 @@ public class CommandTest {
     @DataProvider(name = "isInvalidDataProvider")
     public Object[][] isInvalidDataProvider() {
         return new Object[][]{
-            {new Quit(), asList("volume")},
-            {new Get(), asList("volume", "9d0a68c215bfcdc69b2a0f4852ef5d7aa6aa047e")},
+            {new Quit(), asList("repository")},
+            {new Get(), asList("repository", "9d0a68c215bfcdc69b2a0f4852ef5d7aa6aa047e")},
             {new Set(), asList("primary")}
         };
     }

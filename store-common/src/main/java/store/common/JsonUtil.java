@@ -99,8 +99,7 @@ public final class JsonUtil {
 
     public static JsonObject writeConfig(Config config) {
         return createObjectBuilder()
-                .add("volumes", writePaths(config.getVolumes()))
-                .add("indexes", writePaths(config.getIndexes()))
+                .add("repositories", writePaths(config.getRepositories()))
                 .add("sync", writeSync(config))
                 .build();
     }
@@ -115,7 +114,7 @@ public final class JsonUtil {
 
     private static JsonObjectBuilder writeSync(Config config) {
         JsonObjectBuilder json = createObjectBuilder();
-        for (Path sourcePath : config.getVolumes()) {
+        for (Path sourcePath : config.getRepositories()) {
             String source = sourcePath.getFileName().toString();
             Set<String> destinations = config.getSync(source);
             if (!destinations.isEmpty()) {
@@ -130,8 +129,7 @@ public final class JsonUtil {
     }
 
     public static Config readConfig(JsonObject json) {
-        return new Config(readPaths(json.getJsonArray("volumes")),
-                          readPaths(json.getJsonArray("indexes")),
+        return new Config(readPaths(json.getJsonArray("repositories")),
                           readSync(json.getJsonObject("sync")));
     }
 

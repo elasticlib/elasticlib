@@ -1,20 +1,16 @@
 package store.client.command;
 
 import static java.util.Arrays.asList;
-import java.util.LinkedHashMap;
+import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Set extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
-
-    {
-        syntax.put(VOLUME, asList(Type.VOLUME));
-        syntax.put(INDEX, asList(Type.INDEX));
-    }
+    private final Map<String, List<Type>> syntax = singletonMap(REPOSITORY, asList(Type.REPOSITORY));
 
     @Override
     protected Map<String, List<Type>> syntax() {
@@ -28,19 +24,8 @@ class Set extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        switch (params.get(0).toLowerCase()) {
-            case VOLUME:
-                String volume = params.get(1);
-                session.setVolume(volume);
-                display.setPrompt(volume);
-                break;
-
-            case INDEX:
-                session.setIndex(params.get(1));
-                break;
-
-            default:
-                throw new IllegalArgumentException(params.get(0));
-        }
+        String repository = params.get(1);
+        session.setRepository(repository);
+        display.setPrompt(repository);
     }
 }

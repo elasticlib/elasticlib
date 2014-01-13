@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.List;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -37,13 +38,13 @@ import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
-import store.server.volume.Status;
+import store.server.Status;
 
 /**
  * Volumes REST resource.
  */
-@Path("volumes")
-public class VolumesResource {
+@Path("repositories")
+public class RepositoriesResource {
 
     @Inject
     private RepositoryManager repository;
@@ -51,87 +52,87 @@ public class VolumesResource {
     private UriInfo uriInfo;
 
     /**
-     * Create a new volume.
+     * Create a new repository.
      * <p>
      * Input:<br>
-     * - path (String): Volume path on file system. Volume name is the last part of this path.
+     * - path (String): Repository path on file system. Repository name is the last part of this path.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 412 PRECONDITION FAILED: Volume could not be created at supplied path.
+     * - 412 PRECONDITION FAILED: Repository could not be created at supplied path.
      *
      * @param json input JSON data
      * @return HTTP response
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createVolume(JsonObject json) {
+    public Response createRepository(JsonObject json) {
         if (!hasStringValue(json, "path")) {
             throw new BadRequestException();
         }
         java.nio.file.Path path = Paths.get(json.getString("path"));
-        repository.createVolume(path);
+        repository.createRepository(path);
         return Response
                 .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(path.getFileName().toString()).build())
                 .build();
     }
 
     /**
-     * Create a new volume.
+     * Create a new repository.
      *
-     * @see createVolume(JsonObject)
-     * @param name volume name
+     * @see createRepository(JsonObject)
+     * @param name repository name
      * @param json input JSON data
      * @return HTTP response
      */
     @PUT
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createVolume(@PathParam("name") String name, JsonObject json) {
+    public Response createRepository(@PathParam("name") String name, JsonObject json) {
         if (!hasStringValue(json, "path")) {
             throw new BadRequestException();
         }
-        repository.createVolume(Paths.get(json.getString("path")).resolve(name));
+        repository.createRepository(Paths.get(json.getString("path")).resolve(name));
         return Response.created(uriInfo.getRequestUri()).build();
     }
 
     /**
-     * Delete a volume.
+     * Delete a repository.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 404 NOT FOUND: Volume was not found.
+     * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name volume name
+     * @param name repository name
      * @return HTTP response
      */
     @DELETE
     @Path("{name}")
-    public Response dropVolume(@PathParam("name") String name) {
-        repository.dropVolume(name);
+    public Response dropRepository(@PathParam("name") String name) {
+        repository.dropRepository(name);
         return Response.ok().build();
     }
 
     /**
-     * Update a volume.
+     * Update a repository.
      * <p>
      * Input:<br>
-     * - started (Boolean): Starts/stops the volume.
+     * - started (Boolean): Starts/stops the repository.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Volume was not found.
+     * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name volume name
+     * @param name repository name
      * @param json input JSON data
      * @return HTTP response
      */
     @POST
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateVolume(@PathParam("name") String name, JsonObject json) {
+    public Response updateRepository(@PathParam("name") String name, JsonObject json) {
         if (!hasBooleanValue(json, "started")) {
             throw new BadRequestException();
         }
@@ -144,10 +145,10 @@ public class VolumesResource {
     }
 
     /**
-     * List existing volumes.
+     * List existing repositoryies.
      * <p>
      * Output:<br>
-     * - Array of volume names.
+     * - Array of repository names.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -156,34 +157,34 @@ public class VolumesResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray listVolumes() {
+    public JsonArray listRepositories() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (java.nio.file.Path path : repository.config().getVolumes()) {
+        for (java.nio.file.Path path : repository.config().getRepositories()) {
             builder.add(path.getFileName().toString());
         }
         return builder.build();
     }
 
     /**
-     * Get info about a volume.
+     * Get info about a repository.
      * <p>
      * Output:<br>
-     * - name (String): Volume name.<br>
-     * - path (String): Volume path on file system.<br>
-     * - started (Boolean): If volume is started.
+     * - name (String): Repository name.<br>
+     * - path (String): Repository path on file system.<br>
+     * - started (Boolean): If repository is started.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 404 NOT FOUND: Volume was not found.
+     * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name volume name
+     * @param name repository name
      * @return output JSON data
      */
     @GET
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getVolume(@PathParam("name") String name) {
-        Status status = repository.volumeStatus(name);
+    public JsonObject getRepository(@PathParam("name") String name) {
+        Status status = repository.status(name);
         return Json.createObjectBuilder()
                 .add("name", name)
                 .add("path", status.getPath().toString())
@@ -201,11 +202,11 @@ public class VolumesResource {
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid form data.<br>
-     * - 404 NOT FOUND: Volume was not found.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
      * - 412 PRECONDITION FAILED: Content already exists or integrity checking failed.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param formData entity form data
      * @return HTTP response
      */
@@ -230,7 +231,7 @@ public class VolumesResource {
      * Create a new content.
      *
      * @see postContent(String, FormDataMultipart)
-     * @param name volume name
+     * @param name repository name
      * @param hash content hash
      * @param formData entity form data
      * @return HTTP response
@@ -248,10 +249,10 @@ public class VolumesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 404 NOT FOUND: Volume or content was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param hash content hash
      * @return HTTP response
      */
@@ -268,10 +269,10 @@ public class VolumesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 404 NOT FOUND: Volume or content was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param hash content hash
      * @return HTTP response
      */
@@ -293,10 +294,10 @@ public class VolumesResource {
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Volume or content was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param json input JSON data
      * @return HTTP response
      */
@@ -313,10 +314,10 @@ public class VolumesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 404 NOT FOUND: Volume or content was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param hash content hash
      * @return output JSON data
      */
@@ -327,15 +328,15 @@ public class VolumesResource {
     }
 
     /**
-     * Get volume history.
+     * Get repository history.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid query parameters.<br>
-     * - 404 NOT FOUND: Volume was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Volume is not started.
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name volume name
+     * @param name repository name
      * @param sort chronological sorting. Allowed values are "asc" and "desc".
      * @param from sequence value to start with.
      * @param size number of results to return.
@@ -355,5 +356,26 @@ public class VolumesResource {
             from = sort.equals("asc") ? 0 : Long.MAX_VALUE;
         }
         return writeEvents(repository.history(name, sort.equals("asc"), from, size));
+    }
+
+    /**
+     * Find indexed hashes matching supplied query.
+     * <p>
+     * Output:<br>
+     * - Array of content hashes.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.
+     *
+     * @param name repository name
+     * @param query Query
+     * @return output JSON data
+     */
+    @GET
+    @Path("{name}/docs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Hash> find(@PathParam("name") String name, @QueryParam("q") String query) {
+        return repository.find(name, query);
     }
 }

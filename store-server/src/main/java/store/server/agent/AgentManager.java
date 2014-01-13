@@ -6,8 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import store.server.Index;
-import store.server.volume.Volume;
+import store.server.Repository;
 
 /**
  * Manage replication agents on volumes and indexes within a repository.
@@ -16,22 +15,15 @@ public class AgentManager {
 
     private final Map<String, Map<String, Agent>> agents = new HashMap<>();
 
-    public synchronized void sync(Volume source, Volume destination) {
-        sync(source.getName(), destination.getName(), new SyncAgent(this, source, destination));
-    }
-
-    public synchronized void sync(Volume source, Index destination) {
-        sync(source.getName(), destination.getName(), new IndexAgent(source, destination));
-    }
-
-    private void sync(String source, String destination, Agent agent) {
-        if (!agents.containsKey(source)) {
-            agents.put(source, new HashMap<String, Agent>());
+    public synchronized void sync(Repository source, Repository destination) {
+        if (!agents.containsKey(source.getName())) {
+            agents.put(source.getName(), new HashMap<String, Agent>());
         }
-        if (agents.get(source).containsKey(destination)) {
+        if (agents.get(source.getName()).containsKey(destination.getName())) {
             return;
         }
-        agents.get(source).put(destination, agent);
+        Agent agent = new SyncAgent(this, source, destination);
+        agents.get(source.getName()).put(destination.getName(), agent);
         agent.start();
     }
 

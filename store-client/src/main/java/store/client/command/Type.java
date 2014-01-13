@@ -10,13 +10,9 @@ enum Type {
      */
     PATH,
     /**
-     * A volume name.
+     * A repository name.
      */
-    VOLUME,
-    /**
-     * An index name.
-     */
-    INDEX,
+    REPOSITORY,
     /**
      * A hash.
      */

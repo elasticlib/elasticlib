@@ -21,14 +21,14 @@ class Info extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info about an existing content in current volume";
+        return "Print info about an existing content in current repository";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        String volume = session.getVolume();
+        String repository = session.getRepository();
         Hash hash = new Hash(params.get(0));
-        ContentInfo info = session.getRestClient().info(volume, hash);
+        ContentInfo info = session.getRestClient().info(repository, hash);
         display.print(asString(info));
     }
 }

@@ -18,14 +18,13 @@ class Find extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Search contents in current index";
+        return "Search contents in current repository";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        String volume = session.getVolume();
-        String index = session.getIndex();
+        String repository = session.getRepository();
         String query = params.get(0);
-        session.getRestClient().find(volume, index, query);
+        session.getRestClient().find(repository, query);
     }
 }

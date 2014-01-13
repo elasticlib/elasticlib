@@ -18,7 +18,7 @@ import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 
 /**
  * Unit tests.
@@ -351,7 +351,7 @@ public class VolumeTest {
     /**
      * Test.
      */
-    @Test(expectedExceptions = VolumeNotStartedException.class)
+    @Test(expectedExceptions = RepositoryNotStartedException.class)
     public void stop() {
         Volume volume = Volume.create(newTmpDir());
         volume.stop();
@@ -385,7 +385,7 @@ public class VolumeTest {
         volume.stop();
         txManager.proceed();
 
-        assertThat(first.hasFailed(VolumeNotStartedException.class)).isTrue();
-        assertThat(second.hasFailed(VolumeNotStartedException.class)).isTrue();
+        assertThat(first.hasFailed(RepositoryNotStartedException.class)).isTrue();
+        assertThat(second.hasFailed(RepositoryNotStartedException.class)).isTrue();
     }
 }

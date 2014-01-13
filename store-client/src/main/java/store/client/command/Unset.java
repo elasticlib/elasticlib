@@ -1,20 +1,16 @@
 package store.client.command;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Unset extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
-
-    {
-        syntax.put(VOLUME, Collections.<Type>emptyList());
-        syntax.put(INDEX, Collections.<Type>emptyList());
-    }
+    private final Map<String, List<Type>> syntax = singletonMap(REPOSITORY, Collections.<Type>emptyList());
 
     @Override
     protected Map<String, List<Type>> syntax() {
@@ -28,18 +24,7 @@ class Unset extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        switch (params.get(0).toLowerCase()) {
-            case VOLUME:
-                session.unsetVolume();
-                display.resetPrompt();
-                break;
-
-            case INDEX:
-                session.unsetIndex();
-                break;
-
-            default:
-                throw new IllegalArgumentException(params.get(0));
-        }
+        session.unsetRepository();
+        display.resetPrompt();
     }
 }

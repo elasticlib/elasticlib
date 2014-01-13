@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Create extends AbstractCommand {
 
     private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
 
     {
-        syntax.put(VOLUME, asList(Type.PATH));
-        syntax.put(INDEX, asList(Type.PATH, Type.VOLUME));
-        syntax.put(REPLICATION, asList(Type.VOLUME, Type.VOLUME));
+        syntax.put(REPOSITORY, asList(Type.PATH));
+        syntax.put(REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
     }
 
     @Override
@@ -25,18 +25,14 @@ class Create extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Create a new volume, index or replication";
+        return "Create a new repository or replication";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
-            case VOLUME:
-                session.getRestClient().createVolume(Paths.get(params.get(1)));
-                break;
-
-            case INDEX:
-                session.getRestClient().createIndex(Paths.get(params.get(1)), params.get(2));
+            case REPOSITORY:
+                session.getRestClient().createRepository(Paths.get(params.get(1)));
                 break;
 
             case REPLICATION:

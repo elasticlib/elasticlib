@@ -10,10 +10,7 @@ final class CommandProvider {
 
     private static final List<Command> COMMANDS = Arrays.<Command>asList(new Create(),
                                                                          new Drop(),
-                                                                         new Volumes(),
-                                                                         new Indexes(),
-                                                                         new Start(),
-                                                                         new Stop(),
+                                                                         new Repositories(),
                                                                          new Put(),
                                                                          new Delete(),
                                                                          new Get(),
@@ -54,7 +51,7 @@ final class CommandProvider {
     public static String help() {
         StringBuilder builder = new StringBuilder();
         for (Command command : COMMANDS) {
-            builder.append(tabulate(command.name(), 12))
+            builder.append(tabulate(command.name(), 15))
                     .append(command.description())
                     .append(System.lineSeparator());
         }

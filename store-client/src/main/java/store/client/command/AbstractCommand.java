@@ -22,13 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.client.Session;
-import static store.client.command.Type.VOLUME;
 
 abstract class AbstractCommand implements Command {
 
     private static String USAGE = "Usage:";
-    static final String VOLUME = "volume";
-    static final String INDEX = "index";
+    static final String REPOSITORY = "repository";
     static final String REPLICATION = "replication";
 
     protected abstract Map<String, List<Type>> syntax();
@@ -45,30 +43,24 @@ abstract class AbstractCommand implements Command {
         if (syntax.isEmpty()) {
             return Joiner.on(" ").join(USAGE, name);
         }
-        if (syntax.size() == 1) {
-            return Joiner.on(" ").join(USAGE, name, format(getOnlyElement(syntax.values())));
-        }
         StringBuilder builder = new StringBuilder();
         Iterator<Entry<String, List<Type>>> it = syntax.entrySet().iterator();
         Entry<String, List<Type>> entry = it.next();
-        builder.append(Joiner.on(" ").join(USAGE,
-                                           name,
-                                           entry.getKey(),
-                                           format(entry.getValue())));
+        builder.append(Joiner.on(" ").join(USAGE, name, format(entry)));
         while (it.hasNext()) {
             entry = it.next();
             builder.append(System.lineSeparator())
-                    .append(Joiner.on(" ").join("      ",
-                                                name,
-                                                entry.getKey(),
-                                                format(entry.getValue())));
+                    .append(Joiner.on(" ").join("      ", name, format(entry)));
         }
         return builder.toString();
     }
 
-    private static String format(List<Type> types) {
+    private static String format(Entry<String, List<Type>> entry) {
         StringBuilder builder = new StringBuilder();
-        for (Type type : types) {
+        if (!entry.getKey().isEmpty()) {
+            builder.append(entry.getKey()).append(" ");
+        }
+        for (Type type : entry.getValue()) {
             builder.append(type.name()).append(" ");
         }
         return builder.deleteCharAt(builder.length() - 1).toString();
@@ -80,7 +72,7 @@ abstract class AbstractCommand implements Command {
         if (syntax.isEmpty() || params.isEmpty()) {
             return emptyList();
         }
-        if (syntax.size() == 1) {
+        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
             return complete(session, params, getOnlyElement(syntax.values()));
         }
         String keyword = keyword(params);
@@ -99,7 +91,7 @@ abstract class AbstractCommand implements Command {
         if (syntax.isEmpty()) {
             return params.isEmpty();
         }
-        if (syntax.size() == 1) {
+        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
             return params.size() == getOnlyElement(syntax.values()).size();
         }
         if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
@@ -119,11 +111,8 @@ abstract class AbstractCommand implements Command {
         int lastIndex = params.size() - 1;
         String param = params.get(lastIndex);
         switch (types.get(lastIndex)) {
-            case VOLUME:
-                return filterStartWith(session.getRestClient().listVolumes(), param);
-
-            case INDEX:
-                return filterStartWith(session.getRestClient().listIndexes(), param);
+            case REPOSITORY:
+                return filterStartWith(session.getRestClient().listRepositories(), param);
 
             case COMMAND:
                 return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {

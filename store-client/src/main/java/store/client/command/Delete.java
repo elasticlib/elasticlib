@@ -19,13 +19,13 @@ class Delete extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Delete an existing content from current volume";
+        return "Delete an existing content from current repository";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        String volume = session.getVolume();
+        String repository = session.getRepository();
         Hash hash = new Hash(params.get(0));
-        session.getRestClient().delete(volume, hash);
+        session.getRestClient().delete(repository, hash);
     }
 }

@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Drop extends AbstractCommand {
 
     private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
 
     {
-        syntax.put(VOLUME, asList(Type.VOLUME));
-        syntax.put(INDEX, asList(Type.INDEX));
-        syntax.put(REPLICATION, asList(Type.VOLUME, Type.VOLUME));
+        syntax.put(REPOSITORY, asList(Type.REPOSITORY));
+        syntax.put(REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
     }
 
     @Override
@@ -24,18 +24,14 @@ class Drop extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Drop an existing volume, index or replication";
+        return "Drop an existing repository or replication";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
-            case VOLUME:
-                session.getRestClient().dropVolume(params.get(1));
-                break;
-
-            case INDEX:
-                session.getRestClient().dropIndex(params.get(1));
+            case REPOSITORY:
+                session.getRestClient().dropRepository(params.get(1));
                 break;
 
             case REPLICATION:

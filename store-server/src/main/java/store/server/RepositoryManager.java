@@ -16,7 +16,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
@@ -31,16 +30,12 @@ import store.common.Hash;
 import static store.common.JsonUtil.readConfig;
 import static store.common.JsonUtil.writeConfig;
 import store.server.agent.AgentManager;
-import store.server.exception.IndexAlreadyExistsException;
-import store.server.exception.UnknownIndexException;
-import store.server.exception.UnknownVolumeException;
-import store.server.exception.VolumeAlreadyExistsException;
+import store.server.exception.UnknownRepositoryException;
+import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.WriteException;
-import store.server.volume.Status;
-import store.server.volume.Volume;
 
 /**
- * Manage a consistent set of volumes and indexes, with asynchronous replication support.
+ * Manage a set of repositories, with asynchronous replication support.
  */
 public final class RepositoryManager {
 
@@ -49,8 +44,7 @@ public final class RepositoryManager {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
     private final AgentManager agentManager = new AgentManager();
-    private final Map<String, Volume> volumes = new HashMap<>();
-    private final Map<String, Index> indexes = new HashMap<>();
+    private final Map<String, Repository> repositories = new HashMap<>();
 
     /**
      * Constructor.
@@ -60,103 +54,48 @@ public final class RepositoryManager {
     public RepositoryManager(Path home) {
         this.home = home;
         config = loadConfig();
-        for (Path path : config.getVolumes()) {
-            Volume volume = Volume.open(path);
-            volumes.put(volume.getName(), volume);
+        for (Path path : config.getRepositories()) {
+            Repository repository = Repository.open(path);
+            repositories.put(repository.getName(), repository);
         }
-        for (Path path : config.getIndexes()) {
-            Index index = Index.open(path);
-            indexes.put(index.getName(), index);
-        }
-        for (Volume volume : volumes.values()) {
-            for (String destination : config.getSync(volume.getName())) {
-                if (volumes.containsKey(destination)) {
-                    agentManager.sync(volume, volumes.get(destination));
-                } else {
-                    agentManager.sync(volume, indexes.get(destination));
-                }
+        for (Repository repository : repositories.values()) {
+            for (String destination : config.getSync(repository.getName())) {
+                agentManager.sync(repository, repositories.get(destination));
             }
         }
     }
 
-    public void createVolume(Path path) {
-        LOG.info("Creating volume at {}", path);
+    public void createRepository(Path path) {
+        LOG.info("Creating repository at {}", path);
         lock.writeLock().lock();
         try {
-            if (volumes.containsKey(path.getFileName().toString())) {
-                throw new VolumeAlreadyExistsException();
+            if (repositories.containsKey(path.getFileName().toString())) {
+                throw new RepositoryAlreadyExistsException();
             }
-            Volume volume = Volume.create(path);
-            config.addVolume(path);
+            Repository repository = Repository.create(path);
+            config.addRepository(path);
             saveConfig();
-            volumes.put(volume.getName(), volume);
+            repositories.put(repository.getName(), repository);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void dropVolume(String name) {
-        LOG.info("Dropping volume {}", name);
+    public void dropRepository(String name) {
+        LOG.info("Dropping repository {}", name);
         lock.writeLock().lock();
         try {
-            if (!volumes.containsKey(name)) {
-                throw new UnknownVolumeException();
+            if (!repositories.containsKey(name)) {
+                throw new UnknownRepositoryException();
             }
-            Path path = volumes.get(name).getPath();
-            Set<String> indexesToDrop = config.getIndexes(name);
+            Path path = repositories.get(name).getPath();
 
-            config.removeVolume(name);
-            saveConfig();
-
+            config.removeRepository(name);
             agentManager.drop(name);
-            volumes.remove(name).stop();
-
-            recursiveDelete(path);
-            for (String indexName : indexesToDrop) {
-                Index index = indexes.remove(indexName);
-                recursiveDelete(index.getPath());
-            }
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void createIndex(Path path, String volumeName) {
-        LOG.info("Creating index at {} on {}", path, volumeName);
-        lock.writeLock().lock();
-        try {
-            if (indexes.containsKey(path.getFileName().toString())) {
-                throw new IndexAlreadyExistsException();
-            }
-            if (!volumes.containsKey(volumeName)) {
-                throw new UnknownVolumeException();
-            }
-            Index index = Index.create(path);
-            config.addIndex(path, volumeName);
+            repositories.remove(name).stop();
             saveConfig();
-            indexes.put(index.getName(), index);
-            agentManager.sync(volumes.get(volumeName), index);
-
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    public void dropIndex(String name) {
-        LOG.info("Dropping index {}", name);
-        lock.writeLock().lock();
-        try {
-            if (!indexes.containsKey(name)) {
-                throw new UnknownIndexException();
-            }
-            Path path = indexes.get(name).getPath();
-            config.removeIndex(name);
-            saveConfig();
-            agentManager.drop(name);
-            indexes.remove(name);
             recursiveDelete(path);
-
         } finally {
             lock.writeLock().unlock();
         }
@@ -191,12 +130,12 @@ public final class RepositoryManager {
         LOG.info("Syncing {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
-            if (!volumes.containsKey(source) || !volumes.containsKey(destination)) {
-                throw new UnknownVolumeException();
+            if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
+                throw new UnknownRepositoryException();
             }
             config.sync(source, destination);
             saveConfig();
-            agentManager.sync(volumes.get(source), volumes.get(destination));
+            agentManager.sync(repositories.get(source), repositories.get(destination));
 
         } finally {
             lock.writeLock().unlock();
@@ -207,8 +146,8 @@ public final class RepositoryManager {
         LOG.info("Unsyncing {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
-            if (!volumes.containsKey(source) || !volumes.containsKey(destination)) {
-                throw new UnknownVolumeException();
+            if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
+                throw new UnknownRepositoryException();
             }
             config.unsync(source, destination);
             saveConfig();
@@ -221,14 +160,14 @@ public final class RepositoryManager {
 
     public void start(String name) {
         LOG.info("Starting {}", name);
-        volume(name).start();
+        repository(name).start();
         agentManager.start(name);
     }
 
     public void stop(String name) {
         LOG.info("Stopping {}", name);
         agentManager.stop(name);
-        volume(name).stop();
+        repository(name).stop();
     }
 
     public Config config() {
@@ -242,63 +181,50 @@ public final class RepositoryManager {
         }
     }
 
-    public Status volumeStatus(String name) {
+    public Status status(String name) {
         LOG.info("Returning {} status", name);
-        return volume(name).getStatus();
+        return repository(name).getStatus();
     }
 
     public void put(String name, ContentInfo contentInfo, InputStream source) {
         LOG.info("Putting {}", contentInfo.getHash());
-        volume(name).put(contentInfo, source);
+        repository(name).put(contentInfo, source);
         agentManager.signal(name);
     }
 
     public void delete(String name, Hash hash) {
         LOG.info("Deleting {}", hash);
-        volume(name).delete(hash);
+        repository(name).delete(hash);
         agentManager.signal(name);
     }
 
     public ContentInfo info(String name, Hash hash) {
         LOG.info("Returning info {}", hash);
-        return volume(name).info(hash);
+        return repository(name).info(hash);
     }
 
     public void get(String name, Hash hash, OutputStream outputStream) {
         LOG.info("Getting {}", hash);
-        volume(name).get(hash, outputStream);
+        repository(name).get(hash, outputStream);
     }
 
     public List<Hash> find(String name, String query) {
         LOG.info("Finding {}", query);
-        return index(name).find(query);
+        return repository(name).find(query);
     }
 
     public List<Event> history(String name, boolean chronological, long first, int number) {
         LOG.info("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
-        return volume(name).history(chronological, first, number);
+        return repository(name).history(chronological, first, number);
     }
 
-    private Volume volume(String name) {
+    private Repository repository(String name) {
         lock.readLock().lock();
         try {
-            if (!volumes.containsKey(name)) {
-                throw new UnknownVolumeException();
+            if (!repositories.containsKey(name)) {
+                throw new UnknownRepositoryException();
             }
-            return volumes.get(name);
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private Index index(String name) {
-        lock.readLock().lock();
-        try {
-            if (!indexes.containsKey(name)) {
-                throw new UnknownIndexException();
-            }
-            return indexes.get(name);
+            return repositories.get(name);
 
         } finally {
             lock.readLock().unlock();

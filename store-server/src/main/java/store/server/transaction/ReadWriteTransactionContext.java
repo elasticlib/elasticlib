@@ -10,7 +10,7 @@ import org.xadisk.filesystem.exceptions.FileUnderUseException;
 import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 
 final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
@@ -25,7 +25,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -46,7 +46,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -66,7 +66,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -87,7 +87,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 
@@ -116,7 +116,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             throw new RuntimeException(e);
 

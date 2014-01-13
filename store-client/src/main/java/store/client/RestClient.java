@@ -103,51 +103,25 @@ public class RestClient implements Closeable {
         return list;
     }
 
-    public void createVolume(Path path) {
+    public void createRepository(Path path) {
         JsonObject json = createObjectBuilder()
                 .add("path", path.toAbsolutePath().toString())
                 .build();
 
-        ensureSuccess(resource.path("volumes")
+        ensureSuccess(resource.path("repositories")
                 .request()
                 .post(Entity.json(json)));
     }
 
-    public void dropVolume(String name) {
-        ensureSuccess(resource.path("volumes/{name}")
+    public void dropRepository(String name) {
+        ensureSuccess(resource.path("repositories/{name}")
                 .resolveTemplate("name", name)
                 .request()
                 .delete());
     }
 
-    public List<String> listVolumes() {
-        Response response = ensureSuccess(resource.path("volumes")
-                .request()
-                .get());
-
-        return asStringList(response.readEntity(JsonArray.class));
-    }
-
-    public void createIndex(Path path, String volumeName) {
-        JsonObject json = createObjectBuilder()
-                .add("path", path.toAbsolutePath().toString())
-                .add("volume", volumeName)
-                .build();
-
-        ensureSuccess(resource.path("indexes")
-                .request()
-                .post(Entity.json(json)));
-    }
-
-    public void dropIndex(String name) {
-        ensureSuccess(resource.path("indexes/{name}")
-                .resolveTemplate("name", name)
-                .request()
-                .delete());
-    }
-
-    public List<String> listIndexes() {
-        Response response = ensureSuccess(resource.path("indexes")
+    public List<String> listRepositories() {
+        Response response = ensureSuccess(resource.path("repositories")
                 .request()
                 .get());
 
@@ -173,26 +147,7 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public void start(String volume) {
-        setStarted(volume, true);
-    }
-
-    public void stop(String volume) {
-        setStarted(volume, false);
-    }
-
-    private void setStarted(String volume, boolean value) {
-        JsonObject json = createObjectBuilder()
-                .add("started", value)
-                .build();
-
-        ensureSuccess(resource.path("volumes/{name}")
-                .resolveTemplate("name", volume)
-                .request()
-                .post(Entity.json(json)));
-    }
-
-    public void put(String volume, Path filepath) {
+    public void put(String repository, Path filepath) {
         Digest digest = digest(filepath);
         ContentInfo info = contentInfo()
                 .withHash(digest.getHash())
@@ -201,8 +156,8 @@ public class RestClient implements Closeable {
                 .with(CAPTURE_DATE.key(), new Date())
                 .build();
 
-        Response response = resource.path("volumes/{name}/info/{hash}")
-                .resolveTemplate("name", volume)
+        Response response = resource.path("repositories/{name}/info/{hash}")
+                .resolveTemplate("name", repository)
                 .resolveTemplate("hash", digest.getHash())
                 .request()
                 .head();
@@ -221,8 +176,8 @@ public class RestClient implements Closeable {
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            ensureSuccess(resource.path("volumes/{name}/content")
-                    .resolveTemplate("name", volume)
+            ensureSuccess(resource.path("repositories/{name}/content")
+                    .resolveTemplate("name", repository)
                     .request()
                     .post(entity(multipart, addBoundary(multipart.getMediaType()))));
 
@@ -231,17 +186,17 @@ public class RestClient implements Closeable {
         }
     }
 
-    public void delete(String volume, Hash hash) {
-        ensureSuccess(resource.path("volumes/{name}/content/{hash}")
-                .resolveTemplate("name", volume)
+    public void delete(String repository, Hash hash) {
+        ensureSuccess(resource.path("repositories/{name}/content/{hash}")
+                .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
                 .delete());
     }
 
-    public ContentInfo info(String volume, Hash hash) {
-        Response response = resource.path("volumes/{name}/info/{hash}")
-                .resolveTemplate("name", volume)
+    public ContentInfo info(String repository, Hash hash) {
+        Response response = resource.path("repositories/{name}/info/{hash}")
+                .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
                 .get();
@@ -249,9 +204,9 @@ public class RestClient implements Closeable {
         return readContentInfo(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
-    public void get(String volume, Hash hash) {
-        Response response = resource.path("volumes/{name}/content/{hash}")
-                .resolveTemplate("name", volume)
+    public void get(String repository, Hash hash) {
+        Response response = resource.path("repositories/{name}/content/{hash}")
+                .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
                 .get();
@@ -265,13 +220,13 @@ public class RestClient implements Closeable {
         }
     }
 
-    public List<ContentInfo> find(String volume, String index, String query) {
+    public List<ContentInfo> find(String repository, String query) {
         return Collections.emptyList(); // TODO this is a stub !
     }
 
-    public List<Event> history(String volume, boolean asc, long from, int size) {
-        Response response = resource.path("volumes/{name}/history")
-                .resolveTemplate("name", volume)
+    public List<Event> history(String repository, boolean asc, long from, int size) {
+        Response response = resource.path("repositories/{name}/history")
+                .resolveTemplate("name", repository)
                 .queryParam("sort", asc ? "asc" : "desc")
                 .queryParam("from", from)
                 .queryParam("size", size)

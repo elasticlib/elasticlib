@@ -10,14 +10,12 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import store.server.exception.BadRequestException;
 import store.server.exception.ContentAlreadyStoredException;
-import store.server.exception.IndexAlreadyExistsException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
+import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.StoreException;
 import store.server.exception.UnknownHashException;
-import store.server.exception.UnknownIndexException;
-import store.server.exception.UnknownVolumeException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.UnknownRepositoryException;
 import store.server.exception.WriteException;
 
 /**
@@ -32,15 +30,13 @@ public class HttpExceptionMapper implements ExceptionMapper<StoreException> {
         MAPPING.put(BadRequestException.class, BAD_REQUEST);
 
         MAPPING.put(ContentAlreadyStoredException.class, PRECONDITION_FAILED);
-        MAPPING.put(IndexAlreadyExistsException.class, PRECONDITION_FAILED);
         MAPPING.put(IntegrityCheckingFailedException.class, PRECONDITION_FAILED);
         MAPPING.put(InvalidStorePathException.class, PRECONDITION_FAILED);
 
+        MAPPING.put(UnknownRepositoryException.class, NOT_FOUND);
         MAPPING.put(UnknownHashException.class, NOT_FOUND);
-        MAPPING.put(UnknownIndexException.class, NOT_FOUND);
-        MAPPING.put(UnknownVolumeException.class, NOT_FOUND);
 
-        MAPPING.put(VolumeNotStartedException.class, SERVICE_UNAVAILABLE);
+        MAPPING.put(RepositoryNotStartedException.class, SERVICE_UNAVAILABLE);
 
         MAPPING.put(WriteException.class, INTERNAL_SERVER_ERROR);
     }

@@ -15,7 +15,7 @@ import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 import store.server.lock.LockManager;
 
 /**
@@ -112,7 +112,7 @@ public class TransactionManager {
         lock.readLock().lock();
         try {
             if (!started) {
-                throw new VolumeNotStartedException();
+                throw new RepositoryNotStartedException();
             }
             Session session = filesystem.createSessionForLocalTransaction();
             TransactionContext txContext;

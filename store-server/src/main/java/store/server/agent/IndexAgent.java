@@ -1,7 +1,9 @@
 package store.server.agent;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
+import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
@@ -9,20 +11,31 @@ import static store.common.Operation.DELETE;
 import static store.common.Operation.PUT;
 import store.server.Index;
 import store.server.exception.UnknownHashException;
-import store.server.exception.VolumeNotStartedException;
+import store.server.exception.RepositoryNotStartedException;
 import store.server.volume.Volume;
 
-class IndexAgent extends Agent {
+public class IndexAgent extends Agent {
 
+    private final Volume volume;
     private final Index index;
 
     public IndexAgent(Volume volume, Index index) {
-        super(volume);
+        this.volume = volume;
         this.index = index;
     }
 
     @Override
-    protected AgentThread newAgentThread() {
+    List<Event> history(boolean chronological, long first, int number) {
+        return volume.history(chronological, first, number);
+    }
+
+    @Override
+    void get(Hash hash, OutputStream outputStream) {
+        volume.get(hash, outputStream);
+    }
+
+    @Override
+    AgentThread newAgentThread() {
         return this.new IndexAgentThread();
     }
 
@@ -41,7 +54,7 @@ class IndexAgent extends Agent {
                 }
                 return true;
 
-            } catch (UnknownHashException | VolumeNotStartedException e) {
+            } catch (UnknownHashException | RepositoryNotStartedException e) {
                 return false;
             }
         }

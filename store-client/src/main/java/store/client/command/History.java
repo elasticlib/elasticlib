@@ -17,16 +17,16 @@ class History extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print current volume history";
+        return "Print current repository history";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        String volume = session.getVolume();
+        String repository = session.getRepository();
         long cursor = Long.MAX_VALUE;
         List<Event> events;
         do {
-            events = session.getRestClient().history(volume, false, cursor, 20);
+            events = session.getRestClient().history(repository, false, cursor, 20);
             for (Event event : events) {
                 cursor = event.getSeq();
                 display.print(asString(event));

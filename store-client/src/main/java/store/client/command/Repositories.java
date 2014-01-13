@@ -7,7 +7,7 @@ import java.util.Map;
 import store.client.Display;
 import store.client.Session;
 
-class Indexes extends AbstractCommand {
+class Repositories extends AbstractCommand {
 
     @Override
     protected Map<String, List<Type>> syntax() {
@@ -16,12 +16,12 @@ class Indexes extends AbstractCommand {
 
     @Override
     public String description() {
-        return "List existing indexes";
+        return "List existing repositories";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        List<String> volumes = session.getRestClient().listIndexes();
-        display.print(Joiner.on(System.lineSeparator()).join(volumes));
+        List<String> repositories = session.getRestClient().listRepositories();
+        display.print(Joiner.on(System.lineSeparator()).join(repositories));
     }
 }

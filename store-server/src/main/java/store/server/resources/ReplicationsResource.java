@@ -38,13 +38,13 @@ public class ReplicationsResource {
      * Create a new replication.
      * <p>
      * Input:<br>
-     * - source (String): Source volume name.<br>
-     * - target (String): Target volume name.
+     * - source (String): Source name.<br>
+     * - target (String): Target name.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Source or target volume was not found.<br>
+     * - 404 NOT FOUND: Source or target was not found.<br>
      *
      * @param json input JSON data
      * @return HTTP response
@@ -71,16 +71,16 @@ public class ReplicationsResource {
      * Delete a replication.
      * <p>
      * Input:<br>
-     * - source (String): Source volume name.<br>
-     * - target (String): Target volume name.
+     * - source (String): Source name.<br>
+     * - target (String): Target name.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid query parameters.<br>
-     * - 404 NOT FOUND: Source or target volume was not found.<br>
+     * - 404 NOT FOUND: Source or target was not found.<br>
      *
-     * @param source source volume name
-     * @param target target volume name.
+     * @param source source name
+     * @param target target name.
      * @return HTTP response
      */
     @DELETE
@@ -108,7 +108,7 @@ public class ReplicationsResource {
     public JsonArray listReplications() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
         Config config = repository.config();
-        for (java.nio.file.Path path : config.getVolumes()) {
+        for (java.nio.file.Path path : config.getRepositories()) {
             String source = path.getFileName().toString();
             for (String target : config.getSync(source)) {
                 builder.add(Json.createObjectBuilder().add("source", source).add("target", target));

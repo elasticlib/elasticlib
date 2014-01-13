@@ -8,35 +8,22 @@ import java.io.Closeable;
 public class Session implements Closeable {
 
     private final RestClient restClient;
-    private String volume;
-    private String index;
+    private String repository;
 
     public Session() {
         restClient = new RestClient();
     }
 
-    public void setVolume(String volume) {
-        this.volume = volume;
+    public void setRepository(String repository) {
+        this.repository = repository;
     }
 
-    public void unsetVolume() {
-        volume = null;
+    public void unsetRepository() {
+        repository = null;
     }
 
-    public String getVolume() {
-        return volume;
-    }
-
-    public void setIndex(String index) {
-        this.index = index;
-    }
-
-    public void unsetIndex() {
-        index = null;
-    }
-
-    public String getIndex() {
-        return index;
+    public String getRepository() {
+        return repository;
     }
 
     public RestClient getRestClient() {

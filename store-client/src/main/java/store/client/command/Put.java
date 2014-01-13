@@ -20,13 +20,13 @@ class Put extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Put a new content in current volume";
+        return "Put a new content in current repository";
     }
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        String volume = session.getVolume();
+        String repository = session.getRepository();
         Path path = Paths.get(params.get(0));
-        session.getRestClient().put(volume, path);
+        session.getRestClient().put(repository, path);
     }
 }

@@ -26,18 +26,15 @@ import store.server.transaction.TransactionManager;
  */
 public class Volume {
 
-    private final Path path;
     private final TransactionManager transactionManager;
     private final HistoryManager historyManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Volume(Path path,
-                   TransactionManager transactionManager,
+    private Volume(TransactionManager transactionManager,
                    HistoryManager historyManager,
                    InfoManager infoManager,
                    ContentManager contentManager) {
-        this.path = path;
         this.transactionManager = transactionManager;
         this.historyManager = historyManager;
         this.infoManager = infoManager;
@@ -57,8 +54,7 @@ public class Volume {
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(path,
-                                  txManager,
+                return new Volume(txManager,
                                   HistoryManager.create(path.resolve("history")),
                                   InfoManager.create(path.resolve("info")),
                                   ContentManager.create(path.resolve("content")));
@@ -77,25 +73,12 @@ public class Volume {
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(path,
-                                  txManager,
+                return new Volume(txManager,
                                   HistoryManager.open(path.resolve("history")),
                                   InfoManager.open(path.resolve("info")),
                                   ContentManager.open(path.resolve("content")));
             }
         });
-    }
-
-    public String getName() {
-        return path.getFileName().toString();
-    }
-
-    public Path getPath() {
-        return path;
-    }
-
-    public Status getStatus() {
-        return new Status(path, transactionManager.isStarted());
     }
 
     public void start() {
@@ -104,6 +87,10 @@ public class Volume {
 
     public void stop() {
         transactionManager.stop();
+    }
+
+    public boolean isStarted() {
+        return transactionManager.isStarted();
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source) {

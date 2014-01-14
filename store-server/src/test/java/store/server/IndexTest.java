@@ -55,7 +55,7 @@ public class IndexTest {
      */
     @Test(dependsOnMethods = "create")
     public void findUnknown() {
-        assertThat(index.find("UNKNOWN")).isEmpty();
+        assertThat(index.find("UNKNOWN", 0, 20)).isEmpty();
     }
 
     /**
@@ -79,7 +79,7 @@ public class IndexTest {
      */
     @Test(groups = "emptyRead", dependsOnMethods = "create")
     public void findOnEmptyIndex() {
-        assertThat(index.find("lorem")).isEmpty();
+        assertThat(index.find("lorem", 0, 20)).isEmpty();
     }
 
     /**
@@ -107,7 +107,7 @@ public class IndexTest {
      */
     @Test(groups = "read", dependsOnMethods = "put")
     public void find() {
-        assertThat(index.find("lorem")).hasSize(1);
+        assertThat(index.find("lorem", 0, 20)).hasSize(1);
     }
 
     /**

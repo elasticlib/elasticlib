@@ -27,8 +27,15 @@ class Find extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         String repository = session.getRepository();
         String query = params.get(0);
-        for (ContentInfo info : session.getRestClient().findInfo(repository, query)) {
-            display.print(asString(info));
-        }
+
+        int cursor = 0;
+        List<ContentInfo> infos;
+        do {
+            infos = session.getRestClient().findInfo(repository, query, cursor, 20);
+            for (ContentInfo info : infos) {
+                cursor += infos.size();
+                display.print(asString(info));
+            }
+        } while (!infos.isEmpty());
     }
 }

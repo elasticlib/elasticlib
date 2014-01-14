@@ -374,13 +374,18 @@ public class RepositoriesResource {
      *
      * @param name repository name
      * @param query Query
+     * @param from sequence value to start with.
+     * @param size number of results to return.
      * @return output JSON data
      */
     @GET
-    @Path("{name}/hashes")
+    @Path("{name}/index")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray find(@PathParam("name") String name, @QueryParam("q") String query) {
-        return writeHashes(repository.find(name, query));
+    public JsonArray find(@PathParam("name") String name,
+                          @QueryParam("query") String query,
+                          @QueryParam("from") @DefaultValue("0") int from,
+                          @QueryParam("size") @DefaultValue("20") int size) {
+        return writeHashes(repository.find(name, query, from, size));
     }
 
     /**
@@ -395,15 +400,19 @@ public class RepositoriesResource {
      *
      * @param name repository name
      * @param query Query
+     * @param from sequence value to start with.
+     * @param size number of results to return.
      * @return output JSON data
      */
     @GET
     @Path("{name}/info")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray findInfo(@PathParam("name") String name, @QueryParam("q") String query) {
-        List<Hash> hashes = repository.find(name, query);
-        List<ContentInfo> infos = new ArrayList<>(hashes.size());
-        for (Hash hash : repository.find(name, query)) {
+    public JsonArray findInfo(@PathParam("name") String name,
+                              @QueryParam("query") String query,
+                              @QueryParam("from") @DefaultValue("0") int from,
+                              @QueryParam("size") @DefaultValue("20") int size) {
+        List<ContentInfo> infos = new ArrayList<>(size);
+        for (Hash hash : repository.find(name, query, from, size)) {
             infos.add(repository.info(name, hash));
         }
         return writeContentInfos(infos);

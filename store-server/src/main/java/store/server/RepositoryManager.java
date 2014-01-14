@@ -212,9 +212,9 @@ public final class RepositoryManager {
         repository(name).get(hash, outputStream);
     }
 
-    public List<Hash> find(String name, String query) {
-        LOG.info("Finding {}", query);
-        return repository(name).find(query);
+    public List<Hash> find(String name, String query, int first, int number) {
+        LOG.info("Finding {}, first {}, count {}", query, first, number);
+        return repository(name).find(query, first, number);
     }
 
     public List<Event> history(String name, boolean chronological, long first, int number) {

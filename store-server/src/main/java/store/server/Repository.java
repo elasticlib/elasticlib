@@ -105,7 +105,7 @@ public class Repository {
         return volume.history(chronological, first, number);
     }
 
-    public List<Hash> find(String query) {
-        return index.find(query);
+    public List<Hash> find(String query, int first, int number) {
+        return index.find(query, first, number);
     }
 }

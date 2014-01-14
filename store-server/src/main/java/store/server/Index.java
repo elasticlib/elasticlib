@@ -2,6 +2,7 @@ package store.server;
 
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.Math.min;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import org.apache.lucene.util.Version;
 import org.apache.tika.Tika;
 import store.common.ContentInfo;
 import store.common.Hash;
+import store.server.exception.BadRequestException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 
@@ -111,24 +113,31 @@ public class Index {
         }
     }
 
-    public List<Hash> find(String query) {
+    public List<Hash> find(String query, int first, int number) {
         try {
-            if (directory.listAll().length == 0) {
+            if (first < 0) {
+                number += first;
+                first = 0;
+            }
+            if (directory.listAll().length == 0 || number <= 0) {
                 return emptyList();
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 QueryParser parser = new QueryParser(Version.LUCENE_44, "content", analyzer);
-                ScoreDoc[] hits = searcher.search(parser.parse(query), 1000).scoreDocs;
-
-                List<Hash> hashes = new ArrayList<>(hits.length);
-                for (ScoreDoc hit : hits) {
-                    Document document = searcher.doc(hit.doc, singleton("hash"));
+                ScoreDoc[] hits = searcher.search(parser.parse(query), first + number).scoreDocs;
+                List<Hash> hashes = new ArrayList<>(number);
+                int last = min(first + number, hits.length);
+                for (int i = first; i < last; i++) {
+                    Document document = searcher.doc(hits[i].doc, singleton("hash"));
                     hashes.add(new Hash(document.getValues("hash")[0]));
                 }
                 return hashes;
             }
-        } catch (IOException | ParseException e) {
+        } catch (ParseException e) {
+            throw new BadRequestException(e.getMessage());
+
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

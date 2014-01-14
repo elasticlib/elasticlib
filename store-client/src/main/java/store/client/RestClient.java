@@ -221,20 +221,24 @@ public class RestClient implements Closeable {
         }
     }
 
-    public List<Hash> find(String repository, String query) {
-        Response response = resource.path("repositories/{name}/hashes")
+    public List<Hash> find(String repository, String query, int from, int size) {
+        Response response = resource.path("repositories/{name}/index")
                 .resolveTemplate("name", repository)
-                .queryParam("q", query)
+                .queryParam("query", query)
+                .queryParam("from", from)
+                .queryParam("size", size)
                 .request()
                 .get();
 
         return readHashes(ensureSuccess(response).readEntity(JsonArray.class));
     }
 
-    public List<ContentInfo> findInfo(String repository, String query) {
+    public List<ContentInfo> findInfo(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/info")
                 .resolveTemplate("name", repository)
-                .queryParam("q", query)
+                .queryParam("query", query)
+                .queryParam("from", from)
+                .queryParam("size", size)
                 .request()
                 .get();
 

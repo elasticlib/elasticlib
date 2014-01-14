@@ -135,12 +135,13 @@ abstract class AbstractCommand implements Command {
     }
 
     private static Collection<String> hashes(Session session, String prefix) {
-        if (session.getRepository() == null) {
+        if (session.getRepository() == null || prefix.isEmpty()) {
             return emptyList();
         }
         Collection<String> hashes = new ArrayList<>();
         for (Hash hash : session.getRestClient().find(session.getRepository(),
-                                                      Joiner.on("").join("hash:", prefix.toLowerCase(), "*"))) {
+                                                      Joiner.on("").join("hash:", prefix.toLowerCase(), "*"),
+                                                      0, 100)) {
             hashes.add(hash.encode());
         }
         return hashes;

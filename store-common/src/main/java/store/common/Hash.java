@@ -3,7 +3,7 @@ package store.common;
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;
 
-public final class Hash {
+public final class Hash implements Comparable<Hash> {
 
     private final byte[] value;
 
@@ -35,6 +35,11 @@ public final class Hash {
     @Override
     public final int hashCode() {
         return Arrays.hashCode(value);
+    }
+
+    @Override
+    public int compareTo(Hash that) {
+        return encode().compareTo(that.encode());
     }
 
     @Override

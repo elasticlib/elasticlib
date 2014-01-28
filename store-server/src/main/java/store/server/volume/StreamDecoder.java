@@ -1,11 +1,12 @@
-package store.server.io;
+package store.server.volume;
 
 import java.io.Closeable;
 import static java.nio.ByteBuffer.wrap;
 import java.util.NoSuchElementException;
+import store.common.io.ObjectDecoder;
 import store.server.transaction.Input;
 
-public class StreamDecoder implements Closeable {
+class StreamDecoder implements Closeable {
 
     private static final int EOF = -1;
     private final Input input;

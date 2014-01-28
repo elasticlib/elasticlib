@@ -10,13 +10,12 @@ import java.util.List;
 import store.common.ContentInfo;
 import static store.common.ContentInfo.contentInfo;
 import store.common.Hash;
+import store.common.io.ObjectDecoder;
+import store.common.io.ObjectEncoder;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
-import store.server.io.ObjectDecoder;
-import static store.server.io.ObjectEncoder.encoder;
-import store.server.io.StreamDecoder;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
@@ -114,7 +113,7 @@ class InfoManager {
     }
 
     private static byte[] bytes(ContentInfo contentInfo) {
-        return encoder()
+        return new ObjectEncoder()
                 .put("hash", contentInfo.getHash().value())
                 .put("length", contentInfo.getLength())
                 .put("metadata", contentInfo.getMetadata())

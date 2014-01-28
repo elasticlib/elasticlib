@@ -1,4 +1,4 @@
-package store.server.io;
+package store.common.io;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
-import static store.server.io.ObjectEncoder.encoder;
 
 /**
  * Unit tests.
@@ -24,7 +23,7 @@ public class ObjectEncoderTest {
                                 0x02, // type
                                 0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                                 0x01); // value
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("bool", true)
                 .build();
 
@@ -40,7 +39,7 @@ public class ObjectEncoderTest {
                                 0x05, // type
                                 0x6C, 0x67, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("lg", 1432897L)
                 .build();
 
@@ -72,7 +71,7 @@ public class ObjectEncoderTest {
         map.put("str", "test");
         map.put("bool", false);
 
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("map", map)
                 .build();
 
@@ -89,7 +88,7 @@ public class ObjectEncoderTest {
                                 0x6D, 0x61, 0x70, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00); // value (length only)
 
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("map", Collections.<String, Object>emptyMap())
                 .build();
 
@@ -115,7 +114,7 @@ public class ObjectEncoderTest {
         list.add(10);
         list.add("test");
 
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("list", list)
                 .build();
 
@@ -132,7 +131,7 @@ public class ObjectEncoderTest {
                                 0x6C, 0x69, 0x73, 0x74, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00); // value (length only)
 
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("list", emptyList())
                 .build();
 
@@ -155,7 +154,7 @@ public class ObjectEncoderTest {
                                 0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                                 0x00); // entry
 
-        byte[] actual = encoder()
+        byte[] actual = new ObjectEncoder()
                 .put("num", 4)
                 .put("str", "test")
                 .put("bool", false)

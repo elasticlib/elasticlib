@@ -1,4 +1,4 @@
-package store.server.io;
+package store.common.io;
 
 import static com.google.common.base.Charsets.UTF_8;
 import java.nio.ByteBuffer;
@@ -6,19 +6,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import static store.server.io.BinaryConstants.*;
-import static store.server.io.BinaryType.*;
+import static store.common.io.BinaryConstants.*;
+import static store.common.io.BinaryType.*;
 
 public final class ObjectEncoder {
 
     ByteArrayBuilder arrayBuilder = new ByteArrayBuilder();
-
-    private ObjectEncoder() {
-    }
-
-    public static ObjectEncoder encoder() {
-        return new ObjectEncoder();
-    }
 
     public ObjectEncoder put(String key, byte[] value) {
         arrayBuilder.append(RAW.value)

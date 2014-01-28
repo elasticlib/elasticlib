@@ -13,11 +13,10 @@ import store.common.Event;
 import static store.common.Event.event;
 import store.common.Hash;
 import store.common.Operation;
+import store.common.io.ObjectDecoder;
+import store.common.io.ObjectEncoder;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.server.io.ObjectDecoder;
-import static store.server.io.ObjectEncoder.encoder;
-import store.server.io.StreamDecoder;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
@@ -217,7 +216,7 @@ class HistoryManager {
     }
 
     private static byte[] bytes(Event event) {
-        return encoder()
+        return new ObjectEncoder()
                 .put("seq", event.getSeq())
                 .put("hash", event.getHash().value())
                 .put("timestamp", event.getTimestamp())
@@ -235,7 +234,7 @@ class HistoryManager {
     }
 
     private static byte[] bytes(IndexEntry entry) {
-        return encoder()
+        return new ObjectEncoder()
                 .put("name", entry.name)
                 .put("first", entry.first)
                 .put("last", entry.last)

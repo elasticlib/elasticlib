@@ -1,4 +1,4 @@
-package store.server.io;
+package store.common.io;
 
 import java.util.ArrayList;
 import java.util.HashMap;

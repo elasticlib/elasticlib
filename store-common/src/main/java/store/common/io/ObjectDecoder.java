@@ -1,4 +1,4 @@
-package store.server.io;
+package store.common.io;
 
 import static com.google.common.base.Charsets.UTF_8;
 import java.nio.ByteBuffer;
@@ -8,8 +8,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static store.server.io.BinaryConstants.*;
-import static store.server.io.BinaryType.RAW;
+import static store.common.io.BinaryConstants.*;
+import static store.common.io.BinaryType.RAW;
 
 public class ObjectDecoder {
 

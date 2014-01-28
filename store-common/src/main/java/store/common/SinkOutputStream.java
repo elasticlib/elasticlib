@@ -2,6 +2,9 @@ package store.common;
 
 import java.io.OutputStream;
 
+/**
+ * An output stream that actually does nothing.
+ */
 public class SinkOutputStream extends OutputStream {
 
     private static final SinkOutputStream INSTANCE = new SinkOutputStream();
@@ -9,6 +12,9 @@ public class SinkOutputStream extends OutputStream {
     private SinkOutputStream() {
     }
 
+    /**
+     * @return the singleton instance.
+     */
     public static OutputStream sink() {
         return INSTANCE;
     }

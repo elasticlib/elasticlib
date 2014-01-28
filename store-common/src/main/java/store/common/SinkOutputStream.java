@@ -1,4 +1,4 @@
-package store.client;
+package store.common;
 
 import java.io.OutputStream;
 

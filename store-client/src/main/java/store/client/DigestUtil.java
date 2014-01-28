@@ -5,9 +5,9 @@ import java.io.InputStream;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.size;
 import java.nio.file.Path;
-import static store.client.SinkOutputStream.sink;
 import store.common.Digest;
 import static store.common.IoUtil.copyAndDigest;
+import static store.common.SinkOutputStream.sink;
 
 public final class DigestUtil {
 

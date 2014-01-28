@@ -16,6 +16,19 @@ public class ObjectDecoderTest {
      * Test.
      */
     @Test
+    public void containsKey() {
+        byte[] bytes = array(0x02, // type
+                             0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
+                             0x01); // value
+
+        ObjectDecoder decoder = new ObjectDecoder(bytes);
+        assertThat(decoder.containsKey("bool")).isTrue();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void decodeBoolean() {
         byte[] bytes = array(0x02, // type
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key

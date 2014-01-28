@@ -38,7 +38,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.DigestUtil.digest;
 import store.common.ContentInfo;
-import static store.common.ContentInfo.contentInfo;
+import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
@@ -150,12 +150,12 @@ public class RestClient implements Closeable {
 
     public void put(String repository, Path filepath) {
         Digest digest = digest(filepath);
-        ContentInfo info = contentInfo()
+        ContentInfo info = new ContentInfoBuilder()
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
                 .withMetadata(metadata(filepath))
                 .with(CAPTURE_DATE.key(), new Date())
-                .build();
+                .computeRevAndBuild();
 
         Response response = resource.path("repositories/{name}/info/{hash}")
                 .resolveTemplate("name", repository)

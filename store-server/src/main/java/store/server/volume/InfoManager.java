@@ -4,11 +4,12 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import store.common.ContentInfo;
-import static store.common.ContentInfo.contentInfo;
+import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.Hash;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
@@ -113,8 +114,18 @@ class InfoManager {
     }
 
     private static byte[] bytes(ContentInfo contentInfo) {
-        return new ObjectEncoder()
+        ObjectEncoder encoder = new ObjectEncoder()
                 .put("hash", contentInfo.getHash().value())
+                .put("rev", contentInfo.getRev().value());
+        List<Object> parents = new ArrayList<>();
+        for (Hash parent : contentInfo.getParents()) {
+            parents.add(parent.value());
+        }
+        encoder.put("parents", parents);
+        if (contentInfo.isDeleted()) {
+            encoder.put("deleted", true);
+        }
+        return encoder
                 .put("length", contentInfo.getLength())
                 .put("metadata", contentInfo.getMetadata())
                 .build();
@@ -125,12 +136,19 @@ class InfoManager {
         try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
-                ContentInfo info = contentInfo()
+                ContentInfoBuilder builder = new ContentInfoBuilder()
                         .withHash(new Hash(objectDecoder.getRaw("hash")))
+                        .withRev(new Hash(objectDecoder.getRaw("rev")));
+                for (Object obj : objectDecoder.getList("parents")) {
+                    builder.withParent(new Hash((byte[]) obj));
+                }
+                if (objectDecoder.containsKey("deleted")) {
+                    builder.withDeleted(objectDecoder.getBoolean("deleted"));
+                }
+                ContentInfo info = builder
                         .withLength(objectDecoder.getLong("length"))
                         .withMetadata(objectDecoder.getMap("metadata"))
                         .build();
-
                 entries.add(new Entry(streamDecoder.position(), info));
             }
         }

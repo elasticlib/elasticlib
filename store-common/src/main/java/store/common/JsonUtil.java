@@ -21,7 +21,7 @@ import javax.json.JsonString;
 import static javax.json.JsonValue.ValueType.FALSE;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
-import static store.common.ContentInfo.contentInfo;
+import store.common.ContentInfo.ContentInfoBuilder;
 
 public final class JsonUtil {
 
@@ -82,16 +82,36 @@ public final class JsonUtil {
     }
 
     public static JsonObject writeContentInfo(ContentInfo contentInfo) {
-        return createObjectBuilder()
+        JsonObjectBuilder builder = createObjectBuilder()
                 .add("hash", contentInfo.getHash().encode())
+                .add("rev", contentInfo.getRev().encode());
+
+        JsonArrayBuilder parents = createArrayBuilder();
+        for (Hash item : contentInfo.getParents()) {
+            parents.add(item.encode());
+        }
+        builder.add("parents", parents);
+        if (contentInfo.isDeleted()) {
+            builder.add("deleted", true);
+        }
+        return builder
                 .add("length", contentInfo.getLength())
                 .add("metadata", writeMap(contentInfo.getMetadata()))
                 .build();
     }
 
     public static ContentInfo readContentInfo(JsonObject json) {
-        return contentInfo()
+        ContentInfoBuilder builder = new ContentInfoBuilder()
                 .withHash(new Hash(json.getString("hash")))
+                .withRev(new Hash(json.getString("rev")));
+
+        for (JsonString value : json.getJsonArray("parents").getValuesAs(JsonString.class)) {
+            builder.withParent(new Hash(value.getString()));
+        }
+        if (json.containsKey("deleted")) {
+            builder.withDeleted(json.getBoolean("deleted"));
+        }
+        return builder
                 .withLength(json.getJsonNumber("length").longValue())
                 .withMetadata(readMap(json.getJsonObject("metadata")))
                 .build();

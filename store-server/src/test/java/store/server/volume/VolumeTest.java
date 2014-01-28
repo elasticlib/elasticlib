@@ -17,8 +17,8 @@ import static store.server.TestUtil.inject;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
-import store.server.exception.UnknownHashException;
 import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.UnknownHashException;
 
 /**
  * Unit tests.

@@ -19,6 +19,10 @@ public class ObjectDecoder {
         map = new Decoder(bytes).decode();
     }
 
+    public boolean containsKey(String key) {
+        return map.containsKey(key);
+    }
+
     public byte[] getRaw(String key) {
         return (byte[]) map.get(key);
     }

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Thread.currentThread;
 import store.common.ContentInfo;
-import static store.common.ContentInfo.contentInfo;
+import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
@@ -60,9 +60,9 @@ public final class Content {
      * @return Info on this content.
      */
     public ContentInfo getInfo() {
-        return contentInfo()
+        return new ContentInfoBuilder()
                 .withLength(digest.getLength())
                 .withHash(digest.getHash())
-                .build();
+                .computeRevAndBuild();
     }
 }

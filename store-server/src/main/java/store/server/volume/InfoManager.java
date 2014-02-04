@@ -13,6 +13,7 @@ import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.Hash;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
+import store.common.value.Value;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
@@ -117,11 +118,12 @@ class InfoManager {
         ObjectEncoder encoder = new ObjectEncoder()
                 .put("hash", contentInfo.getHash().value())
                 .put("rev", contentInfo.getRev().value());
-        List<Object> parents = new ArrayList<>();
+
+        List<Value> list = new ArrayList<>();
         for (Hash parent : contentInfo.getParents()) {
-            parents.add(parent.value());
+            list.add(Value.of(parent.value()));
         }
-        encoder.put("parents", parents);
+        encoder.put("parents", list);
         if (contentInfo.isDeleted()) {
             encoder.put("deleted", true);
         }

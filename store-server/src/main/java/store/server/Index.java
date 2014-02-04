@@ -1,5 +1,6 @@
 package store.server;
 
+import static com.google.common.io.BaseEncoding.base16;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Math.min;
@@ -12,8 +13,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.DateTools.Resolution;
+import static org.apache.lucene.document.DateTools.dateToString;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
@@ -32,6 +37,17 @@ import org.apache.lucene.util.Version;
 import org.apache.tika.Tika;
 import store.common.ContentInfo;
 import store.common.Hash;
+import store.common.value.Value;
+import static store.common.value.ValueType.BOOLEAN;
+import static store.common.value.ValueType.BYTE;
+import static store.common.value.ValueType.BYTE_ARRAY;
+import static store.common.value.ValueType.DATE;
+import static store.common.value.ValueType.INTEGER;
+import static store.common.value.ValueType.LIST;
+import static store.common.value.ValueType.LONG;
+import static store.common.value.ValueType.MAP;
+import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.STRING;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
@@ -78,14 +94,67 @@ public class Index {
             Document document = new Document();
             document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
             document.add(new LongField("length", contentInfo.getLength(), Store.NO));
-            for (Entry<String, Object> entry : contentInfo.getMetadata().entrySet()) {
-                document.add(new TextField(entry.getKey(), entry.getValue().toString(), Store.NO));
+            for (Entry<String, Value> entry : contentInfo.getMetadata().entrySet()) {
+                String key = entry.getKey();
+                Value value = entry.getValue();
+                add(document, key, value);
             }
             document.add(new TextField("content", new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void add(Document document, String key, Value value) {
+        switch (value.type()) {
+            case BOOLEAN:
+                document.add(new TextField(key, value.asBoolean() ? "true" : "false", Store.NO));
+                return;
+
+            case BYTE:
+            case INTEGER:
+                document.add(new IntField(key, value.asInt(), Store.NO));
+                return;
+
+            case LONG:
+                document.add(new LongField(key, value.asLong(), Store.NO));
+                return;
+
+            case BIG_DECIMAL:
+                document.add(new DoubleField(key, value.asBigDecimal().doubleValue(), Store.NO));
+                return;
+
+            case STRING:
+                document.add(new TextField(key, value.asString(), Store.NO));
+                return;
+
+            case DATE:
+                document.add(new TextField(key, dateToString(value.asDate(), Resolution.SECOND), Store.NO));
+                return;
+
+            case BYTE_ARRAY:
+                document.add(new TextField(key, base16().lowerCase().encode(value.asByteArray()), Store.NO));
+                return;
+
+            case LIST:
+                for (Value item : value.asList()) {
+                    add(document, key, item);
+                }
+                return;
+
+            case MAP:
+                for (Entry<String, Value> entry : value.asMap().entrySet()) {
+                    add(document, key + "." + entry.getKey(), entry.getValue());
+                }
+                return;
+
+            case NULL:
+                return;
+
+            default:
+                throw new IllegalArgumentException(value.type().toString());
         }
     }
 

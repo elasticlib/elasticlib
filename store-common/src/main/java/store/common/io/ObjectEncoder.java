@@ -1,6 +1,7 @@
 package store.common.io;
 
 import static com.google.common.base.Charsets.UTF_8;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
@@ -8,13 +9,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 import static store.common.io.BinaryConstants.*;
 import static store.common.io.BinaryType.*;
+import store.common.value.Value;
 
 public final class ObjectEncoder {
 
+    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     ByteArrayBuilder arrayBuilder = new ByteArrayBuilder();
 
+    public ObjectEncoder putNull(String key) {
+        arrayBuilder.append(NULL.value)
+                .append(encodeKey(key));
+        return this;
+    }
+
     public ObjectEncoder put(String key, byte[] value) {
-        arrayBuilder.append(RAW.value)
+        arrayBuilder.append(BYTE_ARRAY.value)
                 .append(encodeKey(key))
                 .append(encodeRaw(value));
         return this;
@@ -55,6 +64,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    public ObjectEncoder put(String key, BigDecimal value) {
+        arrayBuilder.append(BIG_DECIMAL.value)
+                .append(encodeKey(key))
+                .append(encodeBigDecimal(value));
+        return this;
+    }
+
     public ObjectEncoder put(String key, Date value) {
         arrayBuilder.append(DATE.value)
                 .append(encodeKey(key))
@@ -62,17 +78,24 @@ public final class ObjectEncoder {
         return this;
     }
 
-    public ObjectEncoder put(String key, Map<String, ?> value) {
+    public ObjectEncoder put(String key, Map<String, Value> value) {
         arrayBuilder.append(MAP.value)
                 .append(encodeKey(key))
                 .append(encodeMap(value));
         return this;
     }
 
-    public ObjectEncoder put(String key, List<?> value) {
+    public ObjectEncoder put(String key, List<Value> value) {
         arrayBuilder.append(LIST.value)
                 .append(encodeKey(key))
                 .append(encodeList(value));
+        return this;
+    }
+
+    public ObjectEncoder put(String key, Value value) {
+        arrayBuilder.append(BinaryType.of(value).value)
+                .append(encodeKey(key))
+                .append(encodeValue(value));
         return this;
     }
 
@@ -99,6 +122,10 @@ public final class ObjectEncoder {
         return new byte[]{value ? TRUE : FALSE};
     }
 
+    private static byte[] encodeByte(byte value) {
+        return new byte[]{value};
+    }
+
     private static byte[] encodeInt(int value) {
         return ByteBuffer.allocate(4)
                 .putInt(value)
@@ -111,6 +138,10 @@ public final class ObjectEncoder {
                 .array();
     }
 
+    private static byte[] encodeBigDecimal(BigDecimal value) {
+        return encodeString(value.toString());
+    }
+
     private static byte[] encodeString(String value) {
         return encodeRaw(value.getBytes(UTF_8));
     }
@@ -119,81 +150,51 @@ public final class ObjectEncoder {
         return encodeLong(value.getTime());
     }
 
-    private static byte[] encodeMap(Map<String, ?> value) {
+    private static byte[] encodeMap(Map<String, Value> value) {
         ByteArrayBuilder builder = new ByteArrayBuilder();
-        for (Entry<String, ?> entry : value.entrySet()) {
-            builder.append(type(entry.getValue()).value)
+        for (Entry<String, Value> entry : value.entrySet()) {
+            builder.append(BinaryType.of(entry.getValue()).value)
                     .append(encodeKey(entry.getKey()))
                     .append(encodeValue(entry.getValue()));
         }
         return builder.prependSizeAndBuild();
     }
 
-    private static byte[] encodeList(List<?> value) {
+    private static byte[] encodeList(List<Value> value) {
         ByteArrayBuilder builder = new ByteArrayBuilder();
-        for (Object obj : value) {
-            builder.append(type(obj).value)
-                    .append(encodeValue(obj));
+        for (Value item : value) {
+            builder.append(BinaryType.of(item).value)
+                    .append(encodeValue(item));
         }
         return builder.prependSizeAndBuild();
     }
 
-    @SuppressWarnings("unchecked")
-    private static byte[] encodeValue(Object value) {
-        if (value instanceof byte[]) {
-            return encodeRaw((byte[]) value);
+    private static byte[] encodeValue(Value value) {
+        switch (value.type()) {
+            case NULL:
+                return EMPTY_BYTE_ARRAY;
+            case BYTE_ARRAY:
+                return encodeRaw(value.asByteArray());
+            case BOOLEAN:
+                return encodeBoolean(value.asBoolean());
+            case BYTE:
+                return encodeByte(value.asByte());
+            case INTEGER:
+                return encodeInt(value.asInt());
+            case LONG:
+                return encodeLong(value.asLong());
+            case BIG_DECIMAL:
+                return encodeBigDecimal(value.asBigDecimal());
+            case STRING:
+                return encodeString(value.asString());
+            case DATE:
+                return encodeDate(value.asDate());
+            case MAP:
+                return encodeMap(value.asMap());
+            case LIST:
+                return encodeList(value.asList());
+            default:
+                throw new IllegalArgumentException(value.type().toString());
         }
-        if (value instanceof Boolean) {
-            return encodeBoolean((boolean) value);
-        }
-        if (value instanceof Integer) {
-            return encodeInt((int) value);
-        }
-        if (value instanceof Long) {
-            return encodeLong((long) value);
-        }
-        if (value instanceof String) {
-            return encodeString((String) value);
-        }
-        if (value instanceof Date) {
-            return encodeDate((Date) value);
-        }
-        if (value instanceof Map) {
-            return encodeMap((Map<String, ?>) value);
-        }
-        if (value instanceof List) {
-            return encodeList((List) value);
-        }
-        throw new IllegalArgumentException(value.getClass()
-                .toString());
-    }
-
-    private static BinaryType type(Object value) {
-        if (value instanceof byte[]) {
-            return RAW;
-        }
-        if (value instanceof Boolean) {
-            return BOOLEAN;
-        }
-        if (value instanceof Integer) {
-            return INTEGER;
-        }
-        if (value instanceof Long) {
-            return LONG;
-        }
-        if (value instanceof String) {
-            return STRING;
-        }
-        if (value instanceof Date) {
-            return DATE;
-        }
-        if (value instanceof Map) {
-            return MAP;
-        }
-        if (value instanceof List) {
-            return LIST;
-        }
-        throw new IllegalArgumentException(value.getClass()
-                .toString());
     }
 }

@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import static store.common.SinkOutputStream.sink;
 import store.common.io.ObjectEncoder;
+import store.common.value.Value;
 
 public class ContentInfo {
 
@@ -23,7 +24,7 @@ public class ContentInfo {
     private final SortedSet<Hash> parents;
     private final boolean deleted;
     private final long length;
-    private final Map<String, Object> metadata;
+    private final Map<String, Value> metadata;
 
     private ContentInfo(ContentInfoBuilder builder) {
         hash = requireNonNull(builder.hash);
@@ -54,11 +55,11 @@ public class ContentInfo {
         return length;
     }
 
-    public Map<String, Object> getMetadata() {
+    public Map<String, Value> getMetadata() {
         return metadata;
     }
 
-    public ContentInfo with(String key, Object value) {
+    public ContentInfo with(String key, Value value) {
         return new ContentInfoBuilder()
                 .withHash(hash)
                 .withLength(length)
@@ -91,7 +92,7 @@ public class ContentInfo {
         private final SortedSet<Hash> parents = new TreeSet<>();
         private boolean deleted;
         private Long length;
-        private final Map<String, Object> metadata = new TreeMap<>();
+        private final Map<String, Value> metadata = new TreeMap<>();
 
         public ContentInfoBuilder withHash(Hash hash) {
             this.hash = hash;
@@ -123,32 +124,31 @@ public class ContentInfo {
             return this;
         }
 
-        public ContentInfoBuilder withMetadata(Map<String, Object> metadata) {
+        public ContentInfoBuilder withMetadata(Map<String, Value> metadata) {
             this.metadata.putAll(metadata);
             return this;
         }
 
-        public ContentInfoBuilder with(String key, Object value) {
+        public ContentInfoBuilder with(String key, Value value) {
             this.metadata.put(key, value);
             return this;
         }
 
         public ContentInfo computeRevAndBuild() {
             ObjectEncoder encoder = new ObjectEncoder()
-                    .put("hash", hash.value())
-                    .put("parents", new ArrayList<>(parents));
+                    .put("hash", hash.value());
 
-            List<Object> list = new ArrayList<>();
+            List<Value> list = new ArrayList<>();
             for (Hash parent : parents) {
-                list.add(parent.value());
+                list.add(Value.of(parent.value()));
             }
             encoder.put("parents", list);
             if (deleted) {
                 encoder.put("deleted", deleted);
             }
             encoder.put("length", length);
-            for (Entry<String, Object> entry : metadata.entrySet()) {
-                encoder.put(entry.getKey(), entry.getValue().toString());
+            for (Entry<String, Value> entry : metadata.entrySet()) {
+                encoder.put(entry.getKey(), entry.getValue());
             }
             try {
                 rev = IoUtil.copyAndDigest(new ByteArrayInputStream(encoder.build()), sink()).getHash();

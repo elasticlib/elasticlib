@@ -3,6 +3,7 @@ package store.common;
 import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -20,13 +21,14 @@ import store.common.Properties.Audio;
 import store.common.Properties.Common;
 import store.common.Properties.Image;
 import store.common.Properties.Text;
+import store.common.value.Value;
 
 public final class MetadataUtil {
 
     private MetadataUtil() {
     }
 
-    public static Map<String, Object> metadata(Path filepath) {
+    public static Map<String, Value> metadata(Path filepath) {
         try (InputStream inputStream = Files.newInputStream(filepath)) {
             Metadata metadata = new Metadata();
             metadata.set(Metadata.RESOURCE_NAME_KEY, filepath.getFileName().toString());
@@ -40,14 +42,14 @@ public final class MetadataUtil {
 
     private static class Extractor {
 
-        private final Map<String, Object> map = new HashMap<>();
+        private final Map<String, Value> map = new HashMap<>();
         private final Metadata metadata;
 
         private Extractor(Metadata metadata) {
             this.metadata = metadata;
         }
 
-        public static Map<String, Object> extract(Metadata metadata) {
+        public static Map<String, Value> extract(Metadata metadata) {
             Extractor extractor = new Extractor(metadata);
             extractor.convert(Metadata.RESOURCE_NAME_KEY, Common.FILE_NAME);
             extractor.convert(Metadata.CONTENT_TYPE, Common.CONTENT_TYPE);
@@ -81,13 +83,33 @@ public final class MetadataUtil {
         }
 
         private void convert(org.apache.tika.metadata.Property tikaKey, Property property) {
-            convert(tikaKey.getName(), property);
+            switch (tikaKey.getValueType()) {
+                case BOOLEAN:
+                    map.put(property.key(), Value.of(Boolean.parseBoolean(metadata.get(tikaKey))));
+                    return;
+
+                case INTEGER:
+                    map.put(property.key(), Value.of(metadata.getInt(tikaKey)));
+                    return;
+
+                case REAL:
+                    map.put(property.key(), Value.of(new BigDecimal(metadata.get(tikaKey))));
+                    return;
+
+                case DATE:
+                    map.put(property.key(), Value.of(metadata.getDate(tikaKey)));
+                    return;
+
+                default:
+                    map.put(property.key(), Value.of(metadata.get(tikaKey)));
+            }
+
         }
 
         private void convert(String tikaKey, Property property) {
             String value = metadata.get(tikaKey);
             if (value != null) {
-                map.put(property.key(), value);
+                map.put(property.key(), Value.of(metadata.get(tikaKey)));
             }
         }
     }

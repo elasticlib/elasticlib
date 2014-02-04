@@ -1,64 +1,81 @@
 package store.common.io;
 
 import static com.google.common.base.Charsets.UTF_8;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import static java.util.Collections.unmodifiableMap;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import static store.common.io.BinaryConstants.*;
-import static store.common.io.BinaryType.RAW;
+import store.common.value.Value;
 
 public class ObjectDecoder {
 
-    private final Map<String, Object> map;
+    private final Map<String, Value> map;
 
     public ObjectDecoder(byte[] bytes) {
-        map = new Decoder(bytes).decode();
+        map = unmodifiableMap(new Decoder(bytes).decode());
     }
 
     public boolean containsKey(String key) {
         return map.containsKey(key);
     }
 
+    public Set<String> keyset() {
+        return map.keySet();
+    }
+
     public byte[] getRaw(String key) {
-        return (byte[]) map.get(key);
+        return get(key).asByteArray();
     }
 
     public boolean getBoolean(String key) {
-        return (boolean) map.get(key);
+        return get(key).asBoolean();
     }
 
     public byte getByte(String key) {
-        return (byte) map.get(key);
+        return get(key).asByte();
     }
 
     public int getInt(String key) {
-        return (int) map.get(key);
+        return get(key).asInt();
     }
 
     public long getLong(String key) {
-        return (long) map.get(key);
+        return get(key).asLong();
+    }
+
+    public BigDecimal getBigDecimal(String key) {
+        return get(key).asBigDecimal();
     }
 
     public String getString(String key) {
-        return (String) map.get(key);
+        return get(key).asString();
     }
 
     public Date getDate(String key) {
-        return (Date) map.get(key);
+        return get(key).asDate();
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getMap(String key) {
-        return (Map<String, Object>) map.get(key);
+    public Map<String, Value> getMap(String key) {
+        return get(key).asMap();
     }
 
-    @SuppressWarnings("unchecked")
-    public List<Object> getList(String key) {
-        return (List<Object>) map.get(key);
+    public List<Value> getList(String key) {
+        return get(key).asList();
+    }
+
+    public Value get(String key) {
+        if (!map.containsKey(key)) {
+            throw new NoSuchElementException();
+        }
+        return map.get(key);
     }
 
     private static class Decoder {
@@ -70,8 +87,8 @@ public class ObjectDecoder {
             this.bytes = bytes;
         }
 
-        public Map<String, Object> decode() {
-            Map<String, Object> map = new HashMap<>();
+        public Map<String, Value> decode() {
+            Map<String, Value> map = new LinkedHashMap<>();
             index = 0;
             while (index < bytes.length) {
                 BinaryType type = decodeBinaryType();
@@ -102,36 +119,32 @@ public class ObjectDecoder {
             throw new IllegalArgumentException();
         }
 
-        private Object decodeValue(BinaryType type) {
+        private Value decodeValue(BinaryType type) {
             switch (type) {
-                case RAW:
-                    return decodeRaw();
-
+                case NULL:
+                    return Value.ofNull();
+                case BYTE_ARRAY:
+                    return Value.of(decodeRaw());
                 case BOOLEAN:
-                    return decodeBoolean();
+                    return Value.of(decodeBoolean());
                 case BYTE:
-                    return decodeByte();
-
+                    return Value.of(decodeByte());
                 case INTEGER:
-                    return decodeInt();
-
+                    return Value.of(decodeInt());
                 case LONG:
-                    return decodeLong();
-
+                    return Value.of(decodeLong());
+                case BIG_DECIMAL:
+                    return Value.of(decodeBigDecimal());
                 case STRING:
-                    return decodeString();
-
+                    return Value.of(decodeString());
                 case DATE:
-                    return decodeDate();
-
+                    return Value.of(decodeDate());
                 case MAP:
-                    return decodeMap();
-
+                    return Value.of(decodeMap());
                 case LIST:
-                    return decodeList();
-
+                    return Value.of(decodeList());
                 default:
-                    throw new RuntimeException();
+                    throw new IllegalArgumentException(type.toString());
             }
         }
 
@@ -171,6 +184,10 @@ public class ObjectDecoder {
             return value;
         }
 
+        private BigDecimal decodeBigDecimal() {
+            return new BigDecimal(decodeString());
+        }
+
         private String decodeString() {
             return new String(decodeRaw(), UTF_8);
         }
@@ -179,8 +196,8 @@ public class ObjectDecoder {
             return new Date(decodeLong());
         }
 
-        private Map<String, ?> decodeMap() {
-            Map<String, Object> map = new HashMap<>();
+        private Map<String, Value> decodeMap() {
+            Map<String, Value> map = new LinkedHashMap<>();
             int limit = index + decodeInt();
             while (index < limit) {
                 BinaryType type = decodeBinaryType();
@@ -190,8 +207,8 @@ public class ObjectDecoder {
             return map;
         }
 
-        private List<?> decodeList() {
-            List<Object> list = new ArrayList<>();
+        private List<Value> decodeList() {
+            List<Value> list = new ArrayList<>();
             int limit = index + decodeInt();
             while (index < limit) {
                 BinaryType type = decodeBinaryType();

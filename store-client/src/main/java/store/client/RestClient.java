@@ -50,6 +50,7 @@ import static store.common.JsonUtil.readHashes;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.MetadataUtil.metadata;
 import static store.common.Properties.Common.CAPTURE_DATE;
+import store.common.value.Value;
 
 /**
  * REST Client.
@@ -154,7 +155,7 @@ public class RestClient implements Closeable {
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
                 .withMetadata(metadata(filepath))
-                .with(CAPTURE_DATE.key(), new Date())
+                .with(CAPTURE_DATE.key(), Value.of(new Date()))
                 .computeRevAndBuild();
 
         Response response = resource.path("repositories/{name}/info/{hash}")

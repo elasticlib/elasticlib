@@ -7,6 +7,7 @@ import store.common.Digest;
 import store.common.Event;
 import store.common.Properties;
 import store.common.Property;
+import store.common.value.Value;
 
 /**
  * Formating utilities.
@@ -35,7 +36,7 @@ public final class FormatUtil {
                 .append(COMMA)
                 .append(format(info.getLength()));
 
-        Map<String, Object> metadata = info.getMetadata();
+        Map<String, Value> metadata = info.getMetadata();
         for (Property property : Properties.list()) {
             if (metadata.containsKey(property.key())) {
                 builder.append(System.lineSeparator())

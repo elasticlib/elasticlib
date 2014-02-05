@@ -21,27 +21,7 @@ class StringValue extends Value {
     }
 
     @Override
-    public String toString() {
-        return "\"" + value + "\"";
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 43 * hash + type().hashCode();
-        hash = 43 * hash + value.hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        StringValue other = (StringValue) obj;
-        return value.equals(other.value);
+    Object value() {
+        return value;
     }
 }

@@ -23,27 +23,7 @@ class ListValue extends Value {
     }
 
     @Override
-    public String toString() {
-        return value.toString();
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + type().hashCode();
-        hash = 67 * hash + value.hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        ListValue other = (ListValue) obj;
-        return value.equals(other.value);
+    Object value() {
+        return value;
     }
 }

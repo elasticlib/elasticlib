@@ -19,27 +19,7 @@ class IntegerValue extends Value {
     }
 
     @Override
-    public String toString() {
-        return Integer.toString(value);
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 17 * hash + type().hashCode();
-        hash = 17 * hash + value;
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        IntegerValue other = (IntegerValue) obj;
-        return value == other.value;
+    Object value() {
+        return value;
     }
 }

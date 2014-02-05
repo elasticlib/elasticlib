@@ -27,22 +27,7 @@ class DateValue extends Value {
     }
 
     @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + type().hashCode();
-        hash = 23 * hash + (int) (time ^ (time >>> 32));
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        DateValue other = (DateValue) obj;
-        return time == other.time;
+    Object value() {
+        return time;
     }
 }

@@ -23,27 +23,7 @@ class MapValue extends Value {
     }
 
     @Override
-    public String toString() {
-        return value.toString();
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 19 * hash + type().hashCode();
-        hash = 19 * hash + value.hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        MapValue other = (MapValue) obj;
-        return value.equals(other.value);
+    Object value() {
+        return value;
     }
 }

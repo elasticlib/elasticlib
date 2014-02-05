@@ -35,4 +35,9 @@ final class NullValue extends Value {
         }
         return obj.getClass() == NullValue.class;
     }
+
+    @Override
+    Object value() {
+        throw new UnsupportedOperationException();
+    }
 }

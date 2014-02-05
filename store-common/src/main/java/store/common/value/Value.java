@@ -189,4 +189,31 @@ public abstract class Value {
     public List<Value> asList() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String toString() {
+        return value().toString();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 83 * hash + type().hashCode();
+        hash = 83 * hash + value().hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Value other = (Value) obj;
+        return value().equals(other.value());
+    }
+
+    abstract Object value();
 }

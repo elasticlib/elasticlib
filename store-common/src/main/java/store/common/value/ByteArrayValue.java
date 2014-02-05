@@ -45,7 +45,7 @@ public final class ByteArrayValue extends Value {
     public int hashCode() {
         int hash = 5;
         hash = 19 * hash + type().hashCode();
-        hash = 19 * hash + Arrays.hashCode(this.value);
+        hash = 19 * hash + Arrays.hashCode(value);
         return hash;
     }
 
@@ -58,6 +58,11 @@ public final class ByteArrayValue extends Value {
             return false;
         }
         ByteArrayValue other = (ByteArrayValue) obj;
-        return Arrays.equals(this.value, other.value);
+        return Arrays.equals(value, other.value);
+    }
+
+    @Override
+    Object value() {
+        throw new UnsupportedOperationException();
     }
 }

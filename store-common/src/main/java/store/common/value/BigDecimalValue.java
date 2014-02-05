@@ -27,22 +27,7 @@ class BigDecimalValue extends Value {
     }
 
     @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + type().hashCode();
-        hash = 83 * hash + value.hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        BigDecimalValue other = (BigDecimalValue) obj;
-        return value.equals(other.value);
+    Object value() {
+        return value;
     }
 }

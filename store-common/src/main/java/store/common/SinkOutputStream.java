@@ -21,9 +21,11 @@ public class SinkOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) {
+        // Actually does nothing.
     }
 
     @Override
     public void write(int b) {
+        // Actually does nothing.
     }
 }

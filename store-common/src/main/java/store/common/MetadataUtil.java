@@ -86,24 +86,24 @@ public final class MetadataUtil {
             switch (tikaKey.getValueType()) {
                 case BOOLEAN:
                     map.put(property.key(), Value.of(Boolean.parseBoolean(metadata.get(tikaKey))));
-                    return;
+                    break;
 
                 case INTEGER:
                     map.put(property.key(), Value.of(metadata.getInt(tikaKey)));
-                    return;
+                    break;
 
                 case REAL:
                     map.put(property.key(), Value.of(new BigDecimal(metadata.get(tikaKey))));
-                    return;
+                    break;
 
                 case DATE:
                     map.put(property.key(), Value.of(metadata.getDate(tikaKey)));
-                    return;
+                    break;
 
                 default:
                     map.put(property.key(), Value.of(metadata.get(tikaKey)));
+                    break;
             }
-
         }
 
         private void convert(String tikaKey, Property property) {

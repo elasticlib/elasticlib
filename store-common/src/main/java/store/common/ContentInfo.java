@@ -155,7 +155,8 @@ public class ContentInfo {
                 return new ContentInfo(this);
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                // Actually impossible.
+                throw new AssertionError(e);
             }
         }
 

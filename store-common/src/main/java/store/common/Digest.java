@@ -32,7 +32,8 @@ public class Digest {
                 messageDigest = MessageDigest.getInstance(ALGORITHM);
 
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+                // Actually impossible.
+                throw new AssertionError(e);
             }
         }
 

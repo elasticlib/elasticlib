@@ -34,6 +34,17 @@ public final class JsonUtil {
 
     private static final String VALUE = "value";
     private static final String TYPE = "type";
+    private static final String HASH = "hash";
+    private static final String REV = "rev";
+    private static final String PARENTS = "parents";
+    private static final String DELETED = "deleted";
+    private static final String LENGTH = "length";
+    private static final String METADATA = "metadata";
+    private static final String SEQ = "seq";
+    private static final String TIMESTAMP = "timestamp";
+    private static final String OPERATION = "operation";
+    private static final String REPOSITORIES = "repositories";
+    private static final String SYNC = "sync";
 
     private JsonUtil() {
     }
@@ -137,20 +148,20 @@ public final class JsonUtil {
      */
     public static JsonObject writeContentInfo(ContentInfo contentInfo) {
         JsonObjectBuilder builder = createObjectBuilder()
-                .add("hash", contentInfo.getHash().encode())
-                .add("rev", contentInfo.getRev().encode());
+                .add(HASH, contentInfo.getHash().encode())
+                .add(REV, contentInfo.getRev().encode());
 
         JsonArrayBuilder parents = createArrayBuilder();
         for (Hash item : contentInfo.getParents()) {
             parents.add(item.encode());
         }
-        builder.add("parents", parents);
+        builder.add(PARENTS, parents);
         if (contentInfo.isDeleted()) {
-            builder.add("deleted", true);
+            builder.add(DELETED, true);
         }
         return builder
-                .add("length", contentInfo.getLength())
-                .add("metadata", writeMap(contentInfo.getMetadata()))
+                .add(LENGTH, contentInfo.getLength())
+                .add(METADATA, writeMap(contentInfo.getMetadata()))
                 .build();
     }
 
@@ -162,18 +173,18 @@ public final class JsonUtil {
      */
     public static ContentInfo readContentInfo(JsonObject json) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
-                .withHash(new Hash(json.getString("hash")))
-                .withRev(new Hash(json.getString("rev")));
+                .withHash(new Hash(json.getString(HASH)))
+                .withRev(new Hash(json.getString(REV)));
 
-        for (JsonString value : json.getJsonArray("parents").getValuesAs(JsonString.class)) {
+        for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(JsonString.class)) {
             builder.withParent(new Hash(value.getString()));
         }
-        if (json.containsKey("deleted")) {
-            builder.withDeleted(json.getBoolean("deleted"));
+        if (json.containsKey(DELETED)) {
+            builder.withDeleted(json.getBoolean(DELETED));
         }
         return builder
-                .withLength(json.getJsonNumber("length").longValue())
-                .withMetadata(readMap(json.getJsonObject("metadata")))
+                .withLength(json.getJsonNumber(LENGTH).longValue())
+                .withMetadata(readMap(json.getJsonObject(METADATA)))
                 .build();
     }
 
@@ -299,8 +310,8 @@ public final class JsonUtil {
      */
     public static JsonObject writeConfig(Config config) {
         return createObjectBuilder()
-                .add("repositories", writePaths(config.getRepositories()))
-                .add("sync", writeSync(config))
+                .add(REPOSITORIES, writePaths(config.getRepositories()))
+                .add(SYNC, writeSync(config))
                 .build();
     }
 
@@ -335,8 +346,8 @@ public final class JsonUtil {
      * @return A Config instance.
      */
     public static Config readConfig(JsonObject json) {
-        return new Config(readPaths(json.getJsonArray("repositories")),
-                          readSync(json.getJsonObject("sync")));
+        return new Config(readPaths(json.getJsonArray(REPOSITORIES)),
+                          readSync(json.getJsonObject(SYNC)));
     }
 
     private static List<Path> readPaths(JsonArray array) {
@@ -393,18 +404,18 @@ public final class JsonUtil {
 
     private static JsonObjectBuilder writeEvent(Event event) {
         return createObjectBuilder()
-                .add("seq", event.getSeq())
-                .add("hash", event.getHash().encode())
-                .add("timestamp", event.getTimestamp().getTime())
-                .add("operation", event.getOperation().name());
+                .add(SEQ, event.getSeq())
+                .add(HASH, event.getHash().encode())
+                .add(TIMESTAMP, event.getTimestamp().getTime())
+                .add(OPERATION, event.getOperation().name());
     }
 
     private static Event readEvent(JsonObject json) {
         return Event.event()
-                .withSeq(json.getJsonNumber("seq").longValue())
-                .withHash(new Hash(json.getString("hash")))
-                .withTimestamp(new Date(json.getJsonNumber("timestamp").longValue()))
-                .withOperation(Operation.valueOf(json.getString("operation")))
+                .withSeq(json.getJsonNumber(SEQ).longValue())
+                .withHash(new Hash(json.getString(HASH)))
+                .withTimestamp(new Date(json.getJsonNumber(TIMESTAMP).longValue()))
+                .withOperation(Operation.valueOf(json.getString(OPERATION)))
                 .build();
     }
 }

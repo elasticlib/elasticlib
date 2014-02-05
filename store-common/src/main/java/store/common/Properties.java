@@ -1,12 +1,15 @@
 package store.common;
 
-import static java.lang.Character.toLowerCase;
-import static java.lang.Character.toUpperCase;
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Properties {
+public final class Properties {
+
+    private Properties() {
+    }
 
     public static List<Property> list() {
         List<Property> list = new ArrayList<>();
@@ -88,30 +91,10 @@ public class Properties {
     }
 
     private static String key(String name) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < name.length(); i++) {
-            char ch = name.charAt(i);
-            if (ch == '_') {
-                i++;
-                builder.append(toUpperCase(name.charAt(i)));
-            } else {
-                builder.append(toLowerCase(ch));
-            }
-        }
-        return builder.toString();
+        return UPPER_UNDERSCORE.to(LOWER_CAMEL, name);
     }
 
     private static String label(String name) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(name.charAt(0));
-        for (int i = 1; i < name.length(); i++) {
-            char ch = name.charAt(i);
-            if (ch == '_') {
-                builder.append(' ');
-            } else {
-                builder.append(toLowerCase(ch));
-            }
-        }
-        return builder.toString();
+        return name.charAt(0) + name.substring(1).toLowerCase().replaceAll("_", " ");
     }
 }

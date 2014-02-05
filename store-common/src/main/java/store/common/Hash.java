@@ -8,7 +8,7 @@ public final class Hash implements Comparable<Hash> {
     private final byte[] value;
 
     public Hash(byte[] value) {
-        this.value = value;
+        this.value = Arrays.copyOf(value, value.length);
     }
 
     public Hash(String encoded) {

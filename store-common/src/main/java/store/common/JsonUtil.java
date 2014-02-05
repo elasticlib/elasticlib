@@ -27,6 +27,9 @@ import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 
+/**
+ * Utils for reading and writing JSON.
+ */
 public final class JsonUtil {
 
     private static final String VALUE = "value";
@@ -35,6 +38,13 @@ public final class JsonUtil {
     private JsonUtil() {
     }
 
+    /**
+     * Checks if supplied JSON object has a string value associated to supplied key.
+     *
+     * @param json A JSON object.
+     * @param key A key.
+     * @return <tt>true</tt> if supplied JSON object has a string value associated to supplied key.
+     */
     public static boolean hasStringValue(JsonObject json, String key) {
         if (!json.containsKey(key)) {
             return false;
@@ -42,6 +52,13 @@ public final class JsonUtil {
         return json.get(key).getValueType() == STRING;
     }
 
+    /**
+     * Checks if supplied JSON object has a boolean value associated to supplied key.
+     *
+     * @param json A JSON object.
+     * @param key A key.
+     * @return <tt>true</tt> if supplied JSON object has a boolean value associated to supplied key.
+     */
     public static boolean hasBooleanValue(JsonObject json, String key) {
         if (!json.containsKey(key)) {
             return false;
@@ -56,6 +73,12 @@ public final class JsonUtil {
         }
     }
 
+    /**
+     * Writes supplied list of {@link Hash} to a JSON array.
+     *
+     * @param hashes A list of hashes.
+     * @return A JSON array.
+     */
     public static JsonArray writeHashes(List<Hash> hashes) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (Hash hash : hashes) {
@@ -64,6 +87,12 @@ public final class JsonUtil {
         return builder.build();
     }
 
+    /**
+     * Reads a list of {@link Hash} from supplied JSON array.
+     *
+     * @param json A JSON array.
+     * @return A list of hashes.
+     */
     public static List<Hash> readHashes(JsonArray json) {
         List<Hash> list = new ArrayList<>();
         for (JsonString value : json.getValuesAs(JsonString.class)) {
@@ -72,6 +101,12 @@ public final class JsonUtil {
         return list;
     }
 
+    /**
+     * Writes supplied list of {@link ContentInfo} to a JSON array.
+     *
+     * @param contentInfos A list of content infos.
+     * @return A JSON array.
+     */
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (ContentInfo contentInfo : contentInfos) {
@@ -80,6 +115,12 @@ public final class JsonUtil {
         return builder.build();
     }
 
+    /**
+     * Reads a list of {@link ContentInfo} from supplied JSON array.
+     *
+     * @param json A JSON array.
+     * @return A list of content infos.
+     */
     public static List<ContentInfo> readContentInfos(JsonArray json) {
         List<ContentInfo> list = new ArrayList<>();
         for (JsonObject object : json.getValuesAs(JsonObject.class)) {
@@ -88,6 +129,12 @@ public final class JsonUtil {
         return list;
     }
 
+    /**
+     * Writes supplied {@link ContentInfo} to a JSON object.
+     *
+     * @param contentInfo A contentInfo instance.
+     * @return A JSON object.
+     */
     public static JsonObject writeContentInfo(ContentInfo contentInfo) {
         JsonObjectBuilder builder = createObjectBuilder()
                 .add("hash", contentInfo.getHash().encode())
@@ -107,6 +154,12 @@ public final class JsonUtil {
                 .build();
     }
 
+    /**
+     * Reads a {@link ContentInfo} from supplied JSON object.
+     *
+     * @param json A JSON object.
+     * @return A contentInfo instance.
+     */
     public static ContentInfo readContentInfo(JsonObject json) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
                 .withHash(new Hash(json.getString("hash")))
@@ -238,6 +291,12 @@ public final class JsonUtil {
         }
     }
 
+    /**
+     * Writes supplied {@link Config} to a JSON object.
+     *
+     * @param config A config instance.
+     * @return A JSON object.
+     */
     public static JsonObject writeConfig(Config config) {
         return createObjectBuilder()
                 .add("repositories", writePaths(config.getRepositories()))
@@ -269,6 +328,12 @@ public final class JsonUtil {
         return json;
     }
 
+    /**
+     * Reads a {@link Config} from supplied JSON object.
+     *
+     * @param json A JSON object.
+     * @return A Config instance.
+     */
     public static Config readConfig(JsonObject json) {
         return new Config(readPaths(json.getJsonArray("repositories")),
                           readSync(json.getJsonObject("sync")));
@@ -298,6 +363,12 @@ public final class JsonUtil {
         return strings;
     }
 
+    /**
+     * Writes supplied list of {@link Event} to a JSON array.
+     *
+     * @param events A list of events.
+     * @return A JSON array.
+     */
     public static JsonArray writeEvents(List<Event> events) {
         JsonArrayBuilder builder = createArrayBuilder();
         for (Event event : events) {
@@ -306,6 +377,12 @@ public final class JsonUtil {
         return builder.build();
     }
 
+    /**
+     * Reads a list of {@link Event} from supplied JSON array.
+     *
+     * @param json A JSON array.
+     * @return A list of events.
+     */
     public static List<Event> readEvents(JsonArray json) {
         List<Event> list = new ArrayList<>();
         for (JsonObject object : json.getValuesAs(JsonObject.class)) {

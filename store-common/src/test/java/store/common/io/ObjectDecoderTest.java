@@ -73,7 +73,7 @@ public class ObjectDecoderTest {
                              0x12, 0x34); // value
 
         ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getRaw("bytes")).isEqualTo(array(0x12, 0x34));
+        assertThat(decoder.getByteArray("bytes")).isEqualTo(array(0x12, 0x34));
     }
 
     /**

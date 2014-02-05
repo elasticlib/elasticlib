@@ -139,8 +139,8 @@ class InfoManager {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
                 ContentInfoBuilder builder = new ContentInfoBuilder()
-                        .withHash(new Hash(objectDecoder.getRaw("hash")))
-                        .withRev(new Hash(objectDecoder.getRaw("rev")));
+                        .withHash(new Hash(objectDecoder.getByteArray("hash")))
+                        .withRev(new Hash(objectDecoder.getByteArray("rev")));
                 for (Object obj : objectDecoder.getList("parents")) {
                     builder.withParent(new Hash((byte[]) obj));
                 }

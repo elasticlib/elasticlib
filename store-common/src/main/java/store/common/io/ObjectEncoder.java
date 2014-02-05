@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import static store.common.io.BinaryConstants.*;
-import static store.common.io.BinaryType.*;
 import store.common.value.Value;
+import static store.common.value.ValueType.*;
 
 /**
  * A JSON-like binary encoder with a fluent API.
@@ -32,7 +32,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder putNull(String key) {
-        arrayBuilder.append(NULL.value)
+        arrayBuilder.append(encodeType(NULL))
                 .append(encodeKey(key));
         return this;
     }
@@ -45,7 +45,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, byte[] value) {
-        arrayBuilder.append(BYTE_ARRAY.value)
+        arrayBuilder.append(encodeType(BYTE_ARRAY))
                 .append(encodeKey(key))
                 .append(encodeRaw(value));
         return this;
@@ -59,7 +59,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, boolean value) {
-        arrayBuilder.append(BOOLEAN.value)
+        arrayBuilder.append(encodeType(BOOLEAN))
                 .append(encodeKey(key))
                 .append(encodeBoolean(value));
         return this;
@@ -73,7 +73,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, byte value) {
-        arrayBuilder.append(BYTE.value)
+        arrayBuilder.append(encodeType(BYTE))
                 .append(encodeKey(key))
                 .append(encodeByte(value));
         return this;
@@ -87,7 +87,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, int value) {
-        arrayBuilder.append(INTEGER.value)
+        arrayBuilder.append(encodeType(INTEGER))
                 .append(encodeKey(key))
                 .append(encodeInt(value));
         return this;
@@ -101,7 +101,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, long value) {
-        arrayBuilder.append(LONG.value)
+        arrayBuilder.append(encodeType(LONG))
                 .append(encodeKey(key))
                 .append(encodeLong(value));
         return this;
@@ -115,7 +115,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, String value) {
-        arrayBuilder.append(STRING.value)
+        arrayBuilder.append(encodeType(STRING))
                 .append(encodeKey(key))
                 .append(encodeString(value));
         return this;
@@ -129,7 +129,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, BigDecimal value) {
-        arrayBuilder.append(BIG_DECIMAL.value)
+        arrayBuilder.append(encodeType(BIG_DECIMAL))
                 .append(encodeKey(key))
                 .append(encodeBigDecimal(value));
         return this;
@@ -143,7 +143,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, Date value) {
-        arrayBuilder.append(DATE.value)
+        arrayBuilder.append(encodeType(DATE))
                 .append(encodeKey(key))
                 .append(encodeDate(value));
         return this;
@@ -157,7 +157,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, Map<String, Value> value) {
-        arrayBuilder.append(MAP.value)
+        arrayBuilder.append(encodeType(MAP))
                 .append(encodeKey(key))
                 .append(encodeMap(value));
         return this;
@@ -171,7 +171,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, List<Value> value) {
-        arrayBuilder.append(LIST.value)
+        arrayBuilder.append(encodeType(LIST))
                 .append(encodeKey(key))
                 .append(encodeList(value));
         return this;
@@ -185,7 +185,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, Value value) {
-        arrayBuilder.append(BinaryType.of(value).value)
+        arrayBuilder.append(encodeType(value.type()))
                 .append(encodeKey(key))
                 .append(encodeValue(value));
         return this;
@@ -250,7 +250,7 @@ public final class ObjectEncoder {
     private static byte[] encodeMap(Map<String, Value> value) {
         ByteArrayBuilder builder = new ByteArrayBuilder();
         for (Entry<String, Value> entry : value.entrySet()) {
-            builder.append(BinaryType.of(entry.getValue()).value)
+            builder.append(encodeType(entry.getValue().type()))
                     .append(encodeKey(entry.getKey()))
                     .append(encodeValue(entry.getValue()));
         }
@@ -260,7 +260,7 @@ public final class ObjectEncoder {
     private static byte[] encodeList(List<Value> value) {
         ByteArrayBuilder builder = new ByteArrayBuilder();
         for (Value item : value) {
-            builder.append(BinaryType.of(item).value)
+            builder.append(encodeType(item.type()))
                     .append(encodeValue(item));
         }
         return builder.prependSizeAndBuild();

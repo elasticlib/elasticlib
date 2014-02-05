@@ -227,7 +227,7 @@ class HistoryManager {
     private static Event readEvent(ObjectDecoder objectDecoder) {
         return event()
                 .withSeq(objectDecoder.getLong("seq"))
-                .withHash(new Hash(objectDecoder.getRaw("hash")))
+                .withHash(new Hash(objectDecoder.getByteArray("hash")))
                 .withTimestamp(objectDecoder.getDate("timestamp"))
                 .withOperation(Operation.of(objectDecoder.getByte("operation")))
                 .build();

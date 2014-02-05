@@ -39,7 +39,7 @@ public final class ObjectEncoder {
     public ObjectEncoder put(String key, byte value) {
         arrayBuilder.append(BYTE.value)
                 .append(encodeKey(key))
-                .append(value);
+                .append(encodeByte(value));
         return this;
     }
 

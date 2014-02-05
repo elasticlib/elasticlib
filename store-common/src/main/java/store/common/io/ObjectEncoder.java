@@ -11,17 +11,39 @@ import static store.common.io.BinaryConstants.*;
 import static store.common.io.BinaryType.*;
 import store.common.value.Value;
 
+/**
+ * A JSON-like binary encoder with a fluent API.
+ * <p>
+ * Serialize a sequence of key-value pairs into a JSON-like binary document. Produced format supports the embedding of
+ * documents and arrays within other documents and arrays. It also contains extensions that allow representation of data
+ * types that are not part of the JSON spec.
+ *
+ * @see ObjectDecoder
+ */
 public final class ObjectEncoder {
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     ByteArrayBuilder arrayBuilder = new ByteArrayBuilder();
 
+    /**
+     * Add a null value to the binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @return This encoder instance.
+     */
     public ObjectEncoder putNull(String key) {
         arrayBuilder.append(NULL.value)
                 .append(encodeKey(key));
         return this;
     }
 
+    /**
+     * Add a byte array to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, byte[] value) {
         arrayBuilder.append(BYTE_ARRAY.value)
                 .append(encodeKey(key))
@@ -29,6 +51,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a boolean to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, boolean value) {
         arrayBuilder.append(BOOLEAN.value)
                 .append(encodeKey(key))
@@ -36,6 +65,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a byte to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, byte value) {
         arrayBuilder.append(BYTE.value)
                 .append(encodeKey(key))
@@ -43,6 +79,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add an integer to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, int value) {
         arrayBuilder.append(INTEGER.value)
                 .append(encodeKey(key))
@@ -50,6 +93,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a long to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, long value) {
         arrayBuilder.append(LONG.value)
                 .append(encodeKey(key))
@@ -57,6 +107,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a string to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, String value) {
         arrayBuilder.append(STRING.value)
                 .append(encodeKey(key))
@@ -64,6 +121,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a big decimal to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, BigDecimal value) {
         arrayBuilder.append(BIG_DECIMAL.value)
                 .append(encodeKey(key))
@@ -71,6 +135,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a date to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, Date value) {
         arrayBuilder.append(DATE.value)
                 .append(encodeKey(key))
@@ -78,6 +149,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a map to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, Map<String, Value> value) {
         arrayBuilder.append(MAP.value)
                 .append(encodeKey(key))
@@ -85,6 +163,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a list to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, List<Value> value) {
         arrayBuilder.append(LIST.value)
                 .append(encodeKey(key))
@@ -92,6 +177,13 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Add a value to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
     public ObjectEncoder put(String key, Value value) {
         arrayBuilder.append(BinaryType.of(value).value)
                 .append(encodeKey(key))
@@ -99,6 +191,11 @@ public final class ObjectEncoder {
         return this;
     }
 
+    /**
+     * Build the binary structure.
+     *
+     * @return Built structure as a byte array.
+     */
     public byte[] build() {
         return arrayBuilder.prependSizeAndBuild();
     }

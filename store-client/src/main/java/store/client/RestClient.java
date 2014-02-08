@@ -10,7 +10,6 @@ import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,8 +48,6 @@ import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.readHashes;
 import static store.common.JsonUtil.writeContentInfo;
 import static store.common.MetadataUtil.metadata;
-import static store.common.Properties.Common.CAPTURE_DATE;
-import store.common.value.Value;
 
 /**
  * REST Client.
@@ -155,7 +152,6 @@ public class RestClient implements Closeable {
                 .withHash(digest.getHash())
                 .withLength(digest.getLength())
                 .withMetadata(metadata(filepath))
-                .with(CAPTURE_DATE.key(), Value.of(new Date()))
                 .computeRevAndBuild();
 
         Response response = resource.path("repositories/{name}/info/{hash}")

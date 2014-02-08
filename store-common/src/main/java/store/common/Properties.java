@@ -23,8 +23,7 @@ public final class Properties {
     public static enum Common implements Property {
 
         FILE_NAME,
-        CONTENT_TYPE,
-        CAPTURE_DATE;
+        CONTENT_TYPE;
 
         @Override
         public String key() {

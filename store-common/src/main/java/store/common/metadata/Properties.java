@@ -1,4 +1,4 @@
-package store.common;
+package store.common.metadata;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -6,11 +6,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Enumerates properties.
+ */
 public final class Properties {
 
     private Properties() {
     }
 
+    /**
+     * List existing properties.
+     *
+     * @return All properties.
+     */
     public static List<Property> list() {
         List<Property> list = new ArrayList<>();
         list.addAll(Arrays.asList(Common.values()));
@@ -20,7 +28,7 @@ public final class Properties {
         return list;
     }
 
-    public static enum Common implements Property {
+    static enum Common implements Property {
 
         FILE_NAME,
         CONTENT_TYPE;
@@ -36,7 +44,7 @@ public final class Properties {
         }
     }
 
-    public static enum Text implements Property {
+    static enum Text implements Property {
 
         ENCODING;
 
@@ -51,7 +59,7 @@ public final class Properties {
         }
     }
 
-    public static enum Audio implements Property {
+    static enum Audio implements Property {
 
         ARTIST,
         ALBUM,
@@ -72,7 +80,7 @@ public final class Properties {
         }
     }
 
-    public static enum Image implements Property {
+    static enum Image implements Property {
 
         HEIGHT,
         WIDTH,

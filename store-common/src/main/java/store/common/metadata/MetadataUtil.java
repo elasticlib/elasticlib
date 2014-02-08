@@ -1,4 +1,4 @@
-package store.common;
+package store.common.metadata;
 
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -17,25 +17,35 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import store.common.Properties.Audio;
-import store.common.Properties.Common;
-import store.common.Properties.Image;
-import store.common.Properties.Text;
+import store.common.metadata.Properties.Audio;
+import store.common.metadata.Properties.Common;
+import store.common.metadata.Properties.Image;
+import store.common.metadata.Properties.Text;
 import store.common.value.Value;
 
+/**
+ * Metadata extraction utils.
+ */
 public final class MetadataUtil {
 
     private MetadataUtil() {
     }
 
-    public static Map<String, Value> metadata(Path filepath) {
+    /**
+     * Extracts metadata from file the located at supplied path.
+     *
+     * @param filepath File path.
+     * @return Extracted metadata as a map of Values.
+     * @throws IOException If an I/O error occurs.
+     */
+    public static Map<String, Value> metadata(Path filepath) throws IOException {
         try (InputStream inputStream = Files.newInputStream(filepath)) {
             Metadata metadata = new Metadata();
             metadata.set(Metadata.RESOURCE_NAME_KEY, filepath.getFileName().toString());
             new AutoDetectParser().parse(inputStream, new DefaultHandler(), metadata, new ParseContext());
             return Extractor.extract(metadata);
 
-        } catch (IOException | SAXException | TikaException e) {
+        } catch (SAXException | TikaException e) {
             throw new RuntimeException(e);
         }
     }

@@ -1,9 +1,9 @@
-package store.common;
+package store.common.metadata;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
-import static store.common.Properties.Common.FILE_NAME;
-import static store.common.Properties.Text.ENCODING;
+import static store.common.metadata.Properties.Common.FILE_NAME;
+import static store.common.metadata.Properties.Text.ENCODING;
 
 /**
  * Unit tests.

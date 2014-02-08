@@ -47,7 +47,7 @@ import static store.common.JsonUtil.readContentInfos;
 import static store.common.JsonUtil.readEvents;
 import static store.common.JsonUtil.readHashes;
 import static store.common.JsonUtil.writeContentInfo;
-import static store.common.MetadataUtil.metadata;
+import static store.common.metadata.MetadataUtil.metadata;
 
 /**
  * REST Client.
@@ -147,38 +147,39 @@ public class RestClient implements Closeable {
     }
 
     public void put(String repository, Path filepath) {
-        Digest digest = digest(filepath);
-        ContentInfo info = new ContentInfoBuilder()
-                .withHash(digest.getHash())
-                .withLength(digest.getLength())
-                .withMetadata(metadata(filepath))
-                .computeRevAndBuild();
+        try {
+            Digest digest = digest(filepath);
+            ContentInfo info = new ContentInfoBuilder()
+                    .withHash(digest.getHash())
+                    .withLength(digest.getLength())
+                    .withMetadata(metadata(filepath))
+                    .computeRevAndBuild();
 
-        Response response = resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", digest.getHash())
-                .request()
-                .head();
-
-        if (response.getStatus() == Status.OK.getStatusCode()) {
-            throw new RequestFailedException("This content is already stored");
-        }
-
-        try (InputStream inputStream = new LoggingInputStream("Uploading content",
-                                                              newInputStream(filepath),
-                                                              digest.getLength())) {
-
-            MultiPart multipart = new FormDataMultiPart()
-                    .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
-                    .bodyPart(new StreamDataBodyPart("content",
-                                                     inputStream,
-                                                     filepath.getFileName().toString(),
-                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            ensureSuccess(resource.path("repositories/{name}/content")
+            Response response = resource.path("repositories/{name}/info/{hash}")
                     .resolveTemplate("name", repository)
+                    .resolveTemplate("hash", digest.getHash())
                     .request()
-                    .post(entity(multipart, addBoundary(multipart.getMediaType()))));
+                    .head();
 
+            if (response.getStatus() == Status.OK.getStatusCode()) {
+                throw new RequestFailedException("This content is already stored");
+            }
+
+            try (InputStream inputStream = new LoggingInputStream("Uploading content",
+                                                                  newInputStream(filepath),
+                                                                  digest.getLength())) {
+
+                MultiPart multipart = new FormDataMultiPart()
+                        .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
+                        .bodyPart(new StreamDataBodyPart("content",
+                                                         inputStream,
+                                                         filepath.getFileName().toString(),
+                                                         MediaType.APPLICATION_OCTET_STREAM_TYPE));
+                ensureSuccess(resource.path("repositories/{name}/content")
+                        .resolveTemplate("name", repository)
+                        .request()
+                        .post(entity(multipart, addBoundary(multipart.getMediaType()))));
+            }
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }

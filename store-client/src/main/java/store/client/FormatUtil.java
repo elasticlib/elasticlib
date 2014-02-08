@@ -5,8 +5,8 @@ import static store.client.ByteLengthFormatter.format;
 import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Event;
-import store.common.Properties;
-import store.common.Property;
+import store.common.metadata.Properties;
+import store.common.metadata.Property;
 import store.common.value.Value;
 
 /**

@@ -74,4 +74,29 @@ public final class Config {
         }
         return unmodifiableSet(sync.get(source));
     }
+
+    @Override
+    public String toString() {
+        return "Config{" + "repositories=" + repositories + ", sync=" + sync + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 29 * hash + repositories.hashCode();
+        hash = 29 * hash + sync.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Config other = (Config) obj;
+        return repositories.equals(other.repositories) && sync.equals(other.sync);
+    }
 }

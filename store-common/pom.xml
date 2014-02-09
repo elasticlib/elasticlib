@@ -13,4 +13,12 @@
     <artifactId>store-common</artifactId>
     <packaging>jar</packaging>
     <name>Store Common</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>

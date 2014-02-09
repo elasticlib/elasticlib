@@ -24,6 +24,7 @@ import static javax.json.JsonValue.ValueType.FALSE;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.Event.EventBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 
@@ -411,7 +412,7 @@ public final class JsonUtil {
     }
 
     private static Event readEvent(JsonObject json) {
-        return Event.event()
+        return new EventBuilder()
                 .withSeq(json.getJsonNumber(SEQ).longValue())
                 .withHash(new Hash(json.getString(HASH)))
                 .withTimestamp(new Date(json.getJsonNumber(TIMESTAMP).longValue()))

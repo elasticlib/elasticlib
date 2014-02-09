@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import store.common.Event;
-import static store.common.Event.event;
+import store.common.Event.EventBuilder;
 import store.common.Hash;
 import store.common.Operation;
 import store.common.io.ObjectDecoder;
@@ -84,7 +84,7 @@ class HistoryManager {
 
     private void append(Hash hash, Operation operation) {
         TransactionContext txContext = currentTransactionContext();
-        Event event = event()
+        Event event = new EventBuilder()
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
                 .withTimestamp(new Date())
@@ -225,7 +225,7 @@ class HistoryManager {
     }
 
     private static Event readEvent(ObjectDecoder objectDecoder) {
-        return event()
+        return new EventBuilder()
                 .withSeq(objectDecoder.getLong("seq"))
                 .withHash(new Hash(objectDecoder.getByteArray("hash")))
                 .withTimestamp(objectDecoder.getDate("timestamp"))

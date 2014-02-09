@@ -32,8 +32,46 @@ public class Event {
         return operation;
     }
 
-    public static EventBuilder event() {
-        return new EventBuilder();
+    @Override
+    public String toString() {
+        return "Event{" + "seq=" + seq +
+                ", hash=" + hash +
+                ", timestamp=" + timestamp.getTime() +
+                ", operation=" + operation.name() + '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 5;
+        result = 89 * result + (int) (this.seq ^ (this.seq >>> 32));
+        result = 89 * result + hash.hashCode();
+        result = 89 * result + timestamp.hashCode();
+        result = 89 * result + operation.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Event other = (Event) obj;
+        if (seq != other.seq) {
+            return false;
+        }
+        if (!hash.equals(other.hash)) {
+            return false;
+        }
+        if (!timestamp.equals(other.timestamp)) {
+            return false;
+        }
+        if (operation != other.operation) {
+            return false;
+        }
+        return true;
     }
 
     public static class EventBuilder {
@@ -42,9 +80,6 @@ public class Event {
         private Hash hash;
         private Date timestamp;
         private Operation operation;
-
-        private EventBuilder() {
-        }
 
         public EventBuilder withSeq(long seq) {
             this.seq = seq;

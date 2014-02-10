@@ -19,7 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Config;
-import static store.common.JsonUtil.hasStringValue;
+import static store.common.json.JsonUtil.hasStringValue;
 import store.server.RepositoryManager;
 import store.server.exception.BadRequestException;
 

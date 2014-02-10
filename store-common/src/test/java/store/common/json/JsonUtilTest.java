@@ -1,4 +1,4 @@
-package store.common;
+package store.common.json;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,19 +13,24 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import store.common.Config;
+import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.Event;
 import store.common.Event.EventBuilder;
-import static store.common.JsonUtil.hasBooleanValue;
-import static store.common.JsonUtil.hasStringValue;
-import static store.common.JsonUtil.readConfig;
-import static store.common.JsonUtil.readContentInfo;
-import static store.common.JsonUtil.readContentInfos;
-import static store.common.JsonUtil.readHashes;
-import static store.common.JsonUtil.writeConfig;
-import static store.common.JsonUtil.writeContentInfo;
-import static store.common.JsonUtil.writeContentInfos;
-import static store.common.JsonUtil.writeEvents;
-import static store.common.JsonUtil.writeHashes;
+import store.common.Hash;
+import store.common.Operation;
+import static store.common.json.JsonUtil.hasBooleanValue;
+import static store.common.json.JsonUtil.hasStringValue;
+import static store.common.json.JsonUtil.readConfig;
+import static store.common.json.JsonUtil.readContentInfo;
+import static store.common.json.JsonUtil.readContentInfos;
+import static store.common.json.JsonUtil.readHashes;
+import static store.common.json.JsonUtil.writeConfig;
+import static store.common.json.JsonUtil.writeContentInfo;
+import static store.common.json.JsonUtil.writeContentInfos;
+import static store.common.json.JsonUtil.writeEvents;
+import static store.common.json.JsonUtil.writeHashes;
 import store.common.value.Value;
 
 /**

@@ -42,11 +42,11 @@ import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
-import static store.common.JsonUtil.readContentInfo;
-import static store.common.JsonUtil.readContentInfos;
-import static store.common.JsonUtil.readEvents;
-import static store.common.JsonUtil.readHashes;
-import static store.common.JsonUtil.writeContentInfo;
+import static store.common.json.JsonUtil.readContentInfo;
+import static store.common.json.JsonUtil.readContentInfos;
+import static store.common.json.JsonUtil.readEvents;
+import static store.common.json.JsonUtil.readHashes;
+import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.metadata.MetadataUtil.metadata;
 
 /**

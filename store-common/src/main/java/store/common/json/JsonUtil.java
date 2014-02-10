@@ -1,16 +1,13 @@
-package store.common;
+package store.common.json;
 
-import static com.google.common.io.BaseEncoding.base16;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
@@ -19,22 +16,24 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
-import javax.json.JsonValue;
 import static javax.json.JsonValue.ValueType.FALSE;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
+import store.common.Config;
+import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.Event;
 import store.common.Event.EventBuilder;
-import store.common.value.Value;
-import store.common.value.ValueType;
+import store.common.Hash;
+import store.common.Operation;
+import static store.common.json.ValueReading.readMap;
+import static store.common.json.ValueWriting.writeMap;
 
 /**
  * Utils for reading and writing JSON.
  */
 public final class JsonUtil {
 
-    private static final String VALUE = "value";
-    private static final String TYPE = "type";
     private static final String HASH = "hash";
     private static final String REV = "rev";
     private static final String PARENTS = "parents";
@@ -187,120 +186,6 @@ public final class JsonUtil {
                 .withLength(json.getJsonNumber(LENGTH).longValue())
                 .withMetadata(readMap(json.getJsonObject(METADATA)))
                 .build();
-    }
-
-    private static JsonObjectBuilder writeMap(Map<String, Value> map) {
-        JsonObjectBuilder json = createObjectBuilder();
-        for (Entry<String, Value> entry : map.entrySet()) {
-            json.add(entry.getKey(), writeValue(entry.getValue()));
-        }
-        return json;
-    }
-
-    private static Map<String, Value> readMap(JsonObject json) {
-        Map<String, Value> map = new HashMap<>();
-        for (String key : json.keySet()) {
-            map.put(key, readValue(json.get(key)));
-        }
-        return map;
-    }
-
-    private static JsonArrayBuilder writeList(List< Value> list) {
-        JsonArrayBuilder array = createArrayBuilder();
-        for (Value value : list) {
-            array.add(writeValue(value));
-        }
-        return array;
-    }
-
-    private static List< Value> readList(JsonArray array) {
-        List< Value> list = new ArrayList<>(array.size());
-        for (JsonValue json : array.getValuesAs(JsonValue.class)) {
-            list.add(readValue(json));
-        }
-        return list;
-    }
-
-    private static JsonValue writeValue(Value value) {
-        JsonObjectBuilder json = createObjectBuilder();
-        json.add(TYPE, value.type().name());
-        switch (value.type()) {
-            case NULL:
-                return json.addNull(VALUE).build();
-
-            case BYTE:
-            case BYTE_ARRAY:
-                return json.add(VALUE, value.asHexadecimalString()).build();
-
-            case BOOLEAN:
-                return json.add(VALUE, value.asBoolean()).build();
-
-            case INTEGER:
-                return json.add(VALUE, value.asInt()).build();
-
-            case LONG:
-                return json.add(VALUE, value.asLong()).build();
-
-            case BIG_DECIMAL:
-                return json.add(VALUE, value.asBigDecimal()).build();
-
-            case STRING:
-                return json.add(VALUE, value.asString()).build();
-
-            case DATE:
-                return json.add(VALUE, value.asDate().getTime()).build();
-
-            case MAP:
-                return json.add(VALUE, writeMap(value.asMap())).build();
-
-            case LIST:
-                return json.add(VALUE, writeList(value.asList())).build();
-
-            default:
-                throw new IllegalArgumentException(value.type().toString());
-        }
-    }
-
-    private static Value readValue(JsonValue value) {
-        JsonObject json = (JsonObject) value;
-        ValueType type = ValueType.valueOf(json.getString(TYPE));
-        switch (type) {
-            case NULL:
-                return Value.ofNull();
-
-            case BYTE:
-                return Value.of(base16().decode(json.getString(VALUE))[0]);
-
-            case BYTE_ARRAY:
-                return Value.of(base16().decode(json.getString(VALUE)));
-
-            case BOOLEAN:
-                return Value.of(json.getBoolean(VALUE));
-
-            case INTEGER:
-                return Value.of(json.getInt(VALUE));
-
-            case LONG:
-                return Value.of(json.getJsonNumber(VALUE).longValueExact());
-
-            case BIG_DECIMAL:
-                return Value.of(json.getJsonNumber(VALUE).bigDecimalValue());
-
-            case STRING:
-                return Value.of(json.getString(VALUE));
-
-            case DATE:
-                return Value.of(new Date(json.getJsonNumber(VALUE).longValueExact()));
-
-            case MAP:
-                return Value.of(readMap(json.getJsonObject(VALUE)));
-
-            case LIST:
-                return Value.of(readList(json.getJsonArray(VALUE)));
-
-            default:
-                throw new IllegalArgumentException(type.toString());
-        }
     }
 
     /**

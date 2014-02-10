@@ -1,15 +1,13 @@
 package store.common.io;
 
-import static com.google.common.base.Charsets.UTF_8;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import static store.common.io.BinaryConstants.*;
+import static store.common.io.Encoding.encodeKey;
+import static store.common.io.Encoding.encodeValue;
 import store.common.value.Value;
-import static store.common.value.ValueType.*;
 
 /**
  * A JSON-like binary encoder with a fluent API.
@@ -22,7 +20,6 @@ import static store.common.value.ValueType.*;
  */
 public final class ObjectEncoder {
 
-    private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     ByteArrayBuilder arrayBuilder = new ByteArrayBuilder();
 
     /**
@@ -32,8 +29,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder putNull(String key) {
-        arrayBuilder.append(encodeType(NULL))
-                .append(encodeKey(key));
+        put(key, Value.ofNull());
         return this;
     }
 
@@ -45,9 +41,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, byte[] value) {
-        arrayBuilder.append(encodeType(BYTE_ARRAY))
-                .append(encodeKey(key))
-                .append(encodeRaw(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -59,9 +53,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, boolean value) {
-        arrayBuilder.append(encodeType(BOOLEAN))
-                .append(encodeKey(key))
-                .append(encodeBoolean(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -73,9 +65,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, byte value) {
-        arrayBuilder.append(encodeType(BYTE))
-                .append(encodeKey(key))
-                .append(encodeByte(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -87,9 +77,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, int value) {
-        arrayBuilder.append(encodeType(INTEGER))
-                .append(encodeKey(key))
-                .append(encodeInt(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -101,9 +89,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, long value) {
-        arrayBuilder.append(encodeType(LONG))
-                .append(encodeKey(key))
-                .append(encodeLong(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -115,9 +101,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, String value) {
-        arrayBuilder.append(encodeType(STRING))
-                .append(encodeKey(key))
-                .append(encodeString(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -129,9 +113,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, BigDecimal value) {
-        arrayBuilder.append(encodeType(BIG_DECIMAL))
-                .append(encodeKey(key))
-                .append(encodeBigDecimal(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -143,9 +125,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, Date value) {
-        arrayBuilder.append(encodeType(DATE))
-                .append(encodeKey(key))
-                .append(encodeDate(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -157,9 +137,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, Map<String, Value> value) {
-        arrayBuilder.append(encodeType(MAP))
-                .append(encodeKey(key))
-                .append(encodeMap(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -171,9 +149,7 @@ public final class ObjectEncoder {
      * @return This encoder instance.
      */
     public ObjectEncoder put(String key, List<Value> value) {
-        arrayBuilder.append(encodeType(LIST))
-                .append(encodeKey(key))
-                .append(encodeList(value));
+        put(key, Value.of(value));
         return this;
     }
 
@@ -198,100 +174,5 @@ public final class ObjectEncoder {
      */
     public byte[] build() {
         return arrayBuilder.prependSizeAndBuild();
-    }
-
-    private static byte[] encodeKey(String key) {
-        byte[] bytes = key.getBytes(UTF_8);
-        return new ByteArrayBuilder(bytes.length + 1)
-                .append(bytes)
-                .append(NULL_BYTE)
-                .build();
-    }
-
-    private static byte[] encodeRaw(byte[] value) {
-        return new ByteArrayBuilder(value.length + 4)
-                .append(encodeInt(value.length))
-                .append(value)
-                .build();
-    }
-
-    private static byte[] encodeBoolean(boolean value) {
-        return new byte[]{value ? TRUE : FALSE};
-    }
-
-    private static byte[] encodeByte(byte value) {
-        return new byte[]{value};
-    }
-
-    private static byte[] encodeInt(int value) {
-        return ByteBuffer.allocate(4)
-                .putInt(value)
-                .array();
-    }
-
-    private static byte[] encodeLong(long value) {
-        return ByteBuffer.allocate(8)
-                .putLong(value)
-                .array();
-    }
-
-    private static byte[] encodeBigDecimal(BigDecimal value) {
-        return encodeString(value.toString());
-    }
-
-    private static byte[] encodeString(String value) {
-        return encodeRaw(value.getBytes(UTF_8));
-    }
-
-    private static byte[] encodeDate(Date value) {
-        return encodeLong(value.getTime());
-    }
-
-    private static byte[] encodeMap(Map<String, Value> value) {
-        ByteArrayBuilder builder = new ByteArrayBuilder();
-        for (Entry<String, Value> entry : value.entrySet()) {
-            builder.append(encodeType(entry.getValue().type()))
-                    .append(encodeKey(entry.getKey()))
-                    .append(encodeValue(entry.getValue()));
-        }
-        return builder.prependSizeAndBuild();
-    }
-
-    private static byte[] encodeList(List<Value> value) {
-        ByteArrayBuilder builder = new ByteArrayBuilder();
-        for (Value item : value) {
-            builder.append(encodeType(item.type()))
-                    .append(encodeValue(item));
-        }
-        return builder.prependSizeAndBuild();
-    }
-
-    private static byte[] encodeValue(Value value) {
-        switch (value.type()) {
-            case NULL:
-                return EMPTY_BYTE_ARRAY;
-            case BYTE_ARRAY:
-                return encodeRaw(value.asByteArray());
-            case BOOLEAN:
-                return encodeBoolean(value.asBoolean());
-            case BYTE:
-                return encodeByte(value.asByte());
-            case INTEGER:
-                return encodeInt(value.asInt());
-            case LONG:
-                return encodeLong(value.asLong());
-            case BIG_DECIMAL:
-                return encodeBigDecimal(value.asBigDecimal());
-            case STRING:
-                return encodeString(value.asString());
-            case DATE:
-                return encodeDate(value.asDate());
-            case MAP:
-                return encodeMap(value.asMap());
-            case LIST:
-                return encodeList(value.asList());
-            default:
-                throw new IllegalArgumentException(value.type().toString());
-        }
     }
 }

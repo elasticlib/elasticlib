@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import static store.common.io.Decoding.decodeMap;
 import store.common.value.Value;
 
 /**
@@ -24,7 +25,7 @@ public class ObjectDecoder {
      * @param bytes A JSON-like binary structure.
      */
     public ObjectDecoder(byte[] bytes) {
-        map = unmodifiableMap(new Decoder(bytes).decode());
+        map = unmodifiableMap(decodeMap(new ByteArrayReader(bytes), bytes.length));
     }
 
     /**

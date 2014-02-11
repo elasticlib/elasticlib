@@ -136,11 +136,11 @@ public class ContentInfo {
 
         public ContentInfo computeRevAndBuild() {
             ObjectEncoder encoder = new ObjectEncoder()
-                    .put("hash", hash.value());
+                    .put("hash", hash.getBytes());
 
             List<Value> list = new ArrayList<>();
             for (Hash parent : parents) {
-                list.add(Value.of(parent.value()));
+                list.add(Value.of(parent.getBytes()));
             }
             encoder.put("parents", list);
             if (deleted) {

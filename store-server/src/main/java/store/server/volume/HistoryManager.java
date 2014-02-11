@@ -218,7 +218,7 @@ class HistoryManager {
     private static byte[] bytes(Event event) {
         return new ObjectEncoder()
                 .put("seq", event.getSeq())
-                .put("hash", event.getHash().value())
+                .put("hash", event.getHash().getBytes())
                 .put("timestamp", event.getTimestamp())
                 .put("operation", event.getOperation().value())
                 .build();

@@ -1,5 +1,6 @@
 package store.common.json;
 
+import static com.google.common.io.BaseEncoding.base16;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
 import java.util.Date;
@@ -12,7 +13,6 @@ import javax.json.JsonValue;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import store.common.Hash;
 import static store.common.json.ValueReading.readValue;
 import static store.common.json.ValueWriting.writeValue;
 import store.common.value.Value;
@@ -42,7 +42,7 @@ public class ValueReadingAndWritingTest {
                 .add("value", "1a")
                 .build());
 
-        put(Value.of(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb").value()),
+        put(Value.of(base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb")),
             createObjectBuilder()
                 .add("type", "BYTE_ARRAY")
                 .add("value", "8d5f3c77e94a0cad3a32340d342135f43dbb7cbb")
@@ -163,7 +163,7 @@ public class ValueReadingAndWritingTest {
     /**
      * Test.
      *
-     * @param value Input data.
+     * @param getBytes Input data.
      * @param expected Expected Output data.
      */
     @Test(dataProvider = "writeValueDataProvider")

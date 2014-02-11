@@ -3,38 +3,60 @@ package store.common;
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;
 
+/**
+ * Represents a Hash.
+ * <p>
+ * Wraps bare bytes and provides additionnal operations.<br>
+ * Is comparable in order to sort hashes in ascending lexicographical order over their encoded form.
+ */
 public final class Hash implements Comparable<Hash> {
 
-    private final byte[] value;
+    private final byte[] bytes;
 
-    public Hash(byte[] value) {
-        this.value = Arrays.copyOf(value, value.length);
+    /**
+     * Byte array based constructor.
+     *
+     * @param bytes A byte array.
+     */
+    public Hash(byte[] bytes) {
+        this.bytes = Arrays.copyOf(bytes, bytes.length);
     }
 
+    /**
+     * Hexadecimal string based constructor.
+     *
+     * @param encoded Hexadecimal encoded bytes. Case unsensitive.
+     */
     public Hash(String encoded) {
         this(base16()
                 .lowerCase()
                 .decode(encoded.toLowerCase()));
     }
 
-    public final byte[] value() {
-        return Arrays.copyOf(value, value.length);
+    /**
+     * @return This hash as a byte array.
+     */
+    public byte[] getBytes() {
+        return Arrays.copyOf(bytes, bytes.length);
     }
 
-    public final String encode() {
+    /**
+     * @return This hash encoded as an hexadecimal lower-case string.
+     */
+    public String encode() {
         return base16()
                 .lowerCase()
-                .encode(value);
+                .encode(bytes);
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return encode();
     }
 
     @Override
-    public final int hashCode() {
-        return Arrays.hashCode(value);
+    public int hashCode() {
+        return Arrays.hashCode(bytes);
     }
 
     @Override
@@ -44,9 +66,9 @@ public final class Hash implements Comparable<Hash> {
 
     @Override
     public final boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != this.getClass()) {
+        if (obj == null || obj.getClass() != getClass()) {
             return false;
         }
-        return Arrays.equals(value, Hash.class.cast(obj).value);
+        return Arrays.equals(bytes, Hash.class.cast(obj).bytes);
     }
 }

@@ -116,12 +116,12 @@ class InfoManager {
 
     private static byte[] bytes(ContentInfo contentInfo) {
         ObjectEncoder encoder = new ObjectEncoder()
-                .put("hash", contentInfo.getHash().value())
-                .put("rev", contentInfo.getRev().value());
+                .put("hash", contentInfo.getHash().getBytes())
+                .put("rev", contentInfo.getRev().getBytes());
 
         List<Value> list = new ArrayList<>();
         for (Hash parent : contentInfo.getParents()) {
-            list.add(Value.of(parent.value()));
+            list.add(Value.of(parent.getBytes()));
         }
         encoder.put("parents", list);
         if (contentInfo.isDeleted()) {

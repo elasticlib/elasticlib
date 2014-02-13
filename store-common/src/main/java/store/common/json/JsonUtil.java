@@ -149,6 +149,7 @@ public final class JsonUtil {
     public static JsonObject writeContentInfo(ContentInfo contentInfo) {
         JsonObjectBuilder builder = createObjectBuilder()
                 .add(HASH, contentInfo.getHash().encode())
+                .add(LENGTH, contentInfo.getLength())
                 .add(REV, contentInfo.getRev().encode());
 
         JsonArrayBuilder parents = createArrayBuilder();
@@ -160,7 +161,6 @@ public final class JsonUtil {
             builder.add(DELETED, true);
         }
         return builder
-                .add(LENGTH, contentInfo.getLength())
                 .add(METADATA, writeMap(contentInfo.getMetadata()))
                 .build();
     }
@@ -172,20 +172,19 @@ public final class JsonUtil {
      * @return A contentInfo instance.
      */
     public static ContentInfo readContentInfo(JsonObject json) {
-        ContentInfoBuilder builder = new ContentInfoBuilder()
-                .withHash(new Hash(json.getString(HASH)))
-                .withRev(new Hash(json.getString(REV)));
-
-        for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(JsonString.class)) {
+        ContentInfoBuilder builder = new ContentInfoBuilder();
+        for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(
+                JsonString.class)) {
             builder.withParent(new Hash(value.getString()));
         }
         if (json.containsKey(DELETED)) {
             builder.withDeleted(json.getBoolean(DELETED));
         }
         return builder
+                .withHash(new Hash(json.getString(HASH)))
                 .withLength(json.getJsonNumber(LENGTH).longValue())
                 .withMetadata(readMap(json.getJsonObject(METADATA)))
-                .build();
+                .build(new Hash(json.getString(REV)));
     }
 
     /**

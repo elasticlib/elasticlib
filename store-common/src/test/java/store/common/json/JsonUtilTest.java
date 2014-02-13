@@ -64,10 +64,9 @@ public class JsonUtilTest {
 
         CONTENT_INFOS.put(HASHES[0], new ContentInfoBuilder()
                 .withHash(new Hash(HASHES[0]))
-                .withRev(new Hash(REV[0]))
                 .withLength(10)
                 .with("text", Value.of("ipsum lorem"))
-                .build());
+                .build(new Hash(REV[0])));
 
         CONTENT_INFOS_JSON.put(HASHES[0], createObjectBuilder()
                 .add("hash", HASHES[0])
@@ -82,10 +81,9 @@ public class JsonUtilTest {
 
         CONTENT_INFOS.put(HASHES[1], new ContentInfoBuilder()
                 .withHash(new Hash(HASHES[1]))
-                .withRev(new Hash(REV[1]))
-                .withParent(new Hash(REV[0]))
                 .withLength(120)
-                .build());
+                .withParent(new Hash(REV[0]))
+                .build(new Hash(REV[1])));
 
         CONTENT_INFOS_JSON.put(HASHES[1], createObjectBuilder()
                 .add("hash", HASHES[1])

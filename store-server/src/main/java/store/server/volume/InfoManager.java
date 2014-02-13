@@ -117,6 +117,7 @@ class InfoManager {
     private static byte[] bytes(ContentInfo contentInfo) {
         ObjectEncoder encoder = new ObjectEncoder()
                 .put("hash", contentInfo.getHash().getBytes())
+                .put("length", contentInfo.getLength())
                 .put("rev", contentInfo.getRev().getBytes());
 
         List<Value> list = new ArrayList<>();
@@ -128,7 +129,6 @@ class InfoManager {
             encoder.put("deleted", true);
         }
         return encoder
-                .put("length", contentInfo.getLength())
                 .put("metadata", contentInfo.getMetadata())
                 .build();
     }
@@ -138,9 +138,7 @@ class InfoManager {
         try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
-                ContentInfoBuilder builder = new ContentInfoBuilder()
-                        .withHash(new Hash(objectDecoder.getByteArray("hash")))
-                        .withRev(new Hash(objectDecoder.getByteArray("rev")));
+                ContentInfoBuilder builder = new ContentInfoBuilder();
                 for (Object obj : objectDecoder.getList("parents")) {
                     builder.withParent(new Hash((byte[]) obj));
                 }
@@ -148,9 +146,10 @@ class InfoManager {
                     builder.withDeleted(objectDecoder.getBoolean("deleted"));
                 }
                 ContentInfo info = builder
+                        .withHash(new Hash(objectDecoder.getByteArray("hash")))
                         .withLength(objectDecoder.getLong("length"))
                         .withMetadata(objectDecoder.getMap("metadata"))
-                        .build();
+                        .build(new Hash(objectDecoder.getByteArray("rev")));
                 entries.add(new Entry(streamDecoder.position(), info));
             }
         }

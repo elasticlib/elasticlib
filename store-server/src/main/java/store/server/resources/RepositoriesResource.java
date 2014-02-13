@@ -232,23 +232,6 @@ public class RepositoriesResource {
     }
 
     /**
-     * Create a new content.
-     *
-     * @see postContent(String, FormDataMultipart)
-     * @param name repository name
-     * @param hash content hash
-     * @param formData entity form data
-     * @return HTTP response
-     */
-    @PUT
-    @Path("{name}/content/{hash}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response putContent(@PathParam("name") String name, @PathParam("hash") Hash hash, FormDataMultipart formData) {
-        // TODO à implémenter
-        return Response.status(NOT_IMPLEMENTED).build();
-    }
-
-    /**
      * Delete a content.
      * <p>
      * Response:<br>

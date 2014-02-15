@@ -182,11 +182,23 @@ public class ContentInfoTree {
 
         private final Map<Hash, ContentInfo> nodes = new HashMap<>();
 
+        /**
+         * Add a revision.
+         *
+         * @param info Revision to add.
+         * @return this
+         */
         public InfoTreeBuilder add(ContentInfo info) {
             nodes.put(info.getRev(), info);
             return this;
         }
 
+        /**
+         * Add some revisions.
+         *
+         * @param infos Revisions to add.
+         * @return this
+         */
         public InfoTreeBuilder addAll(Collection<ContentInfo> infos) {
             for (ContentInfo info : infos) {
                 nodes.put(info.getRev(), info);
@@ -194,6 +206,11 @@ public class ContentInfoTree {
             return this;
         }
 
+        /**
+         * Build tree.
+         *
+         * @return A new ContentInfoTree instance.
+         */
         public ContentInfoTree build() {
             return new ContentInfoTree(nodes);
         }

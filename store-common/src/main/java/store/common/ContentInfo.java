@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSortedSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +33,7 @@ public class ContentInfo {
         hash = requireNonNull(builder.hash);
         length = requireNonNull(builder.length);
         rev = requireNonNull(builder.rev);
-        parents = new UnmodifiableSortedSet<>(builder.parents);
+        parents = unmodifiableSortedSet(builder.parents);
         deleted = requireNonNull(builder.deleted);
         metadata = unmodifiableMap(builder.metadata);
     }

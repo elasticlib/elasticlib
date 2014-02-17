@@ -56,7 +56,7 @@ public class ContentInfoTree {
     private static SortedSet<Hash> tail(Map<Hash, ContentInfo> nodes) {
         SortedSet<Hash> tail = new TreeSet<>();
         for (ContentInfo info : nodes.values()) {
-            if (info.getParents().isEmpty()) {
+            if (intersection(info.getParents(), nodes.keySet()).isEmpty()) {
                 tail.add(info.getRev());
             }
         }
@@ -85,7 +85,8 @@ public class ContentInfoTree {
     }
 
     /**
-     * Provides tail revisions hashes of this tree, those which do not have any parent.
+     * Provides tail revisions hashes of this tree, those which do not have any parent. Tail also includes revisions for
+     * which all parents are unknown.
      *
      * @return A sorted set of revision hashes.
      */
@@ -272,9 +273,11 @@ public class ContentInfoTree {
 
     private Set<ContentInfo> ancestors(ContentInfo info, Set<ContentInfo> seed) {
         for (Hash rev : info.getParents()) {
-            ContentInfo parent = get(rev);
-            seed.add(parent);
-            ancestors(parent, seed);
+            if (contains(rev)) {
+                ContentInfo parent = get(rev);
+                seed.add(parent);
+                ancestors(parent, seed);
+            }
         }
         return seed;
     }

@@ -186,14 +186,15 @@ public class ContentInfoTree {
         }
         Iterator<Hash> headIt = head.iterator();
         ContentInfo mergeHead = get(headIt.next());
-        ContentInfoTree copy = new ContentInfoTree(nodes);
+        ContentInfoTree workTree = this;
         while (headIt.hasNext()) {
-            Optional<ContentInfo> merge = copy.merge(mergeHead, get(headIt.next()));
-            if (merge.isPresent()) {
-                mergeHead = merge.get();
-                copy = copy.add(mergeHead);
-            } else {
+            Optional<ContentInfo> merge = workTree.merge(mergeHead, get(headIt.next()));
+            if (!merge.isPresent()) {
                 return this;
+            }
+            mergeHead = merge.get();
+            if (headIt.hasNext()) {
+                workTree = workTree.add(mergeHead);
             }
         }
         return add(new ContentInfoBuilder()
@@ -207,7 +208,7 @@ public class ContentInfoTree {
 
     private Optional<ContentInfo> merge(ContentInfo left, ContentInfo right) {
         if (left.isDeleted() != right.isDeleted()) {
-            // No automatic merge in this particular case, its a conflict.
+            // No automatic merge in this particular case, it is a conflict.
             return Optional.absent();
         }
         if (left.getMetadata().equals(right.getMetadata())) {
@@ -226,14 +227,15 @@ public class ContentInfoTree {
     private Optional<ContentInfo> recursiveThreeWayMerge(ContentInfo left, ContentInfo right, Set<ContentInfo> ancestors) {
         Iterator<ContentInfo> ancestorsIt = ancestors.iterator();
         ContentInfo virtualAncestor = ancestorsIt.next();
-        ContentInfoTree copy = new ContentInfoTree(nodes);
+        ContentInfoTree workTree = this;
         while (ancestorsIt.hasNext()) {
-            Optional<ContentInfo> merge = copy.merge(virtualAncestor, ancestorsIt.next());
-            if (merge.isPresent()) {
-                virtualAncestor = merge.get();
-                copy = copy.add(virtualAncestor);
-            } else {
+            Optional<ContentInfo> merge = workTree.merge(virtualAncestor, ancestorsIt.next());
+            if (!merge.isPresent()) {
                 return Optional.absent();
+            }
+            virtualAncestor = merge.get();
+            if (ancestorsIt.hasNext()) {
+                workTree = workTree.add(virtualAncestor);
             }
         }
         return threeWayMerge(left, right, virtualAncestor.getMetadata());

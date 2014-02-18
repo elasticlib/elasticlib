@@ -11,6 +11,7 @@ import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.Config;
@@ -39,7 +40,7 @@ import store.common.value.Value;
 public class JsonUtilTest {
 
     private static final String[] HASHES;
-    private static final String[] REV;
+    private static final String[] REVS;
     private static final JsonArray HASHES_ARRAY;
     private static final Map<String, ContentInfo> CONTENT_INFOS = new HashMap<>();
     private static final Map<String, JsonObject> CONTENT_INFOS_JSON = new HashMap<>();
@@ -47,14 +48,28 @@ public class JsonUtilTest {
     private static final JsonObject CONFIG_JSON;
     private static final List<Event> EVENTS = new ArrayList<>();
     private static final JsonArray EVENTS_ARRAY;
+    private static final String TITLE = "title";
+    private static final String TYPE = "type";
+    private static final String PROPERTIES = "properties";
+    private static final String HASH = "hash";
+    private static final String REV = "rev";
+    private static final String PARENTS = "parents";
+    private static final String LENGTH = "length";
+    private static final String SCHEMA = "schema";
+    private static final String METADATA = "metadata";
+    private static final String SEQ = "seq";
+    private static final String TIMESTAMP = "timestamp";
+    private static final String OPERATION = "operation";
+    private static final String REPOSITORIES = "repositories";
+    private static final String SYNC = "sync";
 
     static {
         HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
                               "0827c43f0aad546501f99b11f0bd44be42d68870",
                               "39819150ee99549a8c0a59782169bb3be65b46a4"};
 
-        REV = new String[]{"0d99dd9895a2a1c485e0c75f79f92cc14457bb62",
-                           "a0b87ac4b04a0bed394517d0b01792635531aa42"};
+        REVS = new String[]{"0d99dd9895a2a1c485e0c75f79f92cc14457bb62",
+                            "a0b87ac4b04a0bed394517d0b01792635531aa42"};
 
         HASHES_ARRAY = createArrayBuilder()
                 .add(HASHES[0])
@@ -66,31 +81,44 @@ public class JsonUtilTest {
                 .withHash(new Hash(HASHES[0]))
                 .withLength(10)
                 .with("text", Value.of("ipsum lorem"))
-                .build(new Hash(REV[0])));
+                .build(new Hash(REVS[0])));
+
+        JsonObjectBuilder schema0 = createObjectBuilder()
+                .add(TITLE, METADATA)
+                .add(TYPE, "MAP")
+                .add(PROPERTIES, createObjectBuilder()
+                .add("text", createObjectBuilder()
+                .add(TYPE, "STRING")));
 
         CONTENT_INFOS_JSON.put(HASHES[0], createObjectBuilder()
-                .add("hash", HASHES[0])
-                .add("rev", REV[0])
-                .add("parents", createArrayBuilder())
-                .add("length", 10)
-                .add("metadata", createObjectBuilder()
-                .add("text", createObjectBuilder()
-                .add("type", "STRING")
-                .add("value", "ipsum lorem")))
+                .add(HASH, HASHES[0])
+                .add(LENGTH, 10)
+                .add(REV, REVS[0])
+                .add(PARENTS, createArrayBuilder())
+                .add(SCHEMA, schema0)
+                .add(METADATA, createObjectBuilder()
+                .add("text", "ipsum lorem"))
                 .build());
 
         CONTENT_INFOS.put(HASHES[1], new ContentInfoBuilder()
                 .withHash(new Hash(HASHES[1]))
                 .withLength(120)
-                .withParent(new Hash(REV[0]))
-                .build(new Hash(REV[1])));
+                .withParent(new Hash(REVS[0]))
+                .build(new Hash(REVS[1])));
+
+        JsonObject schema1 = createObjectBuilder()
+                .add(TITLE, METADATA)
+                .add(TYPE, "MAP")
+                .add(PROPERTIES, createObjectBuilder())
+                .build();
 
         CONTENT_INFOS_JSON.put(HASHES[1], createObjectBuilder()
-                .add("hash", HASHES[1])
-                .add("rev", REV[1])
-                .add("parents", createArrayBuilder().add(REV[0]))
-                .add("length", 120)
-                .add("metadata", createObjectBuilder())
+                .add(HASH, HASHES[1])
+                .add(LENGTH, 120)
+                .add(REV, REVS[1])
+                .add(PARENTS, createArrayBuilder().add(REVS[0]))
+                .add(SCHEMA, schema1)
+                .add(METADATA, createObjectBuilder())
                 .build());
 
         CONFIG = new Config();
@@ -99,8 +127,8 @@ public class JsonUtilTest {
         CONFIG.sync("primary", "secondary");
 
         CONFIG_JSON = createObjectBuilder()
-                .add("repositories", createArrayBuilder().add("/repo/primary").add("/repo/secondary"))
-                .add("sync", createObjectBuilder().add("primary", createArrayBuilder().add("secondary")))
+                .add(REPOSITORIES, createArrayBuilder().add("/repo/primary").add("/repo/secondary"))
+                .add(SYNC, createObjectBuilder().add("primary", createArrayBuilder().add("secondary")))
                 .build();
 
         EVENTS.add(new EventBuilder()
@@ -119,15 +147,15 @@ public class JsonUtilTest {
 
         EVENTS_ARRAY = createArrayBuilder()
                 .add(createObjectBuilder()
-                .add("seq", 0)
-                .add("hash", HASHES[0])
-                .add("timestamp", 0)
-                .add("operation", "PUT"))
+                .add(SEQ, 0)
+                .add(HASH, HASHES[0])
+                .add(TIMESTAMP, 0)
+                .add(OPERATION, "PUT"))
                 .add(createObjectBuilder()
-                .add("seq", 1)
-                .add("hash", HASHES[1])
-                .add("timestamp", 123456)
-                .add("operation", "DELETE"))
+                .add(SEQ, 1)
+                .add(HASH, HASHES[1])
+                .add(TIMESTAMP, 123456)
+                .add(OPERATION, "DELETE"))
                 .build();
     }
 

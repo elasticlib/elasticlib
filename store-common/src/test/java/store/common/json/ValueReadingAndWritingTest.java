@@ -1,20 +1,24 @@
 package store.common.json;
 
+import com.google.common.collect.ImmutableMap;
 import static com.google.common.io.BaseEncoding.base16;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonNumber;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static store.common.json.ValueReading.readValue;
 import static store.common.json.ValueWriting.writeValue;
+import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.BOOLEAN;
@@ -31,84 +35,74 @@ public class ValueReadingAndWritingTest {
 
     static {
         put(Value.ofNull(),
-            createObjectBuilder()
-                .add("type", "NULL")
-                .addNull("value")
-                .build());
+            JsonValue.NULL);
 
         put(Value.of((byte) 0x1a),
-            createObjectBuilder()
-                .add("type", "BYTE")
-                .add("value", "1a")
-                .build());
+            jsonString("1a"));
 
         put(Value.of(base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb")),
-            createObjectBuilder()
-                .add("type", "BYTE_ARRAY")
-                .add("value", "8d5f3c77e94a0cad3a32340d342135f43dbb7cbb")
-                .build());
+            jsonString("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"));
+
 
         put(Value.of(true),
-            createObjectBuilder()
-                .add("type", "BOOLEAN")
-                .add("value", true)
-                .build());
+            JsonValue.TRUE);
 
         put(Value.of(10),
-            createObjectBuilder()
-                .add("type", "INTEGER")
-                .add("value", 10)
-                .build());
+            jsonNumber(10));
 
         put(Value.of(120L),
-            createObjectBuilder()
-                .add("type", "LONG")
-                .add("value", 120L)
-                .build());
+            jsonNumber(120L));
 
         put(Value.of(new BigDecimal("3.14159265359")),
-            createObjectBuilder()
-                .add("type", "BIG_DECIMAL")
-                .add("value", "3.14159265359")
-                .build());
+            jsonNumber(new BigDecimal("3.14159265359")));
 
         put(Value.of("test"),
-            createObjectBuilder()
-                .add("type", "STRING")
-                .add("value", "test")
-                .build());
+            jsonString("test"));
 
         put(Value.of(new Date(1391878872)),
-            createObjectBuilder()
-                .add("type", "DATE")
-                .add("value", 1391878872)
-                .build());
+            jsonNumber(1391878872));
 
-        Map<String, Value> map = new LinkedHashMap<>();
-        map.put("num", VALUES.get(INTEGER));
-        map.put("text", VALUES.get(STRING));
-        map.put("bool", VALUES.get(BOOLEAN));
-        put(Value.of(map),
+        put(Value.of(ImmutableMap.of("num", VALUES.get(INTEGER),
+                                     "text", VALUES.get(STRING),
+                                     "bool", VALUES.get(BOOLEAN))),
             createObjectBuilder()
-                .add("type", "MAP")
-                .add("value",
-                     createObjectBuilder()
                 .add("num", JSON.get(INTEGER))
                 .add("text", JSON.get(STRING))
-                .add("bool", JSON.get(BOOLEAN)))
+                .add("bool", JSON.get(BOOLEAN))
                 .build());
 
         put(Value.of(asList(VALUES.get(INTEGER),
                             VALUES.get(STRING),
                             VALUES.get(BOOLEAN))),
-            createObjectBuilder()
-                .add("type", "LIST")
-                .add("value",
-                     createArrayBuilder()
+            createArrayBuilder()
                 .add(JSON.get(INTEGER))
                 .add(JSON.get(STRING))
-                .add(JSON.get(BOOLEAN)))
+                .add(JSON.get(BOOLEAN))
                 .build());
+    }
+
+    private static JsonString jsonString(String value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonString(0);
+    }
+
+    private static JsonNumber jsonNumber(int value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
+    }
+
+    private static JsonNumber jsonNumber(long value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
+    }
+
+    private static JsonNumber jsonNumber(BigDecimal value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
     }
 
     private static void put(Value value, JsonValue json) {
@@ -155,7 +149,7 @@ public class ValueReadingAndWritingTest {
      */
     @Test(dataProvider = "readValueDataProvider")
     public void readValueTest(JsonValue json, Value expected) {
-        assertThat(readValue(json))
+        assertThat(readValue(json, Schema.of("", expected)))
                 .as(expected.type().toString())
                 .isEqualTo(expected);
     }
@@ -163,7 +157,7 @@ public class ValueReadingAndWritingTest {
     /**
      * Test.
      *
-     * @param getBytes Input data.
+     * @param value Input data.
      * @param expected Expected Output data.
      */
     @Test(dataProvider = "writeValueDataProvider")

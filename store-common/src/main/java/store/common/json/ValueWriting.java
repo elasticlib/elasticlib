@@ -1,12 +1,17 @@
 package store.common.json;
 
+import com.google.common.base.Function;
+import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArrayBuilder;
+import javax.json.JsonNumber;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -24,94 +29,106 @@ import static store.common.value.ValueType.STRING;
 
 final class ValueWriting {
 
-    private static final String VALUE = "value";
-    private static final String TYPE = "type";
-    private static final Map<ValueType, Procedure<JsonObjectBuilder, Value>> WRITERS = new EnumMap<>(ValueType.class);
+    private static final Map<ValueType, Function<Value, JsonValue>> WRITERS = new EnumMap<>(ValueType.class);
 
     static {
-        WRITERS.put(NULL, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(NULL, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.addNull(VALUE);
+            public JsonValue apply(Value value) {
+                return JsonValue.NULL;
             }
         });
-        WRITERS.put(BYTE, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(BYTE, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asHexadecimalString());
+            public JsonValue apply(Value value) {
+                return jsonString(value.asHexadecimalString());
             }
         });
         WRITERS.put(BYTE_ARRAY, WRITERS.get(BYTE));
-        WRITERS.put(BOOLEAN, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(BOOLEAN, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asBoolean());
+            public JsonValue apply(Value value) {
+                return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
             }
         });
-        WRITERS.put(INTEGER, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(INTEGER, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asInt());
+            public JsonValue apply(Value value) {
+                return jsonNumber(value.asInt());
             }
         });
-        WRITERS.put(LONG, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(LONG, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asLong());
+            public JsonValue apply(Value value) {
+                return jsonNumber(value.asLong());
             }
         });
-        WRITERS.put(BIG_DECIMAL, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(BIG_DECIMAL, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asBigDecimal().toString());
+            public JsonValue apply(Value value) {
+                return jsonNumber(value.asBigDecimal());
             }
         });
-        WRITERS.put(STRING, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(STRING, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asString());
+            public JsonValue apply(Value value) {
+                return jsonString(value.asString());
             }
         });
-        WRITERS.put(DATE, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(DATE, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, value.asDate().getTime());
+            public JsonValue apply(Value value) {
+                return jsonNumber(value.asDate().getTime());
             }
         });
-        WRITERS.put(MAP, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(MAP, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, writeMap(value.asMap()));
+            public JsonValue apply(Value value) {
+                return writeMap(value.asMap()).build();
             }
         });
-        WRITERS.put(LIST, new Procedure<JsonObjectBuilder, Value>() {
+        WRITERS.put(LIST, new Function<Value, JsonValue>() {
             @Override
-            public void apply(JsonObjectBuilder builder, Value value) {
-                builder.add(VALUE, writeList(value.asList()));
+            public JsonValue apply(Value value) {
+                return writeList(value.asList()).build();
             }
         });
-    }
-
-    private interface Procedure<U, V> {
-
-        void apply(U u, V v);
     }
 
     private ValueWriting() {
     }
 
-    public static JsonValue writeValue(Value value) {
-        JsonObjectBuilder builder = createObjectBuilder();
-        builder.add(TYPE, value.type().name());
-        Procedure<JsonObjectBuilder, Value> proc = WRITERS.get(value.type());
+    private static JsonString jsonString(String value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonString(0);
+    }
 
-        proc.apply(builder, value);
-        return builder.build();
+    private static JsonNumber jsonNumber(int value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
+    }
+
+    private static JsonNumber jsonNumber(long value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
+    }
+
+    private static JsonNumber jsonNumber(BigDecimal value) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        builder.add(value);
+        return builder.build().getJsonNumber(0);
+    }
+
+    public static JsonValue writeValue(Value value) {
+        return WRITERS.get(value.type()).apply(value);
     }
 
     public static JsonObjectBuilder writeMap(Map<String, Value> map) {
         JsonObjectBuilder json = createObjectBuilder();
-        for (Map.Entry<String, Value> entry : map.entrySet()) {
+        for (Entry<String, Value> entry : map.entrySet()) {
             json.add(entry.getKey(), writeValue(entry.getValue()));
         }
         return json;

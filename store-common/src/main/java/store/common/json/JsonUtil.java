@@ -28,6 +28,7 @@ import store.common.Hash;
 import store.common.Operation;
 import static store.common.json.ValueReading.readMap;
 import static store.common.json.ValueWriting.writeMap;
+import store.common.json.schema.Schema;
 
 /**
  * Utils for reading and writing JSON.
@@ -39,6 +40,7 @@ public final class JsonUtil {
     private static final String PARENTS = "parents";
     private static final String DELETED = "deleted";
     private static final String LENGTH = "length";
+    private static final String SCHEMA = "schema";
     private static final String METADATA = "metadata";
     private static final String SEQ = "seq";
     private static final String TIMESTAMP = "timestamp";
@@ -161,6 +163,7 @@ public final class JsonUtil {
             builder.add(DELETED, true);
         }
         return builder
+                .add(SCHEMA, Schema.of(METADATA, contentInfo.getMetadata()).write())
                 .add(METADATA, writeMap(contentInfo.getMetadata()))
                 .build();
     }
@@ -180,10 +183,11 @@ public final class JsonUtil {
         if (json.containsKey(DELETED)) {
             builder.withDeleted(json.getBoolean(DELETED));
         }
+        Schema schema = Schema.read(json.getJsonObject(SCHEMA));
         return builder
                 .withHash(new Hash(json.getString(HASH)))
                 .withLength(json.getJsonNumber(LENGTH).longValue())
-                .withMetadata(readMap(json.getJsonObject(METADATA)))
+                .withMetadata(readMap(json.getJsonObject(METADATA), schema))
                 .build(new Hash(json.getString(REV)));
     }
 

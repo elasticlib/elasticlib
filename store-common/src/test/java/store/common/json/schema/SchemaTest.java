@@ -16,7 +16,7 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import org.fest.assertions.api.Assertions;
+import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.value.Value;
 
@@ -25,13 +25,15 @@ import store.common.value.Value;
  */
 public class SchemaTest {
 
+    private final Map<String, Value> metadata;
+    private final List<Value> listing;
     private final Schema mapSchema;
     private final Schema listSchema;
     private final JsonObject mapSchemaJson;
     private final JsonObject listSchemaJson;
 
     {
-        Map<String, Value> metadata = new LinkedHashMap<>();
+        metadata = new LinkedHashMap<>();
         metadata.put("pi", Value.of(new BigDecimal("3.1415")));
         metadata.put("checksum", Value.of(base16().lowerCase().decode("8d5f3c77e9")));
         metadata.put("text", Value.of("hello"));
@@ -39,10 +41,9 @@ public class SchemaTest {
         metadata.put("coefficients", Value.of(asList(Value.of(10), Value.of(20), Value.of(30))));
         metadata.put("mapping", Value.of(ImmutableMap.of("yes", Value.of(true),
                                                          "answer", Value.of(42))));
-
-        List<Value> listing = asList(Value.of(2014L),
-                                     Value.of("test"),
-                                     Value.of(false));
+        listing = asList(Value.of(2014L),
+                         Value.of("test"),
+                         Value.of(false));
 
         mapSchema = Schema.of("metadata", metadata);
         listSchema = Schema.of("listing", listing);
@@ -67,8 +68,58 @@ public class SchemaTest {
      * Test.
      */
     @Test
+    public void titleTest() {
+        assertThat(mapSchema.title()).isEqualTo("metadata");
+        assertThat(listSchema.title()).isEqualTo("listing");
+        assertThat(mapSchema.properties().get("pi").title()).isEmpty();
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void listPropertiesTest() {
+        listSchema.properties();
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void mapItemsTest() {
+        mapSchema.items();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void equalsTest() {
+        assertThat(mapSchema).isEqualTo(mapSchema);
+        assertThat(mapSchema).isNotEqualTo(null);
+        assertThat(mapSchema).isNotEqualTo(listSchema);
+        assertThat(listSchema).isNotEqualTo(mapSchema);
+        assertThat(mapSchema).isEqualTo(Schema.of("metadata", metadata));
+        assertThat(listSchema).isEqualTo(Schema.of("listing", listing));
+        assertThat(mapSchema).isNotEqualTo(Schema.of("", metadata));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void hashCodeTest() {
+        assertThat(mapSchema.hashCode()).isEqualTo(Schema.of("metadata", metadata).hashCode());
+        assertThat(listSchema.hashCode()).isEqualTo(Schema.of("listing", listing).hashCode());
+        assertThat(mapSchema.hashCode()).isNotEqualTo(listSchema.hashCode());
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void writeMapSchemaTest() {
-        Assertions.assertThat(mapSchema.write()).isEqualTo(mapSchemaJson);
+        assertThat(mapSchema.write()).isEqualTo(mapSchemaJson);
     }
 
     /**
@@ -76,7 +127,7 @@ public class SchemaTest {
      */
     @Test
     public void writeListSchemaTest() {
-        Assertions.assertThat(listSchema.write()).isEqualTo(listSchemaJson);
+        assertThat(listSchema.write()).isEqualTo(listSchemaJson);
     }
 
     /**
@@ -84,7 +135,7 @@ public class SchemaTest {
      */
     @Test
     public void readMapSchemaTest() {
-        Assertions.assertThat(Schema.read(mapSchemaJson)).isEqualTo(mapSchema);
+        assertThat(Schema.read(mapSchemaJson)).isEqualTo(mapSchema);
     }
 
     /**
@@ -92,6 +143,6 @@ public class SchemaTest {
      */
     @Test
     public void readListSchemaTest() {
-        Assertions.assertThat(Schema.read(listSchemaJson)).isEqualTo(listSchema);
+        assertThat(Schema.read(listSchemaJson)).isEqualTo(listSchema);
     }
 }

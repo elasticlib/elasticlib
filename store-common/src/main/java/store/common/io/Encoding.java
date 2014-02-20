@@ -11,12 +11,12 @@ import store.common.value.ValueType;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BYTE_ARRAY;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INTEGER;
-import static store.common.value.ValueType.LIST;
+import static store.common.value.ValueType.INT;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.MAP;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.STRING;
 
@@ -32,7 +32,7 @@ final class Encoding {
                 return EMPTY_BYTE_ARRAY;
             }
         });
-        FUNCTIONS.put(BYTE_ARRAY, new Function<Value, byte[]>() {
+        FUNCTIONS.put(BINARY, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return encodeByteArray(value.asByteArray());
@@ -50,7 +50,7 @@ final class Encoding {
                 return new byte[]{value.asByte()};
             }
         });
-        FUNCTIONS.put(INTEGER, new Function<Value, byte[]>() {
+        FUNCTIONS.put(INT, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return encodeInt(value.asInt());
@@ -80,7 +80,7 @@ final class Encoding {
                 return encodeLong(value.asDate().getTime());
             }
         });
-        FUNCTIONS.put(MAP, new Function<Value, byte[]>() {
+        FUNCTIONS.put(OBJECT, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 ByteArrayBuilder builder = new ByteArrayBuilder();
@@ -92,7 +92,7 @@ final class Encoding {
                 return builder.prependSizeAndBuild();
             }
         });
-        FUNCTIONS.put(LIST, new Function<Value, byte[]>() {
+        FUNCTIONS.put(ARRAY, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 ByteArrayBuilder builder = new ByteArrayBuilder();

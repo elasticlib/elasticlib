@@ -18,12 +18,12 @@ import store.common.value.ValueType;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BYTE_ARRAY;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INTEGER;
-import static store.common.value.ValueType.LIST;
+import static store.common.value.ValueType.INT;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.MAP;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.STRING;
 
@@ -44,14 +44,14 @@ final class ValueWriting {
                 return jsonString(value.asHexadecimalString());
             }
         });
-        WRITERS.put(BYTE_ARRAY, WRITERS.get(BYTE));
+        WRITERS.put(BINARY, WRITERS.get(BYTE));
         WRITERS.put(BOOLEAN, new Function<Value, JsonValue>() {
             @Override
             public JsonValue apply(Value value) {
                 return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
             }
         });
-        WRITERS.put(INTEGER, new Function<Value, JsonValue>() {
+        WRITERS.put(INT, new Function<Value, JsonValue>() {
             @Override
             public JsonValue apply(Value value) {
                 return jsonNumber(value.asInt());
@@ -81,13 +81,13 @@ final class ValueWriting {
                 return jsonNumber(value.asDate().getTime());
             }
         });
-        WRITERS.put(MAP, new Function<Value, JsonValue>() {
+        WRITERS.put(OBJECT, new Function<Value, JsonValue>() {
             @Override
             public JsonValue apply(Value value) {
                 return writeMap(value.asMap()).build();
             }
         });
-        WRITERS.put(LIST, new Function<Value, JsonValue>() {
+        WRITERS.put(ARRAY, new Function<Value, JsonValue>() {
             @Override
             public JsonValue apply(Value value) {
                 return writeList(value.asList()).build();

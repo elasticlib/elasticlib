@@ -1,0 +1,35 @@
+{
+    "title": "metadata",
+    "type": "object",
+    "properties": {
+        "pi": {
+            "type": "bigDecimal"
+        },
+        "checksum": {
+            "type": "binary"
+        },
+        "text": {
+            "type": "string"
+        },
+        "epoch": {
+            "type": "date"
+        },
+        "coefficients": {
+            "type": "array",
+            "items": {
+                "type": "int"
+            }
+        },
+        "mapping": {
+            "type": "object",
+            "properties": {
+                "yes": {
+                    "type": "boolean"
+                },
+                "answer": {
+                    "type": "int"
+                }
+            }
+        }
+    }
+}

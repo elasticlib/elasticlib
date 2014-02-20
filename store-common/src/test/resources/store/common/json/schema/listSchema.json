@@ -1,0 +1,9 @@
+{
+    "title": "listing",
+    "type": "array",
+    "items": [
+        {"type": "long"},
+        {"type": "string"},
+        {"type": "boolean"}
+    ]
+}

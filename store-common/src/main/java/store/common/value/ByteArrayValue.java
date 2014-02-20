@@ -21,7 +21,7 @@ public final class ByteArrayValue extends Value {
 
     @Override
     public ValueType type() {
-        return ValueType.BYTE_ARRAY;
+        return ValueType.BINARY;
     }
 
     @Override

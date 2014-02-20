@@ -14,7 +14,7 @@ class ListValue extends Value {
 
     @Override
     public ValueType type() {
-        return ValueType.LIST;
+        return ValueType.ARRAY;
     }
 
     @Override

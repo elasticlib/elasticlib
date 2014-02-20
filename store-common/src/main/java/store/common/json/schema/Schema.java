@@ -1,19 +1,23 @@
 package store.common.json.schema;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.requireNonNull;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import store.common.value.Value;
 import store.common.value.ValueType;
-import static store.common.value.ValueType.LIST;
-import static store.common.value.ValueType.MAP;
+import static store.common.value.ValueType.ARRAY;
+import static store.common.value.ValueType.OBJECT;
 
 /**
- * Represents a JSON schema. Allows to convert a {@link Value} into a JSON document without loss read type-information.
+ * Represents a JSON schema. Allows to convert a {@link Value} into a JSON document without loss of type-information.
  * <p>
  * Does not claim to be fully compliant with current draft standard.
  *
@@ -41,8 +45,8 @@ public class Schema {
     private final ValueType type;
 
     Schema(String title, ValueType type) {
-        this.title = title;
-        this.type = type;
+        this.title = requireNonNull(title);
+        this.type = requireNonNull(type);
     }
 
     /**
@@ -54,10 +58,10 @@ public class Schema {
      */
     public static Schema of(String title, Value value) {
         switch (value.type()) {
-            case MAP:
+            case OBJECT:
                 return new MapSchema(title, value.asMap());
 
-            case LIST:
+            case ARRAY:
                 return new ListSchema(title, value.asList());
 
             default:
@@ -95,12 +99,12 @@ public class Schema {
      */
     public static Schema read(JsonObject json) {
         String title = json.containsKey(TITLE) ? json.getString(TITLE) : "";
-        ValueType type = ValueType.valueOf(json.getString(TYPE));
+        ValueType type = ValueType.valueOf(LOWER_CAMEL.to(UPPER_UNDERSCORE, json.getString(TYPE)));
         switch (type) {
-            case MAP:
+            case OBJECT:
                 return new MapSchema(title, json);
 
-            case LIST:
+            case ARRAY:
                 return new ListSchema(title, json);
 
             default:
@@ -118,7 +122,7 @@ public class Schema {
         if (!title.isEmpty()) {
             builder.add(TITLE, title);
         }
-        builder.add(TYPE, type().name());
+        builder.add(TYPE, UPPER_UNDERSCORE.to(LOWER_CAMEL, type().name()));
         return write(builder);
     }
 
@@ -166,7 +170,7 @@ public class Schema {
 
     @Override
     public int hashCode() {
-        return write().hashCode();
+        return Objects.hashCode(title, type);
     }
 
     @Override
@@ -175,7 +179,7 @@ public class Schema {
             return false;
         }
         Schema other = (Schema) obj;
-        return write().equals(other.write());
+        return title.equals(other.title) && type.equals(other.type);
     }
 
     @Override

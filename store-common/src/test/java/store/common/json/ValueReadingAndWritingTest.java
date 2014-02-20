@@ -22,7 +22,7 @@ import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.INTEGER;
+import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.STRING;
 
 /**
@@ -62,20 +62,20 @@ public class ValueReadingAndWritingTest {
         put(Value.of(new Date(1391878872)),
             jsonNumber(1391878872));
 
-        put(Value.of(ImmutableMap.of("num", VALUES.get(INTEGER),
+        put(Value.of(ImmutableMap.of("num", VALUES.get(INT),
                                      "text", VALUES.get(STRING),
                                      "bool", VALUES.get(BOOLEAN))),
             createObjectBuilder()
-                .add("num", JSON.get(INTEGER))
+                .add("num", JSON.get(INT))
                 .add("text", JSON.get(STRING))
                 .add("bool", JSON.get(BOOLEAN))
                 .build());
 
-        put(Value.of(asList(VALUES.get(INTEGER),
+        put(Value.of(asList(VALUES.get(INT),
                             VALUES.get(STRING),
                             VALUES.get(BOOLEAN))),
             createArrayBuilder()
-                .add(JSON.get(INTEGER))
+                .add(JSON.get(INT))
                 .add(JSON.get(STRING))
                 .add(JSON.get(BOOLEAN))
                 .build());

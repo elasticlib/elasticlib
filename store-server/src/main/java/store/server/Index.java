@@ -38,15 +38,15 @@ import org.apache.tika.Tika;
 import store.common.ContentInfo;
 import store.common.Hash;
 import store.common.value.Value;
+import static store.common.value.ValueType.ARRAY;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BYTE_ARRAY;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INTEGER;
-import static store.common.value.ValueType.LIST;
+import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.MAP;
 import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidStorePathException;
@@ -114,7 +114,7 @@ public class Index {
                 return;
 
             case BYTE:
-            case INTEGER:
+            case INT:
                 document.add(new IntField(key, value.asInt(), Store.NO));
                 return;
 
@@ -134,17 +134,17 @@ public class Index {
                 document.add(new TextField(key, dateToString(value.asDate(), Resolution.SECOND), Store.NO));
                 return;
 
-            case BYTE_ARRAY:
+            case BINARY:
                 document.add(new TextField(key, base16().lowerCase().encode(value.asByteArray()), Store.NO));
                 return;
 
-            case LIST:
+            case ARRAY:
                 for (Value item : value.asList()) {
                     add(document, key, item);
                 }
                 return;
 
-            case MAP:
+            case OBJECT:
                 for (Entry<String, Value> entry : value.asMap().entrySet()) {
                     add(document, key + "." + entry.getKey(), entry.getValue());
                 }

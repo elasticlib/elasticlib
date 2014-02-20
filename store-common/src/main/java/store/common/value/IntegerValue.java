@@ -10,7 +10,7 @@ class IntegerValue extends Value {
 
     @Override
     public ValueType type() {
-        return ValueType.INTEGER;
+        return ValueType.INT;
     }
 
     @Override

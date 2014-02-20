@@ -16,12 +16,12 @@ import store.common.value.ValueType;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BYTE_ARRAY;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INTEGER;
-import static store.common.value.ValueType.LIST;
+import static store.common.value.ValueType.INT;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.MAP;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.STRING;
 
@@ -36,7 +36,7 @@ final class Decoding {
                 return Value.ofNull();
             }
         });
-        FUNCTIONS.put(BYTE_ARRAY, new Function<ByteArrayReader, Value>() {
+        FUNCTIONS.put(BINARY, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readByteArray(reader.readInt()));
@@ -62,7 +62,7 @@ final class Decoding {
                 return Value.of(reader.readByte());
             }
         });
-        FUNCTIONS.put(INTEGER, new Function<ByteArrayReader, Value>() {
+        FUNCTIONS.put(INT, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readInt());
@@ -92,13 +92,13 @@ final class Decoding {
                 return Value.of(new Date(reader.readLong()));
             }
         });
-        FUNCTIONS.put(MAP, new Function<ByteArrayReader, Value>() {
+        FUNCTIONS.put(OBJECT, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(decodeMap(reader, reader.readInt()));
             }
         });
-        FUNCTIONS.put(LIST, new Function<ByteArrayReader, Value>() {
+        FUNCTIONS.put(ARRAY, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(decodeList(reader, reader.readInt()));

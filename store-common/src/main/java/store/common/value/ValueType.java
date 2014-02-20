@@ -12,7 +12,7 @@ public enum ValueType {
     /**
      * A byte array.
      */
-    BYTE_ARRAY,
+    BINARY,
     /**
      * A boolean.
      */
@@ -24,7 +24,7 @@ public enum ValueType {
     /**
      * An integer.
      */
-    INTEGER,
+    INT,
     /**
      * A long.
      */
@@ -44,9 +44,9 @@ public enum ValueType {
     /**
      * A map of values.
      */
-    MAP,
+    OBJECT,
     /**
      * A list of values.
      */
-    LIST,
+    ARRAY,
 }

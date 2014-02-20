@@ -14,7 +14,7 @@ class MapValue extends Value {
 
     @Override
     public ValueType type() {
-        return ValueType.MAP;
+        return ValueType.OBJECT;
     }
 
     @Override

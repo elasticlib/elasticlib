@@ -1,5 +1,6 @@
 package store.common.json.schema;
 
+import com.google.common.base.Objects;
 import static com.google.common.collect.Maps.transformValues;
 import static java.util.Collections.unmodifiableMap;
 import java.util.Map;
@@ -16,12 +17,12 @@ final class MapSchema extends Schema {
     private final Map<String, Schema> properties;
 
     MapSchema(String title, Map<String, Value> map) {
-        super(title, ValueType.MAP);
+        super(title, ValueType.OBJECT);
         properties = unmodifiableMap(transformValues(map, SCHEMA_BUILDER));
     }
 
     MapSchema(String title, JsonObject jsonObject) {
-        super(title, ValueType.MAP);
+        super(title, ValueType.OBJECT);
         properties = unmodifiableMap(transformValues(jsonObject.getJsonObject(PROPERTIES), SCHEMA_READER));
     }
 
@@ -40,5 +41,19 @@ final class MapSchema extends Schema {
     @Override
     public Map<String, Schema> properties() {
         return properties;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(super.hashCode(), properties);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+        MapSchema other = (MapSchema) obj;
+        return properties.equals(other.properties);
     }
 }

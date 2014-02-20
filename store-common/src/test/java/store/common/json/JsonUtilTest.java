@@ -11,7 +11,6 @@ import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.Config;
@@ -32,6 +31,7 @@ import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
+import store.common.json.schema.Schema;
 import store.common.value.Value;
 
 /**
@@ -83,19 +83,12 @@ public class JsonUtilTest {
                 .with("text", Value.of("ipsum lorem"))
                 .build(new Hash(REVS[0])));
 
-        JsonObjectBuilder schema0 = createObjectBuilder()
-                .add(TITLE, METADATA)
-                .add(TYPE, "MAP")
-                .add(PROPERTIES, createObjectBuilder()
-                .add("text", createObjectBuilder()
-                .add(TYPE, "STRING")));
-
         CONTENT_INFOS_JSON.put(HASHES[0], createObjectBuilder()
                 .add(HASH, HASHES[0])
                 .add(LENGTH, 10)
                 .add(REV, REVS[0])
                 .add(PARENTS, createArrayBuilder())
-                .add(SCHEMA, schema0)
+                .add(SCHEMA, Schema.of("metadata", info(0).getMetadata()).write())
                 .add(METADATA, createObjectBuilder()
                 .add("text", "ipsum lorem"))
                 .build());
@@ -106,18 +99,12 @@ public class JsonUtilTest {
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])));
 
-        JsonObject schema1 = createObjectBuilder()
-                .add(TITLE, METADATA)
-                .add(TYPE, "MAP")
-                .add(PROPERTIES, createObjectBuilder())
-                .build();
-
         CONTENT_INFOS_JSON.put(HASHES[1], createObjectBuilder()
                 .add(HASH, HASHES[1])
                 .add(LENGTH, 120)
                 .add(REV, REVS[1])
                 .add(PARENTS, createArrayBuilder().add(REVS[0]))
-                .add(SCHEMA, schema1)
+                .add(SCHEMA, Schema.of("metadata", info(1).getMetadata()).write())
                 .add(METADATA, createObjectBuilder())
                 .build());
 

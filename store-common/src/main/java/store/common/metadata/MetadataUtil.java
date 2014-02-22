@@ -67,29 +67,39 @@ public final class MetadataUtil {
             String type = Splitter.on('/').split(metadata.get(Metadata.CONTENT_TYPE)).iterator().next();
             switch (type) {
                 case "text":
-                    extractor.convert(Metadata.CONTENT_ENCODING, Text.ENCODING);
+                    extractor.convertText();
                     break;
-
                 case "audio":
-                    extractor.convert(XMPDM.ARTIST, Audio.ARTIST);
-                    extractor.convert(XMPDM.ALBUM, Audio.ALBUM);
-                    extractor.convert(TikaCoreProperties.TITLE, Audio.TITLE);
-                    extractor.convert(XMPDM.GENRE, Audio.GENRE);
-                    extractor.convert(XMPDM.TRACK_NUMBER, Audio.TRACK_NUMBER);
-                    extractor.convert(XMPDM.DURATION, Audio.DURATION);
-                    extractor.convert(XMPDM.RELEASE_DATE, Audio.RELEASE_DATE);
+                    extractor.convertAudio();
                     break;
-
                 case "image":
-                    extractor.convert(TIFF.IMAGE_LENGTH, Image.HEIGHT);
-                    extractor.convert(TIFF.IMAGE_WIDTH, Image.WIDTH);
-                    extractor.convert(TIFF.ORIGINAL_DATE, Image.ORIGINAL_DATE);
+                    extractor.convertImage();
                     break;
-
                 default:
                     break;
             }
             return extractor.map;
+        }
+
+        private void convertText() {
+            convert(Metadata.CONTENT_ENCODING, Text.ENCODING);
+        }
+
+        private void convertAudio() {
+            convert(XMPDM.ARTIST, Audio.ARTIST);
+            convert(XMPDM.ALBUM, Audio.ALBUM);
+            convert(TikaCoreProperties.TITLE, Audio.TITLE);
+            convert(XMPDM.GENRE, Audio.GENRE);
+            convert(XMPDM.TRACK_NUMBER, Audio.TRACK_NUMBER);
+            convert(XMPDM.DURATION, Audio.DURATION);
+            convert(XMPDM.RELEASE_DATE, Audio.RELEASE_DATE);
+        }
+
+        private void convertImage() {
+            convert(TIFF.IMAGE_LENGTH, Image.HEIGHT);
+            convert(TIFF.IMAGE_WIDTH, Image.WIDTH);
+            convert(TIFF.ORIGINAL_DATE, Image.ORIGINAL_DATE);
+
         }
 
         private void convert(org.apache.tika.metadata.Property tikaKey, Property property) {

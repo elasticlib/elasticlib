@@ -48,9 +48,6 @@ public class JsonUtilTest {
     private static final JsonObject CONFIG_JSON;
     private static final List<Event> EVENTS = new ArrayList<>();
     private static final JsonArray EVENTS_ARRAY;
-    private static final String TITLE = "title";
-    private static final String TYPE = "type";
-    private static final String PROPERTIES = "properties";
     private static final String HASH = "hash";
     private static final String REV = "rev";
     private static final String PARENTS = "parents";

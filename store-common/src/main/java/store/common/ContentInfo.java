@@ -94,6 +94,11 @@ public class ContentInfo {
         return rev.equals(that.rev);
     }
 
+    @Override
+    public String toString() {
+        return rev.toString();
+    }
+
     /**
      * Builder.
      */

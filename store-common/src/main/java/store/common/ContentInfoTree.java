@@ -3,17 +3,21 @@ package store.common;
 import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.intersection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSortedSet;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,12 +38,12 @@ public class ContentInfoTree {
 
     private ContentInfoTree(Map<Hash, ContentInfo> nodes) {
         this.nodes = unmodifiableMap(nodes);
-        head = unmodifiableSortedSet(head(nodes));
-        tail = unmodifiableSortedSet(tail(nodes));
-        unknownParents = unmodifiableSortedSet(unknownParents(nodes));
+        head = unmodifiableSortedSet(buildHead(nodes));
+        tail = unmodifiableSortedSet(buildTail(nodes));
+        unknownParents = unmodifiableSortedSet(buildUnknownParents(nodes));
     }
 
-    private static SortedSet<Hash> head(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildHead(Map<Hash, ContentInfo> nodes) {
         Set<Hash> nonRoots = new HashSet<>(nodes.size());
         for (ContentInfo info : nodes.values()) {
             nonRoots.addAll(info.getParents());
@@ -53,7 +57,7 @@ public class ContentInfoTree {
         return head;
     }
 
-    private static SortedSet<Hash> tail(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildTail(Map<Hash, ContentInfo> nodes) {
         SortedSet<Hash> tail = new TreeSet<>();
         for (ContentInfo info : nodes.values()) {
             if (intersection(info.getParents(), nodes.keySet()).isEmpty()) {
@@ -63,7 +67,7 @@ public class ContentInfoTree {
         return tail;
     }
 
-    private static SortedSet<Hash> unknownParents(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildUnknownParents(Map<Hash, ContentInfo> nodes) {
         SortedSet<Hash> unknownParents = new TreeSet<>();
         for (ContentInfo info : nodes.values()) {
             for (Hash parent : info.getParents()) {
@@ -80,7 +84,7 @@ public class ContentInfoTree {
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> getHead() {
+    public SortedSet<Hash> head() {
         return head;
     }
 
@@ -90,7 +94,7 @@ public class ContentInfoTree {
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> getTail() {
+    public SortedSet<Hash> tail() {
         return tail;
     }
 
@@ -100,7 +104,7 @@ public class ContentInfoTree {
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> getUnknownParents() {
+    public SortedSet<Hash> unknownParents() {
         return unknownParents;
     }
 
@@ -126,27 +130,52 @@ public class ContentInfoTree {
     }
 
     /**
-     * Provides all revisions of this tree sorted by topological order (starting from head).
+     * Lists all revisions of this tree sorted by topological order (starting from head).
      *
      * @return A collection of revisions.
      */
-    public Collection<ContentInfo> values() {
-        Collection<ContentInfo> values = new LinkedHashSet<>();
-        SortedSet<Hash> current = new TreeSet<>();
-        SortedSet<Hash> next = new TreeSet<>();
+    public List<ContentInfo> list() {
+        List<ContentInfo> list = new ArrayList<>();
+        List<ContentInfo> toAdd = new ArrayList<>();
+        Set<Hash> sorted = new HashSet<>();
+        Set<Hash> current = new HashSet<>();
+        Set<Hash> next = new HashSet<>();
         current.addAll(head);
         while (!current.isEmpty()) {
-            for (Hash rev : current) {
-                ContentInfo info = nodes.get(rev);
-                values.add(info);
-                for (Hash parentRev : info.getParents()) {
-                    next.add(parentRev);
+            for (Hash rev : difference(current, sorted)) {
+                if (contains(rev)) {
+                    ContentInfo info = get(rev);
+                    toAdd.add(info);
+                    for (Hash parentRev : info.getParents()) {
+                        next.add(parentRev);
+                    }
                 }
             }
-            current.clear();
-            current.addAll(next);
+            Collections.sort(toAdd, new TopologicalComparator());
+            moveAll(toAdd, list);
+            moveAll(current, sorted);
+            moveAll(next, current);
         }
-        return values;
+        return list;
+    }
+
+    private <T> void moveAll(Collection<T> src, Collection<T> dest) {
+        dest.addAll(src);
+        src.clear();
+    }
+
+    private final class TopologicalComparator implements Comparator<  ContentInfo> {
+
+        @Override
+        public int compare(ContentInfo info1, ContentInfo info2) {
+            if (ancestors(info1).contains(info2)) {
+                return -1;
+            }
+            if (ancestors(info2).contains(info1)) {
+                return 1;
+            }
+            return 0;
+        }
     }
 
     /**
@@ -156,7 +185,7 @@ public class ContentInfoTree {
      * @return The new resulting tree.
      */
     public ContentInfoTree add(ContentInfo info) {
-        InfoTreeBuilder builder = new InfoTreeBuilder();
+        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
         builder.addAll(nodes.values());
         builder.add(info);
         return builder.build();
@@ -169,7 +198,7 @@ public class ContentInfoTree {
      * @return The new resulting tree.
      */
     public ContentInfoTree add(ContentInfoTree tree) {
-        InfoTreeBuilder builder = new InfoTreeBuilder();
+        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
         builder.addAll(nodes.values());
         builder.addAll(tree.nodes.values());
         return builder.build();
@@ -244,7 +273,7 @@ public class ContentInfoTree {
 
     private Optional<ContentInfo> threeWayMerge(ContentInfo left, ContentInfo right, Map<String, Value> base) {
         Optional<Diff> diff = mergeDiff(diff(base, left.getMetadata()),
-                                        diff(base, left.getMetadata()));
+                                        diff(base, right.getMetadata()));
         if (!diff.isPresent()) {
             return Optional.absent();
         }
@@ -259,16 +288,17 @@ public class ContentInfoTree {
     }
 
     private Set<ContentInfo> latestCommonAncestors(ContentInfo left, ContentInfo right) {
-        Set<ContentInfo> commonAncestors = intersection(ancestors(left, new HashSet<ContentInfo>()),
-                                                        ancestors(right, new HashSet<ContentInfo>()));
+        Set<ContentInfo> commonAncestors = intersection(ancestors(left), ancestors(right));
 
         SetMultimap<ContentInfo, ContentInfo> dependencies = HashMultimap.create();
         for (ContentInfo info : commonAncestors) {
-            dependencies.putAll(info, intersection(commonAncestors,
-                                                   ancestors(info, new HashSet<ContentInfo>())));
+            dependencies.putAll(info, intersection(commonAncestors, ancestors(info)));
         }
-        return intersection(new HashSet<>(dependencies.values()),
-                            commonAncestors);
+        return difference(commonAncestors, new HashSet<>(dependencies.values()));
+    }
+
+    private Set<ContentInfo> ancestors(ContentInfo info) {
+        return ancestors(info, new HashSet<ContentInfo>());
     }
 
     private Set<ContentInfo> ancestors(ContentInfo info, Set<ContentInfo> seed) {
@@ -282,10 +312,32 @@ public class ContentInfoTree {
         return seed;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(nodes);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        ContentInfoTree other = (ContentInfoTree) obj;
+        return Objects.equals(nodes, other.nodes);
+    }
+
+    @Override
+    public String toString() {
+        return nodes.values().toString();
+    }
+
     /**
      * Builder.
      */
-    public static class InfoTreeBuilder {
+    public static class ContentInfoTreeBuilder {
 
         private final Map<Hash, ContentInfo> nodes = new HashMap<>();
 
@@ -295,7 +347,7 @@ public class ContentInfoTree {
          * @param info Revision to add.
          * @return this
          */
-        public InfoTreeBuilder add(ContentInfo info) {
+        public ContentInfoTreeBuilder add(ContentInfo info) {
             nodes.put(info.getRev(), info);
             return this;
         }
@@ -306,7 +358,7 @@ public class ContentInfoTree {
          * @param infos Revisions to add.
          * @return this
          */
-        public InfoTreeBuilder addAll(Collection<ContentInfo> infos) {
+        public ContentInfoTreeBuilder addAll(Collection<ContentInfo> infos) {
             for (ContentInfo info : infos) {
                 nodes.put(info.getRev(), info);
             }

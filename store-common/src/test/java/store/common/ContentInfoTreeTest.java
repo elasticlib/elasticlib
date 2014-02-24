@@ -3,6 +3,7 @@ package store.common;
 import com.google.common.collect.ImmutableMap;
 import static java.util.Arrays.asList;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.fest.assertions.api.IterableAssert;
 import org.testng.annotations.DataProvider;
@@ -27,7 +28,8 @@ public class ContentInfoTreeTest {
     private final ContentInfo d5;
 
     {
-        //     A5
+        //
+        //     D5
         //     |  \
         //     |   \
         //     A4   \    D4
@@ -50,27 +52,33 @@ public class ContentInfoTreeTest {
                       "a0");
 
         a2 = revision("a2",
-                      ImmutableMap.of("bool", Value.of(false), "msg", Value.of("hello world")),
+                      ImmutableMap.of("bool", Value.of(false),
+                                      "msg", Value.of("hello world")),
                       "a1");
 
         a3 = revision("a3",
-                      ImmutableMap.of("bool", Value.of(true), "msg", Value.of("hello world")),
+                      ImmutableMap.of("bool", Value.of(true),
+                                      "msg", Value.of("hello world")),
                       "a2");
 
         b2 = revision("b2",
-                      ImmutableMap.of("answer", Value.of(42), "msg", Value.of("hello")),
+                      ImmutableMap.of("answer", Value.of(42),
+                                      "msg", Value.of("hello")),
                       "a1");
 
         c3 = revision("c3",
-                      ImmutableMap.of("answer", Value.of(42), "msg", Value.of("hello you")),
+                      ImmutableMap.of("answer", Value.of(42),
+                                      "msg", Value.of("hello you")),
                       "b2");
 
         a4 = revision("a4",
-                      ImmutableMap.of("answer", Value.of(42), "bool", Value.of(true), "msg", Value.of("hello world")),
+                      ImmutableMap.of("answer", Value.of(42),
+                                      "bool", Value.of(true),
+                                      "msg", Value.of("hello world")),
                       "a3", "b2");
 
         d4 = deleted("d4", "c3");
-        d5 = deleted("d4", "a4", "c3");
+        d5 = deleted("d5", "a4", "c3");
 
     }
 
@@ -113,6 +121,58 @@ public class ContentInfoTreeTest {
             revisions[i] = infos[i].getRev();
         }
         return revisions;
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getTest() {
+        assertThat(tree(a0, a1, a2, a3, b2, a4).get(a3.getRev())).isEqualTo(a3);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void containsTest() {
+        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+
+        assertThat(tree.contains(a3.getRev())).isTrue();
+        assertThat(tree.contains(d5.getRev())).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = NoSuchElementException.class)
+    public void getUnknownTest() {
+        tree(a0, a1, a2, a3, b2, a4).get(d5.getRev());
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void hashcodeTest() {
+        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+
+        assertThat(tree.hashCode()).isEqualTo(tree(a0, a1, a2, a3, b2, a4).hashCode());
+        assertThat(tree.hashCode()).isNotEqualTo(tree(a0, a1, a2, a3).hashCode());
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    @SuppressWarnings({"IncompatibleEquals", "ObjectEqualsNull"})
+    public void equalsTest() {
+        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+
+        assertThat(tree.equals(tree(a0, a1, a2, a3, b2, a4))).isTrue();
+        assertThat(tree.equals(tree(a0, a1, a2, a3))).isFalse();
+        assertThat(tree.equals(null)).isFalse();
+        assertThat(tree.equals("some text")).isFalse();
     }
 
     /**
@@ -233,6 +293,24 @@ public class ContentInfoTreeTest {
     }
 
     /**
+     * Test.
+     */
+    @Test
+    public void addRevisionTest() {
+        assertThat(tree(a0, a1, a2).add(a3)).isEqualTo(tree(a0, a1, a2, a3));
+        assertThat(tree(a0, a1, a2, a3).add(a3)).isEqualTo(tree(a0, a1, a2, a3));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void addTreeTest() {
+        assertThat(tree(a0, a1, a2).add(tree(a3, a4, b2))).isEqualTo(tree(a0, a1, a2, a3, a4, b2));
+        assertThat(tree(a0, a1, a2, a3, a4).add(tree(a3, a4, b2))).isEqualTo(tree(a0, a1, a2, a3, a4, b2));
+    }
+
+    /**
      * Data provider.
      *
      * @return Test data.
@@ -248,7 +326,7 @@ public class ContentInfoTreeTest {
             new Object[]{tree(a0, a1, a2, a3, b2, c3)},
             new Object[]{tree(a0, a1, a2, a3, a4, b2, c3)},
             new Object[]{tree(a0, a1, a2, a3, a4, b2, c3, d4)},
-            new Object[]{tree(a0, a1, a2, a3, a4, b2, c3, d4, d5)}
+            new Object[]{tree(a0, a1, a2, a3, a4, b2, c3, d5)}
         };
     }
 
@@ -268,9 +346,10 @@ public class ContentInfoTreeTest {
     @Test
     public void simpleThreeWayMergeTest() {
         ContentInfoTree merge = tree(a0, a1, a2, a3, b2).merge();
+        ContentInfo head = merge.get(merge.head().first());
 
         assertThat(merge.head()).hasSize(1);
-        assertThat(merge.get(merge.head().first()).getMetadata()).isEqualTo(a4.getMetadata());
+        assertThat(head.getMetadata()).isEqualTo(a4.getMetadata());
     }
 
     /**
@@ -283,9 +362,22 @@ public class ContentInfoTreeTest {
                                      "a0");
 
         ContentInfoTree merge = tree(a0, a1, a1Bis).merge();
+        ContentInfo head = merge.get(merge.head().first());
 
         assertThat(merge.head()).hasSize(1);
-        assertThat(merge.get(merge.head().first()).getMetadata()).isEqualTo(ImmutableMap.of("msg", Value.of("hello")));
+        assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("msg", Value.of("hello")));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void deletedMergeTest() {
+        ContentInfoTree merge = tree(a0, a1, a2, a3, a4, b2, c3, d4, d5).merge();
+        ContentInfo head = merge.get(merge.head().first());
+
+        assertThat(merge.head()).hasSize(1);
+        assertThat(head.isDeleted()).isTrue();
     }
 
     /**
@@ -297,10 +389,11 @@ public class ContentInfoTreeTest {
         ContentInfo rev1b = revision("1b", ImmutableMap.of("int", Value.of(10)));
 
         ContentInfoTree merge = tree(rev1a, rev1b).merge();
+        ContentInfo head = merge.get(merge.head().first());
 
         assertThat(merge.head()).hasSize(1);
-        assertThat(merge.get(merge.head().first()).getMetadata())
-                .isEqualTo(ImmutableMap.of("int", Value.of(10), "msg", Value.of("hello")));
+        assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(10),
+                                                                 "msg", Value.of("hello")));
     }
 
     /**
@@ -309,28 +402,90 @@ public class ContentInfoTreeTest {
     @Test
     public void crissCrossMergeTest() {
         ContentInfo rev0 = revision("00",
-                                    ImmutableMap.of("int", Value.of(5), "msg", Value.of("good morning")));
+                                    ImmutableMap.of("int", Value.of(5),
+                                                    "msg", Value.of("good morning")));
 
         ContentInfo rev1a = revision("1a",
-                                     ImmutableMap.of("int", Value.of(5), "msg", Value.of("hello")),
+                                     ImmutableMap.of("int", Value.of(5),
+                                                     "msg", Value.of("hello")),
+                                     "00");
+
+        ContentInfo rev1b = revision("1b",
+                                     ImmutableMap.of("int", Value.of(10),
+                                                     "msg", Value.of("good morning")),
                                      "00");
 
         ContentInfo rev2a = revision("2a",
-                                     ImmutableMap.of("int", Value.of(10), "msg", Value.of("hello world")),
+                                     ImmutableMap.of("int", Value.of(10),
+                                                     "msg", Value.of("hello world")),
                                      "1a", "1b");
-
-        ContentInfo rev1b = revision("1b",
-                                     ImmutableMap.of("int", Value.of(10), "msg", Value.of("good morning")),
-                                     "00");
 
         ContentInfo rev2b = revision("2b",
-                                     ImmutableMap.of("int", Value.of(20), "msg", Value.of("hello")),
+                                     ImmutableMap.of("int", Value.of(20),
+                                                     "msg", Value.of("hello")),
                                      "1a", "1b");
 
-        ContentInfoTree merge = tree(rev0, rev1a, rev2a, rev1b, rev2b).merge();
+        ContentInfoTree merge = tree(rev0, rev1a, rev1b, rev2a, rev2b).merge();
+        ContentInfo head = merge.get(merge.head().first());
 
         assertThat(merge.head()).hasSize(1);
-        assertThat(merge.get(merge.head().first()).getMetadata())
-                .isEqualTo(ImmutableMap.of("int", Value.of(20), "msg", Value.of("hello world")));
+        assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),
+                                                                 "msg", Value.of("hello world")));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void tripleCrissCrossMergeTest() {
+        ContentInfo rev0 = revision("00",
+                                    ImmutableMap.of("int", Value.of(5),
+                                                    "msg", Value.of("good morning"),
+                                                    "out", Value.of("good evening")));
+
+        ContentInfo rev1b = revision("1a",
+                                     ImmutableMap.of("int", Value.of(10),
+                                                     "msg", Value.of("good morning"),
+                                                     "out", Value.of("good evening")),
+                                     "00");
+
+        ContentInfo rev1a = revision("1b",
+                                     ImmutableMap.of("int", Value.of(5),
+                                                     "msg", Value.of("hello"),
+                                                     "out", Value.of("good evening")),
+                                     "00");
+
+        ContentInfo rev1c = revision("1c",
+                                     ImmutableMap.of("int", Value.of(5),
+                                                     "msg", Value.of("good morning"),
+                                                     "out", Value.of("good bye")),
+                                     "00");
+
+
+        ContentInfo rev2a = revision("2a",
+                                     ImmutableMap.of("int", Value.of(20),
+                                                     "msg", Value.of("hello"),
+                                                     "out", Value.of("good bye")),
+                                     "1a", "1b", "1c");
+
+        ContentInfo rev2b = revision("2b",
+                                     ImmutableMap.of("int", Value.of(10),
+                                                     "msg", Value.of("hello world"),
+                                                     "out", Value.of("good bye")),
+                                     "1a", "1b");
+
+        ContentInfo rev2c = revision("2c",
+                                     ImmutableMap.of("int", Value.of(10),
+                                                     "msg", Value.of("hello"),
+                                                     "out", Value.of("bye bye")),
+                                     "1a", "1b", "1c");
+
+        ContentInfoTree merge = tree(rev0, rev1a, rev2a, rev1c, rev1b, rev2b, rev2c).merge();
+        ContentInfo head = merge.get(merge.head().first());
+
+        assertThat(merge.head()).hasSize(1);
+        assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),
+                                                                 "msg", Value.of("hello world"),
+                                                                 "out", Value.of("bye bye")));
     }
 }

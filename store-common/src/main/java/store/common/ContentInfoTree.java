@@ -185,10 +185,10 @@ public class ContentInfoTree {
      * @return The new resulting tree.
      */
     public ContentInfoTree add(ContentInfo info) {
-        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
-        builder.addAll(nodes.values());
-        builder.add(info);
-        return builder.build();
+        return new ContentInfoTreeBuilder()
+                .addAll(nodes.values())
+                .add(info)
+                .build();
     }
 
     /**
@@ -198,10 +198,10 @@ public class ContentInfoTree {
      * @return The new resulting tree.
      */
     public ContentInfoTree add(ContentInfoTree tree) {
-        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
-        builder.addAll(nodes.values());
-        builder.addAll(tree.nodes.values());
-        return builder.build();
+        return new ContentInfoTreeBuilder()
+                .addAll(nodes.values())
+                .addAll(tree.nodes.values())
+                .build();
     }
 
     /**

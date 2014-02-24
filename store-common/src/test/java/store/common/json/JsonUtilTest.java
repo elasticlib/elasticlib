@@ -16,6 +16,8 @@ import org.testng.annotations.Test;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
@@ -24,12 +26,16 @@ import static store.common.TestUtil.readJsonArray;
 import static store.common.TestUtil.readJsonObject;
 import static store.common.json.JsonUtil.hasBooleanValue;
 import static store.common.json.JsonUtil.hasStringValue;
+import static store.common.json.JsonUtil.isContentInfo;
+import static store.common.json.JsonUtil.isContentInfoTree;
 import static store.common.json.JsonUtil.readConfig;
 import static store.common.json.JsonUtil.readContentInfo;
+import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfos;
 import static store.common.json.JsonUtil.readHashes;
 import static store.common.json.JsonUtil.writeConfig;
 import static store.common.json.JsonUtil.writeContentInfo;
+import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
@@ -45,6 +51,8 @@ public class JsonUtilTest {
     private static final JsonArray HASHES_ARRAY;
     private static final Map<String, ContentInfo> CONTENT_INFOS = new HashMap<>();
     private static final Map<String, JsonObject> CONTENT_INFOS_JSON = new HashMap<>();
+    private static final ContentInfoTree CONTENT_INFO_TREE;
+    private static final JsonObject CONTENT_INFO_TREE_JSON;
     private static final Config CONFIG;
     private static final JsonObject CONFIG_JSON;
     private static final List<Event> EVENTS = new ArrayList<>();
@@ -79,6 +87,17 @@ public class JsonUtilTest {
         CONTENT_INFOS_JSON.put(HASHES[0], readJsonObject(JsonUtilTest.class, "contentInfo0.json"));
         CONTENT_INFOS_JSON.put(HASHES[1], readJsonObject(JsonUtilTest.class, "contentInfo1.json"));
 
+        CONTENT_INFO_TREE = new ContentInfoTreeBuilder()
+                .add(info(0))
+                .add(new ContentInfoBuilder()
+                .withHash(new Hash(HASHES[0]))
+                .withLength(10)
+                .withParent(new Hash(REVS[0]))
+                .build(new Hash(REVS[1])))
+                .build();
+
+        CONTENT_INFO_TREE_JSON = readJsonObject(JsonUtilTest.class, "contentInfoTree.json");
+
         CONFIG = new Config();
         CONFIG.addRepository(Paths.get("/repo/primary"));
         CONFIG.addRepository(Paths.get("/repo/secondary"));
@@ -101,6 +120,7 @@ public class JsonUtilTest {
                 .build());
 
         EVENTS_ARRAY = readJsonArray(JsonUtilTest.class, "events.json");
+
     }
 
     /**
@@ -133,6 +153,26 @@ public class JsonUtilTest {
         assertThat(hasBooleanValue(json, "no")).isTrue();
         assertThat(hasBooleanValue(json, "num")).isFalse();
         assertThat(hasBooleanValue(json, "unknown")).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isContentInfoTest() {
+        assertThat(isContentInfo(infoJson(0))).isTrue();
+        assertThat(isContentInfo(CONTENT_INFO_TREE_JSON)).isFalse();
+        assertThat(isContentInfo(CONFIG_JSON)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isContentInfoTreeTest() {
+        assertThat(isContentInfoTree(CONTENT_INFO_TREE_JSON)).isTrue();
+        assertThat(isContentInfoTree(infoJson(0))).isFalse();
+        assertThat(isContentInfoTree(CONFIG_JSON)).isFalse();
     }
 
     /**
@@ -198,6 +238,22 @@ public class JsonUtilTest {
     public void readContentInfoTest() {
         assertThat(readContentInfo(infoJson(0))).isEqualTo(info(0));
         assertThat(readContentInfo(infoJson(1))).isEqualTo(info(1));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeContentInfoTreeTest() {
+        assertThat(writeContentInfoTree(CONTENT_INFO_TREE)).isEqualTo(CONTENT_INFO_TREE_JSON);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readContentInfoTreeTest() {
+        assertThat(readContentInfoTree(CONTENT_INFO_TREE_JSON)).isEqualTo(CONTENT_INFO_TREE);
     }
 
     private static ContentInfo info(int index) {

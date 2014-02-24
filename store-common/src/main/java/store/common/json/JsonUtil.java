@@ -16,12 +16,18 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
+import javax.json.JsonValue;
+import static javax.json.JsonValue.ValueType.ARRAY;
 import static javax.json.JsonValue.ValueType.FALSE;
+import static javax.json.JsonValue.ValueType.NUMBER;
+import static javax.json.JsonValue.ValueType.OBJECT;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
@@ -37,6 +43,7 @@ public final class JsonUtil {
 
     private static final String HASH = "hash";
     private static final String REV = "rev";
+    private static final String REVS = "revs";
     private static final String PARENTS = "parents";
     private static final String DELETED = "deleted";
     private static final String LENGTH = "length";
@@ -59,10 +66,7 @@ public final class JsonUtil {
      * @return <tt>true</tt> if supplied JSON object has a string value associated to supplied key.
      */
     public static boolean hasStringValue(JsonObject json, String key) {
-        if (!json.containsKey(key)) {
-            return false;
-        }
-        return json.get(key).getValueType() == STRING;
+        return hasValue(json, key, STRING);
     }
 
     /**
@@ -73,17 +77,61 @@ public final class JsonUtil {
      * @return <tt>true</tt> if supplied JSON object has a boolean value associated to supplied key.
      */
     public static boolean hasBooleanValue(JsonObject json, String key) {
+        return hasValue(json, key, TRUE, FALSE);
+    }
+
+    private static boolean hasValue(JsonObject json, String key, javax.json.JsonValue.ValueType... types) {
         if (!json.containsKey(key)) {
             return false;
         }
-        switch (json.get(key).getValueType()) {
-            case TRUE:
-            case FALSE:
+        for (javax.json.JsonValue.ValueType type : types) {
+            if (json.get(key).getValueType() == type) {
                 return true;
-
-            default:
-                return false;
+            }
         }
+        return false;
+    }
+
+    /**
+     * Checks if supplied JSON object is a valid {@link ContentInfo}.
+     *
+     * @param json A JSON object.
+     * @return <tt>true</tt> if a ContentInfo can be read from supplied JSON object.
+     */
+    public static boolean isContentInfo(JsonObject json) {
+        return hasValue(json, HASH, STRING) &&
+                hasValue(json, LENGTH, NUMBER) &&
+                hasValue(json, REV, STRING) &&
+                hasValue(json, PARENTS, ARRAY) &&
+                hasValue(json, SCHEMA, OBJECT) &&
+                hasValue(json, METADATA, OBJECT);
+    }
+
+    /**
+     * Checks if supplied JSON object is a valid {@link ContentInfoTree}.
+     *
+     * @param json A JSON object.
+     * @return <tt>true</tt> if a ContentInfoTree can be read from supplied JSON object.
+     */
+    public static boolean isContentInfoTree(JsonObject json) {
+        if (!hasValue(json, HASH, STRING) ||
+                !hasValue(json, LENGTH, NUMBER) ||
+                !hasValue(json, REVS, ARRAY)) {
+            return false;
+        }
+        for (JsonValue value : json.getJsonArray(REVS)) {
+            if (value.getValueType() != OBJECT) {
+                return false;
+            }
+            JsonObject obj = (JsonObject) value;
+            if (!hasValue(obj, REV, STRING) ||
+                    !hasValue(obj, PARENTS, ARRAY) ||
+                    !hasValue(obj, SCHEMA, OBJECT) ||
+                    !hasValue(obj, METADATA, OBJECT)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -151,9 +199,73 @@ public final class JsonUtil {
     public static JsonObject writeContentInfo(ContentInfo contentInfo) {
         JsonObjectBuilder builder = createObjectBuilder()
                 .add(HASH, contentInfo.getHash().encode())
-                .add(LENGTH, contentInfo.getLength())
-                .add(REV, contentInfo.getRev().encode());
+                .add(LENGTH, contentInfo.getLength());
 
+        return writeContentInfoBase(builder, contentInfo);
+    }
+
+    /**
+     * Reads a {@link ContentInfo} from supplied JSON object.
+     *
+     * @param json A JSON object.
+     * @return A contentInfo instance.
+     */
+    public static ContentInfo readContentInfo(JsonObject json) {
+        ContentInfoBuilder builder = new ContentInfoBuilder()
+                .withHash(new Hash(json.getString(HASH)))
+                .withLength(json.getJsonNumber(LENGTH).longValueExact());
+
+        return readContentInfoBase(builder, json);
+    }
+
+    /**
+     * Writes supplied {@link ContentInfoTree} to a JSON object.
+     *
+     * @param tree A contentInfoTree instance.
+     * @return A JSON object.
+     */
+    public static JsonObject writeContentInfoTree(ContentInfoTree tree) {
+        List<ContentInfo> infos = tree.list();
+        if (infos.isEmpty()) {
+            // Tree is expected to have at least a revision.
+            throw new IllegalArgumentException();
+        }
+        JsonArrayBuilder revs = createArrayBuilder();
+        for (ContentInfo info : infos) {
+            revs.add(writeContentInfoBase(createObjectBuilder(), info));
+        }
+        return createObjectBuilder()
+                .add(HASH, infos.get(0).getHash().encode())
+                .add(LENGTH, infos.get(0).getLength())
+                .add(REVS, revs)
+                .build();
+    }
+
+    /**
+     * Reads a {@link ContentInfoTree} from supplied JSON object.
+     *
+     * @param json A JSON object.
+     * @return A contentInfoTree instance.
+     */
+    public static ContentInfoTree readContentInfoTree(JsonObject json) {
+        List<ContentInfo> infos = new ArrayList<>(json.getJsonArray(REVS).size());
+        Hash hash = new Hash(json.getString(HASH));
+        long length = json.getJsonNumber(LENGTH).longValueExact();
+
+        for (JsonObject rev : json.getJsonArray(REVS).getValuesAs(JsonObject.class)) {
+            ContentInfoBuilder builder = new ContentInfoBuilder()
+                    .withHash(hash)
+                    .withLength(length);
+
+            infos.add(readContentInfoBase(builder, rev));
+        }
+        return new ContentInfoTreeBuilder()
+                .addAll(infos)
+                .build();
+    }
+
+    private static JsonObject writeContentInfoBase(JsonObjectBuilder builder, ContentInfo contentInfo) {
+        builder.add(REV, contentInfo.getRev().encode());
         JsonArrayBuilder parents = createArrayBuilder();
         for (Hash item : contentInfo.getParents()) {
             parents.add(item.encode());
@@ -168,14 +280,7 @@ public final class JsonUtil {
                 .build();
     }
 
-    /**
-     * Reads a {@link ContentInfo} from supplied JSON object.
-     *
-     * @param json A JSON object.
-     * @return A contentInfo instance.
-     */
-    public static ContentInfo readContentInfo(JsonObject json) {
-        ContentInfoBuilder builder = new ContentInfoBuilder();
+    private static ContentInfo readContentInfoBase(ContentInfoBuilder builder, JsonObject json) {
         for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(
                 JsonString.class)) {
             builder.withParent(new Hash(value.getString()));
@@ -185,8 +290,6 @@ public final class JsonUtil {
         }
         Schema schema = Schema.read(json.getJsonObject(SCHEMA));
         return builder
-                .withHash(new Hash(json.getString(HASH)))
-                .withLength(json.getJsonNumber(LENGTH).longValue())
                 .withMetadata(readMap(json.getJsonObject(METADATA), schema))
                 .build(new Hash(json.getString(REV)));
     }

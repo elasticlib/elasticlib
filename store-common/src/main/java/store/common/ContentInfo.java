@@ -82,7 +82,7 @@ public class ContentInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(hash, rev);
+        return Objects.hash(hash, length, rev, parents, deleted, metadata);
     }
 
     @Override
@@ -91,7 +91,12 @@ public class ContentInfo {
             return false;
         }
         ContentInfo that = (ContentInfo) obj;
-        return rev.equals(that.rev);
+        return hash.equals(that.hash) &&
+                length == that.length &&
+                rev.equals(that.rev) &&
+                parents.equals(that.parents) &&
+                deleted == that.deleted &&
+                metadata.equals(that.metadata);
     }
 
     @Override

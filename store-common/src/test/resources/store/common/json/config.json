@@ -1,0 +1,6 @@
+{
+    "repositories": ["/repo/primary", "/repo/secondary"],
+    "sync": {
+        "primary": ["secondary"]
+    }
+}

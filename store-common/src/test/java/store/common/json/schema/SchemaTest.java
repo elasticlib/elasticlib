@@ -1,23 +1,17 @@
 package store.common.json.schema;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import static com.google.common.io.BaseEncoding.base16;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import static store.common.TestUtil.readJsonObject;
 import store.common.value.Value;
 
 /**
@@ -47,21 +41,8 @@ public class SchemaTest {
 
         mapSchema = Schema.of("metadata", metadata);
         listSchema = Schema.of("listing", listing);
-        mapSchemaJson = read("mapSchema.json");
-        listSchemaJson = read("listSchema.json");
-    }
-
-    private JsonObject read(String filename) {
-        String resource = getClass().getPackage().getName().replace(".", "/") + "/" + filename;
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resource);
-                Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
-                JsonReader jsonReader = Json.createReader(reader)) {
-
-            return jsonReader.readObject();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        mapSchemaJson = readJsonObject(SchemaTest.class, "mapSchema.json");
+        listSchemaJson = readJsonObject(SchemaTest.class, "listSchema.json");
     }
 
     /**

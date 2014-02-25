@@ -59,12 +59,15 @@ public class Index {
 
     private final Directory directory;
     private final Analyzer analyzer;
-    private final IndexWriterConfig config;
 
     private Index(Path path) throws IOException {
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
-        analyzer = new StandardAnalyzer(Version.LUCENE_44);
-        config = new IndexWriterConfig(Version.LUCENE_44, analyzer);
+        analyzer = new StandardAnalyzer(Version.LUCENE_46);
+    }
+
+    private IndexWriter newIndexWriter() throws IOException {
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
+        return new IndexWriter(directory, config);
     }
 
     public static Index create(Path path) {
@@ -90,7 +93,7 @@ public class Index {
     }
 
     public void put(ContentInfo contentInfo, InputStream inputStream) {
-        try (IndexWriter writer = new IndexWriter(directory, config)) {
+        try (IndexWriter writer = newIndexWriter()) {
             Document document = new Document();
             document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
             document.add(new LongField("length", contentInfo.getLength(), Store.NO));
@@ -159,7 +162,7 @@ public class Index {
     }
 
     public void delete(Hash hash) {
-        try (IndexWriter writer = new IndexWriter(directory, config)) {
+        try (IndexWriter writer = newIndexWriter()) {
             writer.deleteDocuments(new Term("hash", hash.encode()));
 
         } catch (IOException e) {

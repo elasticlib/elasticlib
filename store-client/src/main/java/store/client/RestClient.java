@@ -26,7 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
-import org.glassfish.jersey.apache.connector.ApacheConnector;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -65,10 +65,10 @@ public class RestClient implements Closeable {
         logger.setLevel(Level.OFF);
 
         ClientConfig clientConfig = new ClientConfig()
-                .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024);
-
-        clientConfig.connector(new ApacheConnector(clientConfig))
+                .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024)
+                .connectorProvider(new ApacheConnectorProvider())
                 .register(MultiPartFeature.class)
+                .register(new HeaderRestoringWriterInterceptor())
                 .register(new LoggingFilter(logger, true));
 
         client = ClientBuilder.newClient(clientConfig);

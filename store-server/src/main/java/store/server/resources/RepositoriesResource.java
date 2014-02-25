@@ -78,7 +78,7 @@ public class RepositoriesResource {
         java.nio.file.Path path = Paths.get(json.getString("path"));
         repository.createRepository(path);
         return Response
-                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(path.getFileName().toString()).build())
+                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).path(path.getFileName().toString()).build())
                 .build();
     }
 
@@ -223,7 +223,7 @@ public class RepositoriesResource {
         try (InputStream inputStream = content.getAsInputStream()) {
             repository.put(name, readContentInfo(json), inputStream);
             return Response
-                    .created(UriBuilder.fromUri(uriInfo.getRequestUri()).fragment(json.getString("hash")).build())
+                    .created(UriBuilder.fromUri(uriInfo.getRequestUri()).path(json.getString("hash")).build())
                     .build();
 
         } catch (IOException e) {

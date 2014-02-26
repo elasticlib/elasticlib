@@ -38,7 +38,7 @@ public class Server {
         getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                httpServer.stop();
+                httpServer.shutdownNow();
             }
         });
     }

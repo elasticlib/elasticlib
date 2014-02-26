@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.tika.exception.TikaException;
@@ -103,13 +104,16 @@ public final class MetadataUtil {
         }
 
         private void convert(org.apache.tika.metadata.Property tikaKey, Property property) {
+            if (metadata.get(tikaKey) == null) {
+                return;
+            }
             switch (tikaKey.getValueType()) {
                 case BOOLEAN:
                     map.put(property.key(), Value.of(Boolean.parseBoolean(metadata.get(tikaKey))));
                     break;
 
                 case INTEGER:
-                    map.put(property.key(), Value.of(metadata.getInt(tikaKey)));
+                    map.put(property.key(), getInt(tikaKey));
                     break;
 
                 case REAL:
@@ -117,13 +121,29 @@ public final class MetadataUtil {
                     break;
 
                 case DATE:
-                    map.put(property.key(), Value.of(metadata.getDate(tikaKey)));
+                    map.put(property.key(), getDate(tikaKey));
                     break;
 
                 default:
                     map.put(property.key(), Value.of(metadata.get(tikaKey)));
                     break;
             }
+        }
+
+        private Value getInt(org.apache.tika.metadata.Property tikaKey) {
+            Integer i = metadata.getInt(tikaKey);
+            if (i != null) {
+                return Value.of(i);
+            }
+            return Value.of(metadata.get(tikaKey));
+        }
+
+        private Value getDate(org.apache.tika.metadata.Property tikaKey) {
+            Date date = metadata.getDate(tikaKey);
+            if (date != null) {
+                return Value.of(date);
+            }
+            return Value.of(metadata.get(tikaKey));
         }
 
         private void convert(String tikaKey, Property property) {

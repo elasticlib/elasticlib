@@ -13,6 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.Hash;
 import store.server.Content;
+import store.server.RevSpec;
 import static store.server.TestUtil.inject;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.ContentAlreadyStoredException;
@@ -68,7 +69,7 @@ public class VolumeTest {
     private Volume newVolumeWith(Content content) {
         Volume volume = Volume.create(newTmpDir());
         try (InputStream inputStream = content.getInputStream()) {
-            volume.put(content.getInfo(), inputStream);
+            volume.put(content.getInfo(), inputStream, RevSpec.any());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -95,7 +96,7 @@ public class VolumeTest {
     public void put() throws IOException {
         Volume volume = Volume.create(newTmpDir());
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            volume.put(LOREM_IPSUM.getInfo(), inputStream);
+            volume.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.any());
         }
         assertThat(volume.contains(LOREM_IPSUM.getHash())).isTrue();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(1);
@@ -110,7 +111,7 @@ public class VolumeTest {
     public void putAlreadyStored() throws IOException {
         Volume volume = newVolumeWith(LOREM_IPSUM);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            volume.put(LOREM_IPSUM.getInfo(), inputStream);
+            volume.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.any());
         }
     }
 
@@ -164,7 +165,7 @@ public class VolumeTest {
     @Test
     public void delete() {
         Volume volume = newVolumeWith(LOREM_IPSUM);
-        volume.delete(LOREM_IPSUM.getHash());
+        volume.delete(LOREM_IPSUM.getHash(), RevSpec.any());
         assertThat(volume.contains(LOREM_IPSUM.getHash())).isFalse();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(2);
     }
@@ -174,7 +175,7 @@ public class VolumeTest {
      */
     @Test(expectedExceptions = UnknownHashException.class)
     public void deleteUnknownHash() {
-        Volume.create(newTmpDir()).delete(UNKNOWN_HASH);
+        Volume.create(newTmpDir()).delete(UNKNOWN_HASH, RevSpec.any());
     }
 
     /**

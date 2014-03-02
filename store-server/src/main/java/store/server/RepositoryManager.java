@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.Config;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.json.JsonUtil.readConfig;
@@ -190,15 +191,33 @@ public final class RepositoryManager {
         return repository(name).getStatus();
     }
 
-    public void put(String name, ContentInfo contentInfo, InputStream source) {
-        LOG.info("Putting {}", contentInfo.getHash());
-        repository(name).put(contentInfo, source);
+    public void put(String name, ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
+        LOG.info("Putting info and content for {}, with spec {}", contentInfo.getHash(), revSpec);
+        repository(name).put(contentInfo, source, revSpec);
         agentManager.signal(name);
     }
 
-    public void delete(String name, Hash hash) {
-        LOG.info("Deleting {}", hash);
-        repository(name).delete(hash);
+    public void put(String name, ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
+        LOG.info("Putting tree and content for {}, with spec {}", contentInfoTree.getHash(), revSpec);
+        repository(name).put(contentInfoTree, source, revSpec);
+        agentManager.signal(name);
+    }
+
+    public void put(String name, ContentInfo contentInfo, RevSpec revSpec) {
+        LOG.info("Putting info for {}, with spec {}", contentInfo.getHash(), revSpec);
+        repository(name).put(contentInfo, revSpec);
+        agentManager.signal(name);
+    }
+
+    public void put(String name, ContentInfoTree contentInfoTree, RevSpec revSpec) {
+        LOG.info("Putting tree for {}, with spec {}", contentInfoTree.getHash(), revSpec);
+        repository(name).put(contentInfoTree, revSpec);
+        agentManager.signal(name);
+    }
+
+    public void delete(String name, Hash hash, RevSpec revSpec) {
+        LOG.info("Deleting {}, with spec {}", hash, revSpec);
+        repository(name).delete(hash, revSpec);
         agentManager.signal(name);
     }
 

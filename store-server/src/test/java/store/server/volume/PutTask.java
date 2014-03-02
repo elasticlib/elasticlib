@@ -3,6 +3,7 @@ package store.server.volume;
 import java.io.IOException;
 import java.io.InputStream;
 import store.server.Content;
+import store.server.RevSpec;
 
 class PutTask extends Task {
 
@@ -17,7 +18,7 @@ class PutTask extends Task {
     @Override
     protected void execute() {
         try (InputStream inputStream = content.getInputStream()) {
-            volume.put(content.getInfo(), inputStream);
+            volume.put(content.getInfo(), inputStream, RevSpec.any());
 
         } catch (IOException e) {
             throw new RuntimeException(e);

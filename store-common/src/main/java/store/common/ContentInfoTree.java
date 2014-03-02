@@ -37,6 +37,9 @@ public class ContentInfoTree {
     private final Map<Hash, ContentInfo> nodes;
 
     private ContentInfoTree(Map<Hash, ContentInfo> nodes) {
+        if (nodes.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
         this.nodes = unmodifiableMap(nodes);
         head = unmodifiableSortedSet(buildHead(nodes));
         tail = unmodifiableSortedSet(buildTail(nodes));
@@ -80,11 +83,20 @@ public class ContentInfoTree {
     }
 
     /**
+     * Provides associated content hash.
+     *
+     * @return A hash.
+     */
+    public Hash getHash() {
+        return nodes.values().iterator().next().getHash();
+    }
+
+    /**
      * Provides head revisions hashes of this tree, those which are not parent of any other ones.
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> head() {
+    public SortedSet<Hash> getHead() {
         return head;
     }
 
@@ -94,7 +106,7 @@ public class ContentInfoTree {
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> tail() {
+    public SortedSet<Hash> getTail() {
         return tail;
     }
 
@@ -104,7 +116,7 @@ public class ContentInfoTree {
      *
      * @return A sorted set of revision hashes.
      */
-    public SortedSet<Hash> unknownParents() {
+    public SortedSet<Hash> getUnknownParents() {
         return unknownParents;
     }
 

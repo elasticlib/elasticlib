@@ -3,6 +3,7 @@ package store.server.resources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -32,12 +32,16 @@ import store.common.ContentInfo;
 import store.common.Hash;
 import static store.common.json.JsonUtil.hasBooleanValue;
 import static store.common.json.JsonUtil.hasStringValue;
+import static store.common.json.JsonUtil.isContentInfo;
+import static store.common.json.JsonUtil.isContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfo;
+import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
 import store.server.RepositoryManager;
+import store.server.RevSpec;
 import store.server.Status;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
@@ -197,7 +201,12 @@ public class RepositoriesResource {
     }
 
     /**
-     * Create a new content.
+     * Create a new content or merge new info with an existing content.
+     * <p>
+     * Query param:<br>
+     * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
+     * existing head, "none" if content is expected to not exist, or to a dash-separated sequence of revision hashes of
+     * expected existing head. Default to "any".
      * <p>
      * Input:<br>
      * - info (JSON): Content info JSON data.<br>
@@ -207,24 +216,39 @@ public class RepositoriesResource {
      * - 200 OK: Operation succeeded.<br>
      * - 400 BAD REQUEST: Invalid form data.<br>
      * - 404 NOT FOUND: Repository was not found.<br>
-     * - 412 PRECONDITION FAILED: Content already exists or integrity checking failed.<br>
+     * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
+     * - 412 PRECONDITION FAILED: Integrity checking failed.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param name repository name
+     * @param revSpec expected head to apply request on
      * @param formData entity form data
      * @return HTTP response
      */
     @POST
     @Path("{name}/content")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postContent(@PathParam("name") String name, FormDataMultipart formData) {
+    public Response postContent(@PathParam("name") String name,
+                                @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
+                                FormDataMultipart formData) {
+
         JsonObject json = formData.next("info").getAsJsonObject();
         BodyPart content = formData.next("content");
+        URI uri = UriBuilder
+                .fromUri(uriInfo.getRequestUri())
+                .path(json.getString("hash"))
+                .build();
+
         try (InputStream inputStream = content.getAsInputStream()) {
-            repository.put(name, readContentInfo(json), inputStream);
-            return Response
-                    .created(UriBuilder.fromUri(uriInfo.getRequestUri()).path(json.getString("hash")).build())
-                    .build();
+            if (isContentInfo(json)) {
+                repository.put(name, readContentInfo(json), inputStream, revSpec);
+                return Response.created(uri).build();
+            }
+            if (isContentInfoTree(json)) {
+                repository.put(name, readContentInfoTree(json), inputStream, revSpec);
+                return Response.created(uri).build();
+            }
+            throw new BadRequestException();
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -232,22 +256,68 @@ public class RepositoriesResource {
     }
 
     /**
+     * Update content info.
+     * <p>
+     * Query param:<br>
+     * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
+     * existing head, "none" if content is expected to not exist, or to a dash-separated sequence of revision hashes of
+     * expected existing head. Default to "any".
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 400 BAD REQUEST: Invalid JSON data.<br>
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
+     *
+     * @param name repository name
+     * @param revSpec expected head to apply request on
+     * @param json input JSON data
+     * @return HTTP response
+     */
+    @POST
+    @Path("{name}/info")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateInfo(@PathParam("name") String name,
+                               @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
+                               JsonObject json) {
+
+        if (isContentInfo(json)) {
+            repository.put(name, readContentInfo(json), revSpec);
+            return Response.ok().build();
+        }
+        if (isContentInfoTree(json)) {
+            repository.put(name, readContentInfoTree(json), revSpec);
+            return Response.ok().build();
+        }
+        throw new BadRequestException();
+    }
+
+    /**
      * Delete a content.
+     * <p>
+     * Query param:<br>
+     * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
+     * existing head or to a dash-separated sequence of revision hashes of expected existing head. Default to "any".
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param name repository name
+     * @param revSpec expected head to apply request on
      * @param hash content hash
      * @return HTTP response
      */
     @DELETE
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response deleteContent(@PathParam("name") String name, @PathParam("hash") Hash hash) {
-        repository.delete(name, hash);
+    public Response deleteContent(@PathParam("name") String name,
+                                  @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
+                                  @PathParam("hash") Hash hash) {
+        repository.delete(name, hash, revSpec);
         return Response.ok().build();
     }
 
@@ -273,27 +343,6 @@ public class RepositoriesResource {
                 repository.get(name, hash, outputStream);
             }
         }).build();
-    }
-
-    /**
-     * Update content info.
-     * <p>
-     * Response:<br>
-     * - 200 OK: Operation succeeded.<br>
-     * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Repository or content was not found.<br>
-     * - 503 SERVICE UNAVAILABLE: Repository is not started.
-     *
-     * @param name repository name
-     * @param json input JSON data
-     * @return HTTP response
-     */
-    @POST
-    @Path("{name}/info")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateInfo(@PathParam("name") String name, JsonObject json) {
-        // TODO à implémenter en vue de la mise à jour
-        return Response.status(NOT_IMPLEMENTED).build();
     }
 
     /**

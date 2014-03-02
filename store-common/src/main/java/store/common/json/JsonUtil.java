@@ -226,16 +226,12 @@ public final class JsonUtil {
      */
     public static JsonObject writeContentInfoTree(ContentInfoTree tree) {
         List<ContentInfo> infos = tree.list();
-        if (infos.isEmpty()) {
-            // Tree is expected to have at least a revision.
-            throw new IllegalArgumentException();
-        }
         JsonArrayBuilder revs = createArrayBuilder();
         for (ContentInfo info : infos) {
             revs.add(writeContentInfoBase(createObjectBuilder(), info));
         }
         return createObjectBuilder()
-                .add(HASH, infos.get(0).getHash().encode())
+                .add(HASH, tree.getHash().encode())
                 .add(LENGTH, infos.get(0).getLength())
                 .add(REVS, revs)
                 .build();

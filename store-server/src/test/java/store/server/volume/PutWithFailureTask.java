@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import store.server.Content;
+import store.server.RevSpec;
 
 class PutWithFailureTask extends Task {
 
@@ -18,7 +19,7 @@ class PutWithFailureTask extends Task {
     @Override
     protected void execute() {
         try (InputStream inputStream = new ByteArrayInputStream(content.getBytes(), 0, content.getBytes().length / 2)) {
-            volume.put(content.getInfo(), inputStream);
+            volume.put(content.getInfo(), inputStream, RevSpec.any());
 
         } catch (IOException e) {
             throw new RuntimeException(e);

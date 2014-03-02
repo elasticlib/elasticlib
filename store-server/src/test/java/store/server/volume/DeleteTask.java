@@ -2,6 +2,7 @@ package store.server.volume;
 
 import store.common.Hash;
 import store.server.Content;
+import store.server.RevSpec;
 
 class DeleteTask extends Task {
 
@@ -15,6 +16,6 @@ class DeleteTask extends Task {
 
     @Override
     protected void execute() {
-        volume.delete(hash);
+        volume.delete(hash, RevSpec.any());
     }
 }

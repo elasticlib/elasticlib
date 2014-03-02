@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import store.server.agent.IndexAgent;
@@ -79,13 +80,28 @@ public class Repository {
         volume.stop();
     }
 
-    public void put(ContentInfo contentInfo, InputStream source) {
-        volume.put(contentInfo, source);
+    public void put(ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
+        volume.put(contentInfo, source, revSpec);
         agent.signal();
     }
 
-    public void delete(Hash hash) {
-        volume.delete(hash);
+    public void put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
+        volume.put(contentInfoTree, source, revSpec);
+        agent.signal();
+    }
+
+    public void put(ContentInfo contentInfo, RevSpec revSpec) {
+        volume.put(contentInfo, revSpec);
+        agent.signal();
+    }
+
+    public void put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
+        volume.put(contentInfoTree, revSpec);
+        agent.signal();
+    }
+
+    public void delete(Hash hash, RevSpec revSpec) {
+        volume.delete(hash, revSpec);
         agent.signal();
     }
 

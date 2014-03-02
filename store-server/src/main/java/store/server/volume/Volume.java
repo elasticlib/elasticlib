@@ -9,9 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.server.RevSpec;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownHashException;
@@ -93,7 +95,10 @@ public class Volume {
         return transactionManager.isStarted();
     }
 
-    public void put(final ContentInfo contentInfo, final InputStream source) {
+    public void put(final ContentInfo contentInfo, final InputStream source, RevSpec revSpec) {
+
+        // TODO handle revSpec parameter !
+
         final Hash hash = contentInfo.getHash();
         transactionManager.inTransaction(hash, new Command() {
             @Override
@@ -105,7 +110,22 @@ public class Volume {
         });
     }
 
-    public void delete(final Hash hash) {
+    public void put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
+        // TODO this is a stub !
+    }
+
+    public void put(ContentInfo contentInfo, RevSpec revSpec) {
+        // TODO this is a stub !
+    }
+
+    public void put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
+        // TODO this is a stub !
+    }
+
+    public void delete(final Hash hash, RevSpec revSpec) {
+
+        // TODO handle revSpec parameter !
+
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {

@@ -208,8 +208,8 @@ public class ContentInfoTreeTest {
      *
      * @return Test data.
      */
-    @DataProvider(name = "headTestDataProvider")
-    public Object[][] headTestDataProvider() {
+    @DataProvider(name = "getHeadTestDataProvider")
+    public Object[][] getHeadTestDataProvider() {
         return new Object[][]{
             new Object[]{tree(a0), revisions(a0)},
             new Object[]{tree(a3, b2), revisions(a3, b2)},
@@ -226,9 +226,9 @@ public class ContentInfoTreeTest {
      * @param tree Input tree
      * @param expected Expected output
      */
-    @Test(dataProvider = "headTestDataProvider")
-    public void headTest(ContentInfoTree tree, Hash[] expected) {
-        assertThat(tree.head()).containsExactly(expected);
+    @Test(dataProvider = "getHeadTestDataProvider")
+    public void getHeadTest(ContentInfoTree tree, Hash[] expected) {
+        assertThat(tree.getHead()).containsExactly(expected);
     }
 
     /**
@@ -236,8 +236,8 @@ public class ContentInfoTreeTest {
      *
      * @return Test data.
      */
-    @DataProvider(name = "tailTestDataProvider")
-    public Object[][] tailTestDataProvider() {
+    @DataProvider(name = "getTailTestDataProvider")
+    public Object[][] getTailTestDataProvider() {
         return new Object[][]{
             new Object[]{tree(a0), revisions(a0)},
             new Object[]{tree(a3, b2), revisions(a3, b2)},
@@ -254,9 +254,9 @@ public class ContentInfoTreeTest {
      * @param tree Input tree
      * @param expected Expected output
      */
-    @Test(dataProvider = "tailTestDataProvider")
-    public void tailTest(ContentInfoTree tree, Hash[] expected) {
-        assertThat(tree.tail()).containsExactly(expected);
+    @Test(dataProvider = "getTailTestDataProvider")
+    public void getTailTest(ContentInfoTree tree, Hash[] expected) {
+        assertThat(tree.getTail()).containsExactly(expected);
     }
 
     /**
@@ -264,8 +264,8 @@ public class ContentInfoTreeTest {
      *
      * @return Test data.
      */
-    @DataProvider(name = "unknownParentsTestDataProvider")
-    public Object[][] unknownParentsTestDataProvider() {
+    @DataProvider(name = "getUnknownParentsTestDataProvider")
+    public Object[][] getUnknownParentsTestDataProvider() {
         return new Object[][]{
             new Object[]{tree(a0), revisions()},
             new Object[]{tree(a3, b2), revisions(a1, a2)},
@@ -282,9 +282,9 @@ public class ContentInfoTreeTest {
      * @param tree Input tree
      * @param expected Expected output
      */
-    @Test(dataProvider = "unknownParentsTestDataProvider")
-    public void unknownParentsTest(ContentInfoTree tree, Hash[] expected) {
-        IterableAssert<Hash> assertion = assertThat(tree.unknownParents());
+    @Test(dataProvider = "getUnknownParentsTestDataProvider")
+    public void getUnknownParentsTest(ContentInfoTree tree, Hash[] expected) {
+        IterableAssert<Hash> assertion = assertThat(tree.getUnknownParents());
         if (expected.length == 0) {
             assertion.isEmpty();
         } else {
@@ -346,9 +346,9 @@ public class ContentInfoTreeTest {
     @Test
     public void simpleThreeWayMergeTest() {
         ContentInfoTree merge = tree(a0, a1, a2, a3, b2).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(a4.getMetadata());
     }
 
@@ -362,9 +362,9 @@ public class ContentInfoTreeTest {
                                      "a0");
 
         ContentInfoTree merge = tree(a0, a1, a1Bis).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("msg", Value.of("hello")));
     }
 
@@ -374,9 +374,9 @@ public class ContentInfoTreeTest {
     @Test
     public void deletedMergeTest() {
         ContentInfoTree merge = tree(a0, a1, a2, a3, a4, b2, c3, d4, d5).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.isDeleted()).isTrue();
     }
 
@@ -389,9 +389,9 @@ public class ContentInfoTreeTest {
         ContentInfo rev1b = revision("1b", ImmutableMap.of("int", Value.of(10)));
 
         ContentInfoTree merge = tree(rev1a, rev1b).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(10),
                                                                  "msg", Value.of("hello")));
     }
@@ -426,9 +426,9 @@ public class ContentInfoTreeTest {
                                      "1a", "1b");
 
         ContentInfoTree merge = tree(rev0, rev1a, rev1b, rev2a, rev2b).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),
                                                                  "msg", Value.of("hello world")));
     }
@@ -481,9 +481,9 @@ public class ContentInfoTreeTest {
                                      "1a", "1b", "1c");
 
         ContentInfoTree merge = tree(rev0, rev1a, rev2a, rev1c, rev1b, rev2b, rev2c).merge();
-        ContentInfo head = merge.get(merge.head().first());
+        ContentInfo head = merge.get(merge.getHead().first());
 
-        assertThat(merge.head()).hasSize(1);
+        assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),
                                                                  "msg", Value.of("hello world"),
                                                                  "out", Value.of("bye bye")));

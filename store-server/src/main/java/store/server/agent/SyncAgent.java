@@ -8,10 +8,11 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import store.server.Repository;
+import store.server.RevSpec;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
-import store.server.exception.UnknownHashException;
 import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.UnknownHashException;
 import store.server.exception.WriteException;
 
 class SyncAgent extends Agent {
@@ -68,7 +69,7 @@ class SyncAgent extends Agent {
                 PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
                 try {
                     pipeWriter.start();
-                    destination.put(info, in);
+                    destination.put(info, RevSpec.any());
 
                 } catch (IntegrityCheckingFailedException | WriteException e) {
                     pipeWriter.throwCauseIfAny();
@@ -83,7 +84,7 @@ class SyncAgent extends Agent {
 
         private void delete(Hash hash) {
             try {
-                destination.delete(hash);
+                destination.delete(hash, RevSpec.any());
 
             } catch (UnknownHashException e) {
                 // Ok

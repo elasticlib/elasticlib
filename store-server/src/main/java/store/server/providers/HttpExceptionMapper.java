@@ -12,6 +12,7 @@ import store.server.exception.BadRequestException;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidStorePathException;
+import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.StoreException;
@@ -30,6 +31,7 @@ public class HttpExceptionMapper implements ExceptionMapper<StoreException> {
     static {
         MAPPING.put(BadRequestException.class, BAD_REQUEST);
 
+        MAPPING.put(RepositoryAlreadyExistsException.class, PRECONDITION_FAILED);
         MAPPING.put(ContentAlreadyStoredException.class, PRECONDITION_FAILED);
         MAPPING.put(IntegrityCheckingFailedException.class, PRECONDITION_FAILED);
         MAPPING.put(InvalidStorePathException.class, PRECONDITION_FAILED);

@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 import store.common.Event;
 import store.common.Event.EventBuilder;
@@ -15,6 +17,7 @@ import store.common.Hash;
 import store.common.Operation;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
+import store.common.value.Value;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
 import store.server.transaction.Output;
@@ -74,19 +77,12 @@ class HistoryManager {
         }
     }
 
-    public void put(Hash hash) {
-        append(hash, Operation.PUT);
-    }
-
-    public void delete(Hash hash) {
-        append(hash, Operation.DELETE);
-    }
-
-    private void append(Hash hash, Operation operation) {
+    public void add(Hash hash, Operation operation, SortedSet<Hash> head) {
         TransactionContext txContext = currentTransactionContext();
         Event event = new EventBuilder()
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
+                .withHead(head)
                 .withTimestamp(new Date())
                 .withOperation(operation)
                 .build();
@@ -216,20 +212,30 @@ class HistoryManager {
     }
 
     private static byte[] bytes(Event event) {
+        List<Value> head = new ArrayList<>();
+        for (Hash rev : event.getHead()) {
+            head.add(Value.of(rev.getBytes()));
+        }
         return new ObjectEncoder()
                 .put("seq", event.getSeq())
                 .put("hash", event.getHash().getBytes())
-                .put("timestamp", event.getTimestamp())
-                .put("operation", event.getOperation().value())
+                .put("head", head)
+                .put("ts", event.getTimestamp())
+                .put("code", event.getOperation().getCode())
                 .build();
     }
 
     private static Event readEvent(ObjectDecoder objectDecoder) {
+        SortedSet<Hash> head = new TreeSet<>();
+        for (Value value : objectDecoder.getList("head")) {
+            head.add(new Hash(value.asByteArray()));
+        }
         return new EventBuilder()
                 .withSeq(objectDecoder.getLong("seq"))
                 .withHash(new Hash(objectDecoder.getByteArray("hash")))
-                .withTimestamp(objectDecoder.getDate("timestamp"))
-                .withOperation(Operation.of(objectDecoder.getByte("operation")))
+                .withHead(head)
+                .withTimestamp(objectDecoder.getDate("ts"))
+                .withOperation(Operation.fromCode(objectDecoder.getByte("code")))
                 .build();
     }
 

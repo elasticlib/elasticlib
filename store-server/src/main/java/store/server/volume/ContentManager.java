@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
@@ -52,10 +51,10 @@ class ContentManager {
         return new ContentManager(path);
     }
 
-    public void put(ContentInfo info, InputStream source) {
-        try (Output target = openOutput(info)) {
+    public void add(Hash hash, long length, InputStream source) {
+        try (Output target = openOutput(hash, length)) {
             Digest digest = copyAndDigest(source, target);
-            if (info.getLength() != digest.getLength() || !info.getHash().equals(digest.getHash())) {
+            if (length != digest.getLength() || !hash.equals(digest.getHash())) {
                 throw new IntegrityCheckingFailedException();
             }
         } catch (IOException e) {
@@ -63,14 +62,18 @@ class ContentManager {
         }
     }
 
-    private Output openOutput(ContentInfo info) {
+    private Output openOutput(Hash hash, long length) {
         TransactionContext txContext = currentTransactionContext();
-        Path path = path(info.getHash());
+        Path path = path(hash);
         txContext.create(path);
-        if (info.getLength() > HEAVY_WRITE_THRESHOLD) {
+        if (length > HEAVY_WRITE_THRESHOLD) {
             return txContext.openHeavyWriteOutput(path);
         }
         return txContext.openOutput(path);
+    }
+
+    public boolean contains(Hash hash) {
+        return currentTransactionContext().exists(path(hash));
     }
 
     public InputStream get(Hash hash) {

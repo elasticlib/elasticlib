@@ -5,19 +5,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Hash;
+import store.common.Operation;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
-import store.server.exception.ContentAlreadyStoredException;
+import store.server.RevSpec;
 import store.server.exception.InvalidStorePathException;
+import store.server.exception.RevSpecCheckingFailedException;
 import store.server.exception.StoreRuntimeException;
-import store.server.exception.UnknownHashException;
+import store.server.exception.UnknownContentException;
+import store.server.exception.UnknownRevisionException;
+import store.server.lock.Table;
+import store.server.transaction.Input;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
@@ -34,6 +39,9 @@ class InfoManager {
     public static InfoManager create(Path path) {
         try {
             Files.createDirectory(path);
+            for (String key : Table.keySet(KEY_LENGTH)) {
+                Files.createDirectory(path.resolve(key));
+            }
             return new InfoManager(path);
 
         } catch (IOException e) {
@@ -48,94 +56,166 @@ class InfoManager {
         return new InfoManager(path);
     }
 
-    public void put(ContentInfo contentInfo) {
-        Hash hash = contentInfo.getHash();
-        if (contains(hash)) {
-            throw new ContentAlreadyStoredException();
+    public CommandResult put(ContentInfo info, RevSpec revSpec) {
+        Optional<ContentInfoTree> existing = load(info.getHash(), revSpec);
+        ContentInfoTree updated;
+        if (!existing.isPresent()) {
+            updated = new ContentInfoTreeBuilder()
+                    .add(info)
+                    .build();
+        } else {
+            updated = existing.get()
+                    .add(info)
+                    .merge();
         }
+        save(updated);
+        return result(existing, updated);
+    }
+
+    public CommandResult put(ContentInfoTree tree, RevSpec revSpec) {
+        Optional<ContentInfoTree> existing = load(tree.getHash(), revSpec);
+        ContentInfoTree updated;
+        if (!existing.isPresent()) {
+            updated = tree;
+        } else {
+            updated = existing.get()
+                    .add(tree)
+                    .merge();
+        }
+        save(updated);
+        return result(existing, updated);
+    }
+
+    public CommandResult delete(Hash hash, RevSpec revSpec) {
+        Optional<ContentInfoTree> existing = load(hash, revSpec);
+        if (!existing.isPresent()) {
+            throw new UnknownContentException();
+        }
+        ContentInfoTree updated;
+        if (existing.get().isDeleted()) {
+            updated = existing.get();
+        } else {
+            updated = existing.get().add(new ContentInfoBuilder()
+                    .withHash(hash)
+                    .withLength(existing.get().getLength())
+                    .withParents(existing.get().getHead())
+                    .withDeleted(true)
+                    .computeRevAndBuild());
+        }
+        save(updated);
+        return result(existing, updated);
+    }
+
+    private Optional<ContentInfoTree> load(Hash hash, RevSpec revSpec) {
         Path path = path(hash);
+        TransactionContext txContext = currentTransactionContext();
+        Optional<ContentInfoTree> existing;
+        if (!txContext.exists(path)) {
+            existing = Optional.absent();
+        } else {
+            try (Input input = txContext.openInput(path)) {
+                existing = Optional.of(load(input));
+            }
+        }
+        if (!isMatching(existing, revSpec)) {
+            throw new RevSpecCheckingFailedException();
+        }
+        return existing;
+    }
+
+    private static boolean isMatching(Optional<ContentInfoTree> tree, RevSpec revSpec) {
+        if (!tree.isPresent()) {
+            return revSpec.isNone();
+        }
+        return revSpec.matches(tree.get().getHead());
+    }
+
+    private void save(ContentInfoTree tree) {
+        if (!tree.getUnknownParents().isEmpty()) {
+            throw new UnknownRevisionException();
+        }
+        Path path = path(tree.getHash());
         TransactionContext txContext = currentTransactionContext();
         if (!txContext.exists(path)) {
             txContext.create(path);
         }
         try (Output output = txContext.openOutput(path)) {
-            output.write(bytes(contentInfo));
+            save(tree, output);
         }
     }
 
-    public void delete(Hash hash) {
-        TransactionContext txContext = currentTransactionContext();
-        Path path = path(hash);
-        if (!txContext.exists(path)) {
-            throw new UnknownHashException();
-        }
-        List<Entry> entries = load(path);
-        if (entries.size() == 1 && entries.get(0).getPosition() == 0) {
-            txContext.delete(path);
-            return;
-        }
-        Iterator<Entry> it = entries.iterator();
-        while (it.hasNext()) {
-            Entry entry = it.next();
-            if (entry.matches(hash)) {
-                txContext.truncate(path, entry.getPosition());
-                if (it.hasNext()) {
-                    try (Output output = txContext.openOutput(path)) {
-                        while (it.hasNext()) {
-                            output.write(bytes(it.next().getInfo()));
-                        }
-                    }
-                }
-                return;
-            }
-        }
-        throw new UnknownHashException();
+    private Path path(Hash hash) {
+        return root
+                .resolve(hash.encode().substring(0, KEY_LENGTH))
+                .resolve(hash.encode());
     }
 
-    public boolean contains(Hash hash) {
-        return get(hash).isPresent();
+    private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
+        Optional<Operation> operation = operation(before, after);
+        if (!operation.isPresent()) {
+            return CommandResult.noOp(after.getHead());
+        }
+        return CommandResult.of(operation.get(), after.getHead());
+    }
+
+    private static Optional<Operation> operation(Optional<ContentInfoTree> before, ContentInfoTree after) {
+        if (!before.isPresent()) {
+            return Optional.of(Operation.CREATE);
+        }
+        if (before.get().equals(after)) {
+            return Optional.absent();
+        }
+        boolean beforeIsDeleted = before.get().isDeleted();
+        boolean afterIsDeleted = after.isDeleted();
+
+        if (beforeIsDeleted && !afterIsDeleted) {
+            return Optional.of(Operation.RESTORE);
+        }
+
+        if (!beforeIsDeleted && afterIsDeleted) {
+            return Optional.of(Operation.DELETE);
+        }
+        return Optional.of(Operation.UPDATE);
     }
 
     public Optional<ContentInfo> get(Hash hash) {
-        Path path = path(hash);
-        if (!currentTransactionContext().exists(path)) {
-            return Optional.absent();
-        }
-        for (Entry entry : load(path)) {
-            if (entry.matches(hash)) {
-                return Optional.of(entry.getInfo());
-            }
+        // TODO This is a stub
+        // Devrait prendre en compte la RevSpec
+        // Revoir l'API pour pouvoir retourner un arbre au besoin !
+
+        Optional<ContentInfoTree> tree = load(hash, RevSpec.any());
+        if (tree.isPresent()) {
+            return Optional.of(tree.get().get(tree.get().getHead().first()));
         }
         return Optional.absent();
     }
 
-    private Path path(Hash hash) {
-        String key = hash.encode().substring(0, KEY_LENGTH);
-        return root.resolve(key);
+    private static void save(ContentInfoTree tree, Output output) {
+        for (ContentInfo info : tree.list()) {
+            ObjectEncoder encoder = new ObjectEncoder()
+                    .put("hash", info.getHash().getBytes())
+                    .put("length", info.getLength())
+                    .put("rev", info.getRev().getBytes());
+
+            List<Value> list = new ArrayList<>();
+            for (Hash parent : info.getParents()) {
+                list.add(Value.of(parent.getBytes()));
+            }
+            encoder.put("parents", list);
+            if (info.isDeleted()) {
+                encoder.put("deleted", true);
+            }
+            byte[] bytes = encoder
+                    .put("metadata", info.getMetadata())
+                    .build();
+
+            output.write(bytes);
+        }
     }
 
-    private static byte[] bytes(ContentInfo contentInfo) {
-        ObjectEncoder encoder = new ObjectEncoder()
-                .put("hash", contentInfo.getHash().getBytes())
-                .put("length", contentInfo.getLength())
-                .put("rev", contentInfo.getRev().getBytes());
-
-        List<Value> list = new ArrayList<>();
-        for (Hash parent : contentInfo.getParents()) {
-            list.add(Value.of(parent.getBytes()));
-        }
-        encoder.put("parents", list);
-        if (contentInfo.isDeleted()) {
-            encoder.put("deleted", true);
-        }
-        return encoder
-                .put("metadata", contentInfo.getMetadata())
-                .build();
-    }
-
-    private static List<Entry> load(Path path) {
-        List<Entry> entries = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
+    private static ContentInfoTree load(Input input) {
+        ContentInfoTreeBuilder treeBuilder = new ContentInfoTreeBuilder();
+        try (StreamDecoder streamDecoder = new StreamDecoder(input)) {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
                 ContentInfoBuilder builder = new ContentInfoBuilder();
@@ -145,37 +225,13 @@ class InfoManager {
                 if (objectDecoder.containsKey("deleted")) {
                     builder.withDeleted(objectDecoder.getBoolean("deleted"));
                 }
-                ContentInfo info = builder
+                treeBuilder.add(builder
                         .withHash(new Hash(objectDecoder.getByteArray("hash")))
                         .withLength(objectDecoder.getLong("length"))
                         .withMetadata(objectDecoder.getMap("metadata"))
-                        .build(new Hash(objectDecoder.getByteArray("rev")));
-                entries.add(new Entry(streamDecoder.position(), info));
+                        .build(new Hash(objectDecoder.getByteArray("rev"))));
             }
         }
-        return entries;
-    }
-
-    private static final class Entry {
-
-        private final long position;
-        private final ContentInfo info;
-
-        public Entry(long position, ContentInfo info) {
-            this.position = position;
-            this.info = info;
-        }
-
-        public long getPosition() {
-            return position;
-        }
-
-        public ContentInfo getInfo() {
-            return info;
-        }
-
-        public boolean matches(Hash hash) {
-            return info.getHash().equals(hash);
-        }
+        return treeBuilder.build();
     }
 }

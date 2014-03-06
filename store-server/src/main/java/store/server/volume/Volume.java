@@ -13,10 +13,11 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Operation;
 import store.server.RevSpec;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.StoreRuntimeException;
-import store.server.exception.UnknownHashException;
+import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
@@ -95,52 +96,95 @@ public class Volume {
         return transactionManager.isStarted();
     }
 
-    public void put(final ContentInfo contentInfo, final InputStream source, RevSpec revSpec) {
+    public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
+        final Hash hash = contentInfo.getHash();
+        final long length = contentInfo.getLength();
+        transactionManager.inTransaction(hash, new Command() {
+            @Override
+            public void apply() {
+                CommandResult result = infoManager.put(contentInfo, revSpec);
+                handleCommandResult(result, hash, length, source);
+            }
+        });
+    }
 
-        // TODO handle revSpec parameter !
+    public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
+        final Hash hash = contentInfoTree.getHash();
+        final long length = contentInfoTree.getLength();
+        transactionManager.inTransaction(hash, new Command() {
+            @Override
+            public void apply() {
+                CommandResult result = infoManager.put(contentInfoTree, revSpec);
+                handleCommandResult(result, hash, length, source);
+            }
+        });
+    }
 
+    private void handleCommandResult(CommandResult result, Hash hash, long length, InputStream source) {
+        if (result.isNoOp()) {
+            return;
+        }
+        Operation operation = result.getOperation();
+        if (operation == Operation.CREATE || operation == Operation.RESTORE) {
+            contentManager.add(hash, length, source);
+        }
+        if (operation == Operation.DELETE) {
+            contentManager.delete(hash);
+        }
+        historyManager.add(hash, operation, result.getHead());
+    }
+
+    public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
         final Hash hash = contentInfo.getHash();
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
-                infoManager.put(contentInfo);
-                contentManager.put(contentInfo, source);
-                historyManager.put(hash);
+                CommandResult result = infoManager.put(contentInfo, revSpec);
+                handleCommandResult(result, hash);
             }
         });
     }
 
-    public void put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
-        // TODO this is a stub !
-    }
-
-    public void put(ContentInfo contentInfo, RevSpec revSpec) {
-        // TODO this is a stub !
-    }
-
-    public void put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
-        // TODO this is a stub !
-    }
-
-    public void delete(final Hash hash, RevSpec revSpec) {
-
-        // TODO handle revSpec parameter !
-
+    public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
+        final Hash hash = contentInfoTree.getHash();
         transactionManager.inTransaction(hash, new Command() {
             @Override
             public void apply() {
-                infoManager.delete(hash);
-                contentManager.delete(hash);
-                historyManager.delete(hash);
+                CommandResult result = infoManager.put(contentInfoTree, revSpec);
+                handleCommandResult(result, hash);
             }
         });
+    }
+
+    public void delete(final Hash hash, final RevSpec revSpec) {
+        transactionManager.inTransaction(hash, new Command() {
+            @Override
+            public void apply() {
+                CommandResult result = infoManager.delete(hash, revSpec);
+                handleCommandResult(result, hash);
+            }
+        });
+    }
+
+    private void handleCommandResult(CommandResult result, Hash hash) {
+        if (result.isNoOp()) {
+            return;
+        }
+        Operation operation = result.getOperation();
+        if (operation == Operation.CREATE || operation == Operation.RESTORE) {
+            throw new UnknownContentException();
+        }
+        if (operation == Operation.DELETE) {
+            contentManager.delete(hash);
+        }
+        historyManager.add(hash, operation, result.getHead());
     }
 
     public boolean contains(final Hash hash) {
         return transactionManager.inTransaction(hash, new Query<Boolean>() {
             @Override
             public Boolean apply() {
-                return infoManager.contains(hash);
+                return contentManager.contains(hash);
             }
         });
     }
@@ -151,7 +195,7 @@ public class Volume {
             public ContentInfo apply() {
                 Optional<ContentInfo> info = infoManager.get(hash);
                 if (!info.isPresent()) {
-                    throw new UnknownHashException();
+                    throw new UnknownContentException();
                 }
                 return info.get();
             }
@@ -162,8 +206,8 @@ public class Volume {
         transactionManager.inTransaction(hash, new Query<Void>() {
             @Override
             public Void apply() {
-                if (!infoManager.contains(hash)) {
-                    throw new UnknownHashException();
+                if (!contentManager.contains(hash)) {
+                    throw new UnknownContentException();
                 }
                 try (InputStream inputStream = contentManager.get(hash)) {
                     copy(inputStream, outputStream);

@@ -12,7 +12,7 @@ import store.server.RevSpec;
 import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.UnknownHashException;
+import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 
 class SyncAgent extends Agent {
@@ -48,7 +48,9 @@ class SyncAgent extends Agent {
         protected boolean process(Event event) {
             try {
                 switch (event.getOperation()) {
-                    case PUT:
+                    case CREATE:
+                    case RESTORE:
+                    case UPDATE:
                         put(event.getHash());
                         break;
                     case DELETE:
@@ -58,7 +60,7 @@ class SyncAgent extends Agent {
                 agentManager.signal(destination.getName());
                 return true;
 
-            } catch (UnknownHashException | RepositoryNotStartedException e) {
+            } catch (UnknownContentException | RepositoryNotStartedException e) {
                 return false;
             }
         }
@@ -69,7 +71,7 @@ class SyncAgent extends Agent {
                 PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
                 try {
                     pipeWriter.start();
-                    destination.put(info, RevSpec.any());
+                    destination.put(info, in, RevSpec.any());
 
                 } catch (IntegrityCheckingFailedException | WriteException e) {
                     pipeWriter.throwCauseIfAny();
@@ -86,7 +88,7 @@ class SyncAgent extends Agent {
             try {
                 destination.delete(hash, RevSpec.any());
 
-            } catch (UnknownHashException e) {
+            } catch (UnknownContentException e) {
                 // Ok
             }
         }

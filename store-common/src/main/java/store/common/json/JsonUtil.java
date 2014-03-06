@@ -9,6 +9,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
@@ -42,6 +44,7 @@ import store.common.json.schema.Schema;
 public final class JsonUtil {
 
     private static final String HASH = "hash";
+    private static final String HEAD = "head";
     private static final String REV = "rev";
     private static final String REVS = "revs";
     private static final String PARENTS = "parents";
@@ -59,22 +62,22 @@ public final class JsonUtil {
     }
 
     /**
-     * Checks if supplied JSON object has a string value associated to supplied key.
+     * Checks if supplied JSON object has a string getCode associated to supplied key.
      *
      * @param json A JSON object.
      * @param key A key.
-     * @return <tt>true</tt> if supplied JSON object has a string value associated to supplied key.
+     * @return <tt>true</tt> if supplied JSON object has a string getCode associated to supplied key.
      */
     public static boolean hasStringValue(JsonObject json, String key) {
         return hasValue(json, key, STRING);
     }
 
     /**
-     * Checks if supplied JSON object has a boolean value associated to supplied key.
+     * Checks if supplied JSON object has a boolean getCode associated to supplied key.
      *
      * @param json A JSON object.
      * @param key A key.
-     * @return <tt>true</tt> if supplied JSON object has a boolean value associated to supplied key.
+     * @return <tt>true</tt> if supplied JSON object has a boolean getCode associated to supplied key.
      */
     public static boolean hasBooleanValue(JsonObject json, String key) {
         return hasValue(json, key, TRUE, FALSE);
@@ -135,9 +138,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list of {@link Hash} to a JSON array.
+     * Writes supplied list fromCode {@link Hash} to a JSON array.
      *
-     * @param hashes A list of hashes.
+     * @param hashes A list fromCode hashes.
      * @return A JSON array.
      */
     public static JsonArray writeHashes(List<Hash> hashes) {
@@ -149,10 +152,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list of {@link Hash} from supplied JSON array.
+     * Reads a list fromCode {@link Hash} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list of hashes.
+     * @return A list fromCode hashes.
      */
     public static List<Hash> readHashes(JsonArray json) {
         List<Hash> list = new ArrayList<>();
@@ -163,9 +166,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list of {@link ContentInfo} to a JSON array.
+     * Writes supplied list fromCode {@link ContentInfo} to a JSON array.
      *
-     * @param contentInfos A list of content infos.
+     * @param contentInfos A list fromCode content infos.
      * @return A JSON array.
      */
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
@@ -177,10 +180,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list of {@link ContentInfo} from supplied JSON array.
+     * Reads a list fromCode {@link ContentInfo} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list of content infos.
+     * @return A list fromCode content infos.
      */
     public static List<ContentInfo> readContentInfos(JsonArray json) {
         List<ContentInfo> list = new ArrayList<>();
@@ -277,8 +280,7 @@ public final class JsonUtil {
     }
 
     private static ContentInfo readContentInfoBase(ContentInfoBuilder builder, JsonObject json) {
-        for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(
-                JsonString.class)) {
+        for (JsonString value : json.getJsonArray(PARENTS).getValuesAs(JsonString.class)) {
             builder.withParent(new Hash(value.getString()));
         }
         if (json.containsKey(DELETED)) {
@@ -363,9 +365,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list of {@link Event} to a JSON array.
+     * Writes supplied list fromCode {@link Event} to a JSON array.
      *
-     * @param events A list of events.
+     * @param events A list fromCode events.
      * @return A JSON array.
      */
     public static JsonArray writeEvents(List<Event> events) {
@@ -377,10 +379,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list of {@link Event} from supplied JSON array.
+     * Reads a list fromCode {@link Event} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list of events.
+     * @return A list fromCode events.
      */
     public static List<Event> readEvents(JsonArray json) {
         List<Event> list = new ArrayList<>();
@@ -391,19 +393,29 @@ public final class JsonUtil {
     }
 
     private static JsonObjectBuilder writeEvent(Event event) {
+        JsonArrayBuilder head = createArrayBuilder();
+        for (Hash item : event.getHead()) {
+            head.add(item.encode());
+        }
         return createObjectBuilder()
                 .add(SEQ, event.getSeq())
                 .add(HASH, event.getHash().encode())
+                .add(HEAD, head)
                 .add(TIMESTAMP, event.getTimestamp().getTime())
-                .add(OPERATION, event.getOperation().name());
+                .add(OPERATION, event.getOperation().toString());
     }
 
     private static Event readEvent(JsonObject json) {
+        SortedSet<Hash> head = new TreeSet<>();
+        for (JsonString value : json.getJsonArray(HEAD).getValuesAs(JsonString.class)) {
+            head.add(new Hash(value.getString()));
+        }
         return new EventBuilder()
                 .withSeq(json.getJsonNumber(SEQ).longValue())
                 .withHash(new Hash(json.getString(HASH)))
+                .withHead(head)
                 .withTimestamp(new Date(json.getJsonNumber(TIMESTAMP).longValue()))
-                .withOperation(Operation.valueOf(json.getString(OPERATION)))
+                .withOperation(Operation.fromString(json.getString(OPERATION)))
                 .build();
     }
 }

@@ -105,10 +105,6 @@ public class Repository {
         agent.signal();
     }
 
-    public boolean contains(Hash hash) {
-        return volume.contains(hash);
-    }
-
     public ContentInfo info(Hash hash) {
         return volume.info(hash);
     }

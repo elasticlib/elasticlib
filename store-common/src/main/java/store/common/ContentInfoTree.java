@@ -92,6 +92,29 @@ public class ContentInfoTree {
     }
 
     /**
+     * Provides associated content length.
+     *
+     * @return A content length in bytes.
+     */
+    public long getLength() {
+        return nodes.values().iterator().next().getLength();
+    }
+
+    /**
+     * Indicates if content is deleted according to head.
+     *
+     * @return true if all revisions at head are deleted.
+     */
+    public boolean isDeleted() {
+        for (Hash rev : head) {
+            if (!nodes.get(rev).isDeleted()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Provides head revisions hashes of this tree, those which are not parent of any other ones.
      *
      * @return A sorted set of revision hashes.

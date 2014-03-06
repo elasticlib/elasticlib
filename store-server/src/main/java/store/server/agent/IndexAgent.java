@@ -8,10 +8,9 @@ import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.Operation.DELETE;
-import static store.common.Operation.PUT;
 import store.server.Index;
-import store.server.exception.UnknownHashException;
 import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.UnknownContentException;
 import store.server.volume.Volume;
 
 public class IndexAgent extends Agent {
@@ -45,7 +44,9 @@ public class IndexAgent extends Agent {
         protected boolean process(Event event) {
             try {
                 switch (event.getOperation()) {
-                    case PUT:
+                    case CREATE:
+                    case RESTORE:
+                    case UPDATE:
                         put(event.getHash());
                         break;
                     case DELETE:
@@ -54,7 +55,7 @@ public class IndexAgent extends Agent {
                 }
                 return true;
 
-            } catch (UnknownHashException | RepositoryNotStartedException e) {
+            } catch (UnknownContentException | RepositoryNotStartedException e) {
                 return false;
             }
         }

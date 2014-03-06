@@ -16,10 +16,9 @@ import store.server.Content;
 import store.server.RevSpec;
 import static store.server.TestUtil.inject;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.UnknownHashException;
+import store.server.exception.UnknownContentException;
 
 /**
  * Unit tests.
@@ -107,7 +106,7 @@ public class VolumeTest {
      *
      * @throws IOException If an IO error occurs.
      */
-    @Test(expectedExceptions = ContentAlreadyStoredException.class)
+    @Test
     public void putAlreadyStored() throws IOException {
         Volume volume = newVolumeWith(LOREM_IPSUM);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
@@ -134,7 +133,7 @@ public class VolumeTest {
      *
      * @throws IOException If an IO error occurs.
      */
-    @Test(expectedExceptions = UnknownHashException.class)
+    @Test(expectedExceptions = UnknownContentException.class)
     public void getUnknownHash() throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             Volume.create(newTmpDir()).get(UNKNOWN_HASH, outputStream);
@@ -153,7 +152,7 @@ public class VolumeTest {
     /**
      * Test.
      */
-    @Test(expectedExceptions = UnknownHashException.class)
+    @Test(expectedExceptions = UnknownContentException.class)
     public void infoUnknownHash() {
         Volume volume = newVolumeWith(LOREM_IPSUM);
         volume.info(UNKNOWN_HASH);
@@ -173,7 +172,7 @@ public class VolumeTest {
     /**
      * Test.
      */
-    @Test(expectedExceptions = UnknownHashException.class)
+    @Test(expectedExceptions = UnknownContentException.class)
     public void deleteUnknownHash() {
         Volume.create(newTmpDir()).delete(UNKNOWN_HASH, RevSpec.any());
     }
@@ -194,7 +193,7 @@ public class VolumeTest {
         txManager.proceed();
 
         assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasFailed(ContentAlreadyStoredException.class)).isTrue();
+        assertThat(first.hasSucceed()).isTrue();
     }
 
     /**
@@ -251,7 +250,7 @@ public class VolumeTest {
         txManager.proceed();
 
         assertThat(first.hasFailed(IntegrityCheckingFailedException.class)).isTrue();
-        assertThat(second.hasFailed(UnknownHashException.class)).isTrue();
+        assertThat(second.hasFailed(UnknownContentException.class)).isTrue();
     }
 
     /**
@@ -269,7 +268,7 @@ public class VolumeTest {
         executor.execute(second);
         txManager.proceed();
 
-        assertThat(first.hasFailed(UnknownHashException.class)).isTrue();
+        assertThat(first.hasFailed(UnknownContentException.class)).isTrue();
         assertThat(second.hasSucceed()).isTrue();
     }
 
@@ -327,7 +326,7 @@ public class VolumeTest {
         txManager.proceed();
 
         assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasFailed(UnknownHashException.class)).isTrue();
+        assertThat(second.hasFailed(UnknownContentException.class)).isTrue();
     }
 
     /**

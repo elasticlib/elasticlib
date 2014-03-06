@@ -1,19 +1,26 @@
 package store.common;
 
+import static com.google.common.base.Objects.toStringHelper;
+import static java.util.Collections.unmodifiableSortedSet;
 import java.util.Date;
+import static java.util.Objects.hash;
+import static java.util.Objects.requireNonNull;
+import java.util.SortedSet;
 
 public class Event {
 
     private final long seq;
     private final Hash hash;
+    private final SortedSet<Hash> head;
     private final Date timestamp;
     private final Operation operation;
 
     private Event(EventBuilder builder) {
         this.seq = builder.seq;
-        this.hash = builder.hash;
-        this.timestamp = builder.timestamp;
-        this.operation = builder.operation;
+        this.hash = requireNonNull(builder.hash);
+        this.head = unmodifiableSortedSet(builder.head);
+        this.timestamp = requireNonNull(builder.timestamp);
+        this.operation = requireNonNull(builder.operation);
     }
 
     public long getSeq() {
@@ -22,6 +29,10 @@ public class Event {
 
     public Hash getHash() {
         return hash;
+    }
+
+    public SortedSet<Hash> getHead() {
+        return head;
     }
 
     public Date getTimestamp() {
@@ -34,20 +45,18 @@ public class Event {
 
     @Override
     public String toString() {
-        return "Event{" + "seq=" + seq +
-                ", hash=" + hash +
-                ", timestamp=" + timestamp.getTime() +
-                ", operation=" + operation.name() + '}';
+        return toStringHelper(this)
+                .add("seq", seq)
+                .add("hash", hash)
+                .add("head", head)
+                .add("timestamp", timestamp)
+                .add("operation", operation)
+                .toString();
     }
 
     @Override
     public int hashCode() {
-        int result = 5;
-        result = 89 * result + (int) (this.seq ^ (this.seq >>> 32));
-        result = 89 * result + hash.hashCode();
-        result = 89 * result + timestamp.hashCode();
-        result = 89 * result + operation.hashCode();
-        return result;
+        return hash(seq, hash, head, timestamp, operation);
     }
 
     @Override
@@ -58,26 +67,19 @@ public class Event {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Event other = (Event) obj;
-        if (seq != other.seq) {
-            return false;
-        }
-        if (!hash.equals(other.hash)) {
-            return false;
-        }
-        if (!timestamp.equals(other.timestamp)) {
-            return false;
-        }
-        if (operation != other.operation) {
-            return false;
-        }
-        return true;
+        Event other = (Event) obj;
+        return seq == other.seq &&
+                hash.equals(other.hash) &&
+                head.equals(other.head) &&
+                timestamp.equals(other.timestamp) &&
+                operation == other.operation;
     }
 
     public static class EventBuilder {
 
         private Long seq;
         private Hash hash;
+        private SortedSet<Hash> head;
         private Date timestamp;
         private Operation operation;
 
@@ -88,6 +90,11 @@ public class Event {
 
         public EventBuilder withHash(Hash hash) {
             this.hash = hash;
+            return this;
+        }
+
+        public EventBuilder withHead(SortedSet<Hash> head) {
+            this.head = head;
             return this;
         }
 

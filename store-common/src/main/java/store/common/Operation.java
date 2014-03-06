@@ -1,30 +1,68 @@
 package store.common;
 
+/**
+ * Define types of write operations on a volume.
+ */
 public enum Operation {
 
-    PUT(0x01),
-    DELETE(0x02);
-    private final byte value;
+    /**
+     * A creation, that is adding both a content and some related info from scratch.
+     */
+    CREATE(0x01),
+    /**
+     * A pure info update, that is a adding some info without creating or deleting associated content.
+     */
+    UPDATE(0x02),
+    /**
+     * A content deletion. Info is updated beside.
+     */
+    DELETE(0x03),
+    /**
+     * A content restoration : info is updated and content is re-added after a former deletion.
+     */
+    RESTORE(0x04);
+    private final byte code;
 
-    private Operation(int value) {
-        this.value = (byte) value;
+    private Operation(int code) {
+        this.code = (byte) code;
     }
 
-    public static Operation of(byte value) {
+    /**
+     * Provides operation matching with supplied hexadecimal code. Fails if supplied code is unknown.
+     *
+     * @param code An operation code.
+     * @return Corresponding operation.
+     */
+    public static Operation fromCode(byte code) {
         for (Operation operation : values()) {
-            if (operation.value == value) {
+            if (operation.code == code) {
                 return operation;
             }
         }
-        throw new IllegalArgumentException("0x" + Integer.toHexString(value));
+        throw new IllegalArgumentException("0x" + Integer.toHexString(code));
     }
 
-    public byte value() {
-        return value;
+    /**
+     * Provides operation matching with supplied string argument. Fails if supplied string is unknown.
+     *
+     * @param arg An operation as a string, as obtained by a call to toString().
+     * @return Corresponding operation.
+     */
+    public static Operation fromString(String arg) {
+        return Operation.valueOf(arg.toUpperCase());
+    }
+
+    /**
+     * Provides operation hexadecimal code.
+     *
+     * @return A byte.
+     */
+    public byte getCode() {
+        return code;
     }
 
     @Override
     public String toString() {
-        return name().charAt(0) + name().substring(1).toLowerCase();
+        return name().toLowerCase();
     }
 }

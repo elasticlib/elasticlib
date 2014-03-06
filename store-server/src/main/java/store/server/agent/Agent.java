@@ -6,13 +6,11 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import store.common.Event;
 import store.common.Hash;
-import store.common.Operation;
-import store.server.exception.StoreException;
-import store.server.exception.UnknownHashException;
 import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.StoreException;
+import store.server.exception.UnknownContentException;
 
 abstract class Agent {
 
@@ -63,36 +61,17 @@ abstract class Agent {
             return Optional.absent();
         }
         clearSignal();
-        updateEvents();
+        if (events.isEmpty()) {
+            List<Event> chunk = history(true, cursor, 100);
+            events.addAll(chunk);
+            if (!chunk.isEmpty()) {
+                cursor = chunk.get(chunk.size() - 1).getSeq();
+            }
+        }
         if (events.isEmpty()) {
             return Optional.absent();
         }
         return Optional.of(events.remove(0));
-    }
-
-    private void updateEvents() {
-        List<Event> chunk = history(true, cursor, 1000);
-        while (!chunk.isEmpty()) {
-            events.addAll(chunk);
-            cursor = chunk.get(chunk.size() - 1).getSeq();
-            chunk = history(true, cursor, 1000);
-        }
-        for (int pos = 0; pos < events.size(); pos++) {
-            Event event = events.get(pos);
-            if (event.getOperation() == Operation.PUT) {
-                ListIterator<Event> it = events.listIterator(pos + 1);
-                while (it.hasNext()) {
-                    int nextIndex = it.nextIndex();
-                    Event next = it.next();
-                    if (next.getHash().equals(event.getHash()) && next.getOperation() == Operation.DELETE) {
-                        events.remove(pos);
-                        events.remove(nextIndex - 1);
-                        pos--;
-                        break;
-                    }
-                }
-            }
-        }
     }
 
     abstract List<Event> history(boolean chronological, long first, int number);
@@ -136,7 +115,7 @@ abstract class Agent {
             try (PipedOutputStream out = new PipedOutputStream(in)) {
                 get(hash, out);
 
-            } catch (UnknownHashException | RepositoryNotStartedException e) {
+            } catch (UnknownContentException | RepositoryNotStartedException e) {
                 storeException = e;
 
             } catch (Exception e) {

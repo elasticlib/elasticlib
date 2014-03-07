@@ -1,5 +1,7 @@
 package store.client;
 
+import com.google.common.base.Joiner;
+import java.text.DateFormat;
 import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
 import store.common.ContentInfo;
@@ -15,7 +17,6 @@ import store.common.value.Value;
 public final class FormatUtil {
 
     private static final String COMMA = " : ";
-    private static final String INDENT = "    ";
 
     private FormatUtil() {
     }
@@ -75,18 +76,24 @@ public final class FormatUtil {
      */
     public static String asString(Event event) {
         return new StringBuilder()
-                .append(event.getOperation().toString())
+                .append(toPascalCase(event.getOperation().toString()))
                 .append(System.lineSeparator())
-                .append(INDENT)
+                .append("Date")
+                .append(COMMA)
+                .append(DateFormat.getDateTimeInstance().format(event.getTimestamp()))
+                .append(System.lineSeparator())
                 .append("Hash")
                 .append(COMMA)
                 .append(event.getHash())
                 .append(System.lineSeparator())
-                .append(INDENT)
-                .append("Date")
+                .append("Head")
                 .append(COMMA)
-                .append(event.getTimestamp())
+                .append(Joiner.on(", ").join(event.getHead()))
                 .append(System.lineSeparator())
                 .toString();
+    }
+
+    private static String toPascalCase(String lowerCase) {
+        return Character.toUpperCase(lowerCase.charAt(0)) + lowerCase.substring(1);
     }
 }

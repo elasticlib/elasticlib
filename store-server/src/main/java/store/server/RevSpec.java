@@ -7,6 +7,7 @@ import static java.util.Collections.unmodifiableSortedSet;
 import static java.util.Objects.hash;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import store.common.EqualsBuilder;
 import store.common.Hash;
 
 /**
@@ -133,14 +134,14 @@ public final class RevSpec {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof RevSpec)) {
             return false;
         }
         RevSpec other = (RevSpec) obj;
-        return revs.equals(other.revs) && any == other.any;
+        return new EqualsBuilder()
+                .append(revs, other.revs)
+                .append(any, other.any)
+                .build();
     }
 
     @Override

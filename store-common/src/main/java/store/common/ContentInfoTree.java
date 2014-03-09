@@ -17,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -349,19 +348,16 @@ public class ContentInfoTree {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(nodes);
+        return nodes.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof ContentInfoTree)) {
             return false;
         }
         ContentInfoTree other = (ContentInfoTree) obj;
-        return Objects.equals(nodes, other.nodes);
+        return nodes.equals(other.nodes);
     }
 
     @Override

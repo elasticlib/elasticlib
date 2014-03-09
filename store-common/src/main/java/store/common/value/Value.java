@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a dynamically typed value. Immutable.
@@ -197,18 +198,12 @@ public abstract class Value {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + type().hashCode();
-        hash = 83 * hash + value().hashCode();
-        return hash;
+        return Objects.hash(type(), value());
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof Value)) {
             return false;
         }
         Value other = (Value) obj;

@@ -1,5 +1,7 @@
 package store.common.value;
 
+import static java.util.Objects.hash;
+
 final class NullValue extends Value {
 
     private static final NullValue INSTANCE = new NullValue();
@@ -23,17 +25,12 @@ final class NullValue extends Value {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + type().hashCode();
-        return hash;
+        return hash(type());
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        return obj.getClass() == NullValue.class;
+        return this == obj;
     }
 
     @Override

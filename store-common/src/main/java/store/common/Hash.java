@@ -60,15 +60,16 @@ public final class Hash implements Comparable<Hash> {
     }
 
     @Override
-    public int compareTo(Hash that) {
-        return encode().compareTo(that.encode());
+    public final boolean equals(Object obj) {
+        if (!(obj instanceof Hash)) {
+            return false;
+        }
+        Hash other = (Hash) obj;
+        return Arrays.equals(bytes, other.bytes);
     }
 
     @Override
-    public final boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != getClass()) {
-            return false;
-        }
-        return Arrays.equals(bytes, Hash.class.cast(obj).bytes);
+    public int compareTo(Hash that) {
+        return encode().compareTo(that.encode());
     }
 }

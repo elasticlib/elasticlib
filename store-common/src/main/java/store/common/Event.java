@@ -61,18 +61,17 @@ public class Event {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof Event)) {
             return false;
         }
         Event other = (Event) obj;
-        return seq == other.seq &&
-                hash.equals(other.hash) &&
-                head.equals(other.head) &&
-                timestamp.equals(other.timestamp) &&
-                operation == other.operation;
+        return new EqualsBuilder()
+                .append(seq, other.seq)
+                .append(hash, other.hash)
+                .append(head, other.head)
+                .append(timestamp, other.timestamp)
+                .append(operation, other.operation)
+                .build();
     }
 
     public static class EventBuilder {

@@ -1,5 +1,6 @@
 package store.common;
 
+import static com.google.common.base.Objects.toStringHelper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,26 +83,40 @@ public class ContentInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(hash, length, rev, parents, deleted, metadata);
+        return Objects.hash(hash,
+                            length,
+                            rev,
+                            parents,
+                            deleted,
+                            metadata);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || obj.getClass() != ContentInfo.class) {
+        if (!(obj instanceof ContentInfo)) {
             return false;
         }
-        ContentInfo that = (ContentInfo) obj;
-        return hash.equals(that.hash) &&
-                length == that.length &&
-                rev.equals(that.rev) &&
-                parents.equals(that.parents) &&
-                deleted == that.deleted &&
-                metadata.equals(that.metadata);
+        ContentInfo other = (ContentInfo) obj;
+        return new EqualsBuilder()
+                .append(hash, other.hash)
+                .append(length, other.length)
+                .append(rev, other.rev)
+                .append(parents, other.parents)
+                .append(deleted, other.deleted)
+                .append(metadata, other.metadata)
+                .build();
     }
 
     @Override
     public String toString() {
-        return rev.toString();
+        return toStringHelper(this)
+                .add("hash", hash)
+                .add("length", length)
+                .add("rev", rev)
+                .add("parents", parents)
+                .add("deleted", deleted)
+                .add("metadata", metadata)
+                .toString();
     }
 
     /**

@@ -51,10 +51,7 @@ public final class ByteArrayValue extends Value {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof ByteArrayValue)) {
             return false;
         }
         ByteArrayValue other = (ByteArrayValue) obj;

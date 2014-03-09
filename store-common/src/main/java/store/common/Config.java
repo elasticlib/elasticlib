@@ -1,5 +1,6 @@
 package store.common;
 
+import static com.google.common.base.Objects.toStringHelper;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import static java.util.Collections.emptySet;
@@ -8,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import static java.util.Objects.hash;
 import java.util.Set;
 
 public final class Config {
@@ -77,26 +79,26 @@ public final class Config {
 
     @Override
     public String toString() {
-        return "Config{" + "repositories=" + repositories + ", sync=" + sync + '}';
+        return toStringHelper(this)
+                .add("repositories", repositories)
+                .add("sync", sync)
+                .toString();
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 29 * hash + repositories.hashCode();
-        hash = 29 * hash + sync.hashCode();
-        return hash;
+        return hash(repositories, sync);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (!(obj instanceof Config)) {
             return false;
         }
         Config other = (Config) obj;
-        return repositories.equals(other.repositories) && sync.equals(other.sync);
+        return new EqualsBuilder()
+                .append(repositories, other.repositories)
+                .append(sync, other.sync)
+                .build();
     }
 }

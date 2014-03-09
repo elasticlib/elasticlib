@@ -6,6 +6,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import store.common.EqualsBuilder;
 import store.common.Hash;
 import store.common.Operation;
 
@@ -80,11 +81,14 @@ public final class CommandResult {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof CommandResult) {
-            CommandResult other = (CommandResult) obj;
-            return operation == other.operation && head.equals(other.head);
+        if (!(obj instanceof CommandResult)) {
+            return false;
         }
-        return false;
+        CommandResult other = (CommandResult) obj;
+        return new EqualsBuilder()
+                .append(operation, other.operation)
+                .append(head, other.head)
+                .build();
     }
 
     @Override

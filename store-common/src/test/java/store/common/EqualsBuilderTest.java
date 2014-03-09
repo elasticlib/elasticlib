@@ -30,6 +30,112 @@ public class EqualsBuilderTest {
     }
 
     /**
+     * Test.
+     */
+    @Test
+    public void appendLongTest() {
+        assertThat(new EqualsBuilder().append(1l, 1l).build()).isTrue();
+        assertThat(new EqualsBuilder().append(0l, 1l).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append(1l, 1l).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0l, 1l).build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendIntTest() {
+        assertThat(new EqualsBuilder().append(1, 1).build()).isTrue();
+        assertThat(new EqualsBuilder().append(0, 1).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append(1, 1).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0, 1).build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendShortTest() {
+        assertThat(new EqualsBuilder().append((short) 1, (short) 1).build()).isTrue();
+        assertThat(new EqualsBuilder().append((short) 0, (short) 1).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append((short) 1, (short) 1).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append((short) 0, (short) 1).build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendByteTest() {
+        assertThat(new EqualsBuilder().append((byte) 1, (byte) 1).build()).isTrue();
+        assertThat(new EqualsBuilder().append((byte) 0, (byte) 1).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append((byte) 1, (byte) 1).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append((byte) 0, (byte) 1).build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendCharTest() {
+        assertThat(new EqualsBuilder().append('a', 'a').build()).isTrue();
+        assertThat(new EqualsBuilder().append('a', 'b').build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append('a', 'a').build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append('a', 'b').build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendBooleanTest() {
+        assertThat(new EqualsBuilder().append(true, true).build()).isTrue();
+        assertThat(new EqualsBuilder().append(true, false).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append(true, true).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(true, false).build()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendFloatTest() {
+        assertThat(new EqualsBuilder().append(0.1f, 0.1f).build()).isTrue();
+        assertThat(new EqualsBuilder().append(Float.NaN, Float.NaN).build()).isTrue();
+        assertThat(new EqualsBuilder().append(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY).build()).isTrue();
+
+        assertThat(new EqualsBuilder().append(0.1f, 0.2f).build()).isFalse();
+        assertThat(new EqualsBuilder().append(0.1f, Float.NaN).build()).isFalse();
+        assertThat(new EqualsBuilder().append(Float.NaN, Float.POSITIVE_INFINITY).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.1f).build()).isTrue().isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.2f).build()).isFalse().isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void appendDoubleTest() {
+        assertThat(new EqualsBuilder().append(0.1d, 0.1d).build()).isTrue();
+        assertThat(new EqualsBuilder().append(Double.NaN, Double.NaN).build()).isTrue();
+        assertThat(new EqualsBuilder().append(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY).build()).isTrue();
+
+        assertThat(new EqualsBuilder().append(0.1d, 0.2d).build()).isFalse();
+        assertThat(new EqualsBuilder().append(0.1d, Double.NaN).build()).isFalse();
+        assertThat(new EqualsBuilder().append(Double.NaN, Double.POSITIVE_INFINITY).build()).isFalse();
+
+        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.1d).build()).isTrue().isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.2d).build()).isFalse().isFalse();
+    }
+
+    /**
      * Data provider.
      *
      * @return Test data.
@@ -37,18 +143,6 @@ public class EqualsBuilderTest {
     @DataProvider(name = "appendEqualValuesDataProvider")
     public Object[][] appendEqualValuesDataProvider() {
         return new Object[][]{
-            {1l, 1l},
-            {1, 1},
-            {(short) 1, (short) 1},
-            {(byte) 1, (byte) 1},
-            {'a', 'a'},
-            {true, true},
-            {0.1f, 0.1f},
-            {Float.NaN, Float.NaN},
-            {Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY},
-            {0.1d, 0.1d},
-            {Double.NaN, Double.NaN},
-            {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY},
             {"abc", "abc"},
             {new long[]{1, 2}, new long[]{1, 2}},
             {new int[]{1, 2}, new int[]{1, 2}},
@@ -97,16 +191,6 @@ public class EqualsBuilderTest {
     @DataProvider(name = "appendDifferentValuesDataProvider")
     public Object[][] appendDifferentValuesDataProvider() {
         return new Object[][]{
-            {0L, 1L},
-            {0, 1},
-            {(short) 0, (short) 1},
-            {(byte) 0, (byte) 1},
-            {'a', 'b'},
-            {true, false},
-            {0.1f, 0.2f},
-            {0.1f, Float.NaN},
-            {Float.NaN, Float.POSITIVE_INFINITY},
-            {0.1d, 0.2d},
             {"abc", "def"},
             {new long[]{1, 2}, new long[]{1, 3}},
             {new int[]{1, 2}, new int[]{1, 3}},

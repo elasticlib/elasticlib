@@ -66,14 +66,16 @@ public class EqualsBuilder {
             isEquals = Arrays.equals((boolean[]) lhs, (boolean[]) rhs);
 
         } else {
-            Object[] leftArray = (Object[]) lhs;
-            Object[] rightArray = (Object[]) rhs;
-            if (leftArray.length != rightArray.length) {
-                isEquals = false;
-            }
-            for (int i = 0; i < leftArray.length && isEquals; ++i) {
-                append(leftArray[i], rightArray[i]);
-            }
+            append((Object[]) lhs, (Object[]) rhs);
+        }
+    }
+
+    private void append(Object[] lhs, Object[] rhs) {
+        if (lhs.length != rhs.length) {
+            isEquals = false;
+        }
+        for (int i = 0; i < lhs.length && isEquals; ++i) {
+            append(lhs[i], rhs[i]);
         }
     }
 

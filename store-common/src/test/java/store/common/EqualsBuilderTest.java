@@ -114,8 +114,8 @@ public class EqualsBuilderTest {
         assertThat(new EqualsBuilder().append(0.1f, Float.NaN).build()).isFalse();
         assertThat(new EqualsBuilder().append(Float.NaN, Float.POSITIVE_INFINITY).build()).isFalse();
 
-        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.1f).build()).isTrue().isFalse();
-        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.2f).build()).isFalse().isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.1f).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1f, 0.2f).build()).isFalse();
     }
 
     /**
@@ -131,8 +131,8 @@ public class EqualsBuilderTest {
         assertThat(new EqualsBuilder().append(0.1d, Double.NaN).build()).isFalse();
         assertThat(new EqualsBuilder().append(Double.NaN, Double.POSITIVE_INFINITY).build()).isFalse();
 
-        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.1d).build()).isTrue().isFalse();
-        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.2d).build()).isFalse().isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.1d).build()).isFalse();
+        assertThat(new EqualsBuilder().append(true, false).append(0.1d, 0.2d).build()).isFalse();
     }
 
     /**

@@ -1,6 +1,9 @@
 package store.server.exception;
 
-public final class IntegrityCheckingFailedException extends StoreException {
+/**
+ * Thrown if a content integrity check fails.
+ */
+public final class IntegrityCheckingFailedException extends ServerException {
 
     private static final long serialVersionUID = 1L;
 

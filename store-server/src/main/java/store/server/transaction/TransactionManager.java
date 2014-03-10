@@ -15,7 +15,7 @@ import org.xadisk.bridge.proxies.interfaces.XAFileSystem;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.common.Hash;
-import store.server.exception.InvalidStorePathException;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;
 import store.server.lock.LockManager;
@@ -76,7 +76,7 @@ public class TransactionManager {
      */
     public static TransactionManager open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new InvalidStorePathException();
+            throw new InvalidRepositoryPathException();
         }
         return new TransactionManager(path);
     }

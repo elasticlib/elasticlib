@@ -1,6 +1,9 @@
 package store.server.exception;
 
-public final class UnknownRepositoryException extends StoreException {
+/**
+ * Thrown if an operation references an unknown repository.
+ */
+public final class UnknownRepositoryException extends ServerException {
 
     private static final long serialVersionUID = 1L;
 

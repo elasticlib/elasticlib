@@ -9,7 +9,7 @@ import java.util.List;
 import store.common.Event;
 import store.common.Hash;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.StoreException;
+import store.server.exception.ServerException;
 import store.server.exception.UnknownContentException;
 
 abstract class Agent {
@@ -103,7 +103,7 @@ abstract class Agent {
 
         private final PipedInputStream in;
         private final Hash hash;
-        private StoreException storeException;
+        private ServerException storeException;
 
         public PipeWriterThread(PipedInputStream in, Hash hash) {
             this.in = in;
@@ -123,7 +123,7 @@ abstract class Agent {
             }
         }
 
-        public void throwCauseIfAny() throws StoreException {
+        public void throwCauseIfAny() throws ServerException {
             if (storeException != null) {
                 throw storeException;
             }

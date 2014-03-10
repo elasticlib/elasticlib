@@ -8,8 +8,7 @@ import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
 import store.server.exception.IntegrityCheckingFailedException;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 import store.server.lock.Table;
 import store.server.transaction.Output;
@@ -35,17 +34,17 @@ class ContentManager {
             return new ContentManager(path);
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
     public static ContentManager open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new InvalidStorePathException();
+            throw new InvalidRepositoryPathException();
         }
         for (String key : Table.keySet(KEY_LENGTH)) {
             if (!Files.isDirectory(path.resolve(key))) {
-                throw new InvalidStorePathException();
+                throw new InvalidRepositoryPathException();
             }
         }
         return new ContentManager(path);

@@ -15,8 +15,7 @@ import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.RevSpec;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Command;
@@ -48,10 +47,10 @@ public class Volume {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
-                throw new InvalidStorePathException();
+                throw new InvalidRepositoryPathException();
             }
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
         final TransactionManager txManager = TransactionManager.create(path.resolve("transactions"));
         return txManager.inTransaction(new Query<Volume>() {

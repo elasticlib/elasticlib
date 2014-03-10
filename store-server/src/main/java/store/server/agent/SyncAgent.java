@@ -9,7 +9,6 @@ import store.common.Event;
 import store.common.Hash;
 import store.server.Repository;
 import store.server.RevSpec;
-import store.server.exception.ContentAlreadyStoredException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
@@ -76,8 +75,6 @@ class SyncAgent extends Agent {
                 } catch (IntegrityCheckingFailedException | WriteException e) {
                     pipeWriter.throwCauseIfAny();
                     throw e;
-                } catch (ContentAlreadyStoredException e) {
-                    // Ok
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

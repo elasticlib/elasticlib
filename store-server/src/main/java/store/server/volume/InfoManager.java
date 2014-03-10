@@ -16,11 +16,11 @@ import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
 import store.server.RevSpec;
-import store.server.exception.InvalidStorePathException;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RevSpecCheckingFailedException;
-import store.server.exception.StoreRuntimeException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
+import store.server.exception.WriteException;
 import store.server.lock.Table;
 import store.server.transaction.Input;
 import store.server.transaction.Output;
@@ -45,13 +45,13 @@ class InfoManager {
             return new InfoManager(path);
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
     public static InfoManager open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new InvalidStorePathException();
+            throw new InvalidRepositoryPathException();
         }
         return new InfoManager(path);
     }

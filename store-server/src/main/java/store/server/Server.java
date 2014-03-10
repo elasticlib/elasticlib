@@ -12,7 +12,6 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
-import store.server.exception.StoreRuntimeException;
 
 /**
  * A Standalone HTTP server.
@@ -84,8 +83,8 @@ public class Server {
         try {
             httpServer.start();
 
-        } catch (IOException ex) {
-            throw new StoreRuntimeException(ex);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 }

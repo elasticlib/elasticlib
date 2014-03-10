@@ -49,8 +49,8 @@ import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 import store.server.exception.BadRequestException;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.WriteException;
 
 /**
  * A Lucene index on a volume.
@@ -76,13 +76,13 @@ public class Index {
             return new Index(path);
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
     public static Index open(Path path) {
         if (!Files.isDirectory(path)) {
-            throw new InvalidStorePathException();
+            throw new InvalidRepositoryPathException();
         }
         try {
             return new Index(path);

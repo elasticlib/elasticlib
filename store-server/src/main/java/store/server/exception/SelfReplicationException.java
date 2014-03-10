@@ -1,6 +1,9 @@
 package store.server.exception;
 
-public final class SelfReplicationException extends StoreException {
+/**
+ * Thrown if a replication of from repository to itself is requested.
+ */
+public final class SelfReplicationException extends ServerException {
 
     private static final long serialVersionUID = 1L;
 

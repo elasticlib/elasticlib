@@ -1,6 +1,9 @@
 package store.server.exception;
 
-public final class RevSpecCheckingFailedException extends StoreException {
+/**
+ * Thrown if a rev-spec checking fails.
+ */
+public final class RevSpecCheckingFailedException extends ServerException {
 
     private static final long serialVersionUID = 1L;
 

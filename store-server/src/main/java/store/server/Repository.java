@@ -12,8 +12,8 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import store.server.agent.IndexAgent;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
 /**
@@ -38,10 +38,10 @@ public class Repository {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
-                throw new InvalidStorePathException();
+                throw new InvalidRepositoryPathException();
             }
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
         return new Repository(path,
                               Volume.create(path.resolve("volume")),

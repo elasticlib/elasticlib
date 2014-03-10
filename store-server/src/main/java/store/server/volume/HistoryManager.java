@@ -18,8 +18,8 @@ import store.common.Operation;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
-import store.server.exception.InvalidStorePathException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.WriteException;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
@@ -32,14 +32,14 @@ class HistoryManager {
     private final Path latest;
     private final Path index;
 
-    private HistoryManager(Path root) throws IOException {
+    private HistoryManager(Path root) {
         this.root = root;
         latest = root.resolve("latest");
         index = root.resolve("index");
         nextSeq = new AtomicLong(initNextSeq());
     }
 
-    private long initNextSeq() throws IOException {
+    private long initNextSeq() {
         Deque<Event> latestEvents = loadPage(latest);
         if (!latestEvents.isEmpty()) {
             return latestEvents.getLast().getSeq() + 1;
@@ -59,7 +59,7 @@ class HistoryManager {
             return new HistoryManager(path);
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
@@ -67,14 +67,9 @@ class HistoryManager {
         if (!Files.isDirectory(path) ||
                 !Files.exists(path.resolve("latest")) ||
                 !Files.exists(path.resolve("index"))) {
-            throw new InvalidStorePathException();
+            throw new InvalidRepositoryPathException();
         }
-        try {
-            return new HistoryManager(path);
-
-        } catch (IOException e) {
-            throw new StoreRuntimeException(e);
-        }
+        return new HistoryManager(path);
     }
 
     public void add(Hash hash, Operation operation, SortedSet<Hash> head) {

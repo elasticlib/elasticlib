@@ -1,6 +1,5 @@
 package store.server.providers;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -12,7 +11,6 @@ import javax.json.JsonWriter;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -46,7 +44,8 @@ public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
 
     @Override
     public long getSize(JsonStructure json, Class<?> aClass, Type type, Annotation[] annotations, MediaType mediaType) {
-        return -1;   // Deprecated by JAX-RS 2.0 and ignored by Jersey runtime.
+        // Deprecated by JAX-RS 2.0 and ignored by Jersey runtime.
+        return -1;
     }
 
     @Override
@@ -56,7 +55,7 @@ public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
                         Annotation[] annotations,
                         MediaType mediaType,
                         MultivaluedMap<String, Object> stringObjectMultivaluedMap,
-                        OutputStream outputStream) throws IOException, WebApplicationException {
+                        OutputStream outputStream) {
 
         try (JsonWriter writer = writerFactory().createWriter(outputStream)) {
             writer.write(jsonStructure);

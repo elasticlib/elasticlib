@@ -1,12 +1,10 @@
 package store.server.providers;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -38,7 +36,7 @@ public class MultipartReader implements MessageBodyReader<Multipart> {
                               Annotation[] annotations,
                               MediaType mediaType,
                               MultivaluedMap<String, String> httpHeaders,
-                              InputStream entityStream) throws IOException, WebApplicationException {
+                              InputStream entityStream) {
 
         // Multipart implements Closeable and is responsible for closing entity inputStream.
         // This prevents Jersey runtime from closing entity inputStream directly when returning from this method,

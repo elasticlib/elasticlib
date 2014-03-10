@@ -123,7 +123,7 @@ abstract class Agent {
             }
         }
 
-        public void throwCauseIfAny() throws ServerException {
+        public void throwCauseIfAny() {
             if (storeException != null) {
                 throw storeException;
             }

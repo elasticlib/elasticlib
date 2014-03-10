@@ -61,12 +61,16 @@ public final class RevSpec {
             case ANY:
                 return ANY_SPEC;
             default:
-                SortedSet<Hash> revs = new TreeSet<>();
-                for (String part : Splitter.on('-').split(arg)) {
-                    revs.add(new Hash(part));
-                }
-                return new RevSpec(revs);
+                return new RevSpec(parse(arg));
         }
+    }
+
+    private static SortedSet<Hash> parse(String arg) {
+        SortedSet<Hash> revs = new TreeSet<>();
+        for (String part : Splitter.on('-').split(arg)) {
+            revs.add(new Hash(part));
+        }
+        return revs;
     }
 
     /**

@@ -1,6 +1,5 @@
 package store.server.providers;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -9,7 +8,6 @@ import javax.json.JsonReader;
 import javax.json.JsonReaderFactory;
 import javax.json.JsonStructure;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -43,7 +41,7 @@ public class JsonBodyReader implements MessageBodyReader<JsonStructure> {
                                   Type type, Annotation[] annotations,
                                   MediaType mediaType,
                                   MultivaluedMap<String, String> stringStringMultivaluedMap,
-                                  InputStream inputStream) throws IOException, WebApplicationException {
+                                  InputStream inputStream) {
         try (JsonReader reader = rf.createReader(inputStream)) {
             return reader.read();
         }

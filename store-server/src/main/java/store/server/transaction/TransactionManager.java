@@ -17,7 +17,7 @@ import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.common.Hash;
 import store.server.exception.InvalidStorePathException;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.StoreRuntimeException;
+import store.server.exception.WriteException;
 import store.server.lock.LockManager;
 
 /**
@@ -64,7 +64,7 @@ public class TransactionManager {
             return new TransactionManager(path);
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
@@ -118,7 +118,7 @@ public class TransactionManager {
             started = false;
 
         } catch (IOException e) {
-            throw new StoreRuntimeException(e);
+            throw new WriteException(e);
         } finally {
             lock.writeLock().unlock();
         }

@@ -9,7 +9,7 @@ import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
 
-public abstract class AbstractTransactionContext implements TransactionContext {
+abstract class AbstractTransactionContext implements TransactionContext {
 
     final Session session;
     final AtomicBoolean closed = new AtomicBoolean(false);
@@ -29,7 +29,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
             session.commit();
 
         } catch (NoTransactionAssociatedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -42,7 +42,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
             session.rollback();
 
         } catch (NoTransactionAssociatedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -60,12 +60,12 @@ public abstract class AbstractTransactionContext implements TransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (LockingFailedException |
                 InsufficientPermissionOnFileException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -84,7 +84,7 @@ public abstract class AbstractTransactionContext implements TransactionContext {
                 LockingFailedException |
                 InterruptedException |
                 InsufficientPermissionOnFileException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -97,13 +97,13 @@ public abstract class AbstractTransactionContext implements TransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (FileNotExistsException |
                 LockingFailedException |
                 InsufficientPermissionOnFileException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -116,13 +116,13 @@ public abstract class AbstractTransactionContext implements TransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (LockingFailedException |
                 InsufficientPermissionOnFileException |
                 InterruptedException |
                 FileNotExistsException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 }

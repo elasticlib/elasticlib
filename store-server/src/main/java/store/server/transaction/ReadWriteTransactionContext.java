@@ -27,7 +27,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (FileAlreadyExistsException |
                 FileNotExistsException |
@@ -35,7 +35,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
                 InsufficientPermissionOnFileException |
                 LockingFailedException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -48,14 +48,14 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (FileAlreadyExistsException |
                 FileNotExistsException |
                 InsufficientPermissionOnFileException |
                 LockingFailedException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -68,7 +68,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (DirectoryNotEmptyException |
                 FileNotExistsException |
@@ -76,7 +76,7 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
                 InsufficientPermissionOnFileException |
                 LockingFailedException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -89,13 +89,13 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (FileNotExistsException |
                 InsufficientPermissionOnFileException |
                 LockingFailedException |
                 InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -118,14 +118,14 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
             if (closed.get()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
 
         } catch (LockingFailedException |
                 InsufficientPermissionOnFileException |
                 InterruptedException |
                 FileNotExistsException |
                 FileUnderUseException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 }

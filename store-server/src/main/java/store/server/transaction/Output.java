@@ -6,12 +6,17 @@ import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
 
+/**
+ * A transactional output stream.
+ * <p>
+ * Never throws any IOException.
+ */
 public class Output extends OutputStream {
 
     private final TransactionContext txContext;
     private final XAFileOutputStream delegate;
 
-    public Output(TransactionContext txContext, XAFileOutputStream delegate) {
+    Output(TransactionContext txContext, XAFileOutputStream delegate) {
         this.txContext = txContext;
         this.delegate = delegate;
     }
@@ -25,7 +30,7 @@ public class Output extends OutputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -43,7 +48,7 @@ public class Output extends OutputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -56,7 +61,7 @@ public class Output extends OutputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -69,7 +74,7 @@ public class Output extends OutputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 }

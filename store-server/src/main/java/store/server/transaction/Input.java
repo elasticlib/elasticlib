@@ -6,12 +6,17 @@ import org.xadisk.filesystem.exceptions.ClosedStreamException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
 
+/**
+ * A transactional input stream.
+ * <p>
+ * Does not support mark/reset operations. Never throws any IOException.
+ */
 public class Input extends InputStream {
 
     private final TransactionContext txContext;
     private final XAFileInputStream delegate;
 
-    public Input(TransactionContext txContext, XAFileInputStream delegate) {
+    Input(TransactionContext txContext, XAFileInputStream delegate) {
         this.txContext = txContext;
         this.delegate = delegate;
     }
@@ -25,7 +30,7 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -57,7 +62,7 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -70,7 +75,7 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -83,14 +88,24 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
+    /**
+     * Provides zero-based position of reading pointer in the file.
+     *
+     * @return Absolute position in bytes in the file.
+     */
     public long position() {
         return delegate.position();
     }
 
+    /**
+     * Set position of reading pointer in the file.
+     *
+     * @param n New absolute position in bytes in the file. Expected to be positive and less or equal to file length.
+     */
     public void position(long n) {
         try {
             delegate.position(n);
@@ -99,7 +114,7 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -127,7 +142,7 @@ public class Input extends InputStream {
             if (txContext.isClosed()) {
                 throw new RepositoryNotStartedException();
             }
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 }

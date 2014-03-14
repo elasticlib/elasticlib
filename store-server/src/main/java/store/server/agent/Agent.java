@@ -1,16 +1,9 @@
 package store.server.agent;
 
 import com.google.common.base.Optional;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import store.common.Event;
-import store.common.Hash;
-import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.ServerException;
-import store.server.exception.UnknownContentException;
 
 abstract class Agent {
 
@@ -76,8 +69,6 @@ abstract class Agent {
 
     abstract List<Event> history(boolean chronological, long first, int number);
 
-    abstract void get(Hash hash, OutputStream outputStream);
-
     abstract AgentThread newAgentThread();
 
     abstract class AgentThread extends Thread {
@@ -97,36 +88,5 @@ abstract class Agent {
         }
 
         protected abstract boolean process(Event event);
-    }
-
-    protected final class PipeWriterThread extends Thread {
-
-        private final PipedInputStream in;
-        private final Hash hash;
-        private ServerException storeException;
-
-        public PipeWriterThread(PipedInputStream in, Hash hash) {
-            this.in = in;
-            this.hash = hash;
-        }
-
-        @Override
-        public void run() {
-            try (PipedOutputStream out = new PipedOutputStream(in)) {
-                get(hash, out);
-
-            } catch (UnknownContentException | RepositoryNotStartedException e) {
-                storeException = e;
-
-            } catch (Exception e) {
-                // Ignore it
-            }
-        }
-
-        public void throwCauseIfAny() {
-            if (storeException != null) {
-                throw storeException;
-            }
-        }
     }
 }

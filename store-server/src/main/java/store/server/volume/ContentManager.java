@@ -9,6 +9,7 @@ import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
@@ -75,7 +76,12 @@ class ContentManager {
     }
 
     public InputStream get(Hash hash) {
-        return currentTransactionContext().openInput(path(hash));
+        TransactionContext txContext = currentTransactionContext();
+        Path path = path(hash);
+        if (!txContext.exists(path)) {
+            throw new UnknownContentException();
+        }
+        return txContext.openCommitingInput(path);
     }
 
     public void delete(Hash hash) {

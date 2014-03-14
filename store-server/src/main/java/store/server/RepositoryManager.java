@@ -226,9 +226,9 @@ public final class RepositoryManager {
         return repository(name).info(hash);
     }
 
-    public void get(String name, Hash hash, OutputStream outputStream) {
+    public InputStream get(String name, Hash hash) {
         LOG.info("Getting {}", hash);
-        repository(name).get(hash, outputStream);
+        return repository(name).get(hash);
     }
 
     public List<Hash> find(String name, String query, int first, int number) {

@@ -2,7 +2,6 @@ package store.server;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,8 +108,8 @@ public class Repository {
         return volume.info(hash);
     }
 
-    public void get(Hash hash, OutputStream outputStream) {
-        volume.get(hash, outputStream);
+    public InputStream get(Hash hash) {
+        return volume.get(hash);
     }
 
     public List<Event> history(boolean chronological, long first, int number) {

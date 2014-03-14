@@ -10,6 +10,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.Hash;
+import static store.common.IoUtil.copy;
 import store.server.Content;
 import store.server.RevSpec;
 import static store.server.TestUtil.recursiveDelete;
@@ -111,8 +112,9 @@ public class VolumeTest {
     @Test
     public void get() throws IOException {
         Volume volume = newVolumeWith(LOREM_IPSUM);
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            volume.get(LOREM_IPSUM.getHash(), outputStream);
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                InputStream inputStream = volume.get(LOREM_IPSUM.getHash())) {
+            copy(inputStream, outputStream);
             assertThat(outputStream.toByteArray()).isEqualTo(LOREM_IPSUM.getBytes());
         }
     }
@@ -124,9 +126,7 @@ public class VolumeTest {
      */
     @Test(expectedExceptions = UnknownContentException.class)
     public void getUnknownHash() throws IOException {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            Volume.create(newTmpDir()).get(UNKNOWN_HASH, outputStream);
-        }
+        Volume.create(newTmpDir()).get(LOREM_IPSUM.getHash());
     }
 
     /**

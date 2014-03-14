@@ -1,15 +1,13 @@
 package store.server.agent;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
+import java.io.InputStream;
 import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
 import store.server.Repository;
 import store.server.RevSpec;
-import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
@@ -29,11 +27,6 @@ class SyncAgent extends Agent {
     @Override
     List<Event> history(boolean chronological, long first, int number) {
         return source.history(chronological, first, number);
-    }
-
-    @Override
-    void get(Hash hash, OutputStream outputStream) {
-        source.get(hash, outputStream);
     }
 
     @Override
@@ -66,18 +59,11 @@ class SyncAgent extends Agent {
 
         private void put(Hash hash) {
             ContentInfo info = source.info(hash);
-            try (PipedInputStream in = new PipedInputStream()) {
-                PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
-                try {
-                    pipeWriter.start();
-                    destination.put(info, in, RevSpec.any());
+            try (InputStream inputStream = source.get(hash)) {
+                destination.put(info, inputStream, RevSpec.any());
 
-                } catch (IntegrityCheckingFailedException | WriteException e) {
-                    pipeWriter.throwCauseIfAny();
-                    throw e;
-                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new WriteException(e);
             }
         }
 

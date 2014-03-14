@@ -1,8 +1,7 @@
 package store.server.agent;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
+import java.io.InputStream;
 import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
@@ -11,6 +10,7 @@ import static store.common.Operation.DELETE;
 import store.server.Index;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
+import store.server.exception.WriteException;
 import store.server.volume.Volume;
 
 public class IndexAgent extends Agent {
@@ -26,11 +26,6 @@ public class IndexAgent extends Agent {
     @Override
     List<Event> history(boolean chronological, long first, int number) {
         return volume.history(chronological, first, number);
-    }
-
-    @Override
-    void get(Hash hash, OutputStream outputStream) {
-        volume.get(hash, outputStream);
     }
 
     @Override
@@ -65,18 +60,11 @@ public class IndexAgent extends Agent {
                 return;
             }
             ContentInfo info = volume.info(hash);
-            try (PipedInputStream in = new PipedInputStream()) {
-                PipeWriterThread pipeWriter = new PipeWriterThread(in, hash);
-                try {
-                    pipeWriter.start();
-                    index.put(info, in);
+            try (InputStream inputStream = volume.get(hash)) {
+                index.put(info, inputStream);
 
-                } catch (RuntimeException e) { // Moche
-                    pipeWriter.throwCauseIfAny();
-                    throw e;
-                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new WriteException(e);
             }
         }
 

@@ -30,6 +30,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.ContentInfo;
 import store.common.Hash;
+import static store.common.IoUtil.copy;
 import static store.common.json.JsonUtil.hasBooleanValue;
 import static store.common.json.JsonUtil.hasStringValue;
 import static store.common.json.JsonUtil.isContentInfo;
@@ -335,12 +336,13 @@ public class RepositoriesResource {
      */
     @GET
     @Path("{name}/content/{hash}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getContent(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {
-                repository.get(name, hash, outputStream);
+                try (InputStream inputStream = repository.get(name, hash)) {
+                    copy(inputStream, outputStream);
+                }
             }
         }).build();
     }

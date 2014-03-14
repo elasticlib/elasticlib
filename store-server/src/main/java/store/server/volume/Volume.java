@@ -3,7 +3,6 @@ package store.server.volume;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,15 +11,16 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
-import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.RevSpec;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.ServerException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
+import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 /**
  * A volume. Store contents with their metadata. Each volume also maintains an history log. All read/write operations on
@@ -96,21 +96,25 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
+        final Hash hash = contentInfo.getHash();
+        final long length = contentInfo.getLength();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
+                handleCommandResult(result, hash, length, source);
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
+        final Hash hash = contentInfoTree.getHash();
+        final long length = contentInfoTree.getLength();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
+                handleCommandResult(result, hash, length, source);
             }
         });
     }
@@ -130,21 +134,23 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
+        final Hash hash = contentInfo.getHash();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, contentInfo.getHash());
+                handleCommandResult(result, hash);
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
+        final Hash hash = contentInfoTree.getHash();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, contentInfoTree.getHash());
+                handleCommandResult(result, hash);
             }
         });
     }
@@ -195,22 +201,15 @@ public class Volume {
         });
     }
 
-    public void get(final Hash hash, final OutputStream outputStream) {
-        transactionManager.inTransaction(new Query<Void>() {
-            @Override
-            public Void apply() {
-                if (!contentManager.contains(hash)) {
-                    throw new UnknownContentException();
-                }
-                try (InputStream inputStream = contentManager.get(hash)) {
-                    copy(inputStream, outputStream);
+    public InputStream get(final Hash hash) {
+        transactionManager.beginReadOnlyTransaction();
+        try {
+            return contentManager.get(hash);
 
-                } catch (IOException e) {
-                    throw new WriteException(e);
-                }
-                return null;
-            }
-        });
+        } catch (ServerException e) {
+            currentTransactionContext().close();
+            throw e;
+        }
     }
 
     public List<Event> history(final boolean chronological, final long first, final int number) {

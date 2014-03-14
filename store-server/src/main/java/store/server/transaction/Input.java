@@ -15,10 +15,12 @@ public class Input extends InputStream {
 
     private final TransactionContext txContext;
     private final XAFileInputStream delegate;
+    private final boolean commitOnClose;
 
-    Input(TransactionContext txContext, XAFileInputStream delegate) {
+    Input(TransactionContext txContext, XAFileInputStream delegate, boolean commitOnClose) {
         this.txContext = txContext;
         this.delegate = delegate;
+        this.commitOnClose = commitOnClose;
     }
 
     @Override
@@ -143,6 +145,11 @@ public class Input extends InputStream {
                 throw new RepositoryNotStartedException();
             }
             throw new IllegalStateException(e);
+
+        } finally {
+            if (commitOnClose) {
+                txContext.commit();
+            }
         }
     }
 }

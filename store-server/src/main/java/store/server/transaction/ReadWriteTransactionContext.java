@@ -14,8 +14,8 @@ import store.server.exception.RepositoryNotStartedException;
 
 final class ReadWriteTransactionContext extends AbstractTransactionContext {
 
-    public ReadWriteTransactionContext(Session session) {
-        super(session, true);
+    public ReadWriteTransactionContext(TransactionManager transactionManager, Session session) {
+        super(transactionManager, session, true);
     }
 
     @Override

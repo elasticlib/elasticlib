@@ -4,8 +4,8 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xadisk.bridge.proxies.interfaces.Session;
@@ -24,7 +24,7 @@ public final class TransactionManager {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     private final StandaloneFileSystemConfiguration config;
-    private final List<TransactionContext> txContexts = new ArrayList<>();
+    private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
     private XAFileSystem filesystem;
     private boolean started;
 
@@ -78,7 +78,7 @@ public final class TransactionManager {
     /**
      * Starts this manager. Does nothing if it is already started.
      */
-    public synchronized final void start() {
+    public synchronized void start() {
         try {
             if (started) {
                 return;
@@ -100,10 +100,9 @@ public final class TransactionManager {
             if (!started) {
                 return;
             }
-            for (TransactionContext context : txContexts) {
-                context.close();
+            while (!txContexts.isEmpty()) {
+                txContexts.remove().close();
             }
-            txContexts.clear();
             filesystem.shutdown();
             started = false;
 
@@ -128,16 +127,17 @@ public final class TransactionManager {
         Session session = filesystem.createSessionForLocalTransaction();
         TransactionContext txContext;
         if (readOnly) {
-            txContext = new ReadOnlyTransactionContext(session);
+            txContext = new ReadOnlyTransactionContext(this, session);
         } else {
-            txContext = new ReadWriteTransactionContext(session);
+            txContext = new ReadWriteTransactionContext(this, session);
         }
         CURRENT_TX_CONTEXT.set(txContext);
         txContexts.add(txContext);
         return txContext;
     }
 
-    private synchronized void remove(TransactionContext txContext) {
+    synchronized void remove(TransactionContext txContext) {
+        CURRENT_TX_CONTEXT.remove();
         txContexts.remove(txContext);
     }
 
@@ -156,8 +156,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Execute supplied command in a read-write transaction context, with an exclusive lock on content which hash is
-     * supplied.
+     * Execute supplied command in a read-write transaction context.
      *
      * @param command Command to execute.
      */
@@ -169,8 +168,6 @@ public final class TransactionManager {
 
         } finally {
             txContext.close();
-            remove(txContext);
-            CURRENT_TX_CONTEXT.remove();
         }
     }
 
@@ -188,8 +185,13 @@ public final class TransactionManager {
 
         } finally {
             txContext.commit();
-            remove(txContext);
-            CURRENT_TX_CONTEXT.remove();
         }
+    }
+
+    /**
+     * Start a new read-only transaction.
+     */
+    public void beginReadOnlyTransaction() {
+        createTransactionContext(true);
     }
 }

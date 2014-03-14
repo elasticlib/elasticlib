@@ -115,6 +115,14 @@ public interface TransactionContext {
     Input openInput(Path path);
 
     /**
+     * Open a reading stream from file at supplied path. This context will be transparently committed at stream closing.
+     *
+     * @param path A file-system path.
+     * @return Opened input.
+     */
+    Input openCommitingInput(Path path);
+
+    /**
      * Open a writing (appending) stream to file at supplied path. Fails if :<br>
      * - Supplied path does not exists.<br>
      * - File at supplied path is not a regular one.<br>

@@ -13,9 +13,11 @@ abstract class AbstractTransactionContext implements TransactionContext {
 
     final Session session;
     final AtomicBoolean closed = new AtomicBoolean(false);
+    private final TransactionManager transactionManager;
     private final boolean lockExclusively;
 
-    public AbstractTransactionContext(Session session, boolean lockExclusively) {
+    public AbstractTransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively) {
+        this.transactionManager = transactionManager;
         this.session = session;
         this.lockExclusively = lockExclusively;
     }
@@ -27,6 +29,7 @@ abstract class AbstractTransactionContext implements TransactionContext {
         }
         try {
             session.commit();
+            transactionManager.remove(this);
 
         } catch (NoTransactionAssociatedException e) {
             throw new IllegalStateException(e);
@@ -40,6 +43,7 @@ abstract class AbstractTransactionContext implements TransactionContext {
         }
         try {
             session.rollback();
+            transactionManager.remove(this);
 
         } catch (NoTransactionAssociatedException e) {
             throw new IllegalStateException(e);
@@ -109,8 +113,17 @@ abstract class AbstractTransactionContext implements TransactionContext {
 
     @Override
     public final Input openInput(Path path) {
+        return openInput(path, false);
+    }
+
+    @Override
+    public final Input openCommitingInput(Path path) {
+        return openInput(path, true);
+    }
+
+    private Input openInput(Path path, boolean commitOnClose) {
         try {
-            return new Input(this, session.createXAFileInputStream(path.toFile(), lockExclusively));
+            return new Input(this, session.createXAFileInputStream(path.toFile(), lockExclusively), commitOnClose);
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {

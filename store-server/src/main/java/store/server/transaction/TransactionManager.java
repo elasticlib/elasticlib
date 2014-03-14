@@ -88,7 +88,7 @@ public final class TransactionManager {
             started = true;
 
         } catch (InterruptedException e) {
-            throw new AssertionError("Unexpected exception", e);
+            throw new AssertionError(e);
         }
     }
 

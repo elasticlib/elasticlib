@@ -33,7 +33,7 @@ public final class App {
             currentThread().join();
 
         } catch (InterruptedException e) {
-            throw new AssertionError("This should not happens", e);
+            throw new AssertionError(e);
         }
     }
 }

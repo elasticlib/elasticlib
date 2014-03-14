@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -14,9 +12,7 @@ import org.testng.annotations.Test;
 import store.common.Hash;
 import store.server.Content;
 import store.server.RevSpec;
-import static store.server.TestUtil.inject;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 
@@ -27,7 +23,6 @@ public class VolumeTest {
 
     private static final Hash UNKNOWN_HASH = new Hash("88cd962fec779a3abafa95aad8ace74cae767427");
     private static final Content LOREM_IPSUM = new Content("loremIpsum.txt");
-    private final Executor executor = Executors.newCachedThreadPool();
     private Path path;
 
     /**
@@ -57,12 +52,6 @@ public class VolumeTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private BlockingTransactionManager injectTxManager(Volume volume) {
-        BlockingTransactionManager txManager = new BlockingTransactionManager(newTmpDir());
-        inject(volume, "transactionManager", txManager);
-        return txManager;
     }
 
     private Volume newVolumeWith(Content content) {
@@ -180,177 +169,6 @@ public class VolumeTest {
     /**
      * Test.
      */
-    @Test
-    public void putTwice() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutTask(volume, LOREM_IPSUM);
-        Task second = new PutTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(first.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void putTwiceWithFailure() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutWithFailureTask(volume, LOREM_IPSUM);
-        Task second = new PutTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasFailed(IntegrityCheckingFailedException.class)).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void putAndDelete() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutTask(volume, LOREM_IPSUM);
-        Task second = new DeleteTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void putAndDeleteWithFailure() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutWithFailureTask(volume, LOREM_IPSUM);
-        Task second = new DeleteTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasFailed(IntegrityCheckingFailedException.class)).isTrue();
-        assertThat(second.hasFailed(UnknownContentException.class)).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void getAndPut() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new GetTask(volume, LOREM_IPSUM);
-        Task second = new PutTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasFailed(UnknownContentException.class)).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void putAndGet() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutTask(volume, LOREM_IPSUM);
-        Task second = new GetTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void getAndDelete() {
-        Volume volume = newVolumeWith(LOREM_IPSUM);
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new GetTask(volume, LOREM_IPSUM);
-        Task second = new DeleteTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void deleteAndGet() {
-        Volume volume = newVolumeWith(LOREM_IPSUM);
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new DeleteTask(volume, LOREM_IPSUM);
-        Task second = new GetTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasFailed(UnknownContentException.class)).isTrue();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void getTwice() {
-        Volume volume = newVolumeWith(LOREM_IPSUM);
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new GetTask(volume, LOREM_IPSUM);
-        Task second = new GetTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        txManager.proceed();
-
-        assertThat(first.hasSucceed()).isTrue();
-        assertThat(second.hasSucceed()).isTrue();
-    }
-
-    /**
-     * Test.
-     */
     @Test(expectedExceptions = RepositoryNotStartedException.class)
     public void stop() {
         Volume volume = Volume.create(newTmpDir());
@@ -367,25 +185,5 @@ public class VolumeTest {
         volume.stop();
         volume.start();
         assertThat(volume.contains(UNKNOWN_HASH)).isFalse();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void stopAndPut() {
-        Volume volume = Volume.create(newTmpDir());
-        BlockingTransactionManager txManager = injectTxManager(volume);
-        Task first = new PutTask(volume, LOREM_IPSUM);
-        Task second = new PutTask(volume, LOREM_IPSUM);
-
-        executor.execute(first);
-        txManager.awaitReady();
-        executor.execute(second);
-        volume.stop();
-        txManager.proceed();
-
-        assertThat(first.hasFailed(RepositoryNotStartedException.class)).isTrue();
-        assertThat(second.hasFailed(RepositoryNotStartedException.class)).isTrue();
     }
 }

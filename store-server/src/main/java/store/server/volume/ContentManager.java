@@ -10,7 +10,6 @@ import static store.common.IoUtil.copyAndDigest;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
-import store.server.lock.Table;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
@@ -28,7 +27,7 @@ class ContentManager {
     public static ContentManager create(Path path) {
         try {
             Files.createDirectory(path);
-            for (String key : Table.keySet(KEY_LENGTH)) {
+            for (String key : Hash.keySet(KEY_LENGTH)) {
                 Files.createDirectory(path.resolve(key));
             }
             return new ContentManager(path);
@@ -42,7 +41,7 @@ class ContentManager {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
-        for (String key : Table.keySet(KEY_LENGTH)) {
+        for (String key : Hash.keySet(KEY_LENGTH)) {
             if (!Files.isDirectory(path.resolve(key))) {
                 throw new InvalidRepositoryPathException();
             }
@@ -84,7 +83,8 @@ class ContentManager {
     }
 
     private Path path(Hash hash) {
-        String encoded = hash.encode();
-        return root.resolve(encoded.substring(0, KEY_LENGTH)).resolve(encoded);
+        return root
+                .resolve(hash.key(KEY_LENGTH))
+                .resolve(hash.encode());
     }
 }

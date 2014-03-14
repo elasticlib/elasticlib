@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import static store.common.TestUtil.array;
 import store.common.value.Value;
 
 /**
@@ -301,13 +302,5 @@ public class ObjectEncoderTest {
                 .build();
 
         assertThat(actual).isEqualTo(expected);
-    }
-
-    private static byte[] array(int... values) {
-        byte[] array = new byte[values.length];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = (byte) values[i];
-        }
-        return array;
     }
 }

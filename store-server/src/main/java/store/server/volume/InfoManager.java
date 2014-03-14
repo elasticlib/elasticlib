@@ -21,7 +21,6 @@ import store.server.exception.RevSpecCheckingFailedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
 import store.server.exception.WriteException;
-import store.server.lock.Table;
 import store.server.transaction.Input;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
@@ -39,7 +38,7 @@ class InfoManager {
     public static InfoManager create(Path path) {
         try {
             Files.createDirectory(path);
-            for (String key : Table.keySet(KEY_LENGTH)) {
+            for (String key : Hash.keySet(KEY_LENGTH)) {
                 Files.createDirectory(path.resolve(key));
             }
             return new InfoManager(path);
@@ -146,7 +145,7 @@ class InfoManager {
 
     private Path path(Hash hash) {
         return root
-                .resolve(hash.encode().substring(0, KEY_LENGTH))
+                .resolve(hash.key(KEY_LENGTH))
                 .resolve(hash.encode());
     }
 

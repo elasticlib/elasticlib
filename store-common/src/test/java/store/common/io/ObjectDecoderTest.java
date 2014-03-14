@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import static store.common.TestUtil.array;
 import store.common.value.Value;
 import store.common.value.ValueType;
 
@@ -270,13 +271,5 @@ public class ObjectDecoderTest {
     @Test(expectedExceptions = NoSuchElementException.class)
     public void getUnknownKey() {
         new ObjectDecoder(new byte[0]).get("unknown");
-    }
-
-    private static byte[] array(int... values) {
-        byte[] array = new byte[values.length];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = (byte) values[i];
-        }
-        return array;
     }
 }

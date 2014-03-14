@@ -14,11 +14,9 @@ import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystem;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
-import store.common.Hash;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;
-import store.server.lock.LockManager;
 
 /**
  * Manages transactions within a volume.
@@ -29,7 +27,6 @@ public class TransactionManager {
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     private final StandaloneFileSystemConfiguration config;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final LockManager lockManager = new LockManager();
     private final List<TransactionContext> txContexts = new ArrayList<>();
     private XAFileSystem filesystem;
     private boolean started;
@@ -190,42 +187,19 @@ public class TransactionManager {
      * Execute supplied command in a read-write transaction context, with an exclusive lock on content which hash is
      * supplied.
      *
-     * @param hash Content hash which command is related to.
      * @param command Command to execute.
      */
-    public void inTransaction(Hash hash, Command command) {
-        lockManager.writeLock(hash);
+    public void inTransaction(Command command) {
+        TransactionContext txContext = createTransactionContext(false);
         try {
-            TransactionContext txContext = createTransactionContext(false);
-            try {
-                command.apply();
-                txContext.commit();
-
-            } finally {
-                txContext.close();
-                remove(txContext);
-            }
-        } finally {
-            lockManager.writeUnlock(hash);
-        }
-    }
-
-    /**
-     * Execute supplied query in a read-only transaction context, with a shared lock on content which hash is supplied.
-     *
-     * @param <T> Query return type.
-     * @param hash Content hash which query is related to.
-     * @param query Query to execute.
-     * @return Query result.
-     */
-    public <T> T inTransaction(Hash hash, Query<T> query) {
-        lockManager.readLock(hash);
-        try {
-            return inTransaction(query);
+            command.apply();
+            txContext.commit();
 
         } finally {
-            lockManager.readUnlock(hash);
+            txContext.close();
+            remove(txContext);
         }
+
     }
 
     /**

@@ -96,25 +96,21 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
-        final Hash hash = contentInfo.getHash();
-        final long length = contentInfo.getLength();
-        transactionManager.inTransaction(hash, new Command() {
+        transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, hash, length, source);
+                handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
-        final Hash hash = contentInfoTree.getHash();
-        final long length = contentInfoTree.getLength();
-        transactionManager.inTransaction(hash, new Command() {
+        transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, hash, length, source);
+                handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
             }
         });
     }
@@ -134,29 +130,27 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
-        final Hash hash = contentInfo.getHash();
-        transactionManager.inTransaction(hash, new Command() {
+        transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, hash);
+                handleCommandResult(result, contentInfo.getHash());
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
-        final Hash hash = contentInfoTree.getHash();
-        transactionManager.inTransaction(hash, new Command() {
+        transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, hash);
+                handleCommandResult(result, contentInfoTree.getHash());
             }
         });
     }
 
     public void delete(final Hash hash, final RevSpec revSpec) {
-        transactionManager.inTransaction(hash, new Command() {
+        transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.delete(hash, revSpec);
@@ -180,7 +174,7 @@ public class Volume {
     }
 
     public boolean contains(final Hash hash) {
-        return transactionManager.inTransaction(hash, new Query<Boolean>() {
+        return transactionManager.inTransaction(new Query<Boolean>() {
             @Override
             public Boolean apply() {
                 return contentManager.contains(hash);
@@ -189,7 +183,7 @@ public class Volume {
     }
 
     public ContentInfo info(final Hash hash) {
-        return transactionManager.inTransaction(hash, new Query<ContentInfo>() {
+        return transactionManager.inTransaction(new Query<ContentInfo>() {
             @Override
             public ContentInfo apply() {
                 Optional<ContentInfo> info = infoManager.get(hash);
@@ -202,7 +196,7 @@ public class Volume {
     }
 
     public void get(final Hash hash, final OutputStream outputStream) {
-        transactionManager.inTransaction(hash, new Query<Void>() {
+        transactionManager.inTransaction(new Query<Void>() {
             @Override
             public Void apply() {
                 if (!contentManager.contains(hash)) {

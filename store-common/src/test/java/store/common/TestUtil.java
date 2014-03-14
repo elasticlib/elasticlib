@@ -53,4 +53,18 @@ public final class TestUtil {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Helper fonction for building bytes array.
+     *
+     * @param values A bytes sequence.
+     * @return A new bytes array.
+     */
+    public static byte[] array(int... values) {
+        byte[] array = new byte[values.length];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = (byte) values[i];
+        }
+        return array;
+    }
 }

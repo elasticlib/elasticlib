@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xadisk.bridge.proxies.interfaces.Session;
@@ -26,7 +24,6 @@ public final class TransactionManager {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     private final StandaloneFileSystemConfiguration config;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final List<TransactionContext> txContexts = new ArrayList<>();
     private XAFileSystem filesystem;
     private boolean started;
@@ -81,8 +78,7 @@ public final class TransactionManager {
     /**
      * Starts this manager. Does nothing if it is already started.
      */
-    public final void start() {
-        lock.writeLock().lock();
+    public synchronized final void start() {
         try {
             if (started) {
                 return;
@@ -93,16 +89,13 @@ public final class TransactionManager {
 
         } catch (InterruptedException e) {
             throw new AssertionError("Unexpected exception", e);
-        } finally {
-            lock.writeLock().unlock();
         }
     }
 
     /**
      * Stops this manager. Does nothing if it is already stopped.
      */
-    public void stop() {
-        lock.writeLock().lock();
+    public synchronized void stop() {
         try {
             if (!started) {
                 return;
@@ -116,8 +109,6 @@ public final class TransactionManager {
 
         } catch (IOException e) {
             throw new WriteException(e);
-        } finally {
-            lock.writeLock().unlock();
         }
     }
 
@@ -126,47 +117,28 @@ public final class TransactionManager {
      *
      * @return true if this manager is started.
      */
-    public boolean isStarted() {
-        lock.readLock().lock();
-        try {
-            return started;
-
-        } finally {
-            lock.readLock().unlock();
-        }
+    public synchronized boolean isStarted() {
+        return started;
     }
 
-    private TransactionContext createTransactionContext(boolean readOnly) {
-        lock.readLock().lock();
-        try {
-            if (!started) {
-                throw new RepositoryNotStartedException();
-            }
-            Session session = filesystem.createSessionForLocalTransaction();
-            TransactionContext txContext;
-            if (readOnly) {
-                txContext = new ReadOnlyTransactionContext(session);
-            } else {
-                txContext = new ReadWriteTransactionContext(session);
-            }
-            CURRENT_TX_CONTEXT.set(txContext);
-            txContexts.add(txContext);
-            return txContext;
-
-        } finally {
-            lock.readLock().unlock();
+    private synchronized TransactionContext createTransactionContext(boolean readOnly) {
+        if (!started) {
+            throw new RepositoryNotStartedException();
         }
+        Session session = filesystem.createSessionForLocalTransaction();
+        TransactionContext txContext;
+        if (readOnly) {
+            txContext = new ReadOnlyTransactionContext(session);
+        } else {
+            txContext = new ReadWriteTransactionContext(session);
+        }
+        CURRENT_TX_CONTEXT.set(txContext);
+        txContexts.add(txContext);
+        return txContext;
     }
 
-    private void remove(TransactionContext txContext) {
-        lock.readLock().lock();
-        try {
-            CURRENT_TX_CONTEXT.remove();
-            txContexts.remove(txContext);
-
-        } finally {
-            lock.readLock().unlock();
-        }
+    private synchronized void remove(TransactionContext txContext) {
+        txContexts.remove(txContext);
     }
 
     /**
@@ -198,8 +170,8 @@ public final class TransactionManager {
         } finally {
             txContext.close();
             remove(txContext);
+            CURRENT_TX_CONTEXT.remove();
         }
-
     }
 
     /**
@@ -212,13 +184,12 @@ public final class TransactionManager {
     public <T> T inTransaction(Query<T> query) {
         TransactionContext txContext = createTransactionContext(true);
         try {
-            T response = query.apply();
-            txContext.commit();
-            return response;
+            return query.apply();
 
         } finally {
-            txContext.close();
+            txContext.commit();
             remove(txContext);
+            CURRENT_TX_CONTEXT.remove();
         }
     }
 }

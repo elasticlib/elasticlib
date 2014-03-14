@@ -21,7 +21,7 @@ import store.server.exception.WriteException;
 /**
  * Manages transactions within a volume.
  */
-public class TransactionManager {
+public final class TransactionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
@@ -31,7 +31,7 @@ public class TransactionManager {
     private XAFileSystem filesystem;
     private boolean started;
 
-    protected TransactionManager(Path path) {
+    private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
         config = new StandaloneFileSystemConfiguration(dir, dir);
         config.setTransactionTimeout(-1);

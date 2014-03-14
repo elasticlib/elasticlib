@@ -72,7 +72,7 @@ public class VolumeTest {
     @Test
     public void create() {
         Volume volume = Volume.create(newTmpDir());
-        assertThat(volume.contains(LOREM_IPSUM.getHash())).isFalse();
+        assertThat(hasContent(volume, LOREM_IPSUM.getHash())).isFalse();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(0);
     }
 
@@ -87,7 +87,7 @@ public class VolumeTest {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             volume.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.any());
         }
-        assertThat(volume.contains(LOREM_IPSUM.getHash())).isTrue();
+        assertThat(hasContent(volume, LOREM_IPSUM.getHash())).isTrue();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(1);
     }
 
@@ -154,7 +154,7 @@ public class VolumeTest {
     public void delete() {
         Volume volume = newVolumeWith(LOREM_IPSUM);
         volume.delete(LOREM_IPSUM.getHash(), RevSpec.any());
-        assertThat(volume.contains(LOREM_IPSUM.getHash())).isFalse();
+        assertThat(hasContent(volume, LOREM_IPSUM.getHash())).isFalse();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(2);
     }
 
@@ -173,7 +173,7 @@ public class VolumeTest {
     public void stop() {
         Volume volume = Volume.create(newTmpDir());
         volume.stop();
-        volume.contains(UNKNOWN_HASH);
+        volume.info(UNKNOWN_HASH);
     }
 
     /**
@@ -184,6 +184,21 @@ public class VolumeTest {
         Volume volume = Volume.create(newTmpDir());
         volume.stop();
         volume.start();
-        assertThat(volume.contains(UNKNOWN_HASH)).isFalse();
+        assertThat(hasContent(volume, UNKNOWN_HASH)).isFalse();
+    }
+
+    private static boolean hasContent(Volume volume, Hash hash) {
+        try {
+            InputStream inputStream = volume.get(hash);
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                // Impossible
+                throw new AssertionError(e);
+            }
+        } catch (UnknownContentException e) {
+            return false;
+        }
+        return true;
     }
 }

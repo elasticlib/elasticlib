@@ -71,10 +71,6 @@ class ContentManager {
         return txContext.openOutput(path);
     }
 
-    public boolean contains(Hash hash) {
-        return currentTransactionContext().exists(path(hash));
-    }
-
     public InputStream get(Hash hash) {
         TransactionContext txContext = currentTransactionContext();
         Path path = path(hash);

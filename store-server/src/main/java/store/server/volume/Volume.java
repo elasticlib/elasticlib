@@ -179,15 +179,6 @@ public class Volume {
         historyManager.add(hash, operation, result.getHead());
     }
 
-    public boolean contains(final Hash hash) {
-        return transactionManager.inTransaction(new Query<Boolean>() {
-            @Override
-            public Boolean apply() {
-                return contentManager.contains(hash);
-            }
-        });
-    }
-
     public ContentInfo info(final Hash hash) {
         return transactionManager.inTransaction(new Query<ContentInfo>() {
             @Override

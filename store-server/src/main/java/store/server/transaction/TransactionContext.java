@@ -3,11 +3,13 @@ package store.server.transaction;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.xadisk.bridge.proxies.interfaces.Session;
+import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
 import org.xadisk.filesystem.exceptions.FileNotExistsException;
 import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
+import static store.server.transaction.TransactionManager.detachFromCurrentThread;
 
 /**
  * A transaction context.
@@ -39,16 +41,8 @@ public abstract class TransactionContext {
      * closed.
      */
     public final void commit() {
-        if (!closed.compareAndSet(false, true)) {
-            return;
-        }
-        try {
-            session.commit();
-            transactionManager.remove(this);
-
-        } catch (NoTransactionAssociatedException e) {
-            throw new IllegalStateException(e);
-        }
+        close(true, true);
+        detachFromCurrentThread();
     }
 
     /**
@@ -56,11 +50,20 @@ public abstract class TransactionContext {
      * closed.
      */
     public final void close() {
+        close(false, true);
+        detachFromCurrentThread();
+    }
+
+    void close(boolean commit, boolean detachFromCurrentThread) {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
         try {
-            session.rollback();
+            if (commit) {
+                session.commit();
+            } else {
+                session.rollback();
+            }
             transactionManager.remove(this);
 
         } catch (NoTransactionAssociatedException e) {
@@ -162,7 +165,9 @@ public abstract class TransactionContext {
     }
 
     /**
-     * Open a reading stream from file at supplied path. This context will be transparently committed at stream closing.
+     * Open a reading stream from file at supplied path. This transaction will be transparently committed at stream
+     * closing. Transaction is also immediately detached from current thread, unless an error happens and prevents input
+     * from being returned.
      *
      * @param path A file-system path.
      * @return Opened input.
@@ -172,8 +177,9 @@ public abstract class TransactionContext {
     }
 
     private Input openInput(Path path, boolean commitOnClose) {
+        XAFileInputStream inputStream;
         try {
-            return new Input(this, session.createXAFileInputStream(path.toFile(), lockExclusively), commitOnClose);
+            inputStream = session.createXAFileInputStream(path.toFile(), lockExclusively);
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
@@ -187,6 +193,11 @@ public abstract class TransactionContext {
                 FileNotExistsException e) {
             throw new IllegalStateException(e);
         }
+
+        if (commitOnClose) {
+            detachFromCurrentThread();
+        }
+        return new Input(this, inputStream, commitOnClose);
     }
 
     /**

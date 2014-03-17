@@ -148,7 +148,7 @@ public class Input extends InputStream {
 
         } finally {
             if (commitOnClose) {
-                txContext.commit();
+                txContext.close(true, false);
             }
         }
     }

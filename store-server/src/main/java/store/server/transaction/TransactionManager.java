@@ -101,7 +101,7 @@ public final class TransactionManager {
                 return;
             }
             while (!txContexts.isEmpty()) {
-                txContexts.remove().close();
+                txContexts.remove().close(false, false);
             }
             filesystem.shutdown();
             started = false;
@@ -136,8 +136,11 @@ public final class TransactionManager {
         return txContext;
     }
 
-    synchronized void remove(TransactionContext txContext) {
+    static void detachFromCurrentThread() {
         CURRENT_TX_CONTEXT.remove();
+    }
+
+    synchronized void remove(TransactionContext txContext) {
         txContexts.remove(txContext);
     }
 

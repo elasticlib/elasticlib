@@ -23,8 +23,8 @@ import store.server.transaction.TransactionManager;
 import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 /**
- * A volume. Store contents with their metadata. Each volume also maintains an history log. All read/write operations on
- * a volume are transactionnal.
+ * Store contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume
+ * are transactionnal.
  */
 public class Volume {
 
@@ -43,6 +43,12 @@ public class Volume {
         this.contentManager = contentManager;
     }
 
+    /**
+     * Create a new volume at specified path.
+     *
+     * @param path File-system path. Expected to not exists.
+     * @return Created volume.
+     */
     public static Volume create(final Path path) {
         try {
             Files.createDirectories(path);
@@ -70,6 +76,12 @@ public class Volume {
         }
     }
 
+    /**
+     * Open an existing volume.
+     *
+     * @param path Path to transaction manager home.
+     * @return Opened volume.
+     */
     public static Volume open(final Path path) {
         final TransactionManager txManager = TransactionManager.open(path.resolve("transactions"));
         return txManager.inTransaction(new Query<Volume>() {
@@ -83,18 +95,36 @@ public class Volume {
         });
     }
 
+    /**
+     * Starts this volume. Does nothing if it is already started.
+     */
     public void start() {
         transactionManager.start();
     }
 
+    /**
+     * Stops this volume. Does nothing if it is already stopped.
+     */
     public void stop() {
         transactionManager.stop();
     }
 
+    /**
+     * Checks if this volume is started. Other operations will fail if this is not the case.
+     *
+     * @return true if this volume is started.
+     */
     public boolean isStarted() {
         return transactionManager.isStarted();
     }
 
+    /**
+     * Put a new content into this volume, along with a single info revision.
+     *
+     * @param contentInfo Content info revision.
+     * @param source Content.
+     * @param revSpec Expectations on current volume state for this content.
+     */
     public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
         transactionManager.inTransaction(new Command() {
             @Override
@@ -105,6 +135,13 @@ public class Volume {
         });
     }
 
+    /**
+     * Put a new content into this volume, along with a related revision tree.
+     *
+     * @param contentInfoTree Revision tree.
+     * @param source Content.
+     * @param revSpec Expectations on current volume state for this content.
+     */
     public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
         transactionManager.inTransaction(new Command() {
             @Override
@@ -129,6 +166,12 @@ public class Volume {
         historyManager.add(hash, operation, result.getHead());
     }
 
+    /**
+     * Put an info revision into this volume.
+     *
+     * @param contentInfo Content info revision.
+     * @param revSpec Expectations on current volume state for this content.
+     */
     public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
         transactionManager.inTransaction(new Command() {
             @Override
@@ -139,6 +182,12 @@ public class Volume {
         });
     }
 
+    /**
+     * Put a revision tree into this volume.
+     *
+     * @param contentInfoTree Revision tree.
+     * @param revSpec Expectations on current volume state for this content.
+     */
     public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
         transactionManager.inTransaction(new Command() {
             @Override
@@ -149,6 +198,12 @@ public class Volume {
         });
     }
 
+    /**
+     * Delete a content from this volume.
+     *
+     * @param hash Hash of the content to delete.
+     * @param revSpec Expectations on current volume state for this content.
+     */
     public void delete(final Hash hash, final RevSpec revSpec) {
         transactionManager.inTransaction(new Command() {
             @Override
@@ -173,6 +228,12 @@ public class Volume {
         historyManager.add(hash, operation, result.getHead());
     }
 
+    /**
+     * Provides info about a content in this volume.
+     *
+     * @param hash Hash of the content.
+     * @return Corresponding info.
+     */
     public ContentInfo info(final Hash hash) {
         return transactionManager.inTransaction(new Query<ContentInfo>() {
             @Override
@@ -186,6 +247,12 @@ public class Volume {
         });
     }
 
+    /**
+     * Provides an input stream on a content in this volume.
+     *
+     * @param hash Hash of the content.
+     * @return An input stream on this content.
+     */
     public InputStream get(final Hash hash) {
         transactionManager.beginReadOnlyTransaction();
         try {
@@ -197,6 +264,14 @@ public class Volume {
         }
     }
 
+    /**
+     * Provides a paginated view of the history of this volume.
+     *
+     * @param chronological If true, returned list of events will sorted chronologically.
+     * @param first Event sequence identifier to start with.
+     * @param number Number of events to return.
+     * @return A list of events.
+     */
     public List<Event> history(final boolean chronological, final long first, final int number) {
         return transactionManager.inTransaction(new Query<List<Event>>() {
             @Override

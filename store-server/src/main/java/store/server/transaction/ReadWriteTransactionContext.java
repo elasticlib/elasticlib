@@ -12,10 +12,40 @@ import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
 
-final class ReadWriteTransactionContext extends AbstractTransactionContext {
+final class ReadWriteTransactionContext extends TransactionContext {
 
-    public ReadWriteTransactionContext(TransactionManager transactionManager, Session session) {
+    ReadWriteTransactionContext(TransactionManager transactionManager, Session session) {
         super(transactionManager, session, true);
+    }
+
+    @Override
+    public Output openOutput(Path path) {
+        return openOutput(path, false);
+    }
+
+    @Override
+    public Output openHeavyWriteOutput(Path path) {
+        return openOutput(path, true);
+    }
+
+    private Output openOutput(Path path, boolean heavyWrite) {
+        try {
+            File file = path.toFile();
+            return new Output(this, session.createXAFileOutputStream(file, heavyWrite));
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new RepositoryNotStartedException();
+            }
+            throw new IllegalStateException(e);
+
+        } catch (LockingFailedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException |
+                FileNotExistsException |
+                FileUnderUseException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -95,36 +125,6 @@ final class ReadWriteTransactionContext extends AbstractTransactionContext {
                 InsufficientPermissionOnFileException |
                 LockingFailedException |
                 InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    @Override
-    public Output openOutput(Path path) {
-        return openOutput(path, false);
-    }
-
-    @Override
-    public Output openHeavyWriteOutput(Path path) {
-        return openOutput(path, true);
-    }
-
-    private Output openOutput(Path path, boolean heavyWrite) {
-        try {
-            File file = path.toFile();
-            return new Output(this, session.createXAFileOutputStream(file, heavyWrite));
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException();
-            }
-            throw new IllegalStateException(e);
-
-        } catch (LockingFailedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException |
-                FileNotExistsException |
-                FileUnderUseException e) {
             throw new IllegalStateException(e);
         }
     }

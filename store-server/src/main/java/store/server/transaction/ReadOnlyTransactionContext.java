@@ -3,10 +3,20 @@ package store.server.transaction;
 import java.nio.file.Path;
 import org.xadisk.bridge.proxies.interfaces.Session;
 
-final class ReadOnlyTransactionContext extends AbstractTransactionContext {
+final class ReadOnlyTransactionContext extends TransactionContext {
 
-    public ReadOnlyTransactionContext(TransactionManager transactionManager, Session session) {
+    ReadOnlyTransactionContext(TransactionManager transactionManager, Session session) {
         super(transactionManager, session, false);
+    }
+
+    @Override
+    public Output openOutput(Path path) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Output openHeavyWriteOutput(Path path) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -26,16 +36,6 @@ final class ReadOnlyTransactionContext extends AbstractTransactionContext {
 
     @Override
     public void truncate(Path path, long length) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Output openOutput(Path path) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Output openHeavyWriteOutput(Path path) {
         throw new UnsupportedOperationException();
     }
 }

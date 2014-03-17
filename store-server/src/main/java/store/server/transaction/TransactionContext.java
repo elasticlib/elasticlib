@@ -1,31 +1,72 @@
 package store.server.transaction;
 
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.xadisk.bridge.proxies.interfaces.Session;
+import org.xadisk.filesystem.exceptions.FileNotExistsException;
+import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
+import org.xadisk.filesystem.exceptions.LockingFailedException;
+import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
+import store.server.exception.RepositoryNotStartedException;
 
 /**
  * A transaction context.
  * <p>
- * Provides access to file-system in a transactional fashion : all operations in a context executed atomically and are
- * isoled from non-commited operations in concurrent contexts. Once transaction is commited, all modifications are
- * durably written on disk.
+ * Provides access to the file-system in a transactional fashion : all file operations in a transaction are executed
+ * atomically and in isolation from other operations in concurrent transactions. Once a transaction is commited, all
+ * modifications are durably written on disk and become visible.
  * <p>
- * A context may be read-write or read-only :<br>
- * - Read-write contexts operations are done with exclusive locking, whereas read-only contexts use shared locking.<br>
- * - All mutative operations require a read-write context.
+ * A transaction may be read-write or read-only :<br>
+ * - Operations in read-write transactions are done with exclusive locking, whereas read-only transactions use shared
+ * locking.<br>
+ * - All mutative operations require a read-write transaction.
  */
-public interface TransactionContext {
+public abstract class TransactionContext {
+
+    final Session session;
+    final AtomicBoolean closed = new AtomicBoolean(false);
+    private final TransactionManager transactionManager;
+    private final boolean lockExclusively;
+
+    TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively) {
+        this.transactionManager = transactionManager;
+        this.session = session;
+        this.lockExclusively = lockExclusively;
+    }
 
     /**
      * Persists all changes done in this transaction and close this context. Does nothing if this context is already
      * closed.
      */
-    void commit();
+    public final void commit() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            session.commit();
+            transactionManager.remove(this);
+
+        } catch (NoTransactionAssociatedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Abort all changes done in this transaction and close this context. Does nothing if this context is already
      * closed.
      */
-    void close();
+    public final void close() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            session.rollback();
+            transactionManager.remove(this);
+
+        } catch (NoTransactionAssociatedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Checks if this context is closed. If this is the case, other operations will fail (excepted closing ones, which
@@ -33,7 +74,9 @@ public interface TransactionContext {
      *
      * @return true if this context is closed.
      */
-    boolean isClosed();
+    public final boolean isClosed() {
+        return closed.get();
+    }
 
     /**
      * Checks if a file exists at supplied path.
@@ -41,7 +84,22 @@ public interface TransactionContext {
      * @param path A file-system path.
      * @return true if this is the case.
      */
-    boolean exists(Path path);
+    public final boolean exists(Path path) {
+        try {
+            return session.fileExists(path.toFile(), lockExclusively);
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new RepositoryNotStartedException();
+            }
+            throw new IllegalStateException(e);
+
+        } catch (LockingFailedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Lists file names at supplied path. Fails if file at supplied path does not exists or is not a directory.
@@ -49,7 +107,23 @@ public interface TransactionContext {
      * @param path A file-system path.
      * @return An array of file names.
      */
-    String[] listFiles(Path path);
+    public final String[] listFiles(Path path) {
+        try {
+            return session.listFiles(path.toFile(), lockExclusively);
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new RepositoryNotStartedException();
+            }
+            throw new RuntimeException(e);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                InterruptedException |
+                InsufficientPermissionOnFileException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Provides length of file at supplied path. Fails if file at supplied path does not exists or is not a regular one.
@@ -57,7 +131,82 @@ public interface TransactionContext {
      * @param path A file-system path.
      * @return A length in bytes.
      */
-    long fileLength(Path path);
+    public final long fileLength(Path path) {
+        try {
+            return session.getFileLength(path.toFile(), lockExclusively);
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new RepositoryNotStartedException();
+            }
+            throw new IllegalStateException(e);
+
+        } catch (FileNotExistsException |
+                LockingFailedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Open a reading stream from file at supplied path. Fails if :<br>
+     * - Supplied path does not exists.<br>
+     * - File at supplied path is not a regular one.
+     *
+     * @param path A file-system path.
+     * @return Opened input.
+     */
+    public final Input openInput(Path path) {
+        return openInput(path, false);
+    }
+
+    /**
+     * Open a reading stream from file at supplied path. This context will be transparently committed at stream closing.
+     *
+     * @param path A file-system path.
+     * @return Opened input.
+     */
+    public final Input openCommitingInput(Path path) {
+        return openInput(path, true);
+    }
+
+    private Input openInput(Path path, boolean commitOnClose) {
+        try {
+            return new Input(this, session.createXAFileInputStream(path.toFile(), lockExclusively), commitOnClose);
+
+        } catch (NoTransactionAssociatedException e) {
+            if (closed.get()) {
+                throw new RepositoryNotStartedException();
+            }
+            throw new IllegalStateException(e);
+
+        } catch (LockingFailedException |
+                InsufficientPermissionOnFileException |
+                InterruptedException |
+                FileNotExistsException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Open a writing (appending) stream to file at supplied path. Fails if :<br>
+     * - Supplied path does not exists.<br>
+     * - File at supplied path is not a regular one.<br>
+     * - This context is read-only.
+     *
+     * @param path A file-system path.
+     * @return Opened output.
+     */
+    public abstract Output openOutput(Path path);
+
+    /**
+     * Open a writing (appending) stream to file at supplied path. Optimized for large writes.
+     *
+     * @param path A file-system path.
+     * @return Opened output.
+     */
+    public abstract Output openHeavyWriteOutput(Path path);
 
     /**
      * Moves file or directory from supplied source path to supplied destination path. Fails if :<br>
@@ -69,7 +218,7 @@ public interface TransactionContext {
      * @param src Source file-system path.
      * @param dest Destination file-system path.
      */
-    void move(Path src, Path dest);
+    public abstract void move(Path src, Path dest);
 
     /**
      * Create a regular file at supplied path. Fails if :<br>
@@ -79,7 +228,7 @@ public interface TransactionContext {
      *
      * @param path A file-system path.
      */
-    void create(Path path);
+    public abstract void create(Path path);
 
     /**
      * Delete file or (empty) directory at specified path. Fails if :<br>
@@ -90,7 +239,7 @@ public interface TransactionContext {
      *
      * @param path A file-system path.
      */
-    void delete(Path path);
+    public abstract void delete(Path path);
 
     /**
      * Truncate file at spectified path. Fails if :<br>
@@ -102,42 +251,5 @@ public interface TransactionContext {
      * @param length Length in byte to truncate file to. Expected to be non-negative and less than or equal to current
      * file length.
      */
-    void truncate(Path path, long length);
-
-    /**
-     * Open a reading stream from file at supplied path. Fails if :<br>
-     * - Supplied path does not exists.<br>
-     * - File at supplied path is not a regular one.
-     *
-     * @param path A file-system path.
-     * @return Opened input.
-     */
-    Input openInput(Path path);
-
-    /**
-     * Open a reading stream from file at supplied path. This context will be transparently committed at stream closing.
-     *
-     * @param path A file-system path.
-     * @return Opened input.
-     */
-    Input openCommitingInput(Path path);
-
-    /**
-     * Open a writing (appending) stream to file at supplied path. Fails if :<br>
-     * - Supplied path does not exists.<br>
-     * - File at supplied path is not a regular one.<br>
-     * - This context is read-only.
-     *
-     * @param path A file-system path.
-     * @return Opened output.
-     */
-    Output openOutput(Path path);
-
-    /**
-     * Open a writing (appending) stream to file at supplied path. Optimized for large writes.
-     *
-     * @param path A file-system path.
-     * @return Opened output.
-     */
-    Output openHeavyWriteOutput(Path path);
+    public abstract void truncate(Path path, long length);
 }

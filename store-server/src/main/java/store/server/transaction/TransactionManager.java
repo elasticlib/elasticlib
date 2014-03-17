@@ -67,7 +67,7 @@ public final class TransactionManager {
      * Open an existing transaction manager.
      *
      * @param path Path to transaction manager home.
-     * @return Opened manager
+     * @return Opened manager.
      */
     public static TransactionManager open(Path path) {
         if (!Files.isDirectory(path)) {

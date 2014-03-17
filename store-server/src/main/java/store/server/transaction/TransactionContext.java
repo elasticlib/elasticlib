@@ -93,7 +93,7 @@ public abstract class TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -116,7 +116,7 @@ public abstract class TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new RuntimeException(e);
 
@@ -140,7 +140,7 @@ public abstract class TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -183,7 +183,7 @@ public abstract class TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 

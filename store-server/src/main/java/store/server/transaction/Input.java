@@ -30,7 +30,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -62,7 +62,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -75,7 +75,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -88,7 +88,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -114,7 +114,7 @@ public class Input extends InputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -142,7 +142,7 @@ public class Input extends InputStream {
 
         } catch (NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 

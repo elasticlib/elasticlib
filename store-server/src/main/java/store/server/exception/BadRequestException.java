@@ -6,26 +6,19 @@ package store.server.exception;
 public final class BadRequestException extends ServerException {
 
     private static final long serialVersionUID = 1L;
-    private final String message;
 
     /**
      * Constructor.
      */
     public BadRequestException() {
-        this("Bad request");
     }
 
     /**
      * Constructor.
      *
-     * @param message Detail message.
+     * @param cause Cause exception.
      */
-    public BadRequestException(String message) {
-        this.message = message;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
+    public BadRequestException(Throwable cause) {
+        initCause(cause);
     }
 }

@@ -207,7 +207,7 @@ public class Index {
                 return hashes;
             }
         } catch (ParseException e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadRequestException(e);
 
         } catch (IOException e) {
             throw new RuntimeException(e);

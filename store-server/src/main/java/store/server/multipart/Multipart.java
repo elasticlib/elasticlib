@@ -82,7 +82,7 @@ public class Multipart implements Closeable {
             return new BodyPart(mimePart, null);
 
         } catch (ParseException e) {
-            throw new BadRequestException();
+            throw new BadRequestException(e);
         }
     }
 

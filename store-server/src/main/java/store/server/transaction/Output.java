@@ -28,7 +28,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -46,7 +46,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -59,7 +59,7 @@ public class Output extends OutputStream {
 
         } catch (ClosedStreamException | NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }
@@ -72,7 +72,7 @@ public class Output extends OutputStream {
 
         } catch (NoTransactionAssociatedException e) {
             if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
         }

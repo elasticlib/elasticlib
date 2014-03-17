@@ -35,7 +35,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -55,7 +55,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -76,7 +76,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -96,7 +96,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 
@@ -117,7 +117,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
         } catch (NoTransactionAssociatedException e) {
             if (closed.get()) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryNotStartedException(e);
             }
             throw new IllegalStateException(e);
 

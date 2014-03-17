@@ -34,7 +34,7 @@ public class FormDataMultipart extends Multipart {
             return new FormDataBodyPart(mimePart, contentDisposition);
 
         } catch (ParseException e) {
-            throw new BadRequestException();
+            throw new BadRequestException(e);
         }
     }
 

@@ -11,6 +11,7 @@ import javax.ws.rs.ext.Provider;
 import store.server.exception.BadRequestException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.TransactionNotFoundException;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.RevSpecCheckingFailedException;
@@ -44,6 +45,7 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         MAPPING.put(UnknownContentException.class, NOT_FOUND);
 
         MAPPING.put(RepositoryNotStartedException.class, SERVICE_UNAVAILABLE);
+        MAPPING.put(TransactionNotFoundException.class, SERVICE_UNAVAILABLE);
 
         MAPPING.put(WriteException.class, INTERNAL_SERVER_ERROR);
     }

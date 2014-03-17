@@ -24,6 +24,7 @@ public final class TransactionManager {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     private final StandaloneFileSystemConfiguration config;
+    private final TransactionCache cache = new TransactionCache();
     private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
     private XAFileSystem filesystem;
     private boolean started;
@@ -103,6 +104,7 @@ public final class TransactionManager {
             while (!txContexts.isEmpty()) {
                 txContexts.remove().close(false, false);
             }
+            cache.clear();
             filesystem.shutdown();
             started = false;
 
@@ -193,8 +195,43 @@ public final class TransactionManager {
 
     /**
      * Start a new read-only transaction.
+     *
+     * @return Created transaction context.
      */
-    public void beginReadOnlyTransaction() {
-        createTransactionContext(true);
+    public TransactionContext beginReadOnlyTransaction() {
+        return createTransactionContext(true);
+    }
+
+    /**
+     * Start a new read-write transaction.
+     *
+     * @return Created transaction context.
+     */
+    public TransactionContext beginReadWriteTransaction() {
+        return createTransactionContext(false);
+    }
+
+    /**
+     * Suspend a pending transaction.
+     *
+     * @param context Context of transaction to suspend.
+     * @return The key suspended transaction has been associated to, for latter retrieval.
+     */
+    public int suspend(TransactionContext context) {
+        CURRENT_TX_CONTEXT.remove();
+        return cache.suspend(context);
+    }
+
+    /**
+     * Retrieve and resume suspended transaction associated to supplied key. Fails if there is no suspended transaction
+     * associated to this key, or if such transaction has expired.
+     *
+     * @param key The key suspended transaction has previously been associated to.
+     * @return Corresponding transaction.
+     */
+    public TransactionContext resumeTransaction(int key) {
+        TransactionContext context = cache.resume(key);
+        CURRENT_TX_CONTEXT.set(context);
+        return context;
     }
 }

@@ -96,25 +96,21 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
-        final Hash hash = contentInfo.getHash();
-        final long length = contentInfo.getLength();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, hash, length, source);
+                handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
-        final Hash hash = contentInfoTree.getHash();
-        final long length = contentInfoTree.getLength();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, hash, length, source);
+                handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
             }
         });
     }
@@ -134,23 +130,21 @@ public class Volume {
     }
 
     public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
-        final Hash hash = contentInfo.getHash();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
-                handleCommandResult(result, hash);
+                handleCommandResult(result, contentInfo.getHash());
             }
         });
     }
 
     public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
-        final Hash hash = contentInfoTree.getHash();
         transactionManager.inTransaction(new Command() {
             @Override
             public void apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
-                handleCommandResult(result, hash);
+                handleCommandResult(result, contentInfoTree.getHash());
             }
         });
     }

@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import static java.lang.Runtime.getRuntime;
 import static java.util.Objects.requireNonNull;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,12 +21,10 @@ class TransactionCache {
 
     private static final int SIZE = 20;
     private static final int TTL = 60;
-    private final ScheduledExecutorService executor;
     private final AtomicInteger nextKey;
     private final Cache<Integer, CachedContext> cache;
 
     public TransactionCache() {
-        executor = Executors.newSingleThreadScheduledExecutor();
         nextKey = new AtomicInteger();
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
@@ -41,12 +40,19 @@ class TransactionCache {
             }
         }).build();
 
+        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 cache.cleanUp();
             }
         }, 0, TTL, TimeUnit.SECONDS);
+        getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                executor.shutdown();
+            }
+        });
     }
 
     public int suspend(TransactionContext context) {

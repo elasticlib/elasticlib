@@ -58,7 +58,7 @@ class StreamDecoder implements Closeable {
             return 0;
         }
         if (bytes.length != 4) {
-            throw new RuntimeException("Unexpected end of stream");
+            throw new IllegalStateException("Unexpected end of stream");
         }
         return wrap(bytes)
                 .getInt();
@@ -67,7 +67,7 @@ class StreamDecoder implements Closeable {
     private byte[] readBytes(int length) {
         byte[] bytes = new byte[length];
         if (input.read(bytes) != length) {
-            throw new RuntimeException("Unexpected end of stream");
+            throw new IllegalStateException("Unexpected end of stream");
         }
         return bytes;
     }

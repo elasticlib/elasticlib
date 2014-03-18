@@ -184,7 +184,7 @@ public abstract class TransactionContext {
             }
             return function.apply();
 
-        } catch (XAApplicationException | InterruptedException e) {
+        } catch (Exception e) {
             throw new IllegalStateException(e);
 
         } finally {
@@ -195,7 +195,7 @@ public abstract class TransactionContext {
     void inLock(final TransactionProcedure action) {
         inLock(new TransactionFunction<Void>() {
             @Override
-            public Void apply() throws XAApplicationException, InterruptedException {
+            public Void apply() throws Exception {
                 action.apply();
                 return null;
             }
@@ -204,12 +204,12 @@ public abstract class TransactionContext {
 
     interface TransactionFunction<T> {
 
-        T apply() throws XAApplicationException, InterruptedException;
+        T apply() throws Exception;
     }
 
     interface TransactionProcedure {
 
-        void apply() throws XAApplicationException, InterruptedException;
+        void apply() throws Exception;
     }
 
     /**

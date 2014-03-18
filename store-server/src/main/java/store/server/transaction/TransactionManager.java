@@ -15,6 +15,7 @@ import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;
+import static store.server.transaction.TransactionContext.newTransactionContext;
 
 /**
  * Manages transactions within a volume.
@@ -22,7 +23,6 @@ import store.server.exception.WriteException;
 public final class TransactionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
-    private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     private final StandaloneFileSystemConfiguration config;
     private final TransactionCache cache = new TransactionCache();
     private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
@@ -48,7 +48,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Create a new transaction manager at specified path.
+     * Creates a new transaction manager at specified path.
      *
      * @param path File-system path. Expected to not exists.
      * @return Created manager.
@@ -64,7 +64,7 @@ public final class TransactionManager {
     }
 
     /**
-     * Open an existing transaction manager.
+     * Opens an existing transaction manager.
      *
      * @param path Path to transaction manager home.
      * @return Opened manager.
@@ -127,57 +127,57 @@ public final class TransactionManager {
             throw new RepositoryNotStartedException();
         }
         Session session = filesystem.createSessionForLocalTransaction();
-        TransactionContext txContext;
-        if (readOnly) {
-            txContext = new ReadOnlyTransactionContext(this, session);
-        } else {
-            txContext = new ReadWriteTransactionContext(this, session);
-        }
-        CURRENT_TX_CONTEXT.set(txContext);
+        TransactionContext txContext = newTransactionContext(this, session, readOnly);
         txContexts.add(txContext);
         return txContext;
-    }
-
-    static void detachFromCurrentThread() {
-        CURRENT_TX_CONTEXT.remove();
     }
 
     synchronized void remove(TransactionContext txContext) {
         txContexts.remove(txContext);
     }
 
-    /**
-     * Provides access to the transaction context attached to current thread. Fails if no pending transaction context is
-     * attached to current thread.
-     *
-     * @return A transaction context.
-     */
-    public static TransactionContext currentTransactionContext() {
-        TransactionContext txContext = CURRENT_TX_CONTEXT.get();
-        if (txContext == null) {
-            throw new IllegalStateException("No current transaction");
-        }
-        return txContext;
+    int suspend(TransactionContext context) {
+        return cache.suspend(context);
     }
 
     /**
-     * Execute supplied command in a read-write transaction context.
+     * Execute supplied command in a read-write transaction. Transaction is guaranteed to have been committed or
+     * roll-backed when command returns, unless it is suspended during command execution.
      *
      * @param command Command to execute.
      */
     public void inTransaction(Command command) {
-        TransactionContext txContext = createTransactionContext(false);
+        inTransaction(createTransactionContext(false), command);
+    }
+
+    /**
+     * Retrieves and resumes suspended transaction associated to supplied key. Then executes supplied command within
+     * this transaction. Fails if there is no suspended transaction associated to this key, or if such transaction has
+     * expired.
+     *
+     * @param key The key suspended transaction has previously been associated to.
+     * @param command Command to execute.
+     */
+    public void inTransaction(int key, Command command) {
+        inTransaction(cache.resume(key), command);
+    }
+
+    private void inTransaction(TransactionContext txContext, Command command) {
         try {
             command.apply();
-            txContext.commit();
-
+            if (!txContext.isSuspended()) {
+                txContext.commit();
+            }
         } finally {
-            txContext.close();
+            if (!txContext.isSuspended()) {
+                txContext.close();
+            }
         }
     }
 
     /**
-     * Execute supplied query in a read-only transaction context.
+     * Execute supplied query in a read-only transaction. Transaction is guaranteed to have been committed when query
+     * returns, unless query successfully opens and returns a committing input.
      *
      * @param <T> Query return type.
      * @param query Query to execute.
@@ -189,49 +189,9 @@ public final class TransactionManager {
             return query.apply();
 
         } finally {
-            txContext.commit();
+            if (!txContext.isDetached()) {
+                txContext.commit();
+            }
         }
-    }
-
-    /**
-     * Start a new read-only transaction.
-     *
-     * @return Created transaction context.
-     */
-    public TransactionContext beginReadOnlyTransaction() {
-        return createTransactionContext(true);
-    }
-
-    /**
-     * Start a new read-write transaction.
-     *
-     * @return Created transaction context.
-     */
-    public TransactionContext beginReadWriteTransaction() {
-        return createTransactionContext(false);
-    }
-
-    /**
-     * Suspend a pending transaction.
-     *
-     * @param context Context of transaction to suspend.
-     * @return The key suspended transaction has been associated to, for latter retrieval.
-     */
-    public int suspend(TransactionContext context) {
-        CURRENT_TX_CONTEXT.remove();
-        return cache.suspend(context);
-    }
-
-    /**
-     * Retrieve and resume suspended transaction associated to supplied key. Fails if there is no suspended transaction
-     * associated to this key, or if such transaction has expired.
-     *
-     * @param key The key suspended transaction has previously been associated to.
-     * @return Corresponding transaction.
-     */
-    public TransactionContext resumeTransaction(int key) {
-        TransactionContext context = cache.resume(key);
-        CURRENT_TX_CONTEXT.set(context);
-        return context;
     }
 }

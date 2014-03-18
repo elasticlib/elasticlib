@@ -2,6 +2,7 @@ package store.server.transaction;
 
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
 import org.xadisk.filesystem.exceptions.FileNotExistsException;
@@ -9,7 +10,6 @@ import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import store.server.exception.RepositoryNotStartedException;
-import static store.server.transaction.TransactionManager.detachFromCurrentThread;
 
 /**
  * A transaction context.
@@ -25,7 +25,19 @@ import static store.server.transaction.TransactionManager.detachFromCurrentThrea
  */
 public abstract class TransactionContext {
 
+    /**
+     * Defines possible states of a transaction.
+     */
+    private static enum State {
+
+        PENDING,
+        SUSPENDED,
+        REMOVED
+    }
+    private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
     final Session session;
+    final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
+    final AtomicBoolean detached = new AtomicBoolean(false);
     final AtomicBoolean closed = new AtomicBoolean(false);
     private final TransactionManager transactionManager;
     private final boolean lockExclusively;
@@ -36,22 +48,45 @@ public abstract class TransactionContext {
         this.lockExclusively = lockExclusively;
     }
 
+    static TransactionContext newTransactionContext(TransactionManager manager, Session session, boolean readOnly) {
+        TransactionContext txContext;
+        if (readOnly) {
+            txContext = new ReadOnlyTransactionContext(manager, session);
+        } else {
+            txContext = new ReadWriteTransactionContext(manager, session);
+        }
+        CURRENT_TX_CONTEXT.set(txContext);
+        return txContext;
+    }
+
+    /**
+     * Provides access to the transaction context attached to current thread. Fails if no pending transaction context is
+     * attached to current thread.
+     *
+     * @return A transaction context.
+     */
+    public static TransactionContext current() {
+        TransactionContext txContext = CURRENT_TX_CONTEXT.get();
+        if (txContext == null) {
+            throw new IllegalStateException("No current transaction");
+        }
+        return txContext;
+    }
+
     /**
      * Persists all changes done in this transaction and close this context. Does nothing if this context is already
      * closed.
      */
-    public final void commit() {
+    void commit() {
         close(true, true);
-        detachFromCurrentThread();
     }
 
     /**
      * Abort all changes done in this transaction and close this context. Does nothing if this context is already
      * closed.
      */
-    public final void close() {
+    void close() {
         close(false, true);
-        detachFromCurrentThread();
     }
 
     void close(boolean commit, boolean detachFromCurrentThread) {
@@ -65,10 +100,42 @@ public abstract class TransactionContext {
                 session.rollback();
             }
             transactionManager.remove(this);
-
+            if (detachFromCurrentThread) {
+                detach();
+            }
         } catch (NoTransactionAssociatedException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * Suspend this transaction.
+     *
+     * @return The key this transaction has been associated to, for latter retrieval and resuming.
+     */
+    public int suspend() {
+        if (!state.compareAndSet(State.PENDING, State.SUSPENDED)) {
+            throw new IllegalStateException();
+        }
+        CURRENT_TX_CONTEXT.remove();
+        return transactionManager.suspend(this);
+    }
+
+    boolean resume() {
+        if (state.compareAndSet(State.SUSPENDED, State.PENDING)) {
+            CURRENT_TX_CONTEXT.set(this);
+            return true;
+        }
+        return false;
+    }
+
+    boolean remove() {
+        return state.compareAndSet(State.SUSPENDED, State.REMOVED);
+    }
+
+    private void detach() {
+        detached.set(true);
+        CURRENT_TX_CONTEXT.remove();
     }
 
     /**
@@ -77,8 +144,16 @@ public abstract class TransactionContext {
      *
      * @return true if this context is closed.
      */
-    public final boolean isClosed() {
+    boolean isClosed() {
         return closed.get();
+    }
+
+    boolean isDetached() {
+        return detached.get();
+    }
+
+    boolean isSuspended() {
+        return state.get() == State.SUSPENDED;
     }
 
     /**
@@ -172,7 +247,7 @@ public abstract class TransactionContext {
      * @param path A file-system path.
      * @return Opened input.
      */
-    public final Input openCommitingInput(Path path) {
+    public final Input openCommittingInput(Path path) {
         return openInput(path, true);
     }
 
@@ -193,9 +268,8 @@ public abstract class TransactionContext {
                 FileNotExistsException e) {
             throw new IllegalStateException(e);
         }
-
         if (commitOnClose) {
-            detachFromCurrentThread();
+            detach();
         }
         return new Input(this, inputStream, commitOnClose);
     }

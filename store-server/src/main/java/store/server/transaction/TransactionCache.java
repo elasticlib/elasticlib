@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import store.server.exception.TransactionNotFoundException;
 
 /**
@@ -22,20 +21,20 @@ class TransactionCache {
     private static final int SIZE = 20;
     private static final int TTL = 60;
     private final AtomicInteger nextKey;
-    private final Cache<Integer, CachedContext> cache;
+    private final Cache<Integer, TransactionContext> cache;
 
     public TransactionCache() {
         nextKey = new AtomicInteger();
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
                 .expireAfterWrite(TTL, TimeUnit.SECONDS)
-                .removalListener(new RemovalListener<Integer, CachedContext>() {
+                .removalListener(new RemovalListener<Integer, TransactionContext>() {
             @Override
-            public void onRemoval(RemovalNotification<Integer, CachedContext> notification) {
+            public void onRemoval(RemovalNotification<Integer, TransactionContext> notification) {
                 // Value can not be null as whe use strong references.
-                CachedContext cachedContext = requireNonNull(notification.getValue());
-                if (cachedContext.remove()) {
-                    cachedContext.get().close(false, false);
+                TransactionContext txContext = requireNonNull(notification.getValue());
+                if (txContext.remove()) {
+                    txContext.close(false, false);
                 }
             }
         }).build();
@@ -58,50 +57,20 @@ class TransactionCache {
     public int suspend(TransactionContext context) {
         requireNonNull(context);
         int key = nextKey.incrementAndGet();
-        cache.put(key, new CachedContext(context));
+        cache.put(key, context);
         return key;
     }
 
     public TransactionContext resume(int key) {
-        CachedContext context = cache.getIfPresent(key);
+        TransactionContext context = cache.getIfPresent(key);
         if (context != null && context.resume()) {
             cache.invalidate(key);
-            return context.get();
+            return context;
         }
         throw new TransactionNotFoundException();
     }
 
     public void clear() {
         cache.invalidateAll();
-    }
-
-    private static class CachedContext {
-
-        private final TransactionContext context;
-        private AtomicReference<State> state;
-
-        public CachedContext(TransactionContext context) {
-            this.context = context;
-            state = new AtomicReference<>(State.SUSPENDED);
-        }
-
-        public boolean resume() {
-            return state.compareAndSet(State.SUSPENDED, State.RESUMED);
-        }
-
-        public boolean remove() {
-            return state.compareAndSet(State.SUSPENDED, State.REMOVED);
-        }
-
-        public TransactionContext get() {
-            return context;
-        }
-    }
-
-    private static enum State {
-
-        SUSPENDED,
-        RESUMED,
-        REMOVED
     }
 }

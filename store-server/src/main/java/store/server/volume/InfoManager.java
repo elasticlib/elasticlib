@@ -24,7 +24,6 @@ import store.server.exception.WriteException;
 import store.server.transaction.Input;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
-import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 class InfoManager {
 
@@ -107,7 +106,7 @@ class InfoManager {
 
     private Optional<ContentInfoTree> load(Hash hash, RevSpec revSpec) {
         Path path = path(hash);
-        TransactionContext txContext = currentTransactionContext();
+        TransactionContext txContext = TransactionContext.current();
         Optional<ContentInfoTree> existing;
         if (!txContext.exists(path)) {
             existing = Optional.absent();
@@ -134,7 +133,7 @@ class InfoManager {
             throw new UnknownRevisionException();
         }
         Path path = path(tree.getHash());
-        TransactionContext txContext = currentTransactionContext();
+        TransactionContext txContext = TransactionContext.current();
         if (!txContext.exists(path)) {
             txContext.create(path);
         }

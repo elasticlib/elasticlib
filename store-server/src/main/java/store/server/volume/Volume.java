@@ -14,16 +14,14 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.RevSpec;
 import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.ServerException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
 import store.server.transaction.TransactionManager;
-import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 /**
- * Store contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume
+ * Stores contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume
  * are transactionnal.
  */
 public class Volume {
@@ -44,7 +42,7 @@ public class Volume {
     }
 
     /**
-     * Create a new volume at specified path.
+     * Creates a new volume at specified path.
      *
      * @param path File-system path. Expected to not exists.
      * @return Created volume.
@@ -77,7 +75,7 @@ public class Volume {
     }
 
     /**
-     * Open an existing volume.
+     * Opens an existing volume.
      *
      * @param path Path to transaction manager home.
      * @return Opened volume.
@@ -254,14 +252,12 @@ public class Volume {
      * @return An input stream on this content.
      */
     public InputStream get(final Hash hash) {
-        transactionManager.beginReadOnlyTransaction();
-        try {
-            return contentManager.get(hash);
-
-        } catch (ServerException e) {
-            currentTransactionContext().close();
-            throw e;
-        }
+        return transactionManager.inTransaction(new Query<InputStream>() {
+            @Override
+            public InputStream apply() {
+                return contentManager.get(hash);
+            }
+        });
     }
 
     /**

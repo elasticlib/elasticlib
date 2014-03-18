@@ -13,7 +13,6 @@ import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
-import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 class ContentManager {
 
@@ -62,7 +61,7 @@ class ContentManager {
     }
 
     private Output openOutput(Hash hash, long length) {
-        TransactionContext txContext = currentTransactionContext();
+        TransactionContext txContext = TransactionContext.current();
         Path path = path(hash);
         txContext.create(path);
         if (length > HEAVY_WRITE_THRESHOLD) {
@@ -72,16 +71,16 @@ class ContentManager {
     }
 
     public InputStream get(Hash hash) {
-        TransactionContext txContext = currentTransactionContext();
+        TransactionContext txContext = TransactionContext.current();
         Path path = path(hash);
         if (!txContext.exists(path)) {
             throw new UnknownContentException();
         }
-        return txContext.openCommitingInput(path);
+        return txContext.openCommittingInput(path);
     }
 
     public void delete(Hash hash) {
-        currentTransactionContext().delete(path(hash));
+        TransactionContext.current().delete(path(hash));
     }
 
     private Path path(Hash hash) {

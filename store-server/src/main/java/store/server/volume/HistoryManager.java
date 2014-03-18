@@ -22,7 +22,6 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
 import store.server.transaction.TransactionContext;
-import static store.server.transaction.TransactionManager.currentTransactionContext;
 
 class HistoryManager {
 
@@ -73,7 +72,7 @@ class HistoryManager {
     }
 
     public void add(Hash hash, Operation operation, SortedSet<Hash> head) {
-        TransactionContext txContext = currentTransactionContext();
+        TransactionContext txContext = TransactionContext.current();
         Event event = new EventBuilder()
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
@@ -187,7 +186,7 @@ class HistoryManager {
 
     private Deque<Event> loadPage(Path path) {
         Deque<Event> events = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(path))) {
+        try (StreamDecoder streamDecoder = new StreamDecoder(TransactionContext.current().openInput(path))) {
             while (streamDecoder.hasNext()) {
                 Event event = readEvent(streamDecoder.next());
                 events.add(event);
@@ -198,7 +197,7 @@ class HistoryManager {
 
     private Deque<IndexEntry> loadIndex() {
         Deque<IndexEntry> entries = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(currentTransactionContext().openInput(index))) {
+        try (StreamDecoder streamDecoder = new StreamDecoder(TransactionContext.current().openInput(index))) {
             while (streamDecoder.hasNext()) {
                 entries.add(readEntry(streamDecoder.next()));
             }

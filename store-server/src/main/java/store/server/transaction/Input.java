@@ -2,9 +2,9 @@ package store.server.transaction;
 
 import java.io.InputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
-import org.xadisk.filesystem.exceptions.ClosedStreamException;
-import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.RepositoryNotStartedException;
+import org.xadisk.filesystem.exceptions.XAApplicationException;
+import store.server.transaction.TransactionContext.TransactionFunction;
+import store.server.transaction.TransactionContext.TransactionProcedure;
 
 /**
  * A transactional input stream.
@@ -25,15 +25,12 @@ public class Input extends InputStream {
 
     @Override
     public int read() {
-        try {
-            return delegate.read();
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+        return txContext.inLock(new TransactionFunction<Integer>() {
+            @Override
+            public Integer apply() throws XAApplicationException {
+                return delegate.read();
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
@@ -42,56 +39,44 @@ public class Input extends InputStream {
     }
 
     @Override
-    public int read(byte[] bytes, int offset, int length) {
-        try {
-            int pos = delegate.read(bytes, offset, length);
-            if (pos == -1) {
-                return pos;
-            }
-            while (pos != length) {
-                if (pos > length) {
-                    throw new RuntimeException();
-                }
-                int ret = delegate.read(bytes, offset + pos, length - pos);
-                if (ret == -1) {
+    public int read(final byte[] bytes, final int offset, final int length) {
+        return txContext.inLock(new TransactionFunction<Integer>() {
+            @Override
+            public Integer apply() throws XAApplicationException {
+                int pos = delegate.read(bytes, offset, length);
+                if (pos == -1) {
                     return pos;
                 }
-                pos += ret;
+                while (pos < length) {
+                    int ret = delegate.read(bytes, offset + pos, length - pos);
+                    if (ret == -1) {
+                        return pos;
+                    }
+                    pos += ret;
+                }
+                return pos;
             }
-            return pos;
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
-            }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
-    public long skip(long n) {
-        try {
-            return delegate.skip(n);
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+    public long skip(final long n) {
+        return txContext.inLock(new TransactionFunction<Long>() {
+            @Override
+            public Long apply() throws XAApplicationException {
+                return delegate.skip(n);
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
     public int available() {
-        try {
-            return delegate.available();
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+        return txContext.inLock(new TransactionFunction<Integer>() {
+            @Override
+            public Integer apply() throws XAApplicationException {
+                return delegate.available();
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     /**
@@ -100,7 +85,12 @@ public class Input extends InputStream {
      * @return Absolute position in bytes in the file.
      */
     public long position() {
-        return delegate.position();
+        return txContext.inLock(new TransactionFunction<Long>() {
+            @Override
+            public Long apply() {
+                return delegate.position();
+            }
+        });
     }
 
     /**
@@ -108,16 +98,13 @@ public class Input extends InputStream {
      *
      * @param n New absolute position in bytes in the file. Expected to be positive and less or equal to file length.
      */
-    public void position(long n) {
-        try {
-            delegate.position(n);
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+    public void position(final long n) {
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.position(n);
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
@@ -137,19 +124,14 @@ public class Input extends InputStream {
 
     @Override
     public void close() {
-        try {
-            delegate.close();
-
-        } catch (NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.close();
+                if (commitOnClose) {
+                    txContext.commit();
+                }
             }
-            throw new IllegalStateException(e);
-
-        } finally {
-            if (commitOnClose) {
-                txContext.close(true, false);
-            }
-        }
+        });
     }
 }

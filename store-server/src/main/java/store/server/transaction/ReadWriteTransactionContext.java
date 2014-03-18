@@ -1,21 +1,16 @@
 package store.server.transaction;
 
-import java.io.File;
 import java.nio.file.Path;
 import org.xadisk.bridge.proxies.interfaces.Session;
-import org.xadisk.filesystem.exceptions.DirectoryNotEmptyException;
-import org.xadisk.filesystem.exceptions.FileAlreadyExistsException;
-import org.xadisk.filesystem.exceptions.FileNotExistsException;
-import org.xadisk.filesystem.exceptions.FileUnderUseException;
-import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
-import org.xadisk.filesystem.exceptions.LockingFailedException;
-import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.RepositoryNotStartedException;
+import org.xadisk.filesystem.exceptions.XAApplicationException;
 
 final class ReadWriteTransactionContext extends TransactionContext {
 
+    private final Session session;
+
     ReadWriteTransactionContext(TransactionManager transactionManager, Session session) {
         super(transactionManager, session, true);
+        this.session = session;
     }
 
     @Override
@@ -28,104 +23,53 @@ final class ReadWriteTransactionContext extends TransactionContext {
         return openOutput(path, true);
     }
 
-    private Output openOutput(Path path, boolean heavyWrite) {
-        try {
-            File file = path.toFile();
-            return new Output(this, session.createXAFileOutputStream(file, heavyWrite));
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    private Output openOutput(final Path path, final boolean heavyWrite) {
+        return inLock(new TransactionFunction<Output>() {
+            @Override
+            public Output apply() throws XAApplicationException, InterruptedException {
+                return new Output(ReadWriteTransactionContext.this,
+                                  session.createXAFileOutputStream(path.toFile(), heavyWrite));
             }
-            throw new IllegalStateException(e);
-
-        } catch (LockingFailedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException |
-                FileNotExistsException |
-                FileUnderUseException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
-    public void move(Path src, Path dest) {
-        try {
-            session.moveFile(src.toFile(), dest.toFile());
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public void move(final Path src, final Path dest) {
+        inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException, InterruptedException {
+                session.moveFile(src.toFile(), dest.toFile());
             }
-            throw new IllegalStateException(e);
-
-        } catch (FileAlreadyExistsException |
-                FileNotExistsException |
-                FileUnderUseException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
-    public void create(Path path) {
-        try {
-            session.createFile(path.toFile(), false);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public void create(final Path path) {
+        inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException, InterruptedException {
+                session.createFile(path.toFile(), false);
             }
-            throw new IllegalStateException(e);
-
-        } catch (FileAlreadyExistsException |
-                FileNotExistsException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
-    public void delete(Path path) {
-        try {
-            session.deleteFile(path.toFile());
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public void delete(final Path path) {
+        inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException, InterruptedException {
+                session.deleteFile(path.toFile());
             }
-            throw new IllegalStateException(e);
-
-        } catch (DirectoryNotEmptyException |
-                FileNotExistsException |
-                FileUnderUseException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
-    public void truncate(Path path, long length) {
-        try {
-            session.truncateFile(path.toFile(), length);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public void truncate(final Path path, final long length) {
+        inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException, InterruptedException {
+                session.truncateFile(path.toFile(), length);
             }
-            throw new IllegalStateException(e);
-
-        } catch (FileNotExistsException |
-                InsufficientPermissionOnFileException |
-                LockingFailedException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 }

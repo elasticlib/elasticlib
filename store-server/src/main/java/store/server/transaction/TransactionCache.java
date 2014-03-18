@@ -6,7 +6,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import static java.lang.Runtime.getRuntime;
 import static java.util.Objects.requireNonNull;
-import java.util.concurrent.Executors;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,14 +32,11 @@ class TransactionCache {
             @Override
             public void onRemoval(RemovalNotification<Integer, TransactionContext> notification) {
                 // Value can not be null as whe use strong references.
-                TransactionContext txContext = requireNonNull(notification.getValue());
-                if (txContext.remove()) {
-                    txContext.close(false, false);
-                }
+                requireNonNull(notification.getValue()).closeIfSuspended();
             }
         }).build();
 
-        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {

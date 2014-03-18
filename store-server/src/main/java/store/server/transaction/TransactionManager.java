@@ -4,8 +4,8 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xadisk.bridge.proxies.interfaces.Session;
@@ -25,7 +25,7 @@ public final class TransactionManager {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
     private final StandaloneFileSystemConfiguration config;
     private final TransactionCache cache = new TransactionCache();
-    private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
+    private final Deque<TransactionContext> txContexts = new ConcurrentLinkedDeque<>();
     private XAFileSystem filesystem;
     private boolean started;
 
@@ -102,7 +102,7 @@ public final class TransactionManager {
                 return;
             }
             while (!txContexts.isEmpty()) {
-                txContexts.remove().close(false, false);
+                txContexts.remove().close();
             }
             cache.clear();
             filesystem.shutdown();
@@ -132,7 +132,9 @@ public final class TransactionManager {
         return txContext;
     }
 
-    synchronized void remove(TransactionContext txContext) {
+    // This method is not synchronized in order to avoid deadlocking if both TransactionManager.stop()
+    // and TransactionContext.close() are called concurrently.
+    void remove(TransactionContext txContext) {
         txContexts.remove(txContext);
     }
 
@@ -165,13 +167,10 @@ public final class TransactionManager {
     private void inTransaction(TransactionContext txContext, Command command) {
         try {
             command.apply();
-            if (!txContext.isSuspended()) {
-                txContext.commit();
-            }
+            txContext.commitAndDetachIfNotSuspended();
+
         } finally {
-            if (!txContext.isSuspended()) {
-                txContext.close();
-            }
+            txContext.closeAndDetachIfNotSuspended();
         }
     }
 
@@ -189,9 +188,7 @@ public final class TransactionManager {
             return query.apply();
 
         } finally {
-            if (!txContext.isDetached()) {
-                txContext.commit();
-            }
+            txContext.commitAndDetachIfNotDetached();
         }
     }
 }

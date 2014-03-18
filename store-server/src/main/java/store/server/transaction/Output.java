@@ -2,9 +2,8 @@ package store.server.transaction;
 
 import java.io.OutputStream;
 import org.xadisk.bridge.proxies.interfaces.XAFileOutputStream;
-import org.xadisk.filesystem.exceptions.ClosedStreamException;
-import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-import store.server.exception.RepositoryNotStartedException;
+import org.xadisk.filesystem.exceptions.XAApplicationException;
+import store.server.transaction.TransactionContext.TransactionProcedure;
 
 /**
  * A transactional output stream.
@@ -22,16 +21,13 @@ public class Output extends OutputStream {
     }
 
     @Override
-    public void write(int b) {
-        try {
-            delegate.write(b);
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+    public void write(final int b) {
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.write(b);
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
@@ -40,41 +36,32 @@ public class Output extends OutputStream {
     }
 
     @Override
-    public void write(byte[] bytes, int offset, int length) {
-        try {
-            delegate.write(bytes, offset, length);
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+    public void write(final byte[] bytes, final int offset, final int length) {
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.write(bytes, offset, length);
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
     public void flush() {
-        try {
-            delegate.flush();
-
-        } catch (ClosedStreamException | NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.flush();
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     @Override
     public void close() {
-        try {
-            delegate.close();
-
-        } catch (NoTransactionAssociatedException e) {
-            if (txContext.isClosed()) {
-                throw new RepositoryNotStartedException(e);
+        txContext.inLock(new TransactionProcedure() {
+            @Override
+            public void apply() throws XAApplicationException {
+                delegate.close();
             }
-            throw new IllegalStateException(e);
-        }
+        });
     }
 }

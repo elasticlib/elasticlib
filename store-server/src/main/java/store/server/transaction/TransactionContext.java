@@ -1,14 +1,13 @@
 package store.server.transaction;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.xadisk.bridge.proxies.interfaces.Session;
-import org.xadisk.bridge.proxies.interfaces.XAFileInputStream;
-import org.xadisk.filesystem.exceptions.FileNotExistsException;
-import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
-import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
+import org.xadisk.filesystem.exceptions.XAApplicationException;
 import store.server.exception.RepositoryNotStartedException;
 
 /**
@@ -25,22 +24,14 @@ import store.server.exception.RepositoryNotStartedException;
  */
 public abstract class TransactionContext {
 
-    /**
-     * Defines possible states of a transaction.
-     */
-    private static enum State {
-
-        PENDING,
-        SUSPENDED,
-        REMOVED
-    }
     private static final ThreadLocal<TransactionContext> CURRENT_TX_CONTEXT = new ThreadLocal<>();
-    final Session session;
-    final AtomicReference<State> state = new AtomicReference<>(State.PENDING);
-    final AtomicBoolean detached = new AtomicBoolean(false);
-    final AtomicBoolean closed = new AtomicBoolean(false);
+    private final Lock lock = new ReentrantLock();
     private final TransactionManager transactionManager;
+    private final Session session;
     private final boolean lockExclusively;
+    private boolean suspended = false;
+    private boolean detached = false;
+    private boolean closed = false;
 
     TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively) {
         this.transactionManager = transactionManager;
@@ -73,38 +64,72 @@ public abstract class TransactionContext {
         return txContext;
     }
 
-    /**
-     * Persists all changes done in this transaction and close this context. Does nothing if this context is already
-     * closed.
-     */
     void commit() {
-        close(true, true);
+        close(true, false, Predicates.<TransactionContext>alwaysTrue());
     }
 
-    /**
-     * Abort all changes done in this transaction and close this context. Does nothing if this context is already
-     * closed.
-     */
     void close() {
-        close(false, true);
+        close(false, false, Predicates.<TransactionContext>alwaysTrue());
     }
 
-    void close(boolean commit, boolean detachFromCurrentThread) {
-        if (!closed.compareAndSet(false, true)) {
-            return;
-        }
+    void closeIfSuspended() {
+        close(false, false, new Predicate<TransactionContext>() {
+            @Override
+            public boolean apply(TransactionContext txContext) {
+                return txContext.suspended;
+            }
+        });
+    }
+
+    void commitAndDetachIfNotDetached() {
+        close(true, true, new Predicate<TransactionContext>() {
+            @Override
+            public boolean apply(TransactionContext txContext) {
+                return !txContext.detached;
+            }
+        });
+    }
+
+    void commitAndDetachIfNotSuspended() {
+        close(true, true, new Predicate<TransactionContext>() {
+            @Override
+            public boolean apply(TransactionContext txContext) {
+                return !txContext.suspended;
+            }
+        });
+    }
+
+    void closeAndDetachIfNotSuspended() {
+        close(false, true, new Predicate<TransactionContext>() {
+            @Override
+            public boolean apply(TransactionContext txContext) {
+                return !txContext.suspended;
+            }
+        });
+    }
+
+    private void close(boolean commit, boolean detachFromCurrentThread, Predicate<TransactionContext> predicate) {
+        lock.lock();
         try {
+            if (closed || !predicate.apply(this)) {
+                return;
+            }
+            closed = true;
+            if (detachFromCurrentThread) {
+                detach();
+            }
             if (commit) {
                 session.commit();
             } else {
                 session.rollback();
             }
             transactionManager.remove(this);
-            if (detachFromCurrentThread) {
-                detach();
-            }
+
         } catch (NoTransactionAssociatedException e) {
-            throw new IllegalStateException(e);
+            throw new AssertionError(e);
+
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -114,46 +139,77 @@ public abstract class TransactionContext {
      * @return The key this transaction has been associated to, for latter retrieval and resuming.
      */
     public int suspend() {
-        if (!state.compareAndSet(State.PENDING, State.SUSPENDED)) {
-            throw new IllegalStateException();
+        lock.lock();
+        try {
+            if (closed) {
+                throw new RepositoryNotStartedException();
+            }
+            if (suspended) {
+                throw new IllegalStateException();
+            }
+            suspended = true;
+            CURRENT_TX_CONTEXT.remove();
+            return transactionManager.suspend(this);
+
+        } finally {
+            lock.unlock();
         }
-        CURRENT_TX_CONTEXT.remove();
-        return transactionManager.suspend(this);
     }
 
     boolean resume() {
-        if (state.compareAndSet(State.SUSPENDED, State.PENDING)) {
+        lock.lock();
+        try {
+            if (closed) {
+                return false;
+            }
+            suspended = false;
             CURRENT_TX_CONTEXT.set(this);
             return true;
-        }
-        return false;
-    }
 
-    boolean remove() {
-        return state.compareAndSet(State.SUSPENDED, State.REMOVED);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void detach() {
-        detached.set(true);
+        detached = true;
         CURRENT_TX_CONTEXT.remove();
     }
 
-    /**
-     * Checks if this context is closed. If this is the case, other operations will fail (excepted closing ones, which
-     * are idempotent).
-     *
-     * @return true if this context is closed.
-     */
-    boolean isClosed() {
-        return closed.get();
+    <T> T inLock(TransactionFunction<T> function) {
+        lock.lock();
+        try {
+            if (closed) {
+                throw new RepositoryNotStartedException();
+            }
+            return function.apply();
+
+        } catch (XAApplicationException | InterruptedException e) {
+            throw new IllegalStateException(e);
+
+        } finally {
+            lock.unlock();
+        }
     }
 
-    boolean isDetached() {
-        return detached.get();
+    void inLock(final TransactionProcedure action) {
+        inLock(new TransactionFunction<Void>() {
+            @Override
+            public Void apply() throws XAApplicationException, InterruptedException {
+                action.apply();
+                return null;
+            }
+        });
     }
 
-    boolean isSuspended() {
-        return state.get() == State.SUSPENDED;
+    interface TransactionFunction<T> {
+
+        T apply() throws XAApplicationException, InterruptedException;
+    }
+
+    interface TransactionProcedure {
+
+        void apply() throws XAApplicationException, InterruptedException;
     }
 
     /**
@@ -162,21 +218,13 @@ public abstract class TransactionContext {
      * @param path A file-system path.
      * @return true if this is the case.
      */
-    public final boolean exists(Path path) {
-        try {
-            return session.fileExists(path.toFile(), lockExclusively);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public final boolean exists(final Path path) {
+        return inLock(new TransactionFunction<Boolean>() {
+            @Override
+            public Boolean apply() throws XAApplicationException, InterruptedException {
+                return session.fileExists(path.toFile(), lockExclusively);
             }
-            throw new IllegalStateException(e);
-
-        } catch (LockingFailedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     /**
@@ -185,22 +233,13 @@ public abstract class TransactionContext {
      * @param path A file-system path.
      * @return An array of file names.
      */
-    public final String[] listFiles(Path path) {
-        try {
-            return session.listFiles(path.toFile(), lockExclusively);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public final String[] listFiles(final Path path) {
+        return inLock(new TransactionFunction<String[]>() {
+            @Override
+            public String[] apply() throws XAApplicationException, InterruptedException {
+                return session.listFiles(path.toFile(), lockExclusively);
             }
-            throw new RuntimeException(e);
-
-        } catch (FileNotExistsException |
-                LockingFailedException |
-                InterruptedException |
-                InsufficientPermissionOnFileException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     /**
@@ -209,22 +248,13 @@ public abstract class TransactionContext {
      * @param path A file-system path.
      * @return A length in bytes.
      */
-    public final long fileLength(Path path) {
-        try {
-            return session.getFileLength(path.toFile(), lockExclusively);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    public final long fileLength(final Path path) {
+        return inLock(new TransactionFunction<Long>() {
+            @Override
+            public Long apply() throws XAApplicationException, InterruptedException {
+                return session.getFileLength(path.toFile(), lockExclusively);
             }
-            throw new IllegalStateException(e);
-
-        } catch (FileNotExistsException |
-                LockingFailedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        });
     }
 
     /**
@@ -251,27 +281,19 @@ public abstract class TransactionContext {
         return openInput(path, true);
     }
 
-    private Input openInput(Path path, boolean commitOnClose) {
-        XAFileInputStream inputStream;
-        try {
-            inputStream = session.createXAFileInputStream(path.toFile(), lockExclusively);
-
-        } catch (NoTransactionAssociatedException e) {
-            if (closed.get()) {
-                throw new RepositoryNotStartedException(e);
+    private Input openInput(final Path path, final boolean commitOnClose) {
+        return inLock(new TransactionFunction<Input>() {
+            @Override
+            public Input apply() throws XAApplicationException, InterruptedException {
+                Input input = new Input(TransactionContext.this,
+                                        session.createXAFileInputStream(path.toFile(), lockExclusively),
+                                        commitOnClose);
+                if (commitOnClose) {
+                    detach();
+                }
+                return input;
             }
-            throw new IllegalStateException(e);
-
-        } catch (LockingFailedException |
-                InsufficientPermissionOnFileException |
-                InterruptedException |
-                FileNotExistsException e) {
-            throw new IllegalStateException(e);
-        }
-        if (commitOnClose) {
-            detach();
-        }
-        return new Input(this, inputStream, commitOnClose);
+        });
     }
 
     /**

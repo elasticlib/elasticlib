@@ -32,7 +32,7 @@ class TransactionCache {
             @Override
             public void onRemoval(RemovalNotification<Integer, TransactionContext> notification) {
                 // Value can not be null as whe use strong references.
-                requireNonNull(notification.getValue()).closeIfSuspended();
+                requireNonNull(notification.getValue()).rollbackIfSuspended();
             }
         }).build();
 

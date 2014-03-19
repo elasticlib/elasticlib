@@ -68,11 +68,11 @@ public abstract class TransactionContext {
         close(true, false, Predicates.<TransactionContext>alwaysTrue());
     }
 
-    void close() {
+    void rollback() {
         close(false, false, Predicates.<TransactionContext>alwaysTrue());
     }
 
-    void closeIfSuspended() {
+    void rollbackIfSuspended() {
         close(false, false, new Predicate<TransactionContext>() {
             @Override
             public boolean apply(TransactionContext txContext) {
@@ -99,7 +99,7 @@ public abstract class TransactionContext {
         });
     }
 
-    void closeAndDetachIfNotSuspended() {
+    void rollbackAndDetachIfNotSuspended() {
         close(false, true, new Predicate<TransactionContext>() {
             @Override
             public boolean apply(TransactionContext txContext) {

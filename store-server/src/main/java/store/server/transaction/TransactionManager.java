@@ -102,7 +102,7 @@ public final class TransactionManager {
                 return;
             }
             while (!txContexts.isEmpty()) {
-                txContexts.remove().close();
+                txContexts.remove().rollback();
             }
             cache.clear();
             filesystem.shutdown();
@@ -170,7 +170,7 @@ public final class TransactionManager {
             txContext.commitAndDetachIfNotSuspended();
 
         } finally {
-            txContext.closeAndDetachIfNotSuspended();
+            txContext.rollbackAndDetachIfNotSuspended();
         }
     }
 

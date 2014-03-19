@@ -138,9 +138,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list fromCode {@link Hash} to a JSON array.
+     * Writes supplied list of {@link Hash} to a JSON array.
      *
-     * @param hashes A list fromCode hashes.
+     * @param hashes A list of hashes.
      * @return A JSON array.
      */
     public static JsonArray writeHashes(List<Hash> hashes) {
@@ -152,10 +152,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list fromCode {@link Hash} from supplied JSON array.
+     * Reads a list of {@link Hash} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list fromCode hashes.
+     * @return A list of hashes.
      */
     public static List<Hash> readHashes(JsonArray json) {
         List<Hash> list = new ArrayList<>();
@@ -166,9 +166,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list fromCode {@link ContentInfo} to a JSON array.
+     * Writes supplied list of {@link ContentInfo} to a JSON array.
      *
-     * @param contentInfos A list fromCode content infos.
+     * @param contentInfos A list of content infos.
      * @return A JSON array.
      */
     public static JsonArray writeContentInfos(List<ContentInfo> contentInfos) {
@@ -180,10 +180,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list fromCode {@link ContentInfo} from supplied JSON array.
+     * Reads a list of {@link ContentInfo} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list fromCode content infos.
+     * @return A list of content infos.
      */
     public static List<ContentInfo> readContentInfos(JsonArray json) {
         List<ContentInfo> list = new ArrayList<>();
@@ -365,9 +365,9 @@ public final class JsonUtil {
     }
 
     /**
-     * Writes supplied list fromCode {@link Event} to a JSON array.
+     * Writes supplied list of {@link Event} to a JSON array.
      *
-     * @param events A list fromCode events.
+     * @param events A list of events.
      * @return A JSON array.
      */
     public static JsonArray writeEvents(List<Event> events) {
@@ -379,10 +379,10 @@ public final class JsonUtil {
     }
 
     /**
-     * Reads a list fromCode {@link Event} from supplied JSON array.
+     * Reads a list of {@link Event} from supplied JSON array.
      *
      * @param json A JSON array.
-     * @return A list fromCode events.
+     * @return A list of events.
      */
     public static List<Event> readEvents(JsonArray json) {
         List<Event> list = new ArrayList<>();

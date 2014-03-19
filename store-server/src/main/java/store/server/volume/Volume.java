@@ -12,6 +12,7 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import store.common.Operation;
+import store.server.CommandResult;
 import store.server.RevSpec;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;

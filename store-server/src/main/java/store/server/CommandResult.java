@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;

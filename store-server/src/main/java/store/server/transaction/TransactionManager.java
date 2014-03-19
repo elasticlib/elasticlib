@@ -12,7 +12,7 @@ import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystem;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
-import store.server.CommandResult;
+import store.common.CommandResult;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;

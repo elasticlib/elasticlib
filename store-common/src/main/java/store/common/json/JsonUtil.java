@@ -25,6 +25,7 @@ import static javax.json.JsonValue.ValueType.NUMBER;
 import static javax.json.JsonValue.ValueType.OBJECT;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
+import store.common.CommandResult;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -57,6 +58,8 @@ public final class JsonUtil {
     private static final String OPERATION = "operation";
     private static final String REPOSITORIES = "repositories";
     private static final String SYNC = "sync";
+    private static final String TRANSACTION_ID = "transactionId";
+    private static final String NO_OP = "noOp";
 
     private JsonUtil() {
     }
@@ -417,5 +420,44 @@ public final class JsonUtil {
                 .withTimestamp(new Date(json.getJsonNumber(TIMESTAMP).longValue()))
                 .withOperation(Operation.fromString(json.getString(OPERATION)))
                 .build();
+    }
+
+    /**
+     * Writes supplied {@link CommandResult} to a JSON object.
+     *
+     * @param result A CommandResult instance.
+     * @return A JSON object.
+     */
+    public static JsonObject writeCommandResult(CommandResult result) {
+        JsonArrayBuilder head = createArrayBuilder();
+        for (Hash item : result.getHead()) {
+            head.add(item.encode());
+        }
+        return createObjectBuilder()
+                .add(TRANSACTION_ID, result.getTransactionId())
+                .add(OPERATION, result.isNoOp() ? NO_OP : result.getOperation().toString())
+                .add(HEAD, head)
+                .build();
+    }
+
+    /**
+     * Reads a {@link CommandResult} from supplied JSON object.
+     *
+     * @param json A JSON object.
+     * @return A CommandResult instance.
+     */
+    public static CommandResult readCommandResult(JsonObject json) {
+        int transactionId = json.getInt(TRANSACTION_ID);
+        String opCode = json.getString(OPERATION);
+        SortedSet<Hash> head = new TreeSet<>();
+        for (JsonString value : json.getJsonArray(HEAD).getValuesAs(JsonString.class)) {
+            head.add(new Hash(value.getString()));
+        }
+        if (opCode.equals(NO_OP)) {
+            return CommandResult.noOp(transactionId, head);
+
+        } else {
+            return CommandResult.of(transactionId, Operation.fromString(opCode), head);
+        }
     }
 }

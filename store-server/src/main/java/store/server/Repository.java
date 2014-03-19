@@ -6,6 +6,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;

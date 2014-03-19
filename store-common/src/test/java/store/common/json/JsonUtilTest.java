@@ -15,6 +15,7 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import store.common.CommandResult;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -30,11 +31,13 @@ import static store.common.json.JsonUtil.hasBooleanValue;
 import static store.common.json.JsonUtil.hasStringValue;
 import static store.common.json.JsonUtil.isContentInfo;
 import static store.common.json.JsonUtil.isContentInfoTree;
+import static store.common.json.JsonUtil.readCommandResult;
 import static store.common.json.JsonUtil.readConfig;
 import static store.common.json.JsonUtil.readContentInfo;
 import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfos;
 import static store.common.json.JsonUtil.readHashes;
+import static store.common.json.JsonUtil.writeCommandResult;
 import static store.common.json.JsonUtil.writeConfig;
 import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.json.JsonUtil.writeContentInfoTree;
@@ -59,8 +62,12 @@ public class JsonUtilTest {
     private static final JsonObject CONFIG_JSON;
     private static final List<Event> EVENTS = new ArrayList<>();
     private static final JsonArray EVENTS_ARRAY;
+    private static final List<CommandResult> COMMAND_RESULTS = new ArrayList<>();
+    private static final List<JsonObject> COMMAND_RESULTS_JSON = new ArrayList<>();
 
     static {
+        Class<?> clazz = JsonUtilTest.class;
+
         HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
                               "0827c43f0aad546501f99b11f0bd44be42d68870",
                               "39819150ee99549a8c0a59782169bb3be65b46a4"};
@@ -86,8 +93,8 @@ public class JsonUtilTest {
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])));
 
-        CONTENT_INFOS_JSON.put(HASHES[0], readJsonObject(JsonUtilTest.class, "contentInfo0.json"));
-        CONTENT_INFOS_JSON.put(HASHES[1], readJsonObject(JsonUtilTest.class, "contentInfo1.json"));
+        CONTENT_INFOS_JSON.put(HASHES[0], readJsonObject(clazz, "contentInfo0.json"));
+        CONTENT_INFOS_JSON.put(HASHES[1], readJsonObject(clazz, "contentInfo1.json"));
 
         CONTENT_INFO_TREE = new ContentInfoTreeBuilder()
                 .add(info(0))
@@ -98,7 +105,7 @@ public class JsonUtilTest {
                 .build(new Hash(REVS[1])))
                 .build();
 
-        CONTENT_INFO_TREE_JSON = readJsonObject(JsonUtilTest.class, "contentInfoTree.json");
+        CONTENT_INFO_TREE_JSON = readJsonObject(clazz, "contentInfoTree.json");
 
         CONFIG = new Config();
         CONFIG.addRepository(Paths.get("/repo/primary"));
@@ -123,8 +130,13 @@ public class JsonUtilTest {
                 .withOperation(Operation.DELETE)
                 .build());
 
-        EVENTS_ARRAY = readJsonArray(JsonUtilTest.class, "events.json");
+        EVENTS_ARRAY = readJsonArray(clazz, "events.json");
 
+        COMMAND_RESULTS.add(CommandResult.of(1, Operation.CREATE, new TreeSet<>(singleton(new Hash(REVS[0])))));
+        COMMAND_RESULTS.add(CommandResult.noOp(2, new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
+
+        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult1.json"));
+        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult2.json"));
     }
 
     /**
@@ -298,5 +310,23 @@ public class JsonUtilTest {
     @Test
     public void readEventsTest() {
         assertThat(JsonUtil.readEvents(EVENTS_ARRAY)).isEqualTo(EVENTS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeCommandResultTest() {
+        assertThat(writeCommandResult(COMMAND_RESULTS.get(0))).isEqualTo(COMMAND_RESULTS_JSON.get(0));
+        assertThat(writeCommandResult(COMMAND_RESULTS.get(1))).isEqualTo(COMMAND_RESULTS_JSON.get(1));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readCommandResultTest() {
+        assertThat(readCommandResult(COMMAND_RESULTS_JSON.get(0))).isEqualTo(COMMAND_RESULTS.get(0));
+        assertThat(readCommandResult(COMMAND_RESULTS_JSON.get(1))).isEqualTo(COMMAND_RESULTS.get(1));
     }
 }

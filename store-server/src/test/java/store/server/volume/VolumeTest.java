@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
-import store.server.CommandResult;
+import store.common.CommandResult;
 import store.server.Content;
 import store.server.RevSpec;
 import static store.server.TestUtil.recursiveDelete;

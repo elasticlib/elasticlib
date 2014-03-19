@@ -1,6 +1,6 @@
 package store.server.transaction;
 
-import store.server.CommandResult;
+import store.common.CommandResult;
 
 /**
  * Functionnal interface defining a command, that is a pure mutative operation.

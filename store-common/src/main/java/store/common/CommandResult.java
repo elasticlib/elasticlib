@@ -1,4 +1,4 @@
-package store.server;
+package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;
@@ -6,9 +6,6 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import store.common.EqualsBuilder;
-import store.common.Hash;
-import store.common.Operation;
 
 /**
  * Actual result of a command.

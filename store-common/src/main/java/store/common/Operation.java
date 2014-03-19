@@ -6,7 +6,7 @@ package store.common;
 public enum Operation {
 
     /**
-     * A creation, that is adding both a content and some related info from scratch.
+     * A creation, that is adding (or readding) a content and some related info.
      */
     CREATE(0x01),
     /**
@@ -16,11 +16,7 @@ public enum Operation {
     /**
      * A content deletion. Info is updated beside.
      */
-    DELETE(0x03),
-    /**
-     * A content restoration : info is updated and content is re-added after a former deletion.
-     */
-    RESTORE(0x04);
+    DELETE(0x03);
     private final byte code;
 
     private Operation(int code) {

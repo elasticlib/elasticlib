@@ -150,43 +150,35 @@ class InfoManager {
     }
 
     private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
+        int id = TransactionContext.current().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
-            return CommandResult.noOp(after.getHead());
+            return CommandResult.noOp(id, after.getHead());
         }
-        return CommandResult.of(operation.get(), after.getHead());
+        return CommandResult.of(id, operation.get(), after.getHead());
     }
 
     private static Optional<Operation> operation(Optional<ContentInfoTree> before, ContentInfoTree after) {
-        if (!before.isPresent()) {
-            return Optional.of(Operation.CREATE);
-        }
-        if (before.get().equals(after)) {
-            return Optional.absent();
-        }
-        boolean beforeIsDeleted = before.get().isDeleted();
+        boolean beforeIsDeleted = !before.isPresent() || before.get().isDeleted();
         boolean afterIsDeleted = after.isDeleted();
 
-        if (beforeIsDeleted && !afterIsDeleted) {
-            return Optional.of(Operation.RESTORE);
+        if (before.isPresent() && before.get().equals(after)) {
+            return Optional.absent();
         }
-
+        if (beforeIsDeleted && !afterIsDeleted) {
+            return Optional.of(Operation.CREATE);
+        }
         if (!beforeIsDeleted && afterIsDeleted) {
             return Optional.of(Operation.DELETE);
         }
         return Optional.of(Operation.UPDATE);
     }
 
-    public Optional<ContentInfo> get(Hash hash) {
+    public Optional<ContentInfoTree> get(Hash hash) {
         // TODO This is a stub
-        // Devrait prendre en compte la RevSpec
-        // Revoir l'API pour pouvoir retourner un arbre au besoin !
+        // Devrait pouvoir prendre en compte une RevSpec
 
-        Optional<ContentInfoTree> tree = load(hash, RevSpec.any());
-        if (tree.isPresent()) {
-            return Optional.of(tree.get().get(tree.get().getHead().first()));
-        }
-        return Optional.absent();
+        return load(hash, RevSpec.any());
     }
 
     private static void save(ContentInfoTree tree, Output output) {

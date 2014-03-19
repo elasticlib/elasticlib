@@ -11,6 +11,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Operation;
+import store.server.CommandResult;
 import store.server.Content;
 import store.server.RevSpec;
 import static store.server.TestUtil.recursiveDelete;
@@ -86,6 +88,27 @@ public class VolumeTest {
         Volume volume = Volume.create(newTmpDir());
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             volume.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.any());
+        }
+        assertThat(hasContent(volume, LOREM_IPSUM.getHash())).isTrue();
+        assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(1);
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test
+    public void putInTwoSteps() throws IOException {
+        Volume volume = Volume.create(newTmpDir());
+        CommandResult firstStepResult = volume.put(LOREM_IPSUM.getInfo(), RevSpec.none());
+        assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
+
+        try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
+            int transactionId = firstStepResult.getTransactionId();
+            Hash hash = LOREM_IPSUM.getInfo().getHash();
+            CommandResult secondStepResult = volume.create(transactionId, hash, inputStream);
+            assertThat(secondStepResult).isEqualTo(firstStepResult);
         }
         assertThat(hasContent(volume, LOREM_IPSUM.getHash())).isTrue();
         assertThat(volume.history(true, 0, Integer.MAX_VALUE)).hasSize(1);

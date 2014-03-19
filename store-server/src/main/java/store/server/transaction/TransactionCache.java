@@ -9,7 +9,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import store.server.exception.TransactionNotFoundException;
 
 /**
@@ -20,11 +19,9 @@ class TransactionCache {
 
     private static final int SIZE = 20;
     private static final int TTL = 60;
-    private final AtomicInteger nextKey;
     private final Cache<Integer, TransactionContext> cache;
 
     public TransactionCache() {
-        nextKey = new AtomicInteger();
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
                 .expireAfterWrite(TTL, TimeUnit.SECONDS)
@@ -51,11 +48,9 @@ class TransactionCache {
         });
     }
 
-    public int suspend(TransactionContext context) {
+    public void suspend(TransactionContext context) {
         requireNonNull(context);
-        int key = nextKey.incrementAndGet();
-        cache.put(key, context);
-        return key;
+        cache.put(context.getId(), context);
     }
 
     public TransactionContext resume(int key) {

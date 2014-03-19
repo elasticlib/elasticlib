@@ -5,8 +5,8 @@ import org.xadisk.bridge.proxies.interfaces.Session;
 
 final class ReadOnlyTransactionContext extends TransactionContext {
 
-    ReadOnlyTransactionContext(TransactionManager transactionManager, Session session) {
-        super(transactionManager, session, false);
+    ReadOnlyTransactionContext(TransactionManager transactionManager, Session session, int id) {
+        super(transactionManager, session, false, id);
     }
 
     @Override

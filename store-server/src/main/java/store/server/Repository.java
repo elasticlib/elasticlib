@@ -10,6 +10,7 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
+import store.common.Operation;
 import store.server.agent.IndexAgent;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
@@ -79,29 +80,50 @@ public class Repository {
         volume.stop();
     }
 
-    public void put(ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
-        volume.put(contentInfo, source, revSpec);
-        agent.signal();
+    public CommandResult put(ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
+        CommandResult result = volume.put(contentInfo, source, revSpec);
+        if (!result.isNoOp()) {
+            agent.signal();
+        }
+        return result;
     }
 
-    public void put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
-        volume.put(contentInfoTree, source, revSpec);
-        agent.signal();
+    public CommandResult put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
+        CommandResult result = volume.put(contentInfoTree, source, revSpec);
+        if (!result.isNoOp()) {
+            agent.signal();
+        }
+        return result;
     }
 
-    public void put(ContentInfo contentInfo, RevSpec revSpec) {
-        volume.put(contentInfo, revSpec);
-        agent.signal();
+    public CommandResult put(ContentInfo contentInfo, RevSpec revSpec) {
+        CommandResult result = volume.put(contentInfo, revSpec);
+        if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
+            agent.signal();
+        }
+        return result;
     }
 
-    public void put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
-        volume.put(contentInfoTree, revSpec);
-        agent.signal();
+    public CommandResult put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
+        CommandResult result = volume.put(contentInfoTree, revSpec);
+        if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
+            agent.signal();
+        }
+        return result;
     }
 
-    public void delete(Hash hash, RevSpec revSpec) {
-        volume.delete(hash, revSpec);
+    public CommandResult create(int transactionId, Hash hash, InputStream source) {
+        CommandResult result = volume.create(transactionId, hash, source);
         agent.signal();
+        return result;
+    }
+
+    public CommandResult delete(Hash hash, RevSpec revSpec) {
+        CommandResult result = volume.delete(hash, revSpec);
+        if (!result.isNoOp()) {
+            agent.signal();
+        }
+        return result;
     }
 
     public ContentInfo info(Hash hash) {

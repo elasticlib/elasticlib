@@ -12,6 +12,7 @@ import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystem;
 import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
+import store.server.CommandResult;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.WriteException;
@@ -28,6 +29,7 @@ public final class TransactionManager {
     private final Deque<TransactionContext> txContexts = new ConcurrentLinkedDeque<>();
     private XAFileSystem filesystem;
     private boolean started;
+    private int nextId;
 
     private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
@@ -127,7 +129,7 @@ public final class TransactionManager {
             throw new RepositoryNotStartedException();
         }
         Session session = filesystem.createSessionForLocalTransaction();
-        TransactionContext txContext = newTransactionContext(this, session, readOnly);
+        TransactionContext txContext = newTransactionContext(this, session, readOnly, ++nextId);
         txContexts.add(txContext);
         return txContext;
     }
@@ -138,8 +140,8 @@ public final class TransactionManager {
         txContexts.remove(txContext);
     }
 
-    int suspend(TransactionContext context) {
-        return cache.suspend(context);
+    void suspend(TransactionContext context) {
+        cache.suspend(context);
     }
 
     /**
@@ -147,9 +149,10 @@ public final class TransactionManager {
      * roll-backed when command returns, unless it is suspended during command execution.
      *
      * @param command Command to execute.
+     * @return Supplied command invocation result.
      */
-    public void inTransaction(Command command) {
-        inTransaction(createTransactionContext(false), command);
+    public CommandResult inTransaction(Command command) {
+        return inTransaction(createTransactionContext(false), command);
     }
 
     /**
@@ -159,15 +162,17 @@ public final class TransactionManager {
      *
      * @param key The key suspended transaction has previously been associated to.
      * @param command Command to execute.
+     * @return Supplied command invocation result.
      */
-    public void inTransaction(int key, Command command) {
-        inTransaction(cache.resume(key), command);
+    public CommandResult inTransaction(int key, Command command) {
+        return inTransaction(cache.resume(key), command);
     }
 
-    private void inTransaction(TransactionContext txContext, Command command) {
+    private CommandResult inTransaction(TransactionContext txContext, Command command) {
         try {
-            command.apply();
+            CommandResult result = command.apply();
             txContext.commitAndDetachIfNotSuspended();
+            return result;
 
         } finally {
             txContext.rollbackAndDetachIfNotSuspended();

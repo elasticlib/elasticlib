@@ -14,11 +14,13 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.CommandResult;
 import store.server.RevSpec;
+import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
+import store.server.transaction.TransactionContext;
 import store.server.transaction.TransactionManager;
 
 /**
@@ -123,13 +125,15 @@ public class Volume {
      * @param contentInfo Content info revision.
      * @param source Content.
      * @param revSpec Expectations on current volume state for this content.
+     * @return Actual operation result.
      */
-    public void put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
-        transactionManager.inTransaction(new Command() {
+    public CommandResult put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
+        return transactionManager.inTransaction(new Command() {
             @Override
-            public void apply() {
+            public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
                 handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
+                return result;
             }
         });
     }
@@ -140,59 +144,77 @@ public class Volume {
      * @param contentInfoTree Revision tree.
      * @param source Content.
      * @param revSpec Expectations on current volume state for this content.
+     * @return Actual operation result.
      */
-    public void put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
-        transactionManager.inTransaction(new Command() {
+    public CommandResult put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
+        return transactionManager.inTransaction(new Command() {
             @Override
-            public void apply() {
+            public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
                 handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
+                return result;
             }
         });
     }
 
-    private void handleCommandResult(CommandResult result, Hash hash, long length, InputStream source) {
-        if (result.isNoOp()) {
-            return;
-        }
-        Operation operation = result.getOperation();
-        if (operation == Operation.CREATE || operation == Operation.RESTORE) {
-            contentManager.add(hash, length, source);
-        }
-        if (operation == Operation.DELETE) {
-            contentManager.delete(hash);
-        }
-        historyManager.add(hash, operation, result.getHead());
-    }
-
     /**
-     * Put an info revision into this volume.
+     * Put an info revision into this volume. If associated content is not present, started transaction is suspended so
+     * that caller may latter complete this operation by creating this content.
      *
      * @param contentInfo Content info revision.
      * @param revSpec Expectations on current volume state for this content.
+     * @return Actual operation result.
      */
-    public void put(final ContentInfo contentInfo, final RevSpec revSpec) {
-        transactionManager.inTransaction(new Command() {
+    public CommandResult put(final ContentInfo contentInfo, final RevSpec revSpec) {
+        return transactionManager.inTransaction(new Command() {
             @Override
-            public void apply() {
+            public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfo, revSpec);
                 handleCommandResult(result, contentInfo.getHash());
+                return result;
             }
         });
     }
 
     /**
-     * Put a revision tree into this volume.
+     * Put a revision tree into this volume. If associated content is not present, started transaction is suspended so
+     * that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
      * @param revSpec Expectations on current volume state for this content.
+     * @return Actual operation result.
      */
-    public void put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
-        transactionManager.inTransaction(new Command() {
+    public CommandResult put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
+        return transactionManager.inTransaction(new Command() {
             @Override
-            public void apply() {
+            public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfoTree, revSpec);
                 handleCommandResult(result, contentInfoTree.getHash());
+                return result;
+            }
+        });
+    }
+
+    /**
+     * Resume a previously suspended transaction and create content from supplied input-stream.
+     *
+     * @param transactionId Identifier of the transaction to resume.
+     * @param hash Content hash. Used to retrieve its associated info.
+     * @param source Content.
+     * @return Operation result.
+     */
+    public CommandResult create(final int transactionId, final Hash hash, final InputStream source) {
+        return transactionManager.inTransaction(transactionId, new Command() {
+            @Override
+            public CommandResult apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent() || tree.get().isDeleted()) {
+                    // This is unexpected as whe've got a resumed transaction at this point.
+                    throw new BadRequestException();
+                }
+                CommandResult result = CommandResult.of(transactionId, Operation.CREATE, tree.get().getHead());
+                handleCommandResult(result, hash, tree.get().getLength(), source);
+                return result;
             }
         });
     }
@@ -202,15 +224,31 @@ public class Volume {
      *
      * @param hash Hash of the content to delete.
      * @param revSpec Expectations on current volume state for this content.
+     * @return Actual operation result.
      */
-    public void delete(final Hash hash, final RevSpec revSpec) {
-        transactionManager.inTransaction(new Command() {
+    public CommandResult delete(final Hash hash, final RevSpec revSpec) {
+        return transactionManager.inTransaction(new Command() {
             @Override
-            public void apply() {
+            public CommandResult apply() {
                 CommandResult result = infoManager.delete(hash, revSpec);
                 handleCommandResult(result, hash);
+                return result;
             }
         });
+    }
+
+    private void handleCommandResult(CommandResult result, Hash hash, long length, InputStream source) {
+        if (result.isNoOp()) {
+            return;
+        }
+        Operation operation = result.getOperation();
+        if (operation == Operation.CREATE) {
+            contentManager.add(hash, length, source);
+        }
+        if (operation == Operation.DELETE) {
+            contentManager.delete(hash);
+        }
+        historyManager.add(hash, operation, result.getHead());
     }
 
     private void handleCommandResult(CommandResult result, Hash hash) {
@@ -218,8 +256,9 @@ public class Volume {
             return;
         }
         Operation operation = result.getOperation();
-        if (operation == Operation.CREATE || operation == Operation.RESTORE) {
-            throw new UnknownContentException();
+        if (operation == Operation.CREATE) {
+            TransactionContext.current().suspend();
+            return;
         }
         if (operation == Operation.DELETE) {
             contentManager.delete(hash);
@@ -237,11 +276,12 @@ public class Volume {
         return transactionManager.inTransaction(new Query<ContentInfo>() {
             @Override
             public ContentInfo apply() {
-                Optional<ContentInfo> info = infoManager.get(hash);
-                if (!info.isPresent()) {
+                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                if (!treeOpt.isPresent()) {
                     throw new UnknownContentException();
                 }
-                return info.get();
+                ContentInfoTree tree = treeOpt.get();
+                return tree.get(tree.getHead().first());
             }
         });
     }

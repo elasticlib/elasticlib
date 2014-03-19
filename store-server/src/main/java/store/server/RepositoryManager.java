@@ -215,6 +215,12 @@ public final class RepositoryManager {
         agentManager.signal(name);
     }
 
+    public void create(String name, int transactionId, Hash hash, InputStream source) {
+        LOG.info("Creating {}", hash);
+        repository(name).create(transactionId, hash, source);
+        agentManager.signal(name);
+    }
+
     public void delete(String name, Hash hash, RevSpec revSpec) {
         LOG.info("Deleting {}, with spec {}", hash, revSpec);
         repository(name).delete(hash, revSpec);

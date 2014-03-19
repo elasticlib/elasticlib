@@ -29,22 +29,27 @@ public abstract class TransactionContext {
     private final TransactionManager transactionManager;
     private final Session session;
     private final boolean lockExclusively;
+    private final int id;
     private boolean suspended = false;
     private boolean detached = false;
     private boolean closed = false;
 
-    TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively) {
+    TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively, int id) {
         this.transactionManager = transactionManager;
         this.session = session;
         this.lockExclusively = lockExclusively;
+        this.id = id;
     }
 
-    static TransactionContext newTransactionContext(TransactionManager manager, Session session, boolean readOnly) {
+    static TransactionContext newTransactionContext(TransactionManager transactionManager,
+                                                    Session session,
+                                                    boolean readOnly,
+                                                    int id) {
         TransactionContext txContext;
         if (readOnly) {
-            txContext = new ReadOnlyTransactionContext(manager, session);
+            txContext = new ReadOnlyTransactionContext(transactionManager, session, id);
         } else {
-            txContext = new ReadWriteTransactionContext(manager, session);
+            txContext = new ReadWriteTransactionContext(transactionManager, session, id);
         }
         CURRENT_TX_CONTEXT.set(txContext);
         return txContext;
@@ -135,10 +140,8 @@ public abstract class TransactionContext {
 
     /**
      * Suspend this transaction.
-     *
-     * @return The key this transaction has been associated to, for latter retrieval and resuming.
      */
-    public int suspend() {
+    public void suspend() {
         lock.lock();
         try {
             if (closed) {
@@ -149,7 +152,7 @@ public abstract class TransactionContext {
             }
             suspended = true;
             CURRENT_TX_CONTEXT.remove();
-            return transactionManager.suspend(this);
+            transactionManager.suspend(this);
 
         } finally {
             lock.unlock();
@@ -174,6 +177,17 @@ public abstract class TransactionContext {
     private void detach() {
         detached = true;
         CURRENT_TX_CONTEXT.remove();
+    }
+
+    /**
+     * Provides this transaction identifier. Each identifier uniquely identifies a transaction for a given transaction
+     * manager during the lifetime of the latter. Please note that identifiers are not persisted and are reused accross
+     * application restarts.
+     *
+     * @return This transaction identifier.
+     */
+    public int getId() {
+        return id;
     }
 
     <T> T inLock(TransactionFunction<T> function) {

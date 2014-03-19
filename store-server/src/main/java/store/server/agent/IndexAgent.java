@@ -40,7 +40,6 @@ public class IndexAgent extends Agent {
             try {
                 switch (event.getOperation()) {
                     case CREATE:
-                    case RESTORE:
                     case UPDATE:
                         put(event.getHash());
                         break;

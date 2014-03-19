@@ -15,10 +15,12 @@ import store.common.Operation;
  */
 public final class CommandResult {
 
+    private int transactionId;
     private final Operation operation;
     private final SortedSet<Hash> head;
 
-    private CommandResult(Operation operation, SortedSet<Hash> head) {
+    private CommandResult(int transactionId, Operation operation, SortedSet<Hash> head) {
+        this.transactionId = transactionId;
         this.operation = operation;
         this.head = unmodifiableSortedSet(new TreeSet<>(head));
     }
@@ -26,28 +28,39 @@ public final class CommandResult {
     /**
      * Static factory method.
      *
+     * @param transactionId Associated transaction identifier.
      * @param operation Operation executed.
      * @param head New head after command execution.
      * @return A new instance.
      */
-    public static CommandResult of(Operation operation, SortedSet<Hash> head) {
-        return new CommandResult(requireNonNull(operation), head);
+    public static CommandResult of(int transactionId, Operation operation, SortedSet<Hash> head) {
+        return new CommandResult(transactionId, requireNonNull(operation), head);
     }
 
     /**
      * Specific static factory method for no-op command result.
      *
+     * @param transactionId Associated transaction identifier.
      * @param head Head after (and before) command execution.
      * @return A new instance.
      */
-    public static CommandResult noOp(SortedSet<Hash> head) {
-        return new CommandResult(null, head);
+    public static CommandResult noOp(int transactionId, SortedSet<Hash> head) {
+        return new CommandResult(transactionId, null, head);
+    }
+
+    /**
+     * Provides this command associated transaction identifier.
+     *
+     * @return A transaction identifier.
+     */
+    public int getTransactionId() {
+        return transactionId;
     }
 
     /**
      * Checks if command actually lead to a concrete operation.
      *
-     * @return true if no operation actually took place
+     * @return true if no operation actually took place.
      */
     public boolean isNoOp() {
         return operation == null;
@@ -56,7 +69,7 @@ public final class CommandResult {
     /**
      * Provides operation actually executed. Fails if this is a no-op.
      *
-     * @return An operation
+     * @return An operation.
      */
     public Operation getOperation() {
         if (isNoOp()) {

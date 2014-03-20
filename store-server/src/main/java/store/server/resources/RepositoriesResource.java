@@ -25,18 +25,22 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Operation;
 import static store.common.json.JsonUtil.hasBooleanValue;
 import static store.common.json.JsonUtil.hasStringValue;
 import static store.common.json.JsonUtil.isContentInfo;
 import static store.common.json.JsonUtil.isContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfo;
 import static store.common.json.JsonUtil.readContentInfoTree;
+import static store.common.json.JsonUtil.writeCommandResult;
 import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
@@ -215,6 +219,7 @@ public class RepositoriesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
+     * - 201 CREATED: Operation succeeded and content was created.<br>
      * - 400 BAD REQUEST: Invalid form data.<br>
      * - 404 NOT FOUND: Repository was not found.<br>
      * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
@@ -242,12 +247,10 @@ public class RepositoriesResource {
 
         try (InputStream inputStream = content.getAsInputStream()) {
             if (isContentInfo(json)) {
-                repository.put(name, readContentInfo(json), inputStream, revSpec);
-                return Response.created(uri).build();
+                return response(uri, repository.put(name, readContentInfo(json), inputStream, revSpec));
             }
             if (isContentInfoTree(json)) {
-                repository.put(name, readContentInfoTree(json), inputStream, revSpec);
-                return Response.created(uri).build();
+                return response(uri, repository.put(name, readContentInfoTree(json), inputStream, revSpec));
             }
             throw new BadRequestException();
 
@@ -257,7 +260,8 @@ public class RepositoriesResource {
     }
 
     /**
-     * Update content info.
+     * Add content info. If associated content is not present, started transaction is suspended so that client may
+     * create this content in a latter request.
      * <p>
      * Query param:<br>
      * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
@@ -266,6 +270,7 @@ public class RepositoriesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
+     * - 202 ACCEPTED: Requester is expected to supply content in a latter request<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
      * - 404 NOT FOUND: Repository or content was not found.<br>
      * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
@@ -279,19 +284,56 @@ public class RepositoriesResource {
     @POST
     @Path("{name}/info")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateInfo(@PathParam("name") String name,
-                               @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
-                               JsonObject json) {
+    public Response postInfo(@PathParam("name") String name,
+                             @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
+                             JsonObject json) {
 
         if (isContentInfo(json)) {
-            repository.put(name, readContentInfo(json), revSpec);
-            return Response.ok().build();
+            return response(repository.put(name, readContentInfo(json), revSpec));
         }
         if (isContentInfoTree(json)) {
-            repository.put(name, readContentInfoTree(json), revSpec);
-            return Response.ok().build();
+            return response(repository.put(name, readContentInfoTree(json), revSpec));
         }
         throw new BadRequestException();
+    }
+
+    /**
+     * Resume a previously suspended transaction and create a content.
+     * <p>
+     * Query param:<br>
+     * -txId: identifier of a previously suspended transaction.
+     * <p>
+     * Input:<br>
+     * - content (Raw): Content data.
+     * <p>
+     * Response:<br>
+     * - 201 CREATED: Operation succeeded.<br>
+     * - 400 BAD REQUEST: Invalid form data.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 412 PRECONDITION FAILED: Integrity checking failed.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
+     *
+     * @param name repository name
+     * @param hash content hash
+     * @param transactionId transaction identifier
+     * @param formData entity form data
+     * @return HTTP response
+     */
+    @PUT
+    @Path("{name}/content/{hash}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response createContent(@PathParam("name") String name,
+                                  @PathParam("hash") Hash hash,
+                                  @QueryParam("txId") int transactionId,
+                                  FormDataMultipart formData) {
+
+        try (InputStream inputStream = formData.next("content").getAsInputStream()) {
+            return response(uriInfo.getRequestUri(),
+                            repository.create(name, transactionId, hash, inputStream));
+
+        } catch (IOException e) {
+            throw new WriteException(e);
+        }
     }
 
     /**
@@ -318,8 +360,22 @@ public class RepositoriesResource {
     public Response deleteContent(@PathParam("name") String name,
                                   @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
                                   @PathParam("hash") Hash hash) {
-        repository.delete(name, hash, revSpec);
-        return Response.ok().build();
+
+        return response(repository.delete(name, hash, revSpec));
+    }
+
+    private static Response response(CommandResult result) {
+        return Response.ok().entity(writeCommandResult(result)).build();
+    }
+
+    private static Response response(URI uri, CommandResult result) {
+        ResponseBuilder builder;
+        if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
+            builder = Response.created(uri);
+        } else {
+            builder = Response.ok();
+        }
+        return builder.entity(writeCommandResult(result)).build();
     }
 
     /**

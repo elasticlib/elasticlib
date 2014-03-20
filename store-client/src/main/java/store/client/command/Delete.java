@@ -5,7 +5,9 @@ import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Map;
 import store.client.Display;
+import static store.client.FormatUtil.asString;
 import store.client.Session;
+import store.common.CommandResult;
 import store.common.Hash;
 
 class Delete extends AbstractCommand {
@@ -26,6 +28,7 @@ class Delete extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         String repository = session.getRepository();
         Hash hash = new Hash(params.get(0));
-        session.getRestClient().delete(repository, hash);
+        CommandResult result = session.getRestClient().delete(repository, hash);
+        display.print(asString(result));
     }
 }

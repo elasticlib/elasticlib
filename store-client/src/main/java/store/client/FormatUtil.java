@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import java.text.DateFormat;
 import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
+import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.Digest;
 import store.common.Event;
@@ -95,5 +96,18 @@ public final class FormatUtil {
 
     private static String toPascalCase(String lowerCase) {
         return Character.toUpperCase(lowerCase.charAt(0)) + lowerCase.substring(1);
+    }
+
+    /**
+     * Format supplied command result.
+     *
+     * @param result An command result
+     * @return A human readable string
+     */
+    public static String asString(CommandResult result) {
+        if (result.isNoOp()) {
+            return "Not modified";
+        }
+        return toPascalCase(result.getOperation().toString()) + 'd';
     }
 }

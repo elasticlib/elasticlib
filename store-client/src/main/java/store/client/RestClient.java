@@ -24,7 +24,6 @@ import static javax.ws.rs.client.Entity.entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -36,12 +35,15 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.client.DigestUtil.digest;
+import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
+import store.common.Operation;
+import static store.common.json.JsonUtil.readCommandResult;
 import static store.common.json.JsonUtil.readContentInfo;
 import static store.common.json.JsonUtil.readContentInfos;
 import static store.common.json.JsonUtil.readEvents;
@@ -82,8 +84,8 @@ public class RestClient implements Closeable {
                 .build();
     }
 
-    private Response ensureSuccess(Response response) {
-        if (response.getStatus() >= 300) {
+    private static Response ensureSuccess(Response response) {
+        if (response.getStatus() >= 400) {
             if (response.hasEntity() && response.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 String reason = response.getStatusInfo().getReasonPhrase();
                 String message = response.readEntity(JsonObject.class).getString("error");
@@ -146,7 +148,7 @@ public class RestClient implements Closeable {
                 .delete());
     }
 
-    public void put(String repository, Path filepath) {
+    public CommandResult put(String repository, Path filepath) {
         try {
             Digest digest = digest(filepath);
             ContentInfo info = new ContentInfoBuilder()
@@ -155,42 +157,72 @@ public class RestClient implements Closeable {
                     .withMetadata(metadata(filepath))
                     .computeRevAndBuild();
 
-            Response response = resource.path("repositories/{name}/info/{hash}")
-                    .resolveTemplate("name", repository)
-                    .resolveTemplate("hash", digest.getHash())
-                    .request()
-                    .head();
-
-            if (response.getStatus() == Status.OK.getStatusCode()) {
-                throw new RequestFailedException("This content is already stored");
-            }
-
-            try (InputStream inputStream = new LoggingInputStream("Uploading content",
-                                                                  newInputStream(filepath),
-                                                                  digest.getLength())) {
-
-                MultiPart multipart = new FormDataMultiPart()
-                        .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
-                        .bodyPart(new StreamDataBodyPart("content",
-                                                         inputStream,
-                                                         filepath.getFileName().toString(),
-                                                         MediaType.APPLICATION_OCTET_STREAM_TYPE));
-                ensureSuccess(resource.path("repositories/{name}/content")
-                        .resolveTemplate("name", repository)
-                        .request()
-                        .post(entity(multipart, addBoundary(multipart.getMediaType()))));
+            if (info.getLength() < 4096) {
+                return putInOneStep(repository, filepath, info);
+            } else {
+                return putInTwoStep(repository, filepath, info);
             }
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
     }
 
-    public void delete(String repository, Hash hash) {
-        ensureSuccess(resource.path("repositories/{name}/content/{hash}")
+    private CommandResult putInOneStep(String repository, Path filepath, ContentInfo info) throws IOException {
+        try (InputStream inputStream = new LoggingInputStream("Uploading content",
+                                                              newInputStream(filepath),
+                                                              info.getLength())) {
+            MultiPart multipart = new FormDataMultiPart()
+                    .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
+                    .bodyPart(new StreamDataBodyPart("content",
+                                                     inputStream,
+                                                     filepath.getFileName().toString(),
+                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+            return result(resource.path("repositories/{name}/content")
+                    .resolveTemplate("name", repository)
+                    .request()
+                    .post(entity(multipart, addBoundary(multipart.getMediaType()))));
+        }
+    }
+
+    private CommandResult putInTwoStep(String repository, Path filepath, ContentInfo info) throws IOException {
+        CommandResult firstStepResult = result(resource
+                .path("repositories/{name}/info")
+                .resolveTemplate("name", repository)
+                .request()
+                .post(entity(writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)));
+
+        if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
+            return firstStepResult;
+        }
+        try (InputStream inputStream = new LoggingInputStream("Uploading content",
+                                                              newInputStream(filepath),
+                                                              info.getLength())) {
+            MultiPart multipart = new FormDataMultiPart()
+                    .bodyPart(new StreamDataBodyPart("content",
+                                                     inputStream,
+                                                     filepath.getFileName().toString(),
+                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+            return result(resource.path("repositories/{name}/content/{hash}")
+                    .resolveTemplate("name", repository)
+                    .resolveTemplate("hash", info.getHash())
+                    .queryParam("txId", firstStepResult.getTransactionId())
+                    .request()
+                    .put(entity(multipart, addBoundary(multipart.getMediaType()))));
+        }
+    }
+
+    public CommandResult delete(String repository, Hash hash) {
+        return result(resource.path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
                 .delete());
+    }
+
+    private static CommandResult result(Response response) {
+        return readCommandResult(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
     public ContentInfo info(String repository, Hash hash) {

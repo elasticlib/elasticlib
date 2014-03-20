@@ -23,6 +23,7 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.CommandResult;
 import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -191,40 +192,46 @@ public final class RepositoryManager {
         return repository(name).getStatus();
     }
 
-    public void put(String name, ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
+    public CommandResult put(String name, ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
         LOG.info("Putting info and content for {}, with spec {}", contentInfo.getHash(), revSpec);
-        repository(name).put(contentInfo, source, revSpec);
+        CommandResult result = repository(name).put(contentInfo, source, revSpec);
         agentManager.signal(name);
+        return result;
     }
 
-    public void put(String name, ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
+    public CommandResult put(String name, ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
         LOG.info("Putting tree and content for {}, with spec {}", contentInfoTree.getHash(), revSpec);
-        repository(name).put(contentInfoTree, source, revSpec);
+        CommandResult result = repository(name).put(contentInfoTree, source, revSpec);
         agentManager.signal(name);
+        return result;
     }
 
-    public void put(String name, ContentInfo contentInfo, RevSpec revSpec) {
+    public CommandResult put(String name, ContentInfo contentInfo, RevSpec revSpec) {
         LOG.info("Putting info for {}, with spec {}", contentInfo.getHash(), revSpec);
-        repository(name).put(contentInfo, revSpec);
+        CommandResult result = repository(name).put(contentInfo, revSpec);
         agentManager.signal(name);
+        return result;
     }
 
-    public void put(String name, ContentInfoTree contentInfoTree, RevSpec revSpec) {
+    public CommandResult put(String name, ContentInfoTree contentInfoTree, RevSpec revSpec) {
         LOG.info("Putting tree for {}, with spec {}", contentInfoTree.getHash(), revSpec);
-        repository(name).put(contentInfoTree, revSpec);
+        CommandResult result = repository(name).put(contentInfoTree, revSpec);
         agentManager.signal(name);
+        return result;
     }
 
-    public void create(String name, int transactionId, Hash hash, InputStream source) {
+    public CommandResult create(String name, int transactionId, Hash hash, InputStream source) {
         LOG.info("Creating {}", hash);
-        repository(name).create(transactionId, hash, source);
+        CommandResult result = repository(name).create(transactionId, hash, source);
         agentManager.signal(name);
+        return result;
     }
 
-    public void delete(String name, Hash hash, RevSpec revSpec) {
+    public CommandResult delete(String name, Hash hash, RevSpec revSpec) {
         LOG.info("Deleting {}, with spec {}", hash, revSpec);
-        repository(name).delete(hash, revSpec);
+        CommandResult result = repository(name).delete(hash, revSpec);
         agentManager.signal(name);
+        return result;
     }
 
     public ContentInfo info(String name, Hash hash) {

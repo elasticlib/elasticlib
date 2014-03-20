@@ -1,7 +1,9 @@
 package store.common;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import static java.util.Arrays.asList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -128,7 +130,21 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void getTest() {
-        assertThat(tree(a0, a1, a2, a3, b2, a4).get(a3.getRev())).isEqualTo(a3);
+        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        Hash rev = a3.getRev();
+
+        assertThat(tree.get(rev)).isEqualTo(a3);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getBulkTest() {
+        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        Collection<Hash> revs = Arrays.asList(b2.getRev(), a4.getRev());
+
+        assertThat(tree.get(revs)).containsExactly(b2, a4);
     }
 
     /**

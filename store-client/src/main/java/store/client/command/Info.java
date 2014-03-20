@@ -7,7 +7,7 @@ import java.util.Map;
 import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
-import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Hash;
 
 class Info extends AbstractCommand {
@@ -28,7 +28,7 @@ class Info extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         String repository = session.getRepository();
         Hash hash = new Hash(params.get(0));
-        ContentInfo info = session.getRestClient().info(repository, hash);
-        display.print(asString(info));
+        ContentInfoTree tree = session.getRestClient().getInfoTree(repository, hash);
+        display.print(asString(tree));
     }
 }

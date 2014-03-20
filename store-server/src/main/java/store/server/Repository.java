@@ -127,8 +127,17 @@ public class Repository {
         return result;
     }
 
-    public ContentInfo info(Hash hash) {
-        return volume.info(hash);
+    public ContentInfoTree getInfoTree(Hash hash) {
+        return volume.getInfoTree(hash);
+
+    }
+
+    public List<ContentInfo> getInfoHead(Hash hash) {
+        return volume.getInfoHead(hash);
+    }
+
+    public List<ContentInfo> getInfoRevisions(Hash hash, List<Hash> revs) {
+        return volume.getInfoRevisions(hash, revs);
     }
 
     public InputStream get(Hash hash) {

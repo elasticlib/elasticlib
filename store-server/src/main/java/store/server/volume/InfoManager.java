@@ -175,9 +175,6 @@ class InfoManager {
     }
 
     public Optional<ContentInfoTree> get(Hash hash) {
-        // TODO This is a stub
-        // Devrait pouvoir prendre en compte une RevSpec
-
         return load(hash, RevSpec.any());
     }
 

@@ -57,7 +57,7 @@ class SyncAgent extends Agent {
         }
 
         private void put(Hash hash) {
-            ContentInfo info = source.info(hash);
+            ContentInfo info = source.getInfoHead(hash).get(0);
             try (InputStream inputStream = source.get(hash)) {
                 destination.put(info, inputStream, RevSpec.any());
 

@@ -1,6 +1,7 @@
 package store.server;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -234,9 +235,20 @@ public final class RepositoryManager {
         return result;
     }
 
-    public ContentInfo info(String name, Hash hash) {
-        LOG.info("Returning info {}", hash);
-        return repository(name).info(hash);
+    public ContentInfoTree getInfoTree(String name, Hash hash) {
+        LOG.info("Returning info tree {}", hash);
+        return repository(name).getInfoTree(hash);
+
+    }
+
+    public List<ContentInfo> getInfoHead(String name, Hash hash) {
+        LOG.info("Returning info head {}", hash);
+        return repository(name).getInfoHead(hash);
+    }
+
+    public List<ContentInfo> getInfoRevisions(String name, Hash hash, List<Hash> revs) {
+        LOG.info("Returning info revs {} [{}]", hash, Joiner.on(", ").join(revs));
+        return repository(name).getInfoRevisions(hash, revs);
     }
 
     public InputStream get(String name, Hash hash) {

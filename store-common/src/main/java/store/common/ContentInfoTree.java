@@ -156,6 +156,20 @@ public class ContentInfoTree {
     }
 
     /**
+     * Provides revisions associated to supplied hashes.
+     *
+     * @param revs A collecton of revision hashes.
+     * @return Associated revisions.
+     */
+    public List<ContentInfo> get(Collection<Hash> revs) {
+        List<ContentInfo> revisions = new ArrayList<>(revs.size());
+        for (Hash rev : revs) {
+            revisions.add(get(rev));
+        }
+        return revisions;
+    }
+
+    /**
      * @param rev A revision hash.
      * @return true if this tree contains the revision associated to supplied hash.
      */

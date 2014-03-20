@@ -38,13 +38,14 @@ import static store.client.DigestUtil.digest;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.ContentInfoTree;
 import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import static store.common.json.JsonUtil.readCommandResult;
-import static store.common.json.JsonUtil.readContentInfo;
+import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfos;
 import static store.common.json.JsonUtil.readEvents;
 import static store.common.json.JsonUtil.readHashes;
@@ -225,14 +226,14 @@ public class RestClient implements Closeable {
         return readCommandResult(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
-    public ContentInfo info(String repository, Hash hash) {
+    public ContentInfoTree getInfoTree(String repository, Hash hash) {
         Response response = resource.path("repositories/{name}/info/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
                 .get();
 
-        return readContentInfo(ensureSuccess(response).readEntity(JsonObject.class));
+        return readContentInfoTree(ensureSuccess(response).readEntity(JsonObject.class));
     }
 
     public void get(String repository, Hash hash) {

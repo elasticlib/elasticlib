@@ -1,5 +1,6 @@
 package store.server.resources;
 
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,6 +13,7 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import javax.json.JsonStructure;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -41,7 +43,7 @@ import static store.common.json.JsonUtil.isContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfo;
 import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.writeCommandResult;
-import static store.common.json.JsonUtil.writeContentInfo;
+import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
@@ -406,6 +408,11 @@ public class RepositoriesResource {
     /**
      * Get info about a content.
      * <p>
+     * Query param:<br>
+     * - rev: specify revisions to returns. May be set to "head" to return current head revisions or to a dash-separated
+     * sequence of wanted revision hashes. If unspecified, the whole revision tree is returned.
+     *
+     * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository or content was not found.<br>
@@ -413,12 +420,26 @@ public class RepositoriesResource {
      *
      * @param name repository name
      * @param hash content hash
+     * @param rev requested revisions
      * @return output JSON data
      */
     @GET
     @Path("{name}/info/{hash}")
-    public JsonObject getInfo(@PathParam("name") String name, @PathParam("hash") Hash hash) {
-        return writeContentInfo(repository.info(name, hash));
+    public JsonStructure getInfo(@PathParam("name") String name,
+                                 @PathParam("hash") Hash hash,
+                                 @QueryParam("rev") @DefaultValue("") String rev) {
+
+        if (rev.isEmpty()) {
+            return writeContentInfoTree(repository.getInfoTree(name, hash));
+        }
+        if (rev.equals("head")) {
+            return writeContentInfos(repository.getInfoHead(name, hash));
+        }
+        List<Hash> revisions = new ArrayList<>();
+        for (String part : Splitter.on('-').split(rev)) {
+            revisions.add(new Hash(part));
+        }
+        return writeContentInfos(repository.getInfoRevisions(name, hash, revisions));
     }
 
     /**
@@ -503,7 +524,7 @@ public class RepositoriesResource {
                               @QueryParam("size") @DefaultValue("20") int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
         for (Hash hash : repository.find(name, query, from, size)) {
-            infos.add(repository.info(name, hash));
+            infos.addAll(repository.getInfoHead(name, hash));
         }
         return writeContentInfos(infos);
     }

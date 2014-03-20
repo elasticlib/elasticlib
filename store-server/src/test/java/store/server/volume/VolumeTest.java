@@ -5,14 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import store.common.CommandResult;
+import store.common.ContentInfo;
 import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
-import store.common.CommandResult;
 import store.server.Content;
 import store.server.RevSpec;
 import static store.server.TestUtil.recursiveDelete;
@@ -158,7 +160,8 @@ public class VolumeTest {
     @Test
     public void info() {
         Volume volume = newVolumeWith(LOREM_IPSUM);
-        assertThat(volume.info(LOREM_IPSUM.getHash())).isEqualTo(LOREM_IPSUM.getInfo());
+        List<ContentInfo> head = volume.getInfoHead(LOREM_IPSUM.getHash());
+        assertThat(head).containsExactly(LOREM_IPSUM.getInfo());
     }
 
     /**
@@ -167,7 +170,7 @@ public class VolumeTest {
     @Test(expectedExceptions = UnknownContentException.class)
     public void infoUnknownHash() {
         Volume volume = newVolumeWith(LOREM_IPSUM);
-        volume.info(UNKNOWN_HASH);
+        volume.getInfoTree(UNKNOWN_HASH);
     }
 
     /**
@@ -196,7 +199,7 @@ public class VolumeTest {
     public void stop() {
         Volume volume = Volume.create(newTmpDir());
         volume.stop();
-        volume.info(UNKNOWN_HASH);
+        volume.getInfoTree(UNKNOWN_HASH);
     }
 
     /**

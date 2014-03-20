@@ -58,7 +58,7 @@ public class IndexAgent extends Agent {
             if (index.contains(hash)) {
                 return;
             }
-            ContentInfo info = volume.info(hash);
+            ContentInfo info = volume.getInfoHead(hash).get(0);
             try (InputStream inputStream = volume.get(hash)) {
                 index.put(info, inputStream);
 

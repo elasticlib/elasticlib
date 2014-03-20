@@ -267,23 +267,45 @@ public class Volume {
     }
 
     /**
-     * Provides info about a content in this volume.
+     * Provides info tree associated with supplied hash.
      *
      * @param hash Hash of the content.
-     * @return Corresponding info.
+     * @return Corresponding info tree.
      */
-    public ContentInfo info(final Hash hash) {
-        return transactionManager.inTransaction(new Query<ContentInfo>() {
+    public ContentInfoTree getInfoTree(final Hash hash) {
+        return transactionManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
-            public ContentInfo apply() {
-                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
-                if (!treeOpt.isPresent()) {
+            public ContentInfoTree apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent()) {
                     throw new UnknownContentException();
                 }
-                ContentInfoTree tree = treeOpt.get();
-                return tree.get(tree.getHead().first());
+                return tree.get();
             }
         });
+    }
+
+    /**
+     * Provides info head revisions associated with supplied hash.
+     *
+     * @param hash Hash of the content.
+     * @return Corresponding info head revisions.
+     */
+    public List<ContentInfo> getInfoHead(Hash hash) {
+        ContentInfoTree tree = getInfoTree(hash);
+        return tree.get(tree.getHead());
+    }
+
+    /**
+     * Provides requested info revisions associated with supplied hash.
+     *
+     * @param hash Hash of the content.
+     * @param revs Hash of revisions to return.
+     * @return Corresponding revisions.
+     */
+    public List<ContentInfo> getInfoRevisions(Hash hash, List<Hash> revs) {
+        ContentInfoTree tree = getInfoTree(hash);
+        return tree.get(revs);
     }
 
     /**

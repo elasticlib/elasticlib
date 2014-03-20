@@ -2,10 +2,12 @@ package store.client;
 
 import com.google.common.base.Joiner;
 import java.text.DateFormat;
+import java.util.List;
 import java.util.Map;
 import static store.client.ByteLengthFormatter.format;
 import store.common.CommandResult;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Digest;
 import store.common.Event;
 import store.common.metadata.Properties;
@@ -25,29 +27,86 @@ public final class FormatUtil {
     /**
      * Format supplied content info.
      *
+     * @param tree A content info tree
+     * @return A human readable string
+     */
+    public static String asString(ContentInfoTree tree) {
+        List<ContentInfo> revisions = tree.list();
+        if (revisions.size() == 1) {
+            return asString(revisions.get(0));
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("Hash")
+                .append(COMMA)
+                .append(tree.getHash())
+                .append(System.lineSeparator())
+                .append("Length")
+                .append(COMMA)
+                .append(format(tree.getLength()))
+                .append(System.lineSeparator())
+                .append(System.lineSeparator());
+
+        for (ContentInfo revision : tree.list()) {
+            builder.append(formatRevision(revision));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Format supplied content info.
+     *
      * @param info A content info
      * @return A human readable string
      */
     public static String asString(ContentInfo info) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Hash")
+        return new StringBuilder()
+                .append("Hash")
                 .append(COMMA)
                 .append(info.getHash())
                 .append(System.lineSeparator())
                 .append("Length")
                 .append(COMMA)
-                .append(format(info.getLength()));
+                .append(format(info.getLength()))
+                .append(System.lineSeparator())
+                .append(formatRevision(info))
+                .toString();
+    }
+
+    private static String formatRevision(ContentInfo info) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Revision")
+                .append(COMMA)
+                .append(info.getRev())
+                .append(System.lineSeparator());
+
+        if (info.getParents().size() == 1) {
+            builder.append("Parent")
+                    .append(COMMA)
+                    .append(info.getParents().first())
+                    .append(System.lineSeparator());
+        } else if (info.getParents().size() > 1) {
+            builder.append("Parents")
+                    .append(COMMA)
+                    .append(Joiner.on(", ").join(info.getParents()))
+                    .append(System.lineSeparator());
+        }
+
+        if (info.isDeleted()) {
+            builder.append("Deleted")
+                    .append(COMMA)
+                    .append("true")
+                    .append(System.lineSeparator());
+        }
 
         Map<String, Value> metadata = info.getMetadata();
         for (Property property : Properties.list()) {
             if (metadata.containsKey(property.key())) {
-                builder.append(System.lineSeparator())
-                        .append(property.label())
+                builder.append(property.label())
                         .append(COMMA)
-                        .append(metadata.get(property.key()));
+                        .append(metadata.get(property.key()))
+                        .append(System.lineSeparator());
             }
         }
-        builder.append(System.lineSeparator());
         return builder.toString();
     }
 

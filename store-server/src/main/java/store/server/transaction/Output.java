@@ -14,6 +14,7 @@ public class Output extends OutputStream {
 
     private final TransactionContext txContext;
     private final XAFileOutputStream delegate;
+    private boolean closed;
 
     Output(TransactionContext txContext, XAFileOutputStream delegate) {
         this.txContext = txContext;
@@ -57,11 +58,15 @@ public class Output extends OutputStream {
 
     @Override
     public void close() {
+        if (closed) {
+            return;
+        }
         txContext.inLock(new TransactionProcedure() {
             @Override
             public void apply() throws XAApplicationException {
                 delegate.close();
             }
         });
+        closed = true;
     }
 }

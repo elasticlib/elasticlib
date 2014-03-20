@@ -16,6 +16,7 @@ public class Input extends InputStream {
     private final TransactionContext txContext;
     private final XAFileInputStream delegate;
     private final boolean commitOnClose;
+    private boolean closed = false;
 
     Input(TransactionContext txContext, XAFileInputStream delegate, boolean commitOnClose) {
         this.txContext = txContext;
@@ -124,6 +125,9 @@ public class Input extends InputStream {
 
     @Override
     public void close() {
+        if (closed) {
+            return;
+        }
         txContext.inLock(new TransactionProcedure() {
             @Override
             public void apply() throws XAApplicationException {
@@ -133,5 +137,6 @@ public class Input extends InputStream {
                 }
             }
         });
+        closed = true;
     }
 }

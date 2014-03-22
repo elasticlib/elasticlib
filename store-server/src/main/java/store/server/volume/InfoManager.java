@@ -16,7 +16,6 @@ import store.common.Operation;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
-import store.server.RevSpec;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RevSpecCheckingFailedException;
 import store.server.exception.UnknownContentException;

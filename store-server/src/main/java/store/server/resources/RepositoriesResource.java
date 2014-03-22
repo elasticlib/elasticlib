@@ -49,12 +49,12 @@ import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
 import store.server.RepositoriesService;
 import store.server.Repository;
-import store.server.RevSpec;
 import store.server.Status;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
+import store.server.volume.RevSpec;
 
 /**
  * Volumes REST resource.

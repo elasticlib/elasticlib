@@ -9,6 +9,7 @@ import store.common.Hash;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.volume.RevSpec;
 
 /**
  * An agent that performs replication from a repository to another one.

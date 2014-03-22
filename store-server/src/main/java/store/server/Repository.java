@@ -17,6 +17,7 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
+import store.server.volume.RevSpec;
 import store.server.volume.Volume;
 
 /**

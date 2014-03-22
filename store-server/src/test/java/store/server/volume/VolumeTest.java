@@ -16,7 +16,6 @@ import store.common.Hash;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.Content;
-import store.server.RevSpec;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;

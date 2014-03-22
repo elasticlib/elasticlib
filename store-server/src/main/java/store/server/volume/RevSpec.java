@@ -1,4 +1,4 @@
-package store.server;
+package store.server.volume;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

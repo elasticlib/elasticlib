@@ -103,20 +103,24 @@ public class RepositoryTest {
     }
 
     private void async(Assertion assertion) {
-        int delay = 500;
-        int attempt = 0;
+        int timeout = 60;
+        int delay = 1;
+        int time = 0;
         while (true) {
             try {
+                wait(delay);
                 assertion.apply();
                 return;
 
             } catch (AssertionError e) {
-                if (attempt >= 6) {
+                time += delay;
+                delay *= 2;
+                if (delay > 5) {
+                    delay = 5;
+                }
+                if (time >= timeout) {
                     throw e;
                 }
-                wait(delay);
-                attempt++;
-                delay *= 2;
             }
         }
     }
@@ -126,9 +130,9 @@ public class RepositoryTest {
         void apply() throws AssertionError;
     }
 
-    private void wait(int millis) {
+    private void wait(int seconds) {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(1000 * seconds);
 
         } catch (InterruptedException e) {
             throw new AssertionError(e);

@@ -1,4 +1,4 @@
-package store.server.agent;
+package store.server;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,35 +6,34 @@ import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
-import store.server.Repository;
-import store.server.RevSpec;
+import static store.common.Operation.DELETE;
+import store.server.Index;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.volume.Volume;
 
-class SyncAgent extends Agent {
+public class IndexAgent extends Agent {
 
-    private final AgentManager agentManager;
-    private final Repository source;
-    private final Repository destination;
+    private final Volume volume;
+    private final Index index;
 
-    public SyncAgent(AgentManager agentManager, Repository source, Repository destination) {
-        this.agentManager = agentManager;
-        this.source = source;
-        this.destination = destination;
+    public IndexAgent(Volume volume, Index index) {
+        this.volume = volume;
+        this.index = index;
     }
 
     @Override
     List<Event> history(boolean chronological, long first, int number) {
-        return source.history(chronological, first, number);
+        return volume.history(chronological, first, number);
     }
 
     @Override
     AgentThread newAgentThread() {
-        return this.new VolumeAgentThread();
+        return this.new IndexAgentThread();
     }
 
-    private class VolumeAgentThread extends AgentThread {
+    private class IndexAgentThread extends AgentThread {
 
         @Override
         protected boolean process(Event event) {
@@ -48,7 +47,6 @@ class SyncAgent extends Agent {
                         delete(event.getHash());
                         break;
                 }
-                agentManager.signal(destination.getName());
                 return true;
 
             } catch (UnknownContentException | RepositoryNotStartedException e) {
@@ -57,9 +55,12 @@ class SyncAgent extends Agent {
         }
 
         private void put(Hash hash) {
-            ContentInfo info = source.getInfoHead(hash).get(0);
-            try (InputStream inputStream = source.get(hash)) {
-                destination.put(info, inputStream, RevSpec.any());
+            if (index.contains(hash)) {
+                return;
+            }
+            ContentInfo info = volume.getInfoHead(hash).get(0);
+            try (InputStream inputStream = volume.get(hash)) {
+                index.put(info, inputStream);
 
             } catch (IOException e) {
                 throw new WriteException(e);
@@ -67,12 +68,7 @@ class SyncAgent extends Agent {
         }
 
         private void delete(Hash hash) {
-            try {
-                destination.delete(hash, RevSpec.any());
-
-            } catch (UnknownContentException e) {
-                // Ok
-            }
+            index.delete(hash); // Idempotent
         }
     }
 }

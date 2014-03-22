@@ -1,11 +1,11 @@
-package store.server.agent;
+package store.server;
 
 import com.google.common.base.Optional;
 import java.util.ArrayList;
 import java.util.List;
 import store.common.Event;
 
-abstract class Agent {
+public abstract class Agent {
 
     private final List<Event> events = new ArrayList<>();
     private long cursor;

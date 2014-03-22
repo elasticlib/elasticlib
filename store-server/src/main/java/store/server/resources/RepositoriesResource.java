@@ -47,7 +47,8 @@ import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
-import store.server.RepositoryManager;
+import store.server.RepositoriesService;
+import store.server.Repository;
 import store.server.RevSpec;
 import store.server.Status;
 import store.server.exception.BadRequestException;
@@ -62,7 +63,7 @@ import store.server.multipart.FormDataMultipart;
 public class RepositoriesResource {
 
     @Inject
-    private RepositoryManager repository;
+    private RepositoriesService repositoriesService;
     @Context
     private UriInfo uriInfo;
 
@@ -87,7 +88,7 @@ public class RepositoriesResource {
             throw new BadRequestException();
         }
         java.nio.file.Path path = Paths.get(json.getString("path"));
-        repository.createRepository(path);
+        repositoriesService.createRepository(path);
         return Response
                 .created(UriBuilder.fromUri(uriInfo.getRequestUri()).path(path.getFileName().toString()).build())
                 .build();
@@ -108,7 +109,7 @@ public class RepositoriesResource {
         if (!hasStringValue(json, "path")) {
             throw new BadRequestException();
         }
-        repository.createRepository(Paths.get(json.getString("path")).resolve(name));
+        repositoriesService.createRepository(Paths.get(json.getString("path")).resolve(name));
         return Response.created(uriInfo.getRequestUri()).build();
     }
 
@@ -125,7 +126,7 @@ public class RepositoriesResource {
     @DELETE
     @Path("{name}")
     public Response dropRepository(@PathParam("name") String name) {
-        repository.dropRepository(name);
+        repositoriesService.dropRepository(name);
         return Response.ok().build();
     }
 
@@ -152,9 +153,9 @@ public class RepositoriesResource {
             throw new BadRequestException();
         }
         if (json.getBoolean("started")) {
-            repository.start(name);
+            repository(name).start();
         } else {
-            repository.stop(name);
+            repository(name).stop();
         }
         return Response.ok().build();
     }
@@ -174,7 +175,7 @@ public class RepositoriesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listRepositories() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (java.nio.file.Path path : repository.config().getRepositories()) {
+        for (java.nio.file.Path path : repositoriesService.config().getRepositories()) {
             builder.add(path.getFileName().toString());
         }
         return builder.build();
@@ -199,7 +200,7 @@ public class RepositoriesResource {
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject getRepository(@PathParam("name") String name) {
-        Status status = repository.status(name);
+        Status status = repository(name).getStatus();
         return Json.createObjectBuilder()
                 .add("name", name)
                 .add("path", status.getPath().toString())
@@ -249,10 +250,10 @@ public class RepositoriesResource {
 
         try (InputStream inputStream = content.getAsInputStream()) {
             if (isContentInfo(json)) {
-                return response(uri, repository.put(name, readContentInfo(json), inputStream, revSpec));
+                return response(uri, repository(name).put(readContentInfo(json), inputStream, revSpec));
             }
             if (isContentInfoTree(json)) {
-                return response(uri, repository.put(name, readContentInfoTree(json), inputStream, revSpec));
+                return response(uri, repository(name).put(readContentInfoTree(json), inputStream, revSpec));
             }
             throw new BadRequestException();
 
@@ -291,10 +292,10 @@ public class RepositoriesResource {
                              JsonObject json) {
 
         if (isContentInfo(json)) {
-            return response(repository.put(name, readContentInfo(json), revSpec));
+            return response(repository(name).put(readContentInfo(json), revSpec));
         }
         if (isContentInfoTree(json)) {
-            return response(repository.put(name, readContentInfoTree(json), revSpec));
+            return response(repository(name).put(readContentInfoTree(json), revSpec));
         }
         throw new BadRequestException();
     }
@@ -330,8 +331,7 @@ public class RepositoriesResource {
                                   FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next("content").getAsInputStream()) {
-            return response(uriInfo.getRequestUri(),
-                            repository.create(name, transactionId, hash, inputStream));
+            return response(uriInfo.getRequestUri(), repository(name).create(transactionId, hash, inputStream));
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -363,7 +363,7 @@ public class RepositoriesResource {
                                   @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
                                   @PathParam("hash") Hash hash) {
 
-        return response(repository.delete(name, hash, revSpec));
+        return response(repository(name).delete(hash, revSpec));
     }
 
     private static Response response(CommandResult result) {
@@ -398,7 +398,7 @@ public class RepositoriesResource {
         return Response.ok(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException {
-                try (InputStream inputStream = repository.get(name, hash)) {
+                try (InputStream inputStream = repository(name).get(hash)) {
                     copy(inputStream, outputStream);
                 }
             }
@@ -430,16 +430,16 @@ public class RepositoriesResource {
                                  @QueryParam("rev") @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
-            return writeContentInfoTree(repository.getInfoTree(name, hash));
+            return writeContentInfoTree(repository(name).getInfoTree(hash));
         }
         if (rev.equals("head")) {
-            return writeContentInfos(repository.getInfoHead(name, hash));
+            return writeContentInfos(repository(name).getInfoHead(hash));
         }
         List<Hash> revisions = new ArrayList<>();
         for (String part : Splitter.on('-').split(rev)) {
             revisions.add(new Hash(part));
         }
-        return writeContentInfos(repository.getInfoRevisions(name, hash, revisions));
+        return writeContentInfos(repository(name).getInfoRevisions(hash, revisions));
     }
 
     /**
@@ -470,7 +470,7 @@ public class RepositoriesResource {
         if (from == null) {
             from = sort.equals("asc") ? 0 : Long.MAX_VALUE;
         }
-        return writeEvents(repository.history(name, sort.equals("asc"), from, size));
+        return writeEvents(repository(name).history(sort.equals("asc"), from, size));
     }
 
     /**
@@ -496,7 +496,7 @@ public class RepositoriesResource {
                           @QueryParam("query") String query,
                           @QueryParam("from") @DefaultValue("0") int from,
                           @QueryParam("size") @DefaultValue("20") int size) {
-        return writeHashes(repository.find(name, query, from, size));
+        return writeHashes(repository(name).find(query, from, size));
     }
 
     /**
@@ -523,9 +523,14 @@ public class RepositoriesResource {
                               @QueryParam("from") @DefaultValue("0") int from,
                               @QueryParam("size") @DefaultValue("20") int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
-        for (Hash hash : repository.find(name, query, from, size)) {
-            infos.addAll(repository.getInfoHead(name, hash));
+        Repository repository = repository(name);
+        for (Hash hash : repository.find(query, from, size)) {
+            infos.addAll(repository.getInfoHead(hash));
         }
         return writeContentInfos(infos);
+    }
+
+    private Repository repository(String name) {
+        return repositoriesService.getRepository(name);
     }
 }

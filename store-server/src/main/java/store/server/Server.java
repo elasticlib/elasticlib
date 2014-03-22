@@ -71,7 +71,7 @@ public class Server {
         return new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(new RepositoryManager(home)).to(RepositoryManager.class);
+                bind(new RepositoriesService(home, new ReplicationService())).to(RepositoriesService.class);
             }
         };
     }

@@ -1,7 +1,6 @@
 package store.server;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -24,15 +22,9 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import store.common.CommandResult;
 import store.common.Config;
-import store.common.ContentInfo;
-import store.common.ContentInfoTree;
-import store.common.Event;
-import store.common.Hash;
 import static store.common.json.JsonUtil.readConfig;
 import static store.common.json.JsonUtil.writeConfig;
-import store.server.agent.AgentManager;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.UnknownRepositoryException;
@@ -41,30 +33,34 @@ import store.server.exception.WriteException;
 /**
  * Manage a set of repositories, with asynchronous replication support.
  */
-public final class RepositoryManager {
+public final class RepositoriesService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RepositoryManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final Path home;
+    private final ReplicationService replicationService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
-    private final AgentManager agentManager = new AgentManager();
     private final Map<String, Repository> repositories = new HashMap<>();
 
     /**
      * Constructor.
      *
-     * @param home The repository home directory.
+     * @param home The repositories service home directory.
+     * @param replicationService The replication service.
      */
-    public RepositoryManager(Path home) {
+    public RepositoriesService(Path home, ReplicationService replicationService) {
         this.home = home;
+        this.replicationService = replicationService;
         config = loadConfig();
         for (Path path : config.getRepositories()) {
-            Repository repository = Repository.open(path);
+            Repository repository = Repository.open(path, replicationService);
             repositories.put(repository.getName(), repository);
         }
-        for (Repository repository : repositories.values()) {
-            for (String destination : config.getSync(repository.getName())) {
-                agentManager.sync(repository, repositories.get(destination));
+        for (Repository source : repositories.values()) {
+            for (String destinationName : config.getSync(source.getName())) {
+                Repository destination = repositories.get(destinationName);
+                ReplicationAgent agent = new ReplicationAgent(source, destination);
+                replicationService.sync(source.getName(), destinationName, agent);
             }
         }
     }
@@ -76,7 +72,7 @@ public final class RepositoryManager {
             if (repositories.containsKey(path.getFileName().toString())) {
                 throw new RepositoryAlreadyExistsException();
             }
-            Repository repository = Repository.create(path);
+            Repository repository = Repository.create(path, replicationService);
             config.addRepository(path);
             saveConfig();
             repositories.put(repository.getName(), repository);
@@ -96,7 +92,7 @@ public final class RepositoryManager {
             Path path = repositories.get(name).getPath();
 
             config.removeRepository(name);
-            agentManager.drop(name);
+            replicationService.drop(name);
             repositories.remove(name).stop();
             saveConfig();
             recursiveDelete(path);
@@ -142,7 +138,8 @@ public final class RepositoryManager {
             }
             config.sync(source, destination);
             saveConfig();
-            agentManager.sync(repositories.get(source), repositories.get(destination));
+            ReplicationAgent agent = new ReplicationAgent(repositories.get(source), repositories.get(destination));
+            replicationService.sync(source, destination, agent);
 
         } finally {
             lock.writeLock().unlock();
@@ -158,23 +155,11 @@ public final class RepositoryManager {
             }
             config.unsync(source, destination);
             saveConfig();
-            agentManager.unsync(source, destination);
+            replicationService.unsync(source, destination);
 
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-    public void start(String name) {
-        LOG.info("Starting {}", name);
-        repository(name).start();
-        agentManager.start(name);
-    }
-
-    public void stop(String name) {
-        LOG.info("Stopping {}", name);
-        agentManager.stop(name);
-        repository(name).stop();
     }
 
     public Config config() {
@@ -188,85 +173,7 @@ public final class RepositoryManager {
         }
     }
 
-    public Status status(String name) {
-        LOG.info("Returning {} status", name);
-        return repository(name).getStatus();
-    }
-
-    public CommandResult put(String name, ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
-        LOG.info("Putting info and content for {}, with spec {}", contentInfo.getHash(), revSpec);
-        CommandResult result = repository(name).put(contentInfo, source, revSpec);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public CommandResult put(String name, ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
-        LOG.info("Putting tree and content for {}, with spec {}", contentInfoTree.getHash(), revSpec);
-        CommandResult result = repository(name).put(contentInfoTree, source, revSpec);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public CommandResult put(String name, ContentInfo contentInfo, RevSpec revSpec) {
-        LOG.info("Putting info for {}, with spec {}", contentInfo.getHash(), revSpec);
-        CommandResult result = repository(name).put(contentInfo, revSpec);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public CommandResult put(String name, ContentInfoTree contentInfoTree, RevSpec revSpec) {
-        LOG.info("Putting tree for {}, with spec {}", contentInfoTree.getHash(), revSpec);
-        CommandResult result = repository(name).put(contentInfoTree, revSpec);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public CommandResult create(String name, int transactionId, Hash hash, InputStream source) {
-        LOG.info("Creating {}", hash);
-        CommandResult result = repository(name).create(transactionId, hash, source);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public CommandResult delete(String name, Hash hash, RevSpec revSpec) {
-        LOG.info("Deleting {}, with spec {}", hash, revSpec);
-        CommandResult result = repository(name).delete(hash, revSpec);
-        agentManager.signal(name);
-        return result;
-    }
-
-    public ContentInfoTree getInfoTree(String name, Hash hash) {
-        LOG.info("Returning info tree {}", hash);
-        return repository(name).getInfoTree(hash);
-
-    }
-
-    public List<ContentInfo> getInfoHead(String name, Hash hash) {
-        LOG.info("Returning info head {}", hash);
-        return repository(name).getInfoHead(hash);
-    }
-
-    public List<ContentInfo> getInfoRevisions(String name, Hash hash, List<Hash> revs) {
-        LOG.info("Returning info revs {} [{}]", hash, Joiner.on(", ").join(revs));
-        return repository(name).getInfoRevisions(hash, revs);
-    }
-
-    public InputStream get(String name, Hash hash) {
-        LOG.info("Getting {}", hash);
-        return repository(name).get(hash);
-    }
-
-    public List<Hash> find(String name, String query, int first, int number) {
-        LOG.info("Finding {}, first {}, count {}", query, first, number);
-        return repository(name).find(query, first, number);
-    }
-
-    public List<Event> history(String name, boolean chronological, long first, int number) {
-        LOG.info("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
-        return repository(name).history(chronological, first, number);
-    }
-
-    private Repository repository(String name) {
+    public Repository getRepository(String name) {
         lock.readLock().lock();
         try {
             if (!repositories.containsKey(name)) {

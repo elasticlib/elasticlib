@@ -20,7 +20,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Config;
 import static store.common.json.JsonUtil.hasStringValue;
-import store.server.RepositoryManager;
+import store.server.RepositoriesService;
 import store.server.exception.BadRequestException;
 
 /**
@@ -30,7 +30,7 @@ import store.server.exception.BadRequestException;
 public class ReplicationsResource {
 
     @Inject
-    private RepositoryManager repository;
+    private RepositoriesService repository;
     @Context
     private UriInfo uriInfo;
 

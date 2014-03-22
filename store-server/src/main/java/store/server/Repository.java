@@ -30,14 +30,14 @@ public class Repository {
     private final ReplicationService replicationService;
     private final Volume volume;
     private final Index index;
-    private final IndexAgent agent;
+    private final IndexingAgent agent;
 
     private Repository(Path path, ReplicationService replicationService, Volume volume, Index index) {
         this.path = path;
         this.replicationService = replicationService;
         this.volume = volume;
         this.index = index;
-        agent = new IndexAgent(volume, index);
+        agent = new IndexingAgent(volume, index);
     }
 
     public static Repository create(Path path, ReplicationService replicationService) {

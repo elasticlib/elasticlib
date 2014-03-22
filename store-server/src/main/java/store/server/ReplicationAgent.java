@@ -6,17 +6,24 @@ import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
-import store.server.Repository;
-import store.server.RevSpec;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 
+/**
+ * An agent that performs replication from a repository to another one.
+ */
 public class ReplicationAgent extends Agent {
 
     private final Repository source;
     private final Repository destination;
 
+    /**
+     * Constructor.
+     *
+     * @param source Source repository.
+     * @param destination Destination repository.
+     */
     public ReplicationAgent(Repository source, Repository destination) {
         this.source = source;
         this.destination = destination;

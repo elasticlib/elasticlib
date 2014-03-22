@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import store.common.Event;
 
+/**
+ * Performs asynchronous replication or indexing.
+ */
 public abstract class Agent {
 
     private final List<Event> events = new ArrayList<>();
@@ -13,15 +16,24 @@ public abstract class Agent {
     private boolean stoped;
     private boolean running;
 
+    /**
+     * Start this agent.
+     */
     public final synchronized void start() {
         stoped = false;
         signal();
     }
 
+    /**
+     * Stop this agent.
+     */
     public final synchronized void stop() {
         stoped = true;
     }
 
+    /**
+     * Signal this agent that a change may have happen on its source.
+     */
     public final synchronized void signal() {
         if (stoped) {
             return;

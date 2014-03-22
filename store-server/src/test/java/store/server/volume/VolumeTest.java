@@ -36,7 +36,7 @@ public class VolumeTest {
      */
     @BeforeClass
     public void init() throws IOException {
-        path = Files.createTempDirectory(this.getClass().getName());
+        path = Files.createTempDirectory(getClass().getSimpleName() + "-");
     }
 
     /**

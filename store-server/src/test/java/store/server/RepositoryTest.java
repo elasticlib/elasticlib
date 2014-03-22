@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import store.common.Hash;
+import store.common.Event;
+import store.common.Operation;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.exception.UnknownContentException;
 import store.server.volume.RevSpec;
 
 /**
@@ -31,7 +32,7 @@ public class RepositoryTest {
      */
     @BeforeClass
     public void init() throws IOException {
-        path = Files.createTempDirectory(this.getClass().getName());
+        path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         Files.createDirectory(path.resolve("home"));
         repositoriesService = new RepositoriesService(path.resolve("home"), new ReplicationService());
     }
@@ -65,12 +66,16 @@ public class RepositoryTest {
      */
     @Test(dependsOnMethods = "createRepositoryTest")
     public void findTest() throws IOException {
-        Repository source = repository(SOURCE);
+        final Repository source = repository(SOURCE);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             source.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.none());
         }
-        wait(1);
-        assertThat(source.find("Lorem ipsum", 0, 10)).containsExactly(LOREM_IPSUM.getHash());
+        async(new Assertion() {
+            @Override
+            public void apply() throws AssertionError {
+                assertThat(source.find("Lorem ipsum", 0, 10)).containsExactly(LOREM_IPSUM.getHash());
+            }
+        });
     }
 
     /**
@@ -81,35 +86,52 @@ public class RepositoryTest {
     @Test(dependsOnMethods = "findTest")
     public void createReplicationTest() throws IOException {
         repositoriesService.createReplication(SOURCE, DESTINATION);
-        wait(1);
-        assertThat(hasContent(repository(DESTINATION), LOREM_IPSUM.getHash()));
+        async(new Assertion() {
+            @Override
+            public void apply() throws AssertionError {
+                List<Event> events = repository(DESTINATION).history(true, 0, 10);
+
+                assertThat(events).hasSize(1);
+                assertThat(events.get(0).getOperation()).isEqualTo(Operation.CREATE);
+                assertThat(events.get(0).getHash()).isEqualTo(LOREM_IPSUM.getHash());
+            }
+        });
     }
 
     private Repository repository(String name) {
         return repositoriesService.getRepository(name);
     }
 
-    private void wait(int seconds) {
+    private void async(Assertion assertion) {
+        int delay = 500;
+        int attempt = 0;
+        while (true) {
+            try {
+                assertion.apply();
+                return;
+
+            } catch (AssertionError e) {
+                if (attempt >= 6) {
+                    throw e;
+                }
+                wait(delay);
+                attempt++;
+                delay *= 2;
+            }
+        }
+    }
+
+    private interface Assertion {
+
+        void apply() throws AssertionError;
+    }
+
+    private void wait(int millis) {
         try {
-            Thread.sleep(seconds * 1000);
+            Thread.sleep(millis);
 
         } catch (InterruptedException e) {
             throw new AssertionError(e);
         }
-    }
-
-    private static boolean hasContent(Repository repository, Hash hash) {
-        try {
-            InputStream inputStream = repository.getContent(hash);
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                // Impossible
-                throw new AssertionError(e);
-            }
-        } catch (UnknownContentException e) {
-            return false;
-        }
-        return true;
     }
 }

@@ -8,13 +8,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Manage replication agents on volumes and indexes within a repository.
+ * Manage replication agents between repositories.
  */
 public class ReplicationService {
 
     private final Map<String, Map<String, ReplicationAgent>> agents = new HashMap<>();
 
-    public synchronized void sync(String source, String destination, ReplicationAgent agent) {
+    /**
+     * Create a new replication from source to destination. Does nothing if such a replication already exist.
+     *
+     * @param source Source repository name.
+     * @param destination Destination repository name.
+     * @param agent Agent used to perform replication.
+     */
+    public synchronized void createReplication(String source, String destination, ReplicationAgent agent) {
         if (!agents.containsKey(source)) {
             agents.put(source, new HashMap<String, ReplicationAgent>());
         }
@@ -25,7 +32,13 @@ public class ReplicationService {
         agent.start();
     }
 
-    public synchronized void unsync(String source, String destination) {
+    /**
+     * Drop an existing replication from source to destination. Does nothing if such a replication do not exist.
+     *
+     * @param source Source repository name.
+     * @param destination Destination repository name.
+     */
+    public synchronized void dropReplication(String source, String destination) {
         if (!agents.containsKey(source)) {
             return;
         }
@@ -38,12 +51,22 @@ public class ReplicationService {
         }
     }
 
+    /**
+     * Start all agents from/to repository which name is supplied.
+     *
+     * @param name A repository name.
+     */
     public synchronized void start(String name) {
         for (ReplicationAgent agent : agents(name)) {
             agent.start();
         }
     }
 
+    /**
+     * Stop all agents from/to repository which name is supplied.
+     *
+     * @param name A repository name.
+     */
     public synchronized void stop(String name) {
         for (ReplicationAgent agent : agents(name)) {
             agent.stop();
@@ -63,7 +86,12 @@ public class ReplicationService {
         return collection;
     }
 
-    public synchronized void drop(String name) {
+    /**
+     * Drop all replications from/to repository which name is supplied.
+     *
+     * @param name A repository name.
+     */
+    public synchronized void dropReplications(String name) {
         stop(name);
         agents.remove(name);
         Iterator<Entry<String, Map<String, ReplicationAgent>>> iterator = agents.entrySet().iterator();
@@ -76,6 +104,11 @@ public class ReplicationService {
         }
     }
 
+    /**
+     * Signal all agents from repository which name is supplied.
+     *
+     * @param name A repository name.
+     */
     public synchronized void signal(String name) {
         if (!agents.containsKey(name)) {
             return;

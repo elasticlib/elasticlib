@@ -31,7 +31,7 @@ import store.server.exception.UnknownRepositoryException;
 import store.server.exception.WriteException;
 
 /**
- * Manage a set of repositories, with asynchronous replication support.
+ * Manage repositories and replication between them.
  */
 public final class RepositoriesService {
 
@@ -60,11 +60,16 @@ public final class RepositoriesService {
             for (String destinationName : config.getSync(source.getName())) {
                 Repository destination = repositories.get(destinationName);
                 ReplicationAgent agent = new ReplicationAgent(source, destination);
-                replicationService.sync(source.getName(), destinationName, agent);
+                replicationService.createReplication(source.getName(), destinationName, agent);
             }
         }
     }
 
+    /**
+     * Create a new repository.
+     *
+     * @param path Repository home.
+     */
     public void createRepository(Path path) {
         LOG.info("Creating repository at {}", path);
         lock.writeLock().lock();
@@ -82,6 +87,11 @@ public final class RepositoriesService {
         }
     }
 
+    /**
+     * Drop an existing repository.
+     *
+     * @param name Repository name
+     */
     public void dropRepository(String name) {
         LOG.info("Dropping repository {}", name);
         lock.writeLock().lock();
@@ -92,7 +102,7 @@ public final class RepositoriesService {
             Path path = repositories.get(name).getPath();
 
             config.removeRepository(name);
-            replicationService.drop(name);
+            replicationService.dropReplications(name);
             repositories.remove(name).stop();
             saveConfig();
             recursiveDelete(path);
@@ -126,8 +136,14 @@ public final class RepositoriesService {
         }
     }
 
-    public void sync(String source, String destination) {
-        LOG.info("Syncing {} >> {}", source, destination);
+    /**
+     * Create a new replication from source to destination. Does nothing if such a replication already exist.
+     *
+     * @param source Source repository name.
+     * @param destination Destination repository name.
+     */
+    public void createReplication(String source, String destination) {
+        LOG.info("Creating replication {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
@@ -136,43 +152,64 @@ public final class RepositoriesService {
             if (source.equals(destination)) {
                 throw new SelfReplicationException();
             }
-            config.sync(source, destination);
+            if (!config.sync(source, destination)) {
+                return;
+            }
             saveConfig();
             ReplicationAgent agent = new ReplicationAgent(repositories.get(source), repositories.get(destination));
-            replicationService.sync(source, destination, agent);
+            replicationService.createReplication(source, destination, agent);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void unsync(String source, String destination) {
+    /**
+     * Drop an existing replication from source to destination. Does nothing if such a replication do not exist.
+     *
+     * @param source Source repository name.
+     * @param destination Destination repository name.
+     */
+    public void dropReplication(String source, String destination) {
         LOG.info("Unsyncing {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
                 throw new UnknownRepositoryException();
             }
-            config.unsync(source, destination);
+            if (!config.unsync(source, destination)) {
+                return;
+            }
             saveConfig();
-            replicationService.unsync(source, destination);
+            replicationService.dropReplication(source, destination);
 
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public Config config() {
+    /**
+     * Provides a snapshot of the current repositories config.
+     *
+     * @return This config.
+     */
+    public Config getConfig() {
         LOG.info("Returning config");
         lock.readLock().lock();
         try {
-            return config;
+            return new Config(config);
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
+    /**
+     * Provides repository associated with supplied name.
+     *
+     * @param name A repository name
+     * @return Corresponding repository
+     */
     public Repository getRepository(String name) {
         lock.readLock().lock();
         try {

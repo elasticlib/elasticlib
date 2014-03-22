@@ -57,7 +57,7 @@ public class ReplicationsResource {
         }
         String source = json.getString("source");
         String target = json.getString("target");
-        repository.sync(source, target);
+        repository.createReplication(source, target);
         URI location = UriBuilder
                 .fromUri(uriInfo.getRequestUri())
                 .queryParam("source", source)
@@ -88,7 +88,7 @@ public class ReplicationsResource {
         if (source == null || target == null) {
             throw new BadRequestException();
         }
-        repository.unsync(source, target);
+        repository.dropReplication(source, target);
         return Response.ok().build();
     }
 
@@ -107,7 +107,7 @@ public class ReplicationsResource {
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
-        Config config = repository.config();
+        Config config = repository.getConfig();
         for (java.nio.file.Path path : config.getRepositories()) {
             String source = path.getFileName().toString();
             for (String target : config.getSync(source)) {

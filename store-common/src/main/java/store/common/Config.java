@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import static java.util.Objects.hash;
 import java.util.Set;
 
@@ -20,6 +21,16 @@ public final class Config {
     public Config() {
         repositories = new LinkedHashMap<>();
         sync = new LinkedHashMap<>();
+    }
+
+    public Config(Config config) {
+        this();
+        for (Entry<String, Path> entry : config.repositories.entrySet()) {
+            this.repositories.put(entry.getKey(), entry.getValue());
+        }
+        for (Entry<String, Set<String>> entry : config.sync.entrySet()) {
+            this.sync.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+        }
     }
 
     public Config(List<Path> repositories, Map<String, Set<String>> sync) {
@@ -52,18 +63,22 @@ public final class Config {
         }
     }
 
-    public void sync(String source, String destination) {
+    public boolean sync(String source, String destination) {
         if (!sync.containsKey(source)) {
             sync.put(source, new LinkedHashSet<String>());
         }
-        sync.get(source).add(destination);
+        return sync.get(source).add(destination);
     }
 
-    public void unsync(String source, String destination) {
-        sync.get(source).remove(destination);
+    public boolean unsync(String source, String destination) {
+        if (!sync.containsKey(source)) {
+            return false;
+        }
+        boolean removed = sync.get(source).remove(destination);
         if (sync.get(source).isEmpty()) {
             sync.remove(source);
         }
+        return removed;
     }
 
     public List<Path> getRepositories() {

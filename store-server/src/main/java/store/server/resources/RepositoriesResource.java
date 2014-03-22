@@ -175,7 +175,7 @@ public class RepositoriesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listRepositories() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (java.nio.file.Path path : repositoriesService.config().getRepositories()) {
+        for (java.nio.file.Path path : repositoriesService.getConfig().getRepositories()) {
             builder.add(path.getFileName().toString());
         }
         return builder.build();

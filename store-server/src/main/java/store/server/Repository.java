@@ -38,7 +38,7 @@ public class Repository {
         this.replicationService = replicationService;
         this.volume = volume;
         this.index = index;
-        agent = new IndexingAgent(volume, index);
+        agent = new IndexingAgent(path.getFileName().toString(), volume, index);
     }
 
     /**

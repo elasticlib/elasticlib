@@ -85,6 +85,10 @@ public abstract class Agent {
 
     abstract class AgentThread extends Thread {
 
+        public AgentThread(String name) {
+            super(name);
+        }
+
         @Override
         public final void run() {
             do {

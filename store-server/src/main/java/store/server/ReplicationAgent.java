@@ -37,10 +37,14 @@ public class ReplicationAgent extends Agent {
 
     @Override
     AgentThread newAgentThread() {
-        return this.new VolumeAgentThread();
+        return this.new ReplicationAgentThread();
     }
 
-    private class VolumeAgentThread extends AgentThread {
+    private class ReplicationAgentThread extends AgentThread {
+
+        public ReplicationAgentThread() {
+            super("Replication-" + source.getName() + ">" + destination.getName());
+        }
 
         @Override
         protected boolean process(Event event) {

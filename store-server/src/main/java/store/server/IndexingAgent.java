@@ -17,16 +17,19 @@ import store.server.volume.Volume;
  */
 public class IndexingAgent extends Agent {
 
+    private final String name;
     private final Volume volume;
     private final Index index;
 
     /**
      * Constructor.
      *
+     * @param name Repository name.
      * @param volume Source volume.
      * @param index Destination index.
      */
-    public IndexingAgent(Volume volume, Index index) {
+    public IndexingAgent(String name, Volume volume, Index index) {
+        this.name = name;
         this.volume = volume;
         this.index = index;
     }
@@ -38,10 +41,14 @@ public class IndexingAgent extends Agent {
 
     @Override
     AgentThread newAgentThread() {
-        return this.new IndexAgentThread();
+        return this.new IndexingAgentThread();
     }
 
-    private class IndexAgentThread extends AgentThread {
+    private class IndexingAgentThread extends AgentThread {
+
+        public IndexingAgentThread() {
+            super("Indexation-" + name);
+        }
 
         @Override
         protected boolean process(Event event) {

@@ -62,7 +62,7 @@ public class ReplicationAgent extends Agent {
 
         private void put(Hash hash) {
             ContentInfo info = source.getInfoHead(hash).get(0);
-            try (InputStream inputStream = source.get(hash)) {
+            try (InputStream inputStream = source.getContent(hash)) {
                 destination.put(info, inputStream, RevSpec.any());
 
             } catch (IOException e) {

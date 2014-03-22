@@ -138,7 +138,7 @@ public class VolumeTest {
     public void get() throws IOException {
         Volume volume = newVolumeWith(LOREM_IPSUM);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                InputStream inputStream = volume.get(LOREM_IPSUM.getHash())) {
+                InputStream inputStream = volume.getContent(LOREM_IPSUM.getHash())) {
             copy(inputStream, outputStream);
             assertThat(outputStream.toByteArray()).isEqualTo(LOREM_IPSUM.getBytes());
         }
@@ -151,7 +151,7 @@ public class VolumeTest {
      */
     @Test(expectedExceptions = UnknownContentException.class)
     public void getUnknownHash() throws IOException {
-        Volume.create(newTmpDir()).get(LOREM_IPSUM.getHash());
+        Volume.create(newTmpDir()).getContent(LOREM_IPSUM.getHash());
     }
 
     /**
@@ -215,7 +215,7 @@ public class VolumeTest {
 
     private static boolean hasContent(Volume volume, Hash hash) {
         try {
-            InputStream inputStream = volume.get(hash);
+            InputStream inputStream = volume.getContent(hash);
             try {
                 inputStream.close();
             } catch (IOException e) {

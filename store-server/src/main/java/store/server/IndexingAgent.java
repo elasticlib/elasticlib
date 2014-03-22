@@ -67,7 +67,7 @@ public class IndexingAgent extends Agent {
                 return;
             }
             ContentInfo info = volume.getInfoHead(hash).get(0);
-            try (InputStream inputStream = volume.get(hash)) {
+            try (InputStream inputStream = volume.getContent(hash)) {
                 index.put(info, inputStream);
 
             } catch (IOException e) {

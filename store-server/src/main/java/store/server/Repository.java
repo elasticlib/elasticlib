@@ -266,9 +266,9 @@ public class Repository {
      * @param hash Hash of the content.
      * @return An input stream on this content.
      */
-    public InputStream get(Hash hash) {
+    public InputStream getContent(Hash hash) {
         LOG.info("[{}] Returning content {}", getName(), hash);
-        return volume.get(hash);
+        return volume.getContent(hash);
     }
 
     /**

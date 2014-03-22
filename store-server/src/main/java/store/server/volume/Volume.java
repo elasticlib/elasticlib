@@ -314,7 +314,7 @@ public class Volume {
      * @param hash Hash of the content.
      * @return An input stream on this content.
      */
-    public InputStream get(final Hash hash) {
+    public InputStream getContent(final Hash hash) {
         return transactionManager.inTransaction(new Query<InputStream>() {
             @Override
             public InputStream apply() {

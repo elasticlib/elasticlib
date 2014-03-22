@@ -2,6 +2,9 @@ package store.server;
 
 import java.nio.file.Path;
 
+/**
+ * Represents the status of a repository.
+ */
 public final class Status {
 
     private final Path path;
@@ -12,14 +15,23 @@ public final class Status {
         this.started = started;
     }
 
+    /**
+     * @return The repository name.
+     */
     public String getName() {
         return path.getFileName().toString();
     }
 
+    /**
+     * @return The repository home path.
+     */
     public Path getPath() {
         return path;
     }
 
+    /**
+     * @return True if repository is started.
+     */
     public boolean isStarted() {
         return started;
     }

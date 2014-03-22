@@ -24,6 +24,9 @@ public class BodyPart {
         this.contentDisposition = Optional.of(contentDisposition);
     }
 
+    /**
+     * @return The content disposition of this part, if any.
+     */
     public Optional<ContentDisposition> getContentDisposition() {
         return contentDisposition;
     }

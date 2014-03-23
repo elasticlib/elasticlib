@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server.service;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import store.server.transaction.TransactionManager;
  * Stores contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume
  * are transactionnal.
  */
-public class Volume {
+class Volume {
 
     private final TransactionManager transactionManager;
     private final HistoryManager historyManager;

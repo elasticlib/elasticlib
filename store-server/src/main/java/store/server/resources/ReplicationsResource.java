@@ -20,8 +20,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Config;
 import static store.common.json.JsonUtil.hasStringValue;
-import store.server.RepositoriesService;
 import store.server.exception.BadRequestException;
+import store.server.service.RepositoriesService;
 
 /**
  * Replications REST resource.

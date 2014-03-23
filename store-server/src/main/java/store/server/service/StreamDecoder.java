@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server.service;
 
 import java.io.Closeable;
 import static java.nio.ByteBuffer.wrap;

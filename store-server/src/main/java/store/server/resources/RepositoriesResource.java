@@ -47,14 +47,14 @@ import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeHashes;
-import store.server.RepositoriesService;
-import store.server.Repository;
-import store.server.Status;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
-import store.server.volume.RevSpec;
+import store.server.service.RepositoriesService;
+import store.server.service.Repository;
+import store.server.service.RevSpec;
+import store.server.service.Status;
 
 /**
  * Volumes REST resource.

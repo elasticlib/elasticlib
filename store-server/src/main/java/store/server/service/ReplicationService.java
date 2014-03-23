@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import java.util.ArrayList;
 import java.util.Collection;

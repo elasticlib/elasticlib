@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,48 +6,43 @@ import java.util.List;
 import store.common.ContentInfo;
 import store.common.Event;
 import store.common.Hash;
-import static store.common.Operation.DELETE;
 import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
-import store.server.volume.Volume;
 
 /**
- * An agent that performs indexing from a volume to its associated index.
+ * An agent that performs replication from a repository to another one.
  */
-public class IndexingAgent extends Agent {
+public class ReplicationAgent extends Agent {
 
-    private final String name;
-    private final Volume volume;
-    private final Index index;
+    private final Repository source;
+    private final Repository destination;
 
     /**
      * Constructor.
      *
-     * @param name Repository name.
-     * @param volume Source volume.
-     * @param index Destination index.
+     * @param source Source repository.
+     * @param destination Destination repository.
      */
-    public IndexingAgent(String name, Volume volume, Index index) {
-        this.name = name;
-        this.volume = volume;
-        this.index = index;
+    public ReplicationAgent(Repository source, Repository destination) {
+        this.source = source;
+        this.destination = destination;
     }
 
     @Override
     List<Event> history(boolean chronological, long first, int number) {
-        return volume.history(chronological, first, number);
+        return source.history(chronological, first, number);
     }
 
     @Override
     AgentThread newAgentThread() {
-        return this.new IndexingAgentThread();
+        return this.new ReplicationAgentThread();
     }
 
-    private class IndexingAgentThread extends AgentThread {
+    private class ReplicationAgentThread extends AgentThread {
 
-        public IndexingAgentThread() {
-            super("Indexation-" + name);
+        public ReplicationAgentThread() {
+            super("Replication-" + source.getName() + ">" + destination.getName());
         }
 
         @Override
@@ -70,12 +65,9 @@ public class IndexingAgent extends Agent {
         }
 
         private void put(Hash hash) {
-            if (index.contains(hash)) {
-                return;
-            }
-            ContentInfo info = volume.getInfoHead(hash).get(0);
-            try (InputStream inputStream = volume.getContent(hash)) {
-                index.put(info, inputStream);
+            ContentInfo info = source.getInfoHead(hash).get(0);
+            try (InputStream inputStream = source.getContent(hash)) {
+                destination.put(info, inputStream, RevSpec.any());
 
             } catch (IOException e) {
                 throw new WriteException(e);
@@ -83,7 +75,12 @@ public class IndexingAgent extends Agent {
         }
 
         private void delete(Hash hash) {
-            index.delete(hash); // Idempotent
+            try {
+                destination.delete(hash, RevSpec.any());
+
+            } catch (UnknownContentException e) {
+                // Ok
+            }
         }
     }
 }

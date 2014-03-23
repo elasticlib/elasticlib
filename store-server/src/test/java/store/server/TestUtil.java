@@ -7,11 +7,21 @@ import static java.nio.file.Files.walkFileTree;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import store.common.Hash;
 
 /**
  * Test utilities.
  */
 public final class TestUtil {
+
+    /**
+     * An unknown hash.
+     */
+    public static final Hash UNKNOWN_HASH = new Hash("88cd962fec779a3abafa95aad8ace74cae767427");
+    /**
+     * A test content.
+     */
+    public static final Content LOREM_IPSUM = new Content("loremIpsum.txt");
 
     private TestUtil() {
     }

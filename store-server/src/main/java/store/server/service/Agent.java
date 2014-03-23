@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import com.google.common.base.Optional;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import store.common.Event;
 /**
  * Performs asynchronous replication or indexing.
  */
-public abstract class Agent {
+abstract class Agent {
 
     private final List<Event> events = new ArrayList<>();
     private long cursor;

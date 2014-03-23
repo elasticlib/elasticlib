@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server.service;
 
 import java.io.IOException;
 import java.io.InputStream;

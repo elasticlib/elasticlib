@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import com.google.common.base.Joiner;
 import java.io.IOException;
@@ -17,8 +17,6 @@ import store.common.Hash;
 import store.common.Operation;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
-import store.server.volume.RevSpec;
-import store.server.volume.Volume;
 
 /**
  * Composition of a volume and an index. Stores contents with their metadata and performs their asynchronous indexation

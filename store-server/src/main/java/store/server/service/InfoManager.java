@@ -1,4 +1,4 @@
-package store.server.volume;
+package store.server.service;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -206,8 +206,8 @@ class InfoManager {
             while (streamDecoder.hasNext()) {
                 ObjectDecoder objectDecoder = streamDecoder.next();
                 ContentInfoBuilder builder = new ContentInfoBuilder();
-                for (Object obj : objectDecoder.getList("parents")) {
-                    builder.withParent(new Hash((byte[]) obj));
+                for (Value value : objectDecoder.getList("parents")) {
+                    builder.withParent(new Hash(value.asByteArray()));
                 }
                 if (objectDecoder.containsKey("deleted")) {
                     builder.withDeleted(objectDecoder.getBoolean("deleted"));

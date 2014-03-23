@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import static com.google.common.io.BaseEncoding.base16;
 import java.io.IOException;
@@ -55,9 +55,9 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 
 /**
- * A Lucene index on a volume.
+ * A Lucene index on a repository.
  */
-public class Index {
+class Index {
 
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
     private final Directory directory;

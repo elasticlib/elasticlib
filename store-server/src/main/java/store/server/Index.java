@@ -35,6 +35,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.SingleInstanceLockFactory;
 import org.apache.lucene.util.Version;
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.common.ContentInfo;
 import store.common.Hash;
 import store.common.value.Value;
@@ -57,12 +59,15 @@ import store.server.exception.WriteException;
  */
 public class Index {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Index.class);
     private final Directory directory;
     private final Analyzer analyzer;
+    private final String name;
 
     private Index(Path path) throws IOException {
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer(Version.LUCENE_46);
+        name = path.getParent().getFileName().toString();
     }
 
     private IndexWriter newIndexWriter() throws IOException {
@@ -70,6 +75,12 @@ public class Index {
         return new IndexWriter(directory, config);
     }
 
+    /**
+     * Create a new index.
+     *
+     * @param path index home.
+     * @return Created index.
+     */
     public static Index create(Path path) {
         try {
             Files.createDirectory(path);
@@ -80,6 +91,12 @@ public class Index {
         }
     }
 
+    /**
+     * Open an existing index.
+     *
+     * @param path index home.
+     * @return Opened index.
+     */
     public static Index open(Path path) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
@@ -88,11 +105,18 @@ public class Index {
             return new Index(path);
 
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new WriteException(ex);
         }
     }
 
+    /**
+     * Index supplied content.
+     *
+     * @param contentInfo Info associated with content to index.
+     * @param inputStream Input stream of the content to index.
+     */
     public void put(ContentInfo contentInfo, InputStream inputStream) {
+        LOG.info("[{}] Indexing {}", name, contentInfo.getHash());
         try (IndexWriter writer = newIndexWriter()) {
             Document document = new Document();
             document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
@@ -106,7 +130,7 @@ public class Index {
             writer.addDocument(document, analyzer);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
@@ -161,16 +185,29 @@ public class Index {
         }
     }
 
+    /**
+     * Delete all index entry about content which hash is supplied.
+     *
+     * @param hash Hash of this content.
+     */
     public void delete(Hash hash) {
+        LOG.info("[{}] Deleting {}", name, hash);
         try (IndexWriter writer = newIndexWriter()) {
             writer.deleteDocuments(new Term("hash", hash.encode()));
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
+    /**
+     * Checks if index contains any index entry about content which hash is supplied.
+     *
+     * @param hash A Content hash.
+     * @return True if index contains this content.
+     */
     public boolean contains(Hash hash) {
+        LOG.info("[{}] Checking existence of {}", name, hash);
         try {
             if (directory.listAll().length == 0) {
                 return false;
@@ -181,10 +218,18 @@ public class Index {
                 return searcher.search(query, 1).totalHits > 0;
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WriteException(e);
         }
     }
 
+    /**
+     * Find all Hashes of contents matching supplied query.
+     *
+     * @param query Search query.
+     * @param first First result to return.
+     * @param number Number of results to return.
+     * @return A list of content hashes.
+     */
     public List<Hash> find(String query, int first, int number) {
         try {
             if (first < 0) {
@@ -210,7 +255,7 @@ public class Index {
             throw new BadRequestException(e);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new WriteException(e);
         }
     }
 }

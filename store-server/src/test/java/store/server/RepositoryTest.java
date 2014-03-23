@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -19,6 +21,7 @@ import store.server.volume.RevSpec;
  */
 public class RepositoryTest {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoryTest.class);
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
     private static final Content LOREM_IPSUM = new Content("loremIpsum.txt");
@@ -32,6 +35,7 @@ public class RepositoryTest {
      */
     @BeforeClass
     public void init() throws IOException {
+        LOG.info("Initializing");
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         Files.createDirectory(path.resolve("home"));
         repositoriesService = new RepositoriesService(path.resolve("home"), new ReplicationService());
@@ -44,6 +48,7 @@ public class RepositoryTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
+        LOG.info("Cleaning up");
         recursiveDelete(path);
     }
 
@@ -70,9 +75,9 @@ public class RepositoryTest {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             source.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.none());
         }
-        async(new Assertion() {
+        async(new Runnable() {
             @Override
-            public void apply() throws AssertionError {
+            public void run() {
                 assertThat(source.find("Lorem ipsum", 0, 10)).containsExactly(LOREM_IPSUM.getHash());
             }
         });
@@ -80,15 +85,13 @@ public class RepositoryTest {
 
     /**
      * Test.
-     *
-     * @throws IOException If an IO error occurs.
      */
     @Test(dependsOnMethods = "findTest")
-    public void createReplicationTest() throws IOException {
+    public void createReplicationTest() {
         repositoriesService.createReplication(SOURCE, DESTINATION);
-        async(new Assertion() {
+        async(new Runnable() {
             @Override
-            public void apply() throws AssertionError {
+            public void run() {
                 List<Event> events = repository(DESTINATION).history(true, 0, 10);
 
                 assertThat(events).hasSize(1);
@@ -102,32 +105,33 @@ public class RepositoryTest {
         return repositoriesService.getRepository(name);
     }
 
-    private void async(Assertion assertion) {
+    private void async(Runnable runnable) {
         int timeout = 60;
         int delay = 1;
         int time = 0;
         while (true) {
             try {
                 wait(delay);
-                assertion.apply();
-                return;
-
-            } catch (AssertionError e) {
                 time += delay;
                 delay *= 2;
                 if (delay > 5) {
                     delay = 5;
                 }
+                runnable.run();
+                return;
+
+            } catch (Exception e) {
+                if (time >= timeout) {
+                    throw new AssertionError(e);
+                }
+            } catch (AssertionError e) {
                 if (time >= timeout) {
                     throw e;
                 }
+            } catch (Error e) {
+                throw e;
             }
         }
-    }
-
-    private interface Assertion {
-
-        void apply() throws AssertionError;
     }
 
     private void wait(int seconds) {

@@ -143,7 +143,7 @@ public final class RepositoriesService {
      * @param destination Destination repository name.
      */
     public void createReplication(String source, String destination) {
-        LOG.info("Creating replication {} >> {}", source, destination);
+        LOG.info("Creating replication {}>{}", source, destination);
         lock.writeLock().lock();
         try {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {

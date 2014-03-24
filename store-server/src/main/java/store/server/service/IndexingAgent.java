@@ -46,7 +46,7 @@ class IndexingAgent extends Agent {
     private class IndexingAgentThread extends AgentThread {
 
         public IndexingAgentThread() {
-            super("Indexation-" + name);
+            super("indexation-" + name);
         }
 
         @Override

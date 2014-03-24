@@ -42,7 +42,7 @@ public class ReplicationAgent extends Agent {
     private class ReplicationAgentThread extends AgentThread {
 
         public ReplicationAgentThread() {
-            super("Replication-" + source.getName() + ">" + destination.getName());
+            super("replication-" + source.getName() + ">" + destination.getName());
         }
 
         @Override

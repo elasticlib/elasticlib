@@ -42,13 +42,14 @@ import store.common.ContentInfoTree;
 import store.common.Digest;
 import store.common.Event;
 import store.common.Hash;
+import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import static store.common.json.JsonUtil.readCommandResult;
 import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfos;
 import static store.common.json.JsonUtil.readEvents;
-import static store.common.json.JsonUtil.readHashes;
+import static store.common.json.JsonUtil.readIndexEntries;
 import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.metadata.MetadataUtil.metadata;
 
@@ -252,7 +253,7 @@ public class RestClient implements Closeable {
         }
     }
 
-    public List<Hash> find(String repository, String query, int from, int size) {
+    public List<IndexEntry> find(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/index")
                 .resolveTemplate("name", repository)
                 .queryParam("query", query)
@@ -261,7 +262,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readHashes(ensureSuccess(response).readEntity(JsonArray.class));
+        return readIndexEntries(ensureSuccess(response).readEntity(JsonArray.class));
     }
 
     public List<ContentInfo> findInfo(String repository, String query, int from, int size) {

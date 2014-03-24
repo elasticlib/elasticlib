@@ -34,6 +34,7 @@ import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
+import store.common.IndexEntry;
 import store.common.Operation;
 import static store.common.json.ValueReading.readMap;
 import static store.common.json.ValueWriting.writeMap;
@@ -138,34 +139,6 @@ public final class JsonUtil {
             }
         }
         return true;
-    }
-
-    /**
-     * Writes supplied list of {@link Hash} to a JSON array.
-     *
-     * @param hashes A list of hashes.
-     * @return A JSON array.
-     */
-    public static JsonArray writeHashes(List<Hash> hashes) {
-        JsonArrayBuilder builder = createArrayBuilder();
-        for (Hash hash : hashes) {
-            builder.add(hash.encode());
-        }
-        return builder.build();
-    }
-
-    /**
-     * Reads a list of {@link Hash} from supplied JSON array.
-     *
-     * @param json A JSON array.
-     * @return A list of hashes.
-     */
-    public static List<Hash> readHashes(JsonArray json) {
-        List<Hash> list = new ArrayList<>();
-        for (JsonString value : json.getValuesAs(JsonString.class)) {
-            list.add(new Hash(value.getString()));
-        }
-        return list;
     }
 
     /**
@@ -459,5 +432,52 @@ public final class JsonUtil {
         } else {
             return CommandResult.of(transactionId, Operation.fromString(opCode), head);
         }
+    }
+
+    /**
+     * Writes supplied list of {@link IndexEntry} to a JSON array.
+     *
+     * @param indexEntries A list of index entries.
+     * @return A JSON array.
+     */
+    public static JsonArray writeIndexEntries(List<IndexEntry> indexEntries) {
+        JsonArrayBuilder builder = createArrayBuilder();
+        for (IndexEntry entry : indexEntries) {
+            builder.add(writeIndexEntry(entry));
+        }
+        return builder.build();
+    }
+
+    /**
+     * Reads a list of {@link IndexEntry} from supplied JSON array.
+     *
+     * @param json A JSON array.
+     * @return A list of index entries.
+     */
+    public static List<IndexEntry> readIndexEntries(JsonArray json) {
+        List<IndexEntry> list = new ArrayList<>();
+        for (JsonObject object : json.getValuesAs(JsonObject.class)) {
+            list.add(readIndexEntry(object));
+        }
+        return list;
+    }
+
+    private static JsonObjectBuilder writeIndexEntry(IndexEntry entry) {
+        JsonArrayBuilder head = createArrayBuilder();
+        for (Hash item : entry.getHead()) {
+            head.add(item.encode());
+        }
+        return createObjectBuilder()
+                .add(HASH, entry.getHash().encode())
+                .add(HEAD, head);
+    }
+
+    private static IndexEntry readIndexEntry(JsonObject json) {
+        Hash hash = new Hash(json.getString(HASH));
+        SortedSet<Hash> head = new TreeSet<>();
+        for (JsonString value : json.getJsonArray(HEAD).getValuesAs(JsonString.class)) {
+            head.add(new Hash(value.getString()));
+        }
+        return new IndexEntry(hash, head);
     }
 }

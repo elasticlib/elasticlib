@@ -8,6 +8,8 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
@@ -61,14 +63,6 @@ public class IndexTest {
      * Test.
      */
     @Test(dependsOnMethods = "create")
-    public void containsUnknown() {
-        assertThat(index.contains(UNKNOWN_HASH)).isFalse();
-    }
-
-    /**
-     * Test.
-     */
-    @Test(dependsOnMethods = "create")
     public void deleteUnknown() {
         index.delete(UNKNOWN_HASH);
     }
@@ -83,21 +77,14 @@ public class IndexTest {
 
     /**
      * Test.
-     */
-    @Test(groups = "emptyRead", dependsOnMethods = "create")
-    public void containsOnEmptyIndex() {
-        assertThat(index.contains(LOREM_IPSUM.getHash())).isFalse();
-    }
-
-    /**
-     * Test.
      *
      * @throws IOException If an IO error occurs.
      */
     @Test(dependsOnGroups = "emptyRead")
     public void put() throws IOException {
+        ContentInfoTree tree = new ContentInfoTreeBuilder().add(LOREM_IPSUM.getInfo()).build();
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            index.put(LOREM_IPSUM.getInfo(), inputStream);
+            index.put(tree, inputStream);
         }
     }
 
@@ -112,17 +99,9 @@ public class IndexTest {
     /**
      * Test.
      */
-    @Test(groups = "read", dependsOnMethods = "put")
-    public void contains() {
-        assertThat(index.contains(LOREM_IPSUM.getHash())).isTrue();
-    }
-
-    /**
-     * Test.
-     */
     @Test(dependsOnGroups = "read")
     public void delete() {
         index.delete(LOREM_IPSUM.getHash());
-        assertThat(index.contains(LOREM_IPSUM.getHash())).isFalse();
+        assertThat(index.find("lorem", 0, 20)).isEmpty();
     }
 }

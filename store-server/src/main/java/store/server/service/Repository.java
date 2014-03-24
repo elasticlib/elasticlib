@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
+import store.common.IndexEntry;
 import store.common.Operation;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
@@ -254,7 +256,7 @@ public class Repository {
      * @param revs Hash of revisions to return.
      * @return Corresponding revisions.
      */
-    public List<ContentInfo> getInfoRevisions(Hash hash, List<Hash> revs) {
+    public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
         LOG.info("[{}] Returning info revs {} [{}]", getName(), hash, Joiner.on(", ").join(revs));
         return volume.getInfoRevisions(hash, revs);
     }
@@ -285,14 +287,14 @@ public class Repository {
     }
 
     /**
-     * Find Hashes of contents matching supplied query, using index.
+     * Find index entries matching supplied query.
      *
      * @param query Search query.
      * @param first First result to return.
      * @param number Number of results to return.
      * @return A list of content hashes.
      */
-    public List<Hash> find(String query, int first, int number) {
+    public List<IndexEntry> find(String query, int first, int number) {
         LOG.info("[{}] Finding {}, first {}, count {}", getName(), query, first, number);
         return index.find(query, first, number);
     }

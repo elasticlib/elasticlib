@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.util.Collections.singleton;
 import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
@@ -15,6 +16,7 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
+import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.Content;
@@ -169,7 +171,10 @@ public class RepositoryTest {
         async(new Runnable() {
             @Override
             public void run() {
-                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).containsExactly(LOREM_IPSUM.getHash());
+                IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(),
+                                                     singleton(LOREM_IPSUM.getInfo().getRev()));
+
+                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).containsExactly(expected);
             }
         });
     }

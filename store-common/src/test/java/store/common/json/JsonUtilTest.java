@@ -24,6 +24,7 @@ import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
+import store.common.IndexEntry;
 import store.common.Operation;
 import static store.common.TestUtil.readJsonArray;
 import static store.common.TestUtil.readJsonObject;
@@ -36,14 +37,15 @@ import static store.common.json.JsonUtil.readConfig;
 import static store.common.json.JsonUtil.readContentInfo;
 import static store.common.json.JsonUtil.readContentInfoTree;
 import static store.common.json.JsonUtil.readContentInfos;
-import static store.common.json.JsonUtil.readHashes;
+import static store.common.json.JsonUtil.readEvents;
+import static store.common.json.JsonUtil.readIndexEntries;
 import static store.common.json.JsonUtil.writeCommandResult;
 import static store.common.json.JsonUtil.writeConfig;
 import static store.common.json.JsonUtil.writeContentInfo;
 import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
-import static store.common.json.JsonUtil.writeHashes;
+import static store.common.json.JsonUtil.writeIndexEntries;
 import store.common.value.Value;
 
 /**
@@ -53,7 +55,6 @@ public class JsonUtilTest {
 
     private static final String[] HASHES;
     private static final String[] REVS;
-    private static final JsonArray HASHES_ARRAY;
     private static final Map<String, ContentInfo> CONTENT_INFOS = new HashMap<>();
     private static final Map<String, JsonObject> CONTENT_INFOS_JSON = new HashMap<>();
     private static final ContentInfoTree CONTENT_INFO_TREE;
@@ -64,6 +65,8 @@ public class JsonUtilTest {
     private static final JsonArray EVENTS_ARRAY;
     private static final List<CommandResult> COMMAND_RESULTS = new ArrayList<>();
     private static final List<JsonObject> COMMAND_RESULTS_JSON = new ArrayList<>();
+    private static final List<IndexEntry> INDEX_ENTRIES = new ArrayList<>();
+    private static final JsonArray INDEX_ENTRIES_ARRAY;
 
     static {
         Class<?> clazz = JsonUtilTest.class;
@@ -74,12 +77,6 @@ public class JsonUtilTest {
 
         REVS = new String[]{"0d99dd9895a2a1c485e0c75f79f92cc14457bb62",
                             "a0b87ac4b04a0bed394517d0b01792635531aa42"};
-
-        HASHES_ARRAY = createArrayBuilder()
-                .add(HASHES[0])
-                .add(HASHES[1])
-                .add(HASHES[2])
-                .build();
 
         CONTENT_INFOS.put(HASHES[0], new ContentInfoBuilder()
                 .withHash(new Hash(HASHES[0]))
@@ -137,6 +134,14 @@ public class JsonUtilTest {
 
         COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult1.json"));
         COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult2.json"));
+
+        INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[0]),
+                                         new TreeSet<>(singleton(new Hash(REVS[0])))));
+
+        INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[1]),
+                                         new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
+
+        INDEX_ENTRIES_ARRAY = readJsonArray(clazz, "indexEntries.json");
     }
 
     /**
@@ -189,28 +194,6 @@ public class JsonUtilTest {
         assertThat(isContentInfoTree(CONTENT_INFO_TREE_JSON)).isTrue();
         assertThat(isContentInfoTree(infoJson(0))).isFalse();
         assertThat(isContentInfoTree(CONFIG_JSON)).isFalse();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void writeHashesTest() {
-        List<Hash> hashes = asList(new Hash(HASHES[0]),
-                                   new Hash(HASHES[1]),
-                                   new Hash(HASHES[2]));
-
-        assertThat(writeHashes(hashes)).isEqualTo(HASHES_ARRAY);
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void readHashesTest() {
-        assertThat(readHashes(HASHES_ARRAY)).containsExactly(new Hash(HASHES[0]),
-                                                             new Hash(HASHES[1]),
-                                                             new Hash(HASHES[2]));
     }
 
     /**
@@ -309,7 +292,7 @@ public class JsonUtilTest {
      */
     @Test
     public void readEventsTest() {
-        assertThat(JsonUtil.readEvents(EVENTS_ARRAY)).isEqualTo(EVENTS);
+        assertThat(readEvents(EVENTS_ARRAY)).isEqualTo(EVENTS);
     }
 
     /**
@@ -328,5 +311,21 @@ public class JsonUtilTest {
     public void readCommandResultTest() {
         assertThat(readCommandResult(COMMAND_RESULTS_JSON.get(0))).isEqualTo(COMMAND_RESULTS.get(0));
         assertThat(readCommandResult(COMMAND_RESULTS_JSON.get(1))).isEqualTo(COMMAND_RESULTS.get(1));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeIndexEntriesTest() {
+        assertThat(writeIndexEntries(INDEX_ENTRIES)).isEqualTo(INDEX_ENTRIES_ARRAY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readIndexEntriesTest() {
+        assertThat(readIndexEntries(INDEX_ENTRIES_ARRAY)).isEqualTo(INDEX_ENTRIES);
     }
 }

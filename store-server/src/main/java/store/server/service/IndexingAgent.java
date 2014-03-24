@@ -3,7 +3,7 @@ package store.server.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Hash;
 import static store.common.Operation.DELETE;
@@ -69,12 +69,9 @@ class IndexingAgent extends Agent {
         }
 
         private void put(Hash hash) {
-            if (index.contains(hash)) {
-                return;
-            }
-            ContentInfo info = volume.getInfoHead(hash).get(0);
+            ContentInfoTree contentInfoTree = volume.getInfoTree(hash);
             try (InputStream inputStream = volume.getContent(hash)) {
-                index.put(info, inputStream);
+                index.put(contentInfoTree, inputStream);
 
             } catch (IOException e) {
                 throw new WriteException(e);

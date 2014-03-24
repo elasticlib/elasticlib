@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import store.common.CommandResult;
 import store.common.ContentInfo;
@@ -302,7 +303,7 @@ class Volume {
      * @param revs Hash of revisions to return.
      * @return Corresponding revisions.
      */
-    public List<ContentInfo> getInfoRevisions(Hash hash, List<Hash> revs) {
+    public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
         ContentInfoTree tree = getInfoTree(hash);
         return tree.get(revs);
     }

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import store.client.Session;
-import store.common.Hash;
+import store.common.IndexEntry;
 
 abstract class AbstractCommand implements Command {
 
@@ -139,10 +139,10 @@ abstract class AbstractCommand implements Command {
             return emptyList();
         }
         Collection<String> hashes = new ArrayList<>();
-        for (Hash hash : session.getRestClient().find(session.getRepository(),
-                                                      Joiner.on("").join("hash:", prefix.toLowerCase(), "*"),
-                                                      0, 100)) {
-            hashes.add(hash.encode());
+        for (IndexEntry entry : session.getRestClient().find(session.getRepository(),
+                                                             Joiner.on("").join("hash:", prefix.toLowerCase(), "*"),
+                                                             0, 100)) {
+            hashes.add(entry.getHash().encode());
         }
         return hashes;
     }

@@ -34,6 +34,7 @@ import javax.ws.rs.core.UriInfo;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.Hash;
+import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import static store.common.json.JsonUtil.hasBooleanValue;
@@ -46,7 +47,7 @@ import static store.common.json.JsonUtil.writeCommandResult;
 import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
-import static store.common.json.JsonUtil.writeHashes;
+import static store.common.json.JsonUtil.writeIndexEntries;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.BodyPart;
@@ -496,7 +497,7 @@ public class RepositoriesResource {
                           @QueryParam("query") String query,
                           @QueryParam("from") @DefaultValue("0") int from,
                           @QueryParam("size") @DefaultValue("20") int size) {
-        return writeHashes(repository(name).find(query, from, size));
+        return writeIndexEntries(repository(name).find(query, from, size));
     }
 
     /**
@@ -524,8 +525,8 @@ public class RepositoriesResource {
                               @QueryParam("size") @DefaultValue("20") int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
         Repository repository = repository(name);
-        for (Hash hash : repository.find(query, from, size)) {
-            infos.addAll(repository.getInfoHead(hash));
+        for (IndexEntry entry : repository.find(query, from, size)) {
+            infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getHead()));
         }
         return writeContentInfos(infos);
     }

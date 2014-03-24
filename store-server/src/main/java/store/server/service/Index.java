@@ -1,5 +1,8 @@
 package store.server.service;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import static com.google.common.io.BaseEncoding.base16;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,10 +10,12 @@ import static java.lang.Math.min;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singleton;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools.Resolution;
@@ -38,7 +43,9 @@ import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Hash;
+import store.common.IndexEntry;
 import store.common.value.Value;
 import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BINARY;
@@ -115,16 +122,29 @@ class Index {
      * @param contentInfo Info associated with content to index.
      * @param inputStream Input stream of the content to index.
      */
-    public void put(ContentInfo contentInfo, InputStream inputStream) {
-        LOG.info("[{}] Indexing {}", name, contentInfo.getHash());
+    public void put(ContentInfoTree contentInfoTree, InputStream inputStream) {
+        LOG.info("[{}] Indexing {}", name, contentInfoTree.getHash());
+        Optional<IndexEntry> existing = getEntry(contentInfoTree.getHash());
+        if (existing.isPresent() && existing.get().getHead().equals(contentInfoTree.getHead())) {
+            // already indexed !
+            return;
+        }
         try (IndexWriter writer = newIndexWriter()) {
+            // First delete any existing document.
+            writer.deleteDocuments(new Term("hash", contentInfoTree.getHash().encode()));
+
+            // Then (re)create the document.
             Document document = new Document();
-            document.add(new TextField("hash", contentInfo.getHash().encode(), Store.YES));
-            document.add(new LongField("length", contentInfo.getLength(), Store.NO));
-            for (Entry<String, Value> entry : contentInfo.getMetadata().entrySet()) {
+            document.add(new TextField("hash", contentInfoTree.getHash().encode(), Store.YES));
+            for (Hash rev : contentInfoTree.getHead()) {
+                document.add(new TextField("rev", rev.encode(), Store.YES));
+            }
+            document.add(new LongField("length", contentInfoTree.getLength(), Store.NO));
+            for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
                 String key = entry.getKey();
-                Value value = entry.getValue();
-                add(document, key, value);
+                for (Value value : entry.getValue()) {
+                    add(document, key, value);
+                }
             }
             document.add(new TextField("content", new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);
@@ -132,6 +152,17 @@ class Index {
         } catch (IOException e) {
             throw new WriteException(e);
         }
+    }
+
+    private Multimap<String, Value> headMetadata(ContentInfoTree contentInfoTree) {
+        Multimap<String, Value> metadata = HashMultimap.create();
+        for (Hash rev : contentInfoTree.getHead()) {
+            ContentInfo contentInfo = contentInfoTree.get(rev);
+            for (Entry<String, Value> entry : contentInfo.getMetadata().entrySet()) {
+                metadata.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return metadata;
     }
 
     private void add(Document document, String key, Value value) {
@@ -185,6 +216,25 @@ class Index {
         }
     }
 
+    private Optional<IndexEntry> getEntry(Hash hash) {
+        try {
+            if (directory.listAll().length == 0) {
+                return Optional.absent();
+            }
+            try (DirectoryReader reader = DirectoryReader.open(directory)) {
+                IndexSearcher searcher = new IndexSearcher(reader);
+                TermQuery query = new TermQuery(new Term("hash", hash.encode()));
+                ScoreDoc[] hits = searcher.search(query, 1).scoreDocs;
+                if (hits.length == 0) {
+                    return Optional.absent();
+                }
+                return Optional.of(newIndexEntry(searcher.doc(hits[0].doc)));
+            }
+        } catch (IOException e) {
+            throw new WriteException(e);
+        }
+    }
+
     /**
      * Delete all index entry about content which hash is supplied.
      *
@@ -201,36 +251,14 @@ class Index {
     }
 
     /**
-     * Checks if index contains any index entry about content which hash is supplied.
-     *
-     * @param hash A Content hash.
-     * @return True if index contains this content.
-     */
-    public boolean contains(Hash hash) {
-        LOG.info("[{}] Checking existence of {}", name, hash);
-        try {
-            if (directory.listAll().length == 0) {
-                return false;
-            }
-            try (DirectoryReader reader = DirectoryReader.open(directory)) {
-                IndexSearcher searcher = new IndexSearcher(reader);
-                TermQuery query = new TermQuery(new Term("hash", hash.encode()));
-                return searcher.search(query, 1).totalHits > 0;
-            }
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-    }
-
-    /**
-     * Find all Hashes of contents matching supplied query.
+     * Find index entries matching supplied query.
      *
      * @param query Search query.
      * @param first First result to return.
      * @param number Number of results to return.
      * @return A list of content hashes.
      */
-    public List<Hash> find(String query, int first, int number) {
+    public List<IndexEntry> find(String query, int first, int number) {
         try {
             if (first < 0) {
                 number += first;
@@ -243,13 +271,18 @@ class Index {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 QueryParser parser = new QueryParser(Version.LUCENE_46, "content", analyzer);
                 ScoreDoc[] hits = searcher.search(parser.parse(query), first + number).scoreDocs;
-                List<Hash> hashes = new ArrayList<>(number);
+                List<IndexEntry> entries = new ArrayList<>(number);
                 int last = min(first + number, hits.length);
                 for (int i = first; i < last; i++) {
-                    Document document = searcher.doc(hits[i].doc, singleton("hash"));
-                    hashes.add(new Hash(document.getValues("hash")[0]));
+                    Document document = searcher.doc(hits[i].doc);
+                    Hash hash = new Hash(document.getValues("hash")[0]);
+                    Set<Hash> head = new HashSet<>();
+                    for (String value : document.getValues("rev")) {
+                        head.add(new Hash(value));
+                    }
+                    entries.add(new IndexEntry(hash, head));
                 }
-                return hashes;
+                return entries;
             }
         } catch (ParseException e) {
             throw new BadRequestException(e);
@@ -257,5 +290,14 @@ class Index {
         } catch (IOException e) {
             throw new WriteException(e);
         }
+    }
+
+    private IndexEntry newIndexEntry(Document document) {
+        Hash hash = new Hash(document.getValues("hash")[0]);
+        Set<Hash> head = new HashSet<>();
+        for (String value : document.getValues("rev")) {
+            head.add(new Hash(value));
+        }
+        return new IndexEntry(hash, head);
     }
 }

@@ -189,7 +189,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfo contentInfo, final RevSpec revSpec) {
-        LOG.info("[{}] Putting info for {}, with spec {}", getName(), contentInfo.getHash(), revSpec);
+        LOG.info("[{}] Putting info for {}, with spec {}", name, contentInfo.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -209,7 +209,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
-        LOG.info("[{}] Putting tree for {}, with spec {}", getName(), contentInfoTree.getHash(), revSpec);
+        LOG.info("[{}] Putting tree for {}, with spec {}", name, contentInfoTree.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -229,7 +229,7 @@ class Volume {
      * @return Operation result.
      */
     public CommandResult create(final int transactionId, final Hash hash, final InputStream source) {
-        LOG.info("[{}] Creating content {}", getName(), hash);
+        LOG.info("[{}] Creating content {}", name, hash);
         return transactionManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
@@ -253,7 +253,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult delete(final Hash hash, final RevSpec revSpec) {
-        LOG.info("[{}] Deleting content {}, with spec {}", getName(), hash, revSpec);
+        LOG.info("[{}] Deleting content {}, with spec {}", name, hash, revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -300,7 +300,7 @@ class Volume {
      * @return Corresponding info tree.
      */
     public ContentInfoTree getInfoTree(final Hash hash) {
-        LOG.info("[{}] Returning info tree {}", getName(), hash);
+        LOG.info("[{}] Returning info tree {}", name, hash);
         return transactionManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
             public ContentInfoTree apply() {
@@ -320,7 +320,7 @@ class Volume {
      * @return Corresponding info head revisions.
      */
     public List<ContentInfo> getInfoHead(Hash hash) {
-        LOG.info("[{}] Returning info head {}", getName(), hash);
+        LOG.info("[{}] Returning info head {}", name, hash);
         ContentInfoTree tree = getInfoTree(hash);
         return tree.get(tree.getHead());
     }
@@ -333,7 +333,7 @@ class Volume {
      * @return Corresponding revisions.
      */
     public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
-        LOG.info("[{}] Returning info revs {} [{}]", getName(), hash, Joiner.on(", ").join(revs));
+        LOG.info("[{}] Returning info revs {} [{}]", name, hash, Joiner.on(", ").join(revs));
         ContentInfoTree tree = getInfoTree(hash);
         return tree.get(revs);
     }
@@ -345,7 +345,7 @@ class Volume {
      * @return An input stream on this content.
      */
     public InputStream getContent(final Hash hash) {
-        LOG.info("[{}] Returning content {}", getName(), hash);
+        LOG.info("[{}] Returning content {}", name, hash);
         return transactionManager.inTransaction(new Query<InputStream>() {
             @Override
             public InputStream apply() {
@@ -362,7 +362,7 @@ class Volume {
      * @return An input stream on this content, or nothing if supplied head has been superseded.
      */
     public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
-        LOG.info("[{}] Returning content {} with head {}", getName(), hash, head);
+        LOG.info("[{}] Returning content {} with head {}", name, hash, head);
         return transactionManager.inTransaction(new Query<Optional<InputStream>>() {
             @Override
             public Optional<InputStream> apply() {
@@ -384,8 +384,7 @@ class Volume {
      * @return A list of events.
      */
     public List<Event> history(final boolean chronological, final long first, final int number) {
-        LOG.info("[{}] Returning history{}, first {}, count {}",
-                 getName(), chronological ? "" : ", reverse", first, number);
+        LOG.info("[{}] Returning history{}, first {}, count {}", name, chronological ? "" : ", reverse", first, number);
         return transactionManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {

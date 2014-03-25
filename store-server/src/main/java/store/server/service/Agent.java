@@ -1,16 +1,21 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.common.Event;
+import store.server.exception.ServerException;
 
 /**
  * Performs asynchronous replication or indexing.
  */
 abstract class Agent {
 
-    private final List<Event> events = new ArrayList<>();
+    private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
+    private final Deque<Event> events = new ArrayDeque<>();
     private long cursor;
     private boolean signaled;
     private boolean stoped;
@@ -61,6 +66,10 @@ abstract class Agent {
         return false;
     }
 
+    private synchronized void abort() {
+        running = false;
+    }
+
     private Optional<Event> next() {
         if (isStoped()) {
             return Optional.absent();
@@ -73,10 +82,7 @@ abstract class Agent {
                 cursor = chunk.get(chunk.size() - 1).getSeq();
             }
         }
-        if (events.isEmpty()) {
-            return Optional.absent();
-        }
-        return Optional.of(events.remove(0));
+        return Optional.fromNullable(events.pollFirst());
     }
 
     abstract List<Event> history(boolean chronological, long first, int number);
@@ -91,16 +97,22 @@ abstract class Agent {
 
         @Override
         public final void run() {
-            do {
-                Optional<Event> nextEvent = next();
-                while (nextEvent.isPresent()) {
-                    Event event = nextEvent.get();
-                    if (!process(event)) {
-                        events.add(0, event);
+            try {
+                do {
+                    Optional<Event> nextEvent = next();
+                    while (nextEvent.isPresent()) {
+                        Event event = nextEvent.get();
+                        if (!process(event)) {
+                            events.addFirst(event);
+                        }
+                        nextEvent = next();
                     }
-                    nextEvent = next();
-                }
-            } while (!clearRunning());
+                } while (!clearRunning());
+
+            } catch (ServerException e) {
+                LOG.error("Unexpected error, stopping", e);
+                abort();
+            }
         }
 
         protected abstract boolean process(Event event);

@@ -1,15 +1,11 @@
 package store.server.service;
 
+import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import store.common.ContentInfoTree;
 import store.common.Event;
-import store.common.Hash;
-import static store.common.Operation.DELETE;
-import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.UnknownContentException;
-import store.server.exception.WriteException;
 
 /**
  * An agent that performs indexing from a volume to its associated index.
@@ -48,35 +44,24 @@ class IndexingAgent extends Agent {
 
         @Override
         protected boolean process(Event event) {
-            try {
-                switch (event.getOperation()) {
-                    case CREATE:
-                    case UPDATE:
-                        put(event.getHash());
-                        break;
-                    case DELETE:
-                        delete(event.getHash());
-                        break;
-                }
+            ContentInfoTree tree = volume.getInfoTree(event.getHash());
+            if (tree.isDeleted()) {
+                index.delete(tree.getHash());
                 return true;
 
-            } catch (UnknownContentException | RepositoryNotStartedException e) {
-                return false;
+            } else {
+                Optional<InputStream> inputStreamOpt = volume.getContent(tree.getHash(), tree.getHead());
+                if (!inputStreamOpt.isPresent()) {
+                    return false;
+                }
+                try (InputStream inputStream = inputStreamOpt.get()) {
+                    index.put(tree, inputStream);
+                    return true;
+
+                } catch (IOException e) {
+                    throw new AssertionError(e);
+                }
             }
-        }
-
-        private void put(Hash hash) {
-            ContentInfoTree contentInfoTree = volume.getInfoTree(hash);
-            try (InputStream inputStream = volume.getContent(hash)) {
-                index.put(contentInfoTree, inputStream);
-
-            } catch (IOException e) {
-                throw new WriteException(e);
-            }
-        }
-
-        private void delete(Hash hash) {
-            index.delete(hash); // Idempotent
         }
     }
 }

@@ -1,5 +1,6 @@
 package store.server.service;
 
+import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -7,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -257,6 +259,17 @@ public class Repository {
      */
     public InputStream getContent(Hash hash) {
         return volume.getContent(hash);
+    }
+
+    /**
+     * Provides an input stream on a content if its info head matches supplied one.
+     *
+     * @param hash Hash of the content.
+     * @param head Hashes of expected head revisions of the info associated with the content.
+     * @return An input stream on this content, or nothing if supplied head has been superseded.
+     */
+    public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
+        return volume.getContent(hash, head);
     }
 
     /**

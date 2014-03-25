@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
@@ -349,6 +350,27 @@ class Volume {
             @Override
             public InputStream apply() {
                 return contentManager.get(hash);
+            }
+        });
+    }
+
+    /**
+     * Provides an input stream on a content if its info head matches supplied one.
+     *
+     * @param hash Hash of the content.
+     * @param head Hashes of expected head revisions of the info associated with the content.
+     * @return An input stream on this content, or nothing if supplied head has been superseded.
+     */
+    public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
+        LOG.info("[{}] Returning content {} with head {}", getName(), hash, head);
+        return transactionManager.inTransaction(new Query<Optional<InputStream>>() {
+            @Override
+            public Optional<InputStream> apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent() || !tree.get().getHead().equals(head)) {
+                    return Optional.absent();
+                }
+                return Optional.of(contentManager.get(hash));
             }
         });
     }

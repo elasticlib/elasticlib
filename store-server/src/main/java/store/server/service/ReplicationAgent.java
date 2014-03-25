@@ -1,14 +1,11 @@
 package store.server.service;
 
+import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Event;
-import store.common.Hash;
-import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.UnknownContentException;
-import store.server.exception.WriteException;
 
 /**
  * An agent that performs replication from a repository to another one.
@@ -47,39 +44,23 @@ class ReplicationAgent extends Agent {
 
         @Override
         protected boolean process(Event event) {
-            try {
-                switch (event.getOperation()) {
-                    case CREATE:
-                    case UPDATE:
-                        put(event.getHash());
-                        break;
-                    case DELETE:
-                        delete(event.getHash());
-                        break;
-                }
+            ContentInfoTree tree = source.getInfoTree(event.getHash());
+            if (tree.isDeleted()) {
+                destination.put(tree, RevSpec.any());
                 return true;
 
-            } catch (UnknownContentException | RepositoryNotStartedException e) {
-                return false;
-            }
-        }
+            } else {
+                Optional<InputStream> inputStreamOpt = source.getContent(tree.getHash(), tree.getHead());
+                if (!inputStreamOpt.isPresent()) {
+                    return false;
+                }
+                try (InputStream inputStream = inputStreamOpt.get()) {
+                    destination.put(tree, inputStream, RevSpec.any());
+                    return true;
 
-        private void put(Hash hash) {
-            ContentInfo info = source.getInfoHead(hash).get(0);
-            try (InputStream inputStream = source.getContent(hash)) {
-                destination.put(info, inputStream, RevSpec.any());
-
-            } catch (IOException e) {
-                throw new WriteException(e);
-            }
-        }
-
-        private void delete(Hash hash) {
-            try {
-                destination.delete(hash, RevSpec.any());
-
-            } catch (UnknownContentException e) {
-                // Ok
+                } catch (IOException e) {
+                    throw new AssertionError(e);
+                }
             }
         }
     }

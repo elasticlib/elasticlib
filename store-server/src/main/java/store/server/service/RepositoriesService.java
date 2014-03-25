@@ -37,7 +37,7 @@ public final class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final Path home;
-    private final ReplicationService replicationService;
+    private final ReplicationService replicationService = new ReplicationService();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Config config;
     private final Map<String, Repository> repositories = new HashMap<>();
@@ -46,11 +46,9 @@ public final class RepositoriesService {
      * Constructor.
      *
      * @param home The repositories service home directory.
-     * @param replicationService The replication service.
      */
-    public RepositoriesService(Path home, ReplicationService replicationService) {
+    public RepositoriesService(Path home) {
         this.home = home;
-        this.replicationService = replicationService;
         config = loadConfig();
         for (Path path : config.getRepositories()) {
             Repository repository = Repository.open(path, replicationService);

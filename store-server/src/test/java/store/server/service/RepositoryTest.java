@@ -49,7 +49,7 @@ public class RepositoryTest {
     public void init() throws IOException {
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         Files.createDirectory(path.resolve("home"));
-        repositoriesService = new RepositoriesService(path.resolve("home"), new ReplicationService());
+        repositoriesService = new RepositoriesService(path.resolve("home"));
     }
 
     /**

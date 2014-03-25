@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 /**
  * Manage replication agents between repositories.
  */
-public class ReplicationService {
+class ReplicationService {
 
     private final Map<String, Map<String, ReplicationAgent>> agents = new HashMap<>();
 

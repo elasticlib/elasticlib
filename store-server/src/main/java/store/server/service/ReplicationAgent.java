@@ -13,7 +13,7 @@ import store.server.exception.WriteException;
 /**
  * An agent that performs replication from a repository to another one.
  */
-public class ReplicationAgent extends Agent {
+class ReplicationAgent extends Agent {
 
     private final Repository source;
     private final Repository destination;

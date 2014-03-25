@@ -106,7 +106,7 @@ public class Repository {
     }
 
     /**
-     * Start this repository.
+     * Start this repository. Does nothing if it is already started.
      */
     public void start() {
         LOG.info("[{}] Starting", getName());
@@ -115,7 +115,7 @@ public class Repository {
     }
 
     /**
-     * Stop this repository.
+     * Stop this repository. Does nothing if it is already stopped.
      */
     public void stop() {
         LOG.info("[{}] Stopping", getName());
@@ -160,7 +160,8 @@ public class Repository {
     }
 
     /**
-     * Put an info revision into this repository.
+     * Put an info revision into this repository. If associated content is not present, started transaction is suspended
+     * so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfo Content info revision.
      * @param revSpec Expectations on current state for this content.
@@ -177,7 +178,8 @@ public class Repository {
     }
 
     /**
-     * Put a revision tree into this repository.
+     * Put a revision tree into this repository. If associated content is not present, started transaction is suspended
+     * so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
      * @param revSpec Expectations on current state for this content.

@@ -209,7 +209,7 @@ class Volume {
             public CommandResult apply() {
                 Optional<ContentInfoTree> tree = infoManager.get(hash);
                 if (!tree.isPresent() || tree.get().isDeleted()) {
-                    // This is unexpected as whe've got a resumed transaction at this point.
+                    // This is unexpected as we have a resumed transaction at this point.
                     throw new BadRequestException();
                 }
                 CommandResult result = CommandResult.of(transactionId, Operation.CREATE, tree.get().getHead());

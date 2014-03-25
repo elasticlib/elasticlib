@@ -46,7 +46,7 @@ public class Repository {
      * @param replicationService The replication service.
      * @return Created repository.
      */
-    public static Repository create(Path path, ReplicationService replicationService) {
+    static Repository create(Path path, ReplicationService replicationService) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -75,7 +75,7 @@ public class Repository {
      * @param replicationService The replication service.
      * @return Opened repository.
      */
-    public static Repository open(Path path, ReplicationService replicationService) {
+    static Repository open(Path path, ReplicationService replicationService) {
         String name = path.getFileName().toString();
         return new Repository(path,
                               replicationService,

@@ -55,7 +55,7 @@ final class CommandProvider {
                     .append(command.description())
                     .append(System.lineSeparator());
         }
-        return builder.deleteCharAt(builder.length() - 1).toString();
+        return builder.toString();
     }
 
     private static String tabulate(String value, int size) {

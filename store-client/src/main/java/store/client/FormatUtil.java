@@ -8,7 +8,6 @@ import static store.client.ByteLengthFormatter.format;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
-import store.common.Digest;
 import store.common.Event;
 import store.common.metadata.Properties;
 import store.common.metadata.Property;
@@ -43,11 +42,11 @@ public final class FormatUtil {
                 .append("Length")
                 .append(COMMA)
                 .append(format(tree.getLength()))
-                .append(System.lineSeparator())
                 .append(System.lineSeparator());
 
         for (ContentInfo revision : tree.list()) {
-            builder.append(formatRevision(revision));
+            builder.append(System.lineSeparator())
+                    .append(formatRevision(revision));
         }
         return builder.toString();
     }
@@ -111,24 +110,6 @@ public final class FormatUtil {
     }
 
     /**
-     * Format supplied digest.
-     *
-     * @param digest A digest
-     * @return A human readable string
-     */
-    public static String asString(Digest digest) {
-        return new StringBuilder()
-                .append("Hash")
-                .append(COMMA)
-                .append(digest.getHash())
-                .append(System.lineSeparator())
-                .append("Size")
-                .append(COMMA)
-                .append(format(digest.getLength()))
-                .toString();
-    }
-
-    /**
      * Format supplied event.
      *
      * @param event An event
@@ -165,8 +146,8 @@ public final class FormatUtil {
      */
     public static String asString(CommandResult result) {
         if (result.isNoOp()) {
-            return "Not modified";
+            return "Not modified" + System.lineSeparator();
         }
-        return toPascalCase(result.getOperation().toString()) + 'd';
+        return toPascalCase(result.getOperation().toString()) + 'd' + System.lineSeparator();
     }
 }

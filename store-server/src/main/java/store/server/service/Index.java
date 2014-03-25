@@ -67,14 +67,14 @@ import store.server.exception.WriteException;
 class Index {
 
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
+    private final String name;
     private final Directory directory;
     private final Analyzer analyzer;
-    private final String name;
 
-    private Index(Path path) throws IOException {
+    private Index(String name, Path path) throws IOException {
+        this.name = name;
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer(Version.LUCENE_46);
-        name = path.getParent().getFileName().toString();
     }
 
     private IndexWriter newIndexWriter() throws IOException {
@@ -85,13 +85,14 @@ class Index {
     /**
      * Create a new index.
      *
+     * @param name index name.
      * @param path index home.
      * @return Created index.
      */
-    public static Index create(Path path) {
+    public static Index create(String name, Path path) {
         try {
             Files.createDirectory(path);
-            return new Index(path);
+            return new Index(name, path);
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -101,15 +102,16 @@ class Index {
     /**
      * Open an existing index.
      *
+     * @param name index name.
      * @param path index home.
      * @return Opened index.
      */
-    public static Index open(Path path) {
+    public static Index open(String name, Path path) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
         try {
-            return new Index(path);
+            return new Index(name, path);
 
         } catch (IOException ex) {
             throw new WriteException(ex);
@@ -259,6 +261,7 @@ class Index {
      * @return A list of content hashes.
      */
     public List<IndexEntry> find(String query, int first, int number) {
+        LOG.info("[{}] Finding {}, first {}, count {}", name, query, first, number);
         try {
             if (first < 0) {
                 number += first;

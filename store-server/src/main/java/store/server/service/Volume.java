@@ -1,5 +1,6 @@
 package store.server.service;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -29,15 +32,19 @@ import store.server.transaction.TransactionManager;
  */
 class Volume {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Volume.class);
+    private final String name;
     private final TransactionManager transactionManager;
     private final HistoryManager historyManager;
     private final InfoManager infoManager;
     private final ContentManager contentManager;
 
-    private Volume(TransactionManager transactionManager,
+    private Volume(String name,
+                   TransactionManager transactionManager,
                    HistoryManager historyManager,
                    InfoManager infoManager,
                    ContentManager contentManager) {
+        this.name = name;
         this.transactionManager = transactionManager;
         this.historyManager = historyManager;
         this.infoManager = infoManager;
@@ -47,10 +54,11 @@ class Volume {
     /**
      * Creates a new volume at specified path.
      *
-     * @param path File-system path. Expected to not exists.
+     * @param name Volume name.
+     * @param path Volume home.
      * @return Created volume.
      */
-    public static Volume create(final Path path) {
+    public static Volume create(final String name, final Path path) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -63,7 +71,8 @@ class Volume {
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(txManager,
+                return new Volume(name,
+                                  txManager,
                                   HistoryManager.create(path.resolve("history")),
                                   InfoManager.create(path.resolve("info")),
                                   ContentManager.create(path.resolve("content")));
@@ -80,15 +89,17 @@ class Volume {
     /**
      * Opens an existing volume.
      *
-     * @param path Path to transaction manager home.
+     * @param name Volume name.
+     * @param path Volume home.
      * @return Opened volume.
      */
-    public static Volume open(final Path path) {
+    public static Volume open(final String name, final Path path) {
         final TransactionManager txManager = TransactionManager.open(path.resolve("transactions"));
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
-                return new Volume(txManager,
+                return new Volume(name,
+                                  txManager,
                                   HistoryManager.open(path.resolve("history")),
                                   InfoManager.open(path.resolve("info")),
                                   ContentManager.open(path.resolve("content")));
@@ -97,9 +108,17 @@ class Volume {
     }
 
     /**
+     * @return This volume name.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
      * Starts this volume. Does nothing if it is already started.
      */
     public void start() {
+        LOG.info("[{}] Starting", name);
         transactionManager.start();
     }
 
@@ -107,6 +126,7 @@ class Volume {
      * Stops this volume. Does nothing if it is already stopped.
      */
     public void stop() {
+        LOG.info("[{}] Stopping", name);
         transactionManager.stop();
     }
 
@@ -128,6 +148,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
+        LOG.info("[{}] Putting info and content for {}, with spec {}", name, contentInfo.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -147,6 +168,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
+        LOG.info("[{}] Putting tree and content for {}, with spec {}", name, contentInfoTree.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -166,6 +188,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfo contentInfo, final RevSpec revSpec) {
+        LOG.info("[{}] Putting info for {}, with spec {}", getName(), contentInfo.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -185,6 +208,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
+        LOG.info("[{}] Putting tree for {}, with spec {}", getName(), contentInfoTree.getHash(), revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -204,6 +228,7 @@ class Volume {
      * @return Operation result.
      */
     public CommandResult create(final int transactionId, final Hash hash, final InputStream source) {
+        LOG.info("[{}] Creating content {}", getName(), hash);
         return transactionManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
@@ -227,6 +252,7 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult delete(final Hash hash, final RevSpec revSpec) {
+        LOG.info("[{}] Deleting content {}, with spec {}", getName(), hash, revSpec);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -273,6 +299,7 @@ class Volume {
      * @return Corresponding info tree.
      */
     public ContentInfoTree getInfoTree(final Hash hash) {
+        LOG.info("[{}] Returning info tree {}", getName(), hash);
         return transactionManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
             public ContentInfoTree apply() {
@@ -292,6 +319,7 @@ class Volume {
      * @return Corresponding info head revisions.
      */
     public List<ContentInfo> getInfoHead(Hash hash) {
+        LOG.info("[{}] Returning info head {}", getName(), hash);
         ContentInfoTree tree = getInfoTree(hash);
         return tree.get(tree.getHead());
     }
@@ -304,6 +332,7 @@ class Volume {
      * @return Corresponding revisions.
      */
     public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
+        LOG.info("[{}] Returning info revs {} [{}]", getName(), hash, Joiner.on(", ").join(revs));
         ContentInfoTree tree = getInfoTree(hash);
         return tree.get(revs);
     }
@@ -315,6 +344,7 @@ class Volume {
      * @return An input stream on this content.
      */
     public InputStream getContent(final Hash hash) {
+        LOG.info("[{}] Returning content {}", getName(), hash);
         return transactionManager.inTransaction(new Query<InputStream>() {
             @Override
             public InputStream apply() {
@@ -332,6 +362,8 @@ class Volume {
      * @return A list of events.
      */
     public List<Event> history(final boolean chronological, final long first, final int number) {
+        LOG.info("[{}] Returning history{}, first {}, count {}",
+                 getName(), chronological ? "" : ", reverse", first, number);
         return transactionManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {

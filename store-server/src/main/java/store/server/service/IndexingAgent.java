@@ -16,19 +16,16 @@ import store.server.exception.WriteException;
  */
 class IndexingAgent extends Agent {
 
-    private final String name;
     private final Volume volume;
     private final Index index;
 
     /**
      * Constructor.
      *
-     * @param name Repository name.
      * @param volume Source volume.
      * @param index Destination index.
      */
-    public IndexingAgent(String name, Volume volume, Index index) {
-        this.name = name;
+    public IndexingAgent(Volume volume, Index index) {
         this.volume = volume;
         this.index = index;
     }
@@ -46,7 +43,7 @@ class IndexingAgent extends Agent {
     private class IndexingAgentThread extends AgentThread {
 
         public IndexingAgentThread() {
-            super("indexation-" + name);
+            super("indexation-" + volume.getName());
         }
 
         @Override

@@ -8,6 +8,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -54,7 +55,6 @@ import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
 import store.server.service.RepositoriesService;
 import store.server.service.Repository;
-import store.server.service.RevSpec;
 import store.server.service.Status;
 
 /**
@@ -212,11 +212,6 @@ public class RepositoriesResource {
     /**
      * Create a new content or merge new info with an existing content.
      * <p>
-     * Query param:<br>
-     * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
-     * existing head, "none" if content is expected to not exist, or to a dash-separated sequence of revision hashes of
-     * expected existing head. Default to "any".
-     * <p>
      * Input:<br>
      * - info (JSON): Content info JSON data.<br>
      * - content (Raw): Content data.
@@ -231,17 +226,13 @@ public class RepositoriesResource {
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param name repository name
-     * @param revSpec expected head to apply request on
      * @param formData entity form data
      * @return HTTP response
      */
     @POST
     @Path("{name}/content")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postContent(@PathParam("name") String name,
-                                @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
-                                FormDataMultipart formData) {
-
+    public Response postContent(@PathParam("name") String name, FormDataMultipart formData) {
         JsonObject json = formData.next("info").getAsJsonObject();
         BodyPart content = formData.next("content");
         URI uri = UriBuilder
@@ -251,10 +242,10 @@ public class RepositoriesResource {
 
         try (InputStream inputStream = content.getAsInputStream()) {
             if (isContentInfo(json)) {
-                return response(uri, repository(name).put(readContentInfo(json), inputStream, revSpec));
+                return response(uri, repository(name).put(readContentInfo(json), inputStream));
             }
             if (isContentInfoTree(json)) {
-                return response(uri, repository(name).put(readContentInfoTree(json), inputStream, revSpec));
+                return response(uri, repository(name).put(readContentInfoTree(json), inputStream));
             }
             throw new BadRequestException();
 
@@ -267,11 +258,6 @@ public class RepositoriesResource {
      * Add content info. If associated content is not present, started transaction is suspended so that client may
      * create this content in a latter request.
      * <p>
-     * Query param:<br>
-     * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
-     * existing head, "none" if content is expected to not exist, or to a dash-separated sequence of revision hashes of
-     * expected existing head. Default to "any".
-     * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      * - 202 ACCEPTED: Requester is expected to supply content in a latter request<br>
@@ -281,22 +267,18 @@ public class RepositoriesResource {
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param name repository name
-     * @param revSpec expected head to apply request on
      * @param json input JSON data
      * @return HTTP response
      */
     @POST
     @Path("{name}/info")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response postInfo(@PathParam("name") String name,
-                             @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
-                             JsonObject json) {
-
+    public Response postInfo(@PathParam("name") String name, JsonObject json) {
         if (isContentInfo(json)) {
-            return response(repository(name).put(readContentInfo(json), revSpec));
+            return response(repository(name).put(readContentInfo(json)));
         }
         if (isContentInfoTree(json)) {
-            return response(repository(name).put(readContentInfoTree(json), revSpec));
+            return response(repository(name).put(readContentInfoTree(json)));
         }
         throw new BadRequestException();
     }
@@ -353,7 +335,7 @@ public class RepositoriesResource {
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param name repository name
-     * @param revSpec expected head to apply request on
+     * @param rev expected head to apply request on
      * @param hash content hash
      * @return HTTP response
      */
@@ -361,10 +343,10 @@ public class RepositoriesResource {
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response deleteContent(@PathParam("name") String name,
-                                  @QueryParam("rev") @DefaultValue(RevSpec.ANY) RevSpec revSpec,
+                                  @QueryParam("rev") @DefaultValue("") String rev,
                                   @PathParam("hash") Hash hash) {
 
-        return response(repository(name).delete(hash, revSpec));
+        return response(repository(name).delete(hash, new TreeSet<>(parseRevisions(rev))));
     }
 
     private static Response response(CommandResult result) {
@@ -436,11 +418,15 @@ public class RepositoriesResource {
         if (rev.equals("head")) {
             return writeContentInfos(repository(name).getInfoHead(hash));
         }
+        return writeContentInfos(repository(name).getInfoRevisions(hash, parseRevisions(rev)));
+    }
+
+    private static List<Hash> parseRevisions(String arg) {
         List<Hash> revisions = new ArrayList<>();
-        for (String part : Splitter.on('-').split(rev)) {
+        for (String part : Splitter.on('-').split(arg)) {
             revisions.add(new Hash(part));
         }
-        return writeContentInfos(repository(name).getInfoRevisions(hash, revisions));
+        return revisions;
     }
 
     /**

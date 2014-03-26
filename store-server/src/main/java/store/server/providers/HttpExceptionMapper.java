@@ -13,7 +13,7 @@ import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.RevSpecCheckingFailedException;
+import store.server.exception.ConflictException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
 import store.server.exception.TransactionNotFoundException;
@@ -39,7 +39,7 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         MAPPING.put(SelfReplicationException.class, PRECONDITION_FAILED);
         MAPPING.put(UnknownRevisionException.class, PRECONDITION_FAILED);
 
-        MAPPING.put(RevSpecCheckingFailedException.class, CONFLICT);
+        MAPPING.put(ConflictException.class, CONFLICT);
 
         MAPPING.put(UnknownRepositoryException.class, NOT_FOUND);
         MAPPING.put(UnknownContentException.class, NOT_FOUND);

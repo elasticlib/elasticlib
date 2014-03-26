@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -17,7 +18,7 @@ import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
 import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.RevSpecCheckingFailedException;
+import store.server.exception.ConflictException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
 import store.server.exception.WriteException;
@@ -54,14 +55,20 @@ class InfoManager {
         return new InfoManager(path);
     }
 
-    public CommandResult put(ContentInfo info, RevSpec revSpec) {
-        Optional<ContentInfoTree> existing = load(info.getHash(), revSpec);
+    public CommandResult put(ContentInfo info) {
+        Optional<ContentInfoTree> existing = get(info.getHash());
         ContentInfoTree updated;
         if (!existing.isPresent()) {
+            if (!info.getParents().isEmpty()) {
+                throw new ConflictException();
+            }
             updated = new ContentInfoTreeBuilder()
                     .add(info)
                     .build();
         } else {
+            if (!existing.get().getHead().equals(info.getParents())) {
+                throw new ConflictException();
+            }
             updated = existing.get()
                     .add(info)
                     .merge();
@@ -70,8 +77,8 @@ class InfoManager {
         return result(existing, updated);
     }
 
-    public CommandResult put(ContentInfoTree tree, RevSpec revSpec) {
-        Optional<ContentInfoTree> existing = load(tree.getHash(), revSpec);
+    public CommandResult put(ContentInfoTree tree) {
+        Optional<ContentInfoTree> existing = get(tree.getHash());
         ContentInfoTree updated;
         if (!existing.isPresent()) {
             updated = tree;
@@ -84,10 +91,13 @@ class InfoManager {
         return result(existing, updated);
     }
 
-    public CommandResult delete(Hash hash, RevSpec revSpec) {
-        Optional<ContentInfoTree> existing = load(hash, revSpec);
+    public CommandResult delete(Hash hash, SortedSet<Hash> head) {
+        Optional<ContentInfoTree> existing = get(hash);
         if (!existing.isPresent()) {
             throw new UnknownContentException();
+        }
+        if (!existing.get().getHead().equals(head)) {
+            throw new ConflictException();
         }
         ContentInfoTree updated;
         if (existing.get().isDeleted()) {
@@ -104,7 +114,7 @@ class InfoManager {
         return result(existing, updated);
     }
 
-    private Optional<ContentInfoTree> load(Hash hash, RevSpec revSpec) {
+    public Optional<ContentInfoTree> get(Hash hash) {
         Path path = path(hash);
         TransactionContext txContext = TransactionContext.current();
         Optional<ContentInfoTree> existing;
@@ -115,17 +125,7 @@ class InfoManager {
                 existing = Optional.of(load(input));
             }
         }
-        if (!isMatching(existing, revSpec)) {
-            throw new RevSpecCheckingFailedException();
-        }
         return existing;
-    }
-
-    private static boolean isMatching(Optional<ContentInfoTree> tree, RevSpec revSpec) {
-        if (!tree.isPresent()) {
-            return revSpec.isNone();
-        }
-        return revSpec.matches(tree.get().getHead());
     }
 
     private void save(ContentInfoTree tree) {
@@ -171,10 +171,6 @@ class InfoManager {
             return Optional.of(Operation.DELETE);
         }
         return Optional.of(Operation.UPDATE);
-    }
-
-    public Optional<ContentInfoTree> get(Hash hash) {
-        return load(hash, RevSpec.any());
     }
 
     private static void save(ContentInfoTree tree, Output output) {

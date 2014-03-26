@@ -10,7 +10,9 @@ import static java.nio.file.Files.newInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.json.Json.createObjectBuilder;
@@ -153,9 +155,14 @@ public class RestClient implements Closeable {
     public CommandResult put(String repository, Path filepath) {
         try {
             Digest digest = digest(filepath);
+            List<ContentInfo> head = head(repository, digest.getHash());
+            if (!isDeleted(head)) {
+                throw new RequestFailedException("This content is already stored");
+            }
             ContentInfo info = new ContentInfoBuilder()
                     .withHash(digest.getHash())
                     .withLength(digest.getLength())
+                    .withParents(revs(head))
                     .withMetadata(metadata(filepath))
                     .computeRevAndBuild();
 
@@ -167,6 +174,15 @@ public class RestClient implements Closeable {
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
+    }
+
+    private static boolean isDeleted(List<ContentInfo> head) {
+        for (ContentInfo info : head) {
+            if (!info.isDeleted()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private CommandResult putInOneStep(String repository, Path filepath, ContentInfo info) throws IOException {
@@ -216,11 +232,32 @@ public class RestClient implements Closeable {
     }
 
     public CommandResult delete(String repository, Hash hash) {
-        return result(resource.path("repositories/{name}/content/{hash}")
+        return result(resource
+                .path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
+                .queryParam("rev", Joiner.on('-').join(revs(head(repository, hash))))
                 .request()
                 .delete());
+    }
+
+    private static Set<Hash> revs(List<ContentInfo> head) {
+        Set<Hash> revs = new HashSet<>();
+        for (ContentInfo info : head) {
+            revs.add(info.getRev());
+        }
+        return revs;
+    }
+
+    private List<ContentInfo> head(String repository, Hash hash) {
+        Response response = resource.path("repositories/{name}/info/{hash}")
+                .resolveTemplate("name", repository)
+                .resolveTemplate("hash", hash)
+                .queryParam("rev", "head")
+                .request()
+                .get();
+
+        return readContentInfos(ensureSuccess(response).readEntity(JsonArray.class));
     }
 
     private static CommandResult result(Response response) {

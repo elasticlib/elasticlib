@@ -8,6 +8,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.SortedSet;
 import org.slf4j.Logger;
@@ -145,15 +146,15 @@ class Volume {
      *
      * @param contentInfo Content info revision.
      * @param source Content.
-     * @param revSpec Expectations on current volume state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfo contentInfo, final InputStream source, final RevSpec revSpec) {
-        LOG.info("[{}] Putting info and content for {}, with spec {}", name, contentInfo.getHash(), revSpec);
+    public CommandResult put(final ContentInfo contentInfo, final InputStream source) {
+        LOG.info("[{}] Putting info and content for {}, with head {}",
+                 name, contentInfo.getHash(), contentInfo.getParents());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfo, revSpec);
+                CommandResult result = infoManager.put(contentInfo);
                 handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
                 return result;
             }
@@ -165,15 +166,14 @@ class Volume {
      *
      * @param contentInfoTree Revision tree.
      * @param source Content.
-     * @param revSpec Expectations on current volume state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfoTree contentInfoTree, final InputStream source, final RevSpec revSpec) {
-        LOG.info("[{}] Putting tree and content for {}, with spec {}", name, contentInfoTree.getHash(), revSpec);
+    public CommandResult put(final ContentInfoTree contentInfoTree, final InputStream source) {
+        LOG.info("[{}] Putting tree and content for {}", name, contentInfoTree.getHash());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfoTree, revSpec);
+                CommandResult result = infoManager.put(contentInfoTree);
                 handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
                 return result;
             }
@@ -185,15 +185,14 @@ class Volume {
      * that caller may latter complete this operation by creating this content.
      *
      * @param contentInfo Content info revision.
-     * @param revSpec Expectations on current volume state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfo contentInfo, final RevSpec revSpec) {
-        LOG.info("[{}] Putting info for {}, with spec {}", name, contentInfo.getHash(), revSpec);
+    public CommandResult put(final ContentInfo contentInfo) {
+        LOG.info("[{}] Putting info for {}, with head {}", name, contentInfo.getHash(), contentInfo.getParents());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfo, revSpec);
+                CommandResult result = infoManager.put(contentInfo);
                 handleCommandResult(result, contentInfo.getHash());
                 return result;
             }
@@ -205,15 +204,14 @@ class Volume {
      * that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
-     * @param revSpec Expectations on current volume state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfoTree contentInfoTree, final RevSpec revSpec) {
-        LOG.info("[{}] Putting tree for {}, with spec {}", name, contentInfoTree.getHash(), revSpec);
+    public CommandResult put(final ContentInfoTree contentInfoTree) {
+        LOG.info("[{}] Putting tree for {}", name, contentInfoTree.getHash());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfoTree, revSpec);
+                CommandResult result = infoManager.put(contentInfoTree);
                 handleCommandResult(result, contentInfoTree.getHash());
                 return result;
             }
@@ -249,15 +247,15 @@ class Volume {
      * Delete a content from this volume.
      *
      * @param hash Hash of the content to delete.
-     * @param revSpec Expectations on current volume state for this content.
+     * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult delete(final Hash hash, final RevSpec revSpec) {
-        LOG.info("[{}] Deleting content {}, with spec {}", name, hash, revSpec);
+    public CommandResult delete(final Hash hash, final SortedSet<Hash> head) {
+        LOG.info("[{}] Deleting content {}, with head {}", name, hash, head);
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.delete(hash, revSpec);
+                CommandResult result = infoManager.delete(hash, head);
                 handleCommandResult(result, hash);
                 return result;
             }
@@ -319,10 +317,19 @@ class Volume {
      * @param hash Hash of the content.
      * @return Corresponding info head revisions.
      */
-    public List<ContentInfo> getInfoHead(Hash hash) {
+    public List<ContentInfo> getInfoHead(final Hash hash) {
         LOG.info("[{}] Returning info head {}", name, hash);
-        ContentInfoTree tree = getInfoTree(hash);
-        return tree.get(tree.getHead());
+        return transactionManager.inTransaction(new Query<List<ContentInfo>>() {
+            @Override
+            public List<ContentInfo> apply() {
+                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                if (!treeOpt.isPresent()) {
+                    return emptyList();
+                }
+                ContentInfoTree tree = treeOpt.get();
+                return tree.get(tree.getHead());
+            }
+        });
     }
 
     /**

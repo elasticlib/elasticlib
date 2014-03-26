@@ -46,7 +46,7 @@ class ReplicationAgent extends Agent {
         protected boolean process(Event event) {
             ContentInfoTree tree = source.getInfoTree(event.getHash());
             if (tree.isDeleted()) {
-                destination.put(tree, RevSpec.any());
+                destination.put(tree);
                 return true;
 
             } else {
@@ -55,7 +55,7 @@ class ReplicationAgent extends Agent {
                     return false;
                 }
                 try (InputStream inputStream = inputStreamOpt.get()) {
-                    destination.put(tree, inputStream, RevSpec.any());
+                    destination.put(tree, inputStream);
                     return true;
 
                 } catch (IOException e) {

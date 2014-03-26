@@ -7,16 +7,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.util.Collections.singleton;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.CommandResult;
 import store.common.ContentInfo;
+import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Hash;
-import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.Content;
@@ -24,6 +27,7 @@ import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.ConflictException;
 import store.server.exception.UnknownContentException;
 
 /**
@@ -90,7 +94,7 @@ public class RepositoryTest {
     public void putTest() throws IOException {
         Repository alpha = repository(ALPHA);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            CommandResult result = alpha.put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.none());
+            CommandResult result = alpha.put(LOREM_IPSUM.getInfo(), inputStream);
             assertThat(result.getOperation()).isEqualTo(Operation.CREATE);
         }
         assertHas(alpha, LOREM_IPSUM);
@@ -101,12 +105,9 @@ public class RepositoryTest {
      *
      * @throws IOException If an IO error occurs.
      */
-    @Test(groups = OPERATIONS, dependsOnGroups = INIT)
+    @Test(groups = OPERATIONS, dependsOnGroups = INIT, expectedExceptions = ConflictException.class)
     public void putAlreadyStoredTest() throws IOException {
-        try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            CommandResult result = repository(ALPHA).put(LOREM_IPSUM.getInfo(), inputStream, RevSpec.any());
-            assertThat(result.isNoOp()).isTrue();
-        }
+        repository(ALPHA).put(LOREM_IPSUM.getInfo());
     }
 
     /**
@@ -171,10 +172,7 @@ public class RepositoryTest {
         async(new Runnable() {
             @Override
             public void run() {
-                IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(),
-                                                     singleton(LOREM_IPSUM.getInfo().getRev()));
-
-                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).containsExactly(expected);
+                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).hasSize(1);
             }
         });
     }
@@ -185,7 +183,8 @@ public class RepositoryTest {
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS)
     public void deleteTest() {
         Repository alpha = repository(ALPHA);
-        CommandResult result = alpha.delete(LOREM_IPSUM.getHash(), RevSpec.any());
+        SortedSet<Hash> head = new TreeSet<>(singleton(LOREM_IPSUM.getInfo().getRev()));
+        CommandResult result = alpha.delete(LOREM_IPSUM.getHash(), head);
         assertThat(result.getOperation()).isEqualTo(Operation.DELETE);
 
         assertDeleted(alpha, LOREM_IPSUM);
@@ -207,7 +206,20 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS, dependsOnMethods = "deleteTest")
     public void deleteAlreadyDeletedTest() {
-        CommandResult result = repository(ALPHA).delete(LOREM_IPSUM.getHash(), RevSpec.any());
+        ContentInfo rev0 = LOREM_IPSUM.getInfo();
+        ContentInfo rev1 = new ContentInfoBuilder()
+                .withHash(rev0.getHash())
+                .withLength(rev0.getLength())
+                .withParent(rev0.getRev())
+                .withDeleted(true)
+                .computeRevAndBuild();
+
+        ContentInfoTree tree = new ContentInfoTreeBuilder()
+                .add(rev0)
+                .add(rev1)
+                .build();
+
+        CommandResult result = repository(ALPHA).delete(tree.getHash(), tree.getHead());
         assertThat(result.isNoOp()).isTrue();
     }
 
@@ -216,7 +228,7 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS, expectedExceptions = UnknownContentException.class)
     public void deleteUnknownHashTest() {
-        repository(ALPHA).delete(UNKNOWN_HASH, RevSpec.any());
+        repository(ALPHA).delete(UNKNOWN_HASH, new TreeSet<Hash>());
     }
 
     /**
@@ -227,7 +239,7 @@ public class RepositoryTest {
     @Test(groups = GAMMA, dependsOnGroups = INIT)
     public void putInTwoStepsTest() throws IOException {
         Repository gamma = repository(GAMMA);
-        CommandResult firstStepResult = gamma.put(LOREM_IPSUM.getInfo(), RevSpec.none());
+        CommandResult firstStepResult = gamma.put(LOREM_IPSUM.getInfo());
         assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             int transactionId = firstStepResult.getTransactionId();
@@ -236,6 +248,13 @@ public class RepositoryTest {
             assertThat(secondStepResult).isEqualTo(firstStepResult);
         }
         assertHas(gamma, LOREM_IPSUM);
+
+        async(new Runnable() {
+            @Override
+            public void run() {
+                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).hasSize(1);
+            }
+        });
     }
 
     /**

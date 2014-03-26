@@ -125,11 +125,10 @@ public class Repository {
      *
      * @param contentInfo Content info revision.
      * @param source Content.
-     * @param revSpec Expectations on current state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfo contentInfo, InputStream source, RevSpec revSpec) {
-        CommandResult result = volume.put(contentInfo, source, revSpec);
+    public CommandResult put(ContentInfo contentInfo, InputStream source) {
+        CommandResult result = volume.put(contentInfo, source);
         if (!result.isNoOp()) {
             agent.signal();
             replicationService.signal(getName());
@@ -142,11 +141,10 @@ public class Repository {
      *
      * @param contentInfoTree Revision tree.
      * @param source Content.
-     * @param revSpec Expectations on current state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfoTree contentInfoTree, InputStream source, RevSpec revSpec) {
-        CommandResult result = volume.put(contentInfoTree, source, revSpec);
+    public CommandResult put(ContentInfoTree contentInfoTree, InputStream source) {
+        CommandResult result = volume.put(contentInfoTree, source);
         if (!result.isNoOp()) {
             agent.signal();
             replicationService.signal(getName());
@@ -159,11 +157,10 @@ public class Repository {
      * so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfo Content info revision.
-     * @param revSpec Expectations on current state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfo contentInfo, RevSpec revSpec) {
-        CommandResult result = volume.put(contentInfo, revSpec);
+    public CommandResult put(ContentInfo contentInfo) {
+        CommandResult result = volume.put(contentInfo);
         if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
             agent.signal();
             replicationService.signal(getName());
@@ -176,11 +173,10 @@ public class Repository {
      * so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
-     * @param revSpec Expectations on current state for this content.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfoTree contentInfoTree, RevSpec revSpec) {
-        CommandResult result = volume.put(contentInfoTree, revSpec);
+    public CommandResult put(ContentInfoTree contentInfoTree) {
+        CommandResult result = volume.put(contentInfoTree);
         if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
             agent.signal();
             replicationService.signal(getName());
@@ -207,11 +203,11 @@ public class Repository {
      * Delete a content from this repository.
      *
      * @param hash Hash of the content to delete.
-     * @param revSpec Expectations on current state for this content.
+     * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult delete(Hash hash, RevSpec revSpec) {
-        CommandResult result = volume.delete(hash, revSpec);
+    public CommandResult delete(Hash hash, SortedSet<Hash> head) {
+        CommandResult result = volume.delete(hash, head);
         if (!result.isNoOp()) {
             agent.signal();
             replicationService.signal(getName());

@@ -322,7 +322,10 @@ class Volume {
             @Override
             public Optional<InputStream> apply() {
                 Optional<ContentInfoTree> tree = infoManager.get(hash);
-                if (!tree.isPresent() || !tree.get().getHead().equals(head)) {
+                if (!tree.isPresent()) {
+                    throw new UnknownContentException();
+                }
+                if (!tree.get().getHead().equals(head)) {
                     return Optional.absent();
                 }
                 return Optional.of(contentManager.get(hash));

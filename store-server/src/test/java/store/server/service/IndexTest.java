@@ -80,16 +80,16 @@ public class IndexTest {
      * @throws IOException If an IO error occurs.
      */
     @Test(dependsOnGroups = "emptyRead")
-    public void put() throws IOException {
+    public void index() throws IOException {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            index.put(LOREM_IPSUM.getTree(), inputStream);
+            index.index(LOREM_IPSUM.getTree(), inputStream);
         }
     }
 
     /**
      * Test.
      */
-    @Test(groups = "read", dependsOnMethods = "put")
+    @Test(groups = "read", dependsOnMethods = "index")
     public void find() {
         IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
         assertThat(index.find("lorem", 0, 20)).containsExactly(expected);

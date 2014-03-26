@@ -121,14 +121,14 @@ public class Repository {
     }
 
     /**
-     * Put an info revision into this repository. If associated content is not present, started transaction is suspended
-     * so that caller may latter complete this operation by creating this content.
+     * Add an info revision. If associated content is not present, started transaction is suspended so that caller may
+     * latter complete this operation by adding this content.
      *
      * @param contentInfo Content info revision.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfo contentInfo) {
-        CommandResult result = volume.put(contentInfo);
+    public CommandResult addInfo(ContentInfo contentInfo) {
+        CommandResult result = volume.addInfo(contentInfo);
         if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
             agent.signal();
             replicationService.signal(getName());
@@ -137,14 +137,14 @@ public class Repository {
     }
 
     /**
-     * Put a revision tree into this repository. If associated content is not present, started transaction is suspended
-     * so that caller may latter complete this operation by creating this content.
+     * Merge a revision tree with existing one, if any. If associated content is not present, started transaction is
+     * suspended so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult put(ContentInfoTree contentInfoTree) {
-        CommandResult result = volume.put(contentInfoTree);
+    public CommandResult mergeTree(ContentInfoTree contentInfoTree) {
+        CommandResult result = volume.mergeTree(contentInfoTree);
         if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
             agent.signal();
             replicationService.signal(getName());
@@ -153,29 +153,29 @@ public class Repository {
     }
 
     /**
-     * Resume a previously suspended transaction and create content from supplied input-stream.
+     * Resume a previously suspended transaction and add content from supplied input-stream.
      *
      * @param transactionId Identifier of the transaction to resume.
      * @param hash Content hash. Used to retrieve its associated info.
      * @param source Content.
      * @return Operation result.
      */
-    public CommandResult create(int transactionId, Hash hash, InputStream source) {
-        CommandResult result = volume.create(transactionId, hash, source);
+    public CommandResult addContent(int transactionId, Hash hash, InputStream source) {
+        CommandResult result = volume.addContent(transactionId, hash, source);
         agent.signal();
         replicationService.signal(getName());
         return result;
     }
 
     /**
-     * Delete a content from this repository.
+     * Delete a content.
      *
      * @param hash Hash of the content to delete.
      * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult delete(Hash hash, SortedSet<Hash> head) {
-        CommandResult result = volume.delete(hash, head);
+    public CommandResult deleteContent(Hash hash, SortedSet<Hash> head) {
+        CommandResult result = volume.deleteContent(hash, head);
         if (!result.isNoOp()) {
             agent.signal();
             replicationService.signal(getName());

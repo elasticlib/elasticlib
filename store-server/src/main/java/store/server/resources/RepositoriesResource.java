@@ -233,10 +233,10 @@ public class RepositoriesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postInfo(@PathParam("name") String name, JsonObject json) {
         if (isContentInfo(json)) {
-            return response(repository(name).put(readContentInfo(json)));
+            return response(repository(name).addInfo(readContentInfo(json)));
         }
         if (isContentInfoTree(json)) {
-            return response(repository(name).put(readContentInfoTree(json)));
+            return response(repository(name).mergeTree(readContentInfoTree(json)));
         }
         throw new BadRequestException();
     }
@@ -266,13 +266,13 @@ public class RepositoriesResource {
     @PUT
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response createContent(@PathParam("name") String name,
+    public Response addContent(@PathParam("name") String name,
                                   @PathParam("hash") Hash hash,
                                   @QueryParam("txId") int transactionId,
                                   FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next("content").getAsInputStream()) {
-            return response(uriInfo.getRequestUri(), repository(name).create(transactionId, hash, inputStream));
+            return response(uriInfo.getRequestUri(), repository(name).addContent(transactionId, hash, inputStream));
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -304,7 +304,7 @@ public class RepositoriesResource {
                                   @QueryParam("rev") @DefaultValue("") String rev,
                                   @PathParam("hash") Hash hash) {
 
-        return response(repository(name).delete(hash, new TreeSet<>(parseRevisions(rev))));
+        return response(repository(name).deleteContent(hash, new TreeSet<>(parseRevisions(rev))));
     }
 
     private static Response response(CommandResult result) {

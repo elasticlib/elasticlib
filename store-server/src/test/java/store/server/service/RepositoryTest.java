@@ -86,13 +86,13 @@ public class RepositoryTest {
      * @throws IOException If an IO error occurs.
      */
     @Test(groups = INIT, dependsOnMethods = "createRepositoryTest")
-    public void putTest() throws IOException {
+    public void addTest() throws IOException {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             Repository alpha = repository(ALPHA);
-            CommandResult firstStepResult = alpha.put(LOREM_IPSUM.getInfo());
-            CommandResult secondStepResult = alpha.create(firstStepResult.getTransactionId(),
-                                                          LOREM_IPSUM.getInfo().getHash(),
-                                                          inputStream);
+            CommandResult firstStepResult = alpha.addInfo(LOREM_IPSUM.getInfo());
+            CommandResult secondStepResult = alpha.addContent(firstStepResult.getTransactionId(),
+                                                              LOREM_IPSUM.getInfo().getHash(),
+                                                              inputStream);
 
             assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
             assertThat(secondStepResult).isEqualTo(firstStepResult);
@@ -107,7 +107,7 @@ public class RepositoryTest {
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT, expectedExceptions = ConflictException.class)
     public void putAlreadyStoredTest() throws IOException {
-        repository(ALPHA).put(LOREM_IPSUM.getInfo());
+        repository(ALPHA).addInfo(LOREM_IPSUM.getInfo());
     }
 
     /**
@@ -184,7 +184,7 @@ public class RepositoryTest {
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS)
     public void deleteTest() {
         Repository alpha = repository(ALPHA);
-        CommandResult result = alpha.delete(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
+        CommandResult result = alpha.deleteContent(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
         assertThat(result.getOperation()).isEqualTo(Operation.DELETE);
 
         assertDeleted(alpha, LOREM_IPSUM);
@@ -225,7 +225,7 @@ public class RepositoryTest {
                 .add(rev1)
                 .build();
 
-        CommandResult result = repository(ALPHA).delete(tree.getHash(), tree.getHead());
+        CommandResult result = repository(ALPHA).deleteContent(tree.getHash(), tree.getHead());
         assertThat(result.isNoOp()).isTrue();
     }
 
@@ -234,7 +234,7 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS, expectedExceptions = UnknownContentException.class)
     public void deleteUnknownHashTest() {
-        repository(ALPHA).delete(UNKNOWN_HASH, new TreeSet<Hash>());
+        repository(ALPHA).deleteContent(UNKNOWN_HASH, new TreeSet<Hash>());
     }
 
     /**

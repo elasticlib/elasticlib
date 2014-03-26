@@ -142,14 +142,14 @@ class Volume {
     }
 
     /**
-     * Put an info revision into this volume. If associated content is not present, started transaction is suspended so
-     * that caller may latter complete this operation by creating this content.
+     * Add an info revision. If associated content is not present, started transaction is suspended so that caller may
+     * latter complete this operation by adding this content.
      *
      * @param contentInfo Content info revision.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfo contentInfo) {
-        LOG.info("[{}] Putting info for {}, with head {}", name, contentInfo.getHash(), contentInfo.getParents());
+    public CommandResult addInfo(final ContentInfo contentInfo) {
+        LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getHash(), contentInfo.getParents());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -161,14 +161,14 @@ class Volume {
     }
 
     /**
-     * Put a revision tree into this volume. If associated content is not present, started transaction is suspended so
-     * that caller may latter complete this operation by creating this content.
+     * Merge a revision tree with existing one, if any. If associated content is not present, started transaction is
+     * suspended so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult put(final ContentInfoTree contentInfoTree) {
-        LOG.info("[{}] Putting tree for {}", name, contentInfoTree.getHash());
+    public CommandResult mergeTree(final ContentInfoTree contentInfoTree) {
+        LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getHash());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -180,15 +180,15 @@ class Volume {
     }
 
     /**
-     * Resume a previously suspended transaction and create content from supplied input-stream.
+     * Resume a previously suspended transaction and add content from supplied input-stream.
      *
      * @param transactionId Identifier of the transaction to resume.
      * @param hash Content hash. Used to retrieve its associated info.
      * @param source Content.
      * @return Operation result.
      */
-    public CommandResult create(final int transactionId, final Hash hash, final InputStream source) {
-        LOG.info("[{}] Creating content {}", name, hash);
+    public CommandResult addContent(final int transactionId, final Hash hash, final InputStream source) {
+        LOG.info("[{}] Adding content {}", name, hash);
         return transactionManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
@@ -206,13 +206,13 @@ class Volume {
     }
 
     /**
-     * Delete a content from this volume.
+     * Delete a content.
      *
      * @param hash Hash of the content to delete.
      * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult delete(final Hash hash, final SortedSet<Hash> head) {
+    public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
         LOG.info("[{}] Deleting content {}, with head {}", name, hash, head);
         return transactionManager.inTransaction(new Command() {
             @Override

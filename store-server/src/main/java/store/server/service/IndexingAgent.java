@@ -55,7 +55,7 @@ class IndexingAgent extends Agent {
                     return false;
                 }
                 try (InputStream inputStream = inputStreamOpt.get()) {
-                    index.put(tree, inputStream);
+                    index.index(tree, inputStream);
                     return true;
 
                 } catch (IOException e) {

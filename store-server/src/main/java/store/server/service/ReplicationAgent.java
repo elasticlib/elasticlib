@@ -48,7 +48,7 @@ class ReplicationAgent extends Agent {
         protected boolean process(Event event) {
             ContentInfoTree tree = source.getInfoTree(event.getHash());
             if (tree.isDeleted()) {
-                destination.put(tree);
+                destination.mergeTree(tree);
                 return true;
 
             } else {
@@ -57,9 +57,9 @@ class ReplicationAgent extends Agent {
                     return false;
                 }
                 try (InputStream inputStream = inputStreamOpt.get()) {
-                    CommandResult result = destination.put(tree);
+                    CommandResult result = destination.mergeTree(tree);
                     if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
-                        destination.create(result.getTransactionId(), tree.getHash(), inputStream);
+                        destination.addContent(result.getTransactionId(), tree.getHash(), inputStream);
                     }
                     return true;
 

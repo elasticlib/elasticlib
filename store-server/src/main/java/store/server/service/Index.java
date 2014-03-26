@@ -124,8 +124,8 @@ class Index {
      * @param contentInfo Info associated with content to index.
      * @param inputStream Input stream of the content to index.
      */
-    public void put(ContentInfoTree contentInfoTree, InputStream inputStream) {
-        LOG.info("[{}] Indexing {}", name, contentInfoTree.getHash());
+    public void index(ContentInfoTree contentInfoTree, InputStream inputStream) {
+        LOG.info("[{}] Indexing {}, with head {}", name, contentInfoTree.getHash(), contentInfoTree.getHead());
         Optional<IndexEntry> existing = getEntry(contentInfoTree.getHash());
         if (existing.isPresent() && existing.get().getHead().equals(contentInfoTree.getHead())) {
             // already indexed !

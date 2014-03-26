@@ -8,8 +8,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import store.common.ContentInfoTree;
-import store.common.ContentInfoTree.ContentInfoTreeBuilder;
+import store.common.IndexEntry;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
@@ -82,9 +81,8 @@ public class IndexTest {
      */
     @Test(dependsOnGroups = "emptyRead")
     public void put() throws IOException {
-        ContentInfoTree tree = new ContentInfoTreeBuilder().add(LOREM_IPSUM.getInfo()).build();
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            index.put(tree, inputStream);
+            index.put(LOREM_IPSUM.getTree(), inputStream);
         }
     }
 
@@ -93,7 +91,8 @@ public class IndexTest {
      */
     @Test(groups = "read", dependsOnMethods = "put")
     public void find() {
-        assertThat(index.find("lorem", 0, 20)).hasSize(1);
+        IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
+        assertThat(index.find("lorem", 0, 20)).containsExactly(expected);
     }
 
     /**

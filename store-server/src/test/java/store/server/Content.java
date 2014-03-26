@@ -5,8 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Thread.currentThread;
+import java.util.SortedSet;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
+import store.common.ContentInfoTree;
 import store.common.Digest;
 import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
@@ -17,7 +19,8 @@ import static store.common.IoUtil.copyAndDigest;
 public final class Content {
 
     private final byte[] bytes;
-    private final Digest digest;
+    private final ContentInfo info;
+    private final ContentInfoTree tree;
 
     /**
      * Constructor. Loads the actual resource from the classpath.
@@ -27,8 +30,16 @@ public final class Content {
     public Content(String filename) {
         try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            digest = copyAndDigest(inputStream, outputStream);
+
+            Digest digest = copyAndDigest(inputStream, outputStream);
+
             bytes = outputStream.toByteArray();
+            info = new ContentInfoBuilder()
+                    .withLength(digest.getLength())
+                    .withHash(digest.getHash())
+                    .computeRevAndBuild();
+
+            tree = new ContentInfoTree.ContentInfoTreeBuilder().add(info).build();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -53,16 +64,27 @@ public final class Content {
      * @return This content's hash.
      */
     public Hash getHash() {
-        return digest.getHash();
+        return tree.getHash();
+    }
+
+    /**
+     * @return Head of a the tree associated with this content.
+     */
+    public SortedSet<Hash> getHead() {
+        return tree.getHead();
     }
 
     /**
      * @return Info on this content.
      */
     public ContentInfo getInfo() {
-        return new ContentInfoBuilder()
-                .withLength(digest.getLength())
-                .withHash(digest.getHash())
-                .computeRevAndBuild();
+        return info;
+    }
+
+    /**
+     * @return A tree containing the info revision of this content.
+     */
+    public ContentInfoTree getTree() {
+        return tree;
     }
 }

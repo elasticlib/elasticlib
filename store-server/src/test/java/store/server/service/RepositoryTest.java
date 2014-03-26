@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import static java.util.Collections.singleton;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
@@ -20,6 +18,7 @@ import store.common.ContentInfoTree;
 import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Event;
 import store.common.Hash;
+import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.server.Content;
@@ -173,7 +172,8 @@ public class RepositoryTest {
         async(new Runnable() {
             @Override
             public void run() {
-                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).hasSize(1);
+                IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
+                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).containsExactly(expected);
             }
         });
     }
@@ -184,8 +184,7 @@ public class RepositoryTest {
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS)
     public void deleteTest() {
         Repository alpha = repository(ALPHA);
-        SortedSet<Hash> head = new TreeSet<>(singleton(LOREM_IPSUM.getInfo().getRev()));
-        CommandResult result = alpha.delete(LOREM_IPSUM.getHash(), head);
+        CommandResult result = alpha.delete(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
         assertThat(result.getOperation()).isEqualTo(Operation.DELETE);
 
         assertDeleted(alpha, LOREM_IPSUM);

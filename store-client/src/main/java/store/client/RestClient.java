@@ -198,31 +198,18 @@ public class RestClient implements Closeable {
         }
     }
 
-    private static boolean isDeleted(List<ContentInfo> head) {
-        for (ContentInfo info : head) {
-            if (!info.isDeleted()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public CommandResult delete(String repository, Hash hash) {
+        List<ContentInfo> head = head(repository, hash);
+        if (isDeleted(head)) {
+            throw new RequestFailedException("This content is already deleted");
+        }
         return result(resource
                 .path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
-                .queryParam("rev", Joiner.on('-').join(revs(head(repository, hash))))
+                .queryParam("rev", Joiner.on('-').join(revs(head)))
                 .request()
                 .delete());
-    }
-
-    private static Set<Hash> revs(List<ContentInfo> head) {
-        Set<Hash> revs = new HashSet<>();
-        for (ContentInfo info : head) {
-            revs.add(info.getRev());
-        }
-        return revs;
     }
 
     private List<ContentInfo> head(String repository, Hash hash) {
@@ -234,6 +221,23 @@ public class RestClient implements Closeable {
                 .get();
 
         return readContentInfos(ensureSuccess(response).readEntity(JsonArray.class));
+    }
+
+    private static Set<Hash> revs(List<ContentInfo> head) {
+        Set<Hash> revs = new HashSet<>();
+        for (ContentInfo info : head) {
+            revs.add(info.getRev());
+        }
+        return revs;
+    }
+
+    private static boolean isDeleted(List<ContentInfo> head) {
+        for (ContentInfo info : head) {
+            if (!info.isDeleted()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static CommandResult result(Response response) {

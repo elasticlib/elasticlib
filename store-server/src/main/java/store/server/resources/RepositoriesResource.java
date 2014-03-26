@@ -7,7 +7,9 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import static java.util.Collections.emptyMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -49,6 +51,8 @@ import static store.common.json.JsonUtil.writeContentInfoTree;
 import static store.common.json.JsonUtil.writeContentInfos;
 import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeIndexEntries;
+import store.common.value.Value;
+import store.common.value.ValueType;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.FormDataMultipart;
@@ -332,14 +336,44 @@ public class RepositoriesResource {
     @GET
     @Path("{name}/content/{hash}")
     public Response getContent(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
-        return Response.ok(new StreamingOutput() {
-            @Override
-            public void write(OutputStream outputStream) throws IOException {
-                try (InputStream inputStream = repository(name).getContent(hash)) {
-                    copy(inputStream, outputStream);
+        while (true) {
+            final Repository repository = repository(name);
+            ResponseBuilder response = Response.ok(new StreamingOutput() {
+                @Override
+                public void write(OutputStream outputStream) throws IOException {
+                    try (InputStream inputStream = repository.getContent(hash)) {
+                        copy(inputStream, outputStream);
+                    }
                 }
+            });
+            Map<String, Value> metadata = metadata(repository, hash);
+            String contentType = value(metadata, "contentType");
+            if (!contentType.isEmpty()) {
+                response.type(contentType);
             }
-        }).build();
+            String fileName = value(metadata, "fileName");
+            if (!fileName.isEmpty()) {
+                response.header("Content-Disposition", "attachment; filename=" + fileName);
+            }
+            return response.build();
+        }
+    }
+
+    private static Map<String, Value> metadata(Repository repository, Hash hash) {
+        for (ContentInfo info : repository.getInfoHead(hash)) {
+            if (!info.isDeleted()) {
+                return info.getMetadata();
+            }
+        }
+        return emptyMap();
+    }
+
+    private static String value(Map<String, Value> metadata, String key) {
+        Value value = metadata.get(key);
+        if (value == null || value.type() != ValueType.STRING) {
+            return "";
+        }
+        return value.asString();
     }
 
     /**

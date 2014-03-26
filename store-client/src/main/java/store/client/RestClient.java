@@ -1,6 +1,8 @@
 package store.client;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.common.base.Splitter;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -249,19 +251,34 @@ public class RestClient implements Closeable {
     }
 
     public void get(String repository, Hash hash) {
-        Response response = resource.path("repositories/{name}/content/{hash}")
+        Response response = ensureSuccess(resource.path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
                 .request()
-                .get();
+                .get());
 
-        try (InputStream inputStream = ensureSuccess(response).readEntity(InputStream.class);
-                OutputStream outputStream = new DefferedFileOutputStream(Paths.get(hash.encode()))) {
+        Path path = Paths.get(fileName(response).or(hash.encode()));
+        try (InputStream inputStream = response.readEntity(InputStream.class);
+                OutputStream outputStream = new DefferedFileOutputStream(path)) {
             copy(inputStream, outputStream);
 
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
+    }
+
+    private static Optional<String> fileName(Response response) {
+        String header = response.getHeaders().getFirst("Content-Disposition").toString();
+        if (header == null || header.isEmpty()) {
+            return Optional.absent();
+        }
+        for (String param : Splitter.on(';').trimResults().omitEmptyStrings().split(header)) {
+            List<String> parts = Splitter.on('=').trimResults().omitEmptyStrings().splitToList(param);
+            if (parts.size() == 2 && parts.get(0).equalsIgnoreCase("filename")) {
+                return Optional.of(parts.get(1));
+            }
+        }
+        return Optional.absent();
     }
 
     public List<IndexEntry> find(String repository, String query, int from, int size) {

@@ -51,7 +51,6 @@ import static store.common.json.JsonUtil.writeEvents;
 import static store.common.json.JsonUtil.writeIndexEntries;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
-import store.server.multipart.BodyPart;
 import store.server.multipart.FormDataMultipart;
 import store.server.service.RepositoriesService;
 import store.server.service.Repository;
@@ -207,51 +206,6 @@ public class RepositoriesResource {
                 .add("path", status.getPath().toString())
                 .add("started", status.isStarted())
                 .build();
-    }
-
-    /**
-     * Create a new content or merge new info with an existing content.
-     * <p>
-     * Input:<br>
-     * - info (JSON): Content info JSON data.<br>
-     * - content (Raw): Content data.
-     * <p>
-     * Response:<br>
-     * - 200 OK: Operation succeeded.<br>
-     * - 201 CREATED: Operation succeeded and content was created.<br>
-     * - 400 BAD REQUEST: Invalid form data.<br>
-     * - 404 NOT FOUND: Repository was not found.<br>
-     * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
-     * - 412 PRECONDITION FAILED: Integrity checking failed.<br>
-     * - 503 SERVICE UNAVAILABLE: Repository is not started.
-     *
-     * @param name repository name
-     * @param formData entity form data
-     * @return HTTP response
-     */
-    @POST
-    @Path("{name}/content")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postContent(@PathParam("name") String name, FormDataMultipart formData) {
-        JsonObject json = formData.next("info").getAsJsonObject();
-        BodyPart content = formData.next("content");
-        URI uri = UriBuilder
-                .fromUri(uriInfo.getRequestUri())
-                .path(json.getString("hash"))
-                .build();
-
-        try (InputStream inputStream = content.getAsInputStream()) {
-            if (isContentInfo(json)) {
-                return response(uri, repository(name).put(readContentInfo(json), inputStream));
-            }
-            if (isContentInfoTree(json)) {
-                return response(uri, repository(name).put(readContentInfoTree(json), inputStream));
-            }
-            throw new BadRequestException();
-
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
     }
 
     /**

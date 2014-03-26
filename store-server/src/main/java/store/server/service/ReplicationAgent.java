@@ -4,8 +4,10 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import store.common.CommandResult;
 import store.common.ContentInfoTree;
 import store.common.Event;
+import store.common.Operation;
 
 /**
  * An agent that performs replication from a repository to another one.
@@ -55,7 +57,10 @@ class ReplicationAgent extends Agent {
                     return false;
                 }
                 try (InputStream inputStream = inputStreamOpt.get()) {
-                    destination.put(tree, inputStream);
+                    CommandResult result = destination.put(tree);
+                    if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
+                        destination.create(result.getTransactionId(), tree.getHash(), inputStream);
+                    }
                     return true;
 
                 } catch (IOException e) {

@@ -166,10 +166,30 @@ public class RestClient implements Closeable {
                     .withMetadata(metadata(filepath))
                     .computeRevAndBuild();
 
-            if (info.getLength() < 4096) {
-                return putInOneStep(repository, filepath, info);
-            } else {
-                return putInTwoStep(repository, filepath, info);
+            CommandResult firstStepResult = result(resource
+                    .path("repositories/{name}/info")
+                    .resolveTemplate("name", repository)
+                    .request()
+                    .post(entity(writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)));
+
+            if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
+                return firstStepResult;
+            }
+            try (InputStream inputStream = new LoggingInputStream("Uploading content",
+                                                                  newInputStream(filepath),
+                                                                  info.getLength())) {
+                MultiPart multipart = new FormDataMultiPart()
+                        .bodyPart(new StreamDataBodyPart("content",
+                                                         inputStream,
+                                                         filepath.getFileName().toString(),
+                                                         MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+                return result(resource.path("repositories/{name}/content/{hash}")
+                        .resolveTemplate("name", repository)
+                        .resolveTemplate("hash", info.getHash())
+                        .queryParam("txId", firstStepResult.getTransactionId())
+                        .request()
+                        .put(entity(multipart, addBoundary(multipart.getMediaType()))));
             }
         } catch (IOException e) {
             throw new RequestFailedException(e);
@@ -183,52 +203,6 @@ public class RestClient implements Closeable {
             }
         }
         return true;
-    }
-
-    private CommandResult putInOneStep(String repository, Path filepath, ContentInfo info) throws IOException {
-        try (InputStream inputStream = new LoggingInputStream("Uploading content",
-                                                              newInputStream(filepath),
-                                                              info.getLength())) {
-            MultiPart multipart = new FormDataMultiPart()
-                    .field("info", writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)
-                    .bodyPart(new StreamDataBodyPart("content",
-                                                     inputStream,
-                                                     filepath.getFileName().toString(),
-                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
-
-            return result(resource.path("repositories/{name}/content")
-                    .resolveTemplate("name", repository)
-                    .request()
-                    .post(entity(multipart, addBoundary(multipart.getMediaType()))));
-        }
-    }
-
-    private CommandResult putInTwoStep(String repository, Path filepath, ContentInfo info) throws IOException {
-        CommandResult firstStepResult = result(resource
-                .path("repositories/{name}/info")
-                .resolveTemplate("name", repository)
-                .request()
-                .post(entity(writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)));
-
-        if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
-            return firstStepResult;
-        }
-        try (InputStream inputStream = new LoggingInputStream("Uploading content",
-                                                              newInputStream(filepath),
-                                                              info.getLength())) {
-            MultiPart multipart = new FormDataMultiPart()
-                    .bodyPart(new StreamDataBodyPart("content",
-                                                     inputStream,
-                                                     filepath.getFileName().toString(),
-                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
-
-            return result(resource.path("repositories/{name}/content/{hash}")
-                    .resolveTemplate("name", repository)
-                    .resolveTemplate("hash", info.getHash())
-                    .queryParam("txId", firstStepResult.getTransactionId())
-                    .request()
-                    .put(entity(multipart, addBoundary(multipart.getMediaType()))));
-        }
     }
 
     public CommandResult delete(String repository, Hash hash) {

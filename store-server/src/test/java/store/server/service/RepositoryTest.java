@@ -26,8 +26,8 @@ import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.ConflictException;
+import store.server.exception.RepositoryNotStartedException;
 import store.server.exception.UnknownContentException;
 
 /**
@@ -40,7 +40,6 @@ public class RepositoryTest {
     private static final String DELETE = "delete";
     private static final String ALPHA = "alpha";
     private static final String BETA = "beta";
-    private static final String GAMMA = "gamma";
     private RepositoriesService repositoriesService;
     private Path path;
 
@@ -73,16 +72,13 @@ public class RepositoryTest {
     public void createRepositoryTest() {
         Path alphaPath = path.resolve(ALPHA);
         Path betaPath = path.resolve(BETA);
-        Path gammaPath = path.resolve(GAMMA);
 
         repositoriesService.createRepository(alphaPath);
         repositoriesService.createRepository(betaPath);
-        repositoriesService.createRepository(gammaPath);
 
-        assertThat(repositoriesService.getConfig().getRepositories()).containsExactly(alphaPath, betaPath, gammaPath);
+        assertThat(repositoriesService.getConfig().getRepositories()).containsExactly(alphaPath, betaPath);
         assertThat(repository(ALPHA).history(true, 0, 10)).isEmpty();
         assertThat(repository(BETA).history(true, 0, 10)).isEmpty();
-        assertThat(repository(GAMMA).history(true, 0, 10)).isEmpty();
     }
 
     /**
@@ -92,12 +88,17 @@ public class RepositoryTest {
      */
     @Test(groups = INIT, dependsOnMethods = "createRepositoryTest")
     public void putTest() throws IOException {
-        Repository alpha = repository(ALPHA);
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            CommandResult result = alpha.put(LOREM_IPSUM.getInfo(), inputStream);
-            assertThat(result.getOperation()).isEqualTo(Operation.CREATE);
+            Repository alpha = repository(ALPHA);
+            CommandResult firstStepResult = alpha.put(LOREM_IPSUM.getInfo());
+            CommandResult secondStepResult = alpha.create(firstStepResult.getTransactionId(),
+                                                          LOREM_IPSUM.getInfo().getHash(),
+                                                          inputStream);
+
+            assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
+            assertThat(secondStepResult).isEqualTo(firstStepResult);
+            assertHas(alpha, LOREM_IPSUM);
         }
-        assertHas(alpha, LOREM_IPSUM);
     }
 
     /**
@@ -199,6 +200,12 @@ public class RepositoryTest {
                 assertDeleted(repository(BETA), LOREM_IPSUM);
             }
         });
+        async(new Runnable() {
+            @Override
+            public void run() {
+                assertThat(repository(BETA).find("Lorem ipsum", 0, 10)).isEmpty();
+            }
+        });
     }
 
     /**
@@ -233,52 +240,12 @@ public class RepositoryTest {
 
     /**
      * Test.
-     *
-     * @throws IOException If an IO error occurs.
      */
-    @Test(groups = GAMMA, dependsOnGroups = INIT)
-    public void putInTwoStepsTest() throws IOException {
-        Repository gamma = repository(GAMMA);
-        CommandResult firstStepResult = gamma.put(LOREM_IPSUM.getInfo());
-        assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
-        try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            int transactionId = firstStepResult.getTransactionId();
-            Hash hash = LOREM_IPSUM.getInfo().getHash();
-            CommandResult secondStepResult = gamma.create(transactionId, hash, inputStream);
-            assertThat(secondStepResult).isEqualTo(firstStepResult);
-        }
-        assertHas(gamma, LOREM_IPSUM);
-
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertThat(repository(ALPHA).find("Lorem ipsum", 0, 10)).hasSize(1);
-            }
-        });
-    }
-
-    /**
-     * Test.
-     */
-    @Test(groups = GAMMA, dependsOnGroups = INIT, dependsOnMethods = "putInTwoStepsTest")
-    public void stopAndStartTest() {
-        Repository gamma = repository(GAMMA);
-        gamma.stop();
-        gamma.start();
-        assertThat(gamma.getInfoTree(LOREM_IPSUM.getHash())).isNotNull();
-    }
-
-    /**
-     * Test.
-     */
-    @Test(groups = GAMMA,
-          dependsOnGroups = INIT,
-          dependsOnMethods = "stopAndStartTest",
-          expectedExceptions = RepositoryNotStartedException.class)
+    @Test(dependsOnGroups = DELETE, expectedExceptions = RepositoryNotStartedException.class)
     public void stopTest() {
-        Repository gamma = repository(GAMMA);
-        gamma.stop();
-        gamma.getInfoTree(UNKNOWN_HASH);
+        Repository alpha = repository(ALPHA);
+        alpha.stop();
+        alpha.getInfoTree(UNKNOWN_HASH);
     }
 
     private Repository repository(String name) {

@@ -142,45 +142,6 @@ class Volume {
     }
 
     /**
-     * Put a new content into this volume, along with a single info revision.
-     *
-     * @param contentInfo Content info revision.
-     * @param source Content.
-     * @return Actual operation result.
-     */
-    public CommandResult put(final ContentInfo contentInfo, final InputStream source) {
-        LOG.info("[{}] Putting info and content for {}, with head {}",
-                 name, contentInfo.getHash(), contentInfo.getParents());
-        return transactionManager.inTransaction(new Command() {
-            @Override
-            public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfo);
-                handleCommandResult(result, contentInfo.getHash(), contentInfo.getLength(), source);
-                return result;
-            }
-        });
-    }
-
-    /**
-     * Put a new content into this volume, along with a related revision tree.
-     *
-     * @param contentInfoTree Revision tree.
-     * @param source Content.
-     * @return Actual operation result.
-     */
-    public CommandResult put(final ContentInfoTree contentInfoTree, final InputStream source) {
-        LOG.info("[{}] Putting tree and content for {}", name, contentInfoTree.getHash());
-        return transactionManager.inTransaction(new Command() {
-            @Override
-            public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfoTree);
-                handleCommandResult(result, contentInfoTree.getHash(), contentInfoTree.getLength(), source);
-                return result;
-            }
-        });
-    }
-
-    /**
      * Put an info revision into this volume. If associated content is not present, started transaction is suspended so
      * that caller may latter complete this operation by creating this content.
      *
@@ -231,14 +192,15 @@ class Volume {
         return transactionManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
-                Optional<ContentInfoTree> tree = infoManager.get(hash);
-                if (!tree.isPresent() || tree.get().isDeleted()) {
+                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                if (!treeOpt.isPresent() || treeOpt.get().isDeleted()) {
                     // This is unexpected as we have a resumed transaction at this point.
                     throw new BadRequestException();
                 }
-                CommandResult result = CommandResult.of(transactionId, Operation.CREATE, tree.get().getHead());
-                handleCommandResult(result, hash, tree.get().getLength(), source);
-                return result;
+                ContentInfoTree tree = treeOpt.get();
+                contentManager.add(hash, tree.getLength(), source);
+                historyManager.add(hash, Operation.CREATE, tree.getHead());
+                return CommandResult.of(transactionId, Operation.CREATE, tree.getHead());
             }
         });
     }
@@ -260,20 +222,6 @@ class Volume {
                 return result;
             }
         });
-    }
-
-    private void handleCommandResult(CommandResult result, Hash hash, long length, InputStream source) {
-        if (result.isNoOp()) {
-            return;
-        }
-        Operation operation = result.getOperation();
-        if (operation == Operation.CREATE) {
-            contentManager.add(hash, length, source);
-        }
-        if (operation == Operation.DELETE) {
-            contentManager.delete(hash);
-        }
-        historyManager.add(hash, operation, result.getHead());
     }
 
     private void handleCommandResult(CommandResult result, Hash hash) {

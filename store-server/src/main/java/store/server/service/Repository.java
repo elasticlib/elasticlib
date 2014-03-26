@@ -121,38 +121,6 @@ public class Repository {
     }
 
     /**
-     * Put a new content into this repository, along with a single info revision.
-     *
-     * @param contentInfo Content info revision.
-     * @param source Content.
-     * @return Actual operation result.
-     */
-    public CommandResult put(ContentInfo contentInfo, InputStream source) {
-        CommandResult result = volume.put(contentInfo, source);
-        if (!result.isNoOp()) {
-            agent.signal();
-            replicationService.signal(getName());
-        }
-        return result;
-    }
-
-    /**
-     * Put a new content into this repository, along with a related revision tree.
-     *
-     * @param contentInfoTree Revision tree.
-     * @param source Content.
-     * @return Actual operation result.
-     */
-    public CommandResult put(ContentInfoTree contentInfoTree, InputStream source) {
-        CommandResult result = volume.put(contentInfoTree, source);
-        if (!result.isNoOp()) {
-            agent.signal();
-            replicationService.signal(getName());
-        }
-        return result;
-    }
-
-    /**
      * Put an info revision into this repository. If associated content is not present, started transaction is suspended
      * so that caller may latter complete this operation by creating this content.
      *

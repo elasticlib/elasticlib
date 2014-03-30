@@ -1,7 +1,8 @@
 package store.common.json;
 
 import java.math.BigDecimal;
-import java.util.Map;
+import java.util.List;
+import java.util.Map.Entry;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
@@ -73,26 +74,27 @@ public final class JsonValidation {
         if (schema.type() != ValueType.OBJECT) {
             return false;
         }
-        for (Map.Entry<String, Schema> property : schema.properties().entrySet()) {
+        for (Entry<String, Schema> property : schema.properties().entrySet()) {
             String key = property.getKey();
-            Schema subSchema = property.getValue();
-            if (subSchema.isOptional()) {
-                continue;
-            }
-            if (!json.containsKey(key)) {
-                return false;
-            }
-            if (!subSchema.definition().isEmpty()) {
-                if (!json.containsKey(subSchema.definition())) {
-                    return false;
-                }
-                subSchema = Schema.read(json.getJsonObject(subSchema.definition()));
-            }
-            if (!isValid(json.get(key), subSchema)) {
+            Schema propertySchema = property.getValue();
+            if (!isPropertyValid(json, key, propertySchema)) {
                 return false;
             }
         }
         return true;
+    }
+
+    private static boolean isPropertyValid(JsonObject json, String key, Schema propertySchema) {
+        if (propertySchema.isOptional()) {
+            return true;
+        }
+        if (!propertySchema.definition().isEmpty()) {
+            if (!json.containsKey(propertySchema.definition())) {
+                return false;
+            }
+            propertySchema = Schema.read(json.getJsonObject(propertySchema.definition()));
+        }
+        return json.containsKey(key) && isValid(json.get(key), propertySchema);
     }
 
     private static boolean isValid(JsonArray array, Schema schema) {
@@ -100,20 +102,27 @@ public final class JsonValidation {
             return false;
         }
         if (schema.items().size() == 1) {
-            Schema itemSchema = schema.items().get(0);
-            for (JsonValue value : array) {
-                if (!isValid(value, itemSchema)) {
-                    return false;
-                }
-            }
-        } else {
-            if (array.size() != schema.items().size()) {
+            return areItemsValid(array, schema.items().get(0));
+        }
+        return areItemsValid(array, schema.items());
+    }
+
+    private static boolean areItemsValid(JsonArray array, Schema itemSchema) {
+        for (JsonValue value : array) {
+            if (!isValid(value, itemSchema)) {
                 return false;
             }
-            for (int i = 0; i < array.size(); i++) {
-                if (!isValid(array.get(i), schema.items().get(i))) {
-                    return false;
-                }
+        }
+        return true;
+    }
+
+    private static boolean areItemsValid(JsonArray array, List<Schema> itemSchemas) {
+        if (array.size() != itemSchemas.size()) {
+            return false;
+        }
+        for (int i = 0; i < array.size(); i++) {
+            if (!isValid(array.get(i), itemSchemas.get(i))) {
+                return false;
             }
         }
         return true;

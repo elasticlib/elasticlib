@@ -13,5 +13,5 @@ public interface Mappable {
      *
      * @return A map of values.
      */
-    public Map<String, Value> toMap();
+    Map<String, Value> toMap();
 }

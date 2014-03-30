@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import static store.common.MappableUtil.fromList;
+import static store.common.MappableUtil.toList;
 import static store.common.SinkOutputStream.sink;
 import store.common.io.ObjectEncoder;
 import store.common.value.Value;
@@ -21,8 +23,14 @@ import store.common.value.Value;
 /**
  * Represents a revision of metadata about a content.
  */
-public class ContentInfo {
+public class ContentInfo implements Mappable {
 
+    private static final String HASH = "hash";
+    private static final String LENGTH = "length";
+    private static final String REV = "rev";
+    private static final String PARENTS = "parents";
+    private static final String DELETED = "deleted";
+    private static final String METADATA = "metadata";
     private final Hash hash;
     private final long length;
     private final Hash rev;
@@ -82,6 +90,39 @@ public class ContentInfo {
     }
 
     @Override
+    public Map<String, Value> toMap() {
+        MapBuilder builder = new MapBuilder()
+                .put(HASH, hash)
+                .put(LENGTH, length)
+                .put(REV, rev)
+                .put(PARENTS, toList(parents));
+
+        if (deleted) {
+            builder.put(DELETED, deleted);
+        }
+        return builder.put(METADATA, metadata).build();
+    }
+
+    /**
+     * Read a new instance from supplied map of values.
+     *
+     * @param map A map of values.
+     * @return A new instance.
+     */
+    public static ContentInfo fromMap(Map<String, Value> map) {
+        ContentInfoBuilder builder = new ContentInfoBuilder()
+                .withHash(new Hash(map.get(HASH).asByteArray()))
+                .withLength(map.get(LENGTH).asLong())
+                .withParents(fromList(map.get(PARENTS).asList()))
+                .withMetadata(map.get(METADATA).asMap());
+
+        if (map.containsKey(DELETED)) {
+            builder.withDeleted(map.get(DELETED).asBoolean());
+        }
+        return builder.build(new Hash(map.get(REV).asByteArray()));
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(hash,
                             length,
@@ -110,12 +151,12 @@ public class ContentInfo {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add("hash", hash)
-                .add("length", length)
-                .add("rev", rev)
-                .add("parents", parents)
-                .add("deleted", deleted)
-                .add("metadata", metadata)
+                .add(HASH, hash)
+                .add(LENGTH, length)
+                .add(REV, rev)
+                .add(PARENTS, parents)
+                .add(DELETED, deleted)
+                .add(METADATA, metadata)
                 .toString();
     }
 
@@ -216,18 +257,18 @@ public class ContentInfo {
          */
         public ContentInfo computeRevAndBuild() {
             ObjectEncoder encoder = new ObjectEncoder()
-                    .put("hash", hash.getBytes())
-                    .put("length", hash.getBytes());
+                    .put(HASH, hash.getBytes())
+                    .put(LENGTH, hash.getBytes());
 
             List<Value> list = new ArrayList<>();
             for (Hash parent : parents) {
                 list.add(Value.of(parent.getBytes()));
             }
-            encoder.put("parents", list);
+            encoder.put(PARENTS, list);
             if (deleted) {
-                encoder.put("deleted", deleted);
+                encoder.put(DELETED, deleted);
             }
-            encoder.put("metadata", metadata);
+            encoder.put(METADATA, metadata);
             try {
                 rev = IoUtil.copyAndDigest(new ByteArrayInputStream(encoder.build()), sink()).getHash();
                 return new ContentInfo(this);

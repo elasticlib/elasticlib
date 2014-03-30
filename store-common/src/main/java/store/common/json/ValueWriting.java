@@ -1,6 +1,5 @@
 package store.common.json;
 
-import com.google.common.base.Function;
 import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
@@ -13,86 +12,92 @@ import javax.json.JsonNumber;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.INT;
-import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 
 final class ValueWriting {
 
-    private static final Map<ValueType, Function<Value, JsonValue>> WRITERS = new EnumMap<>(ValueType.class);
+    private static final Map<ValueType, Writer> WRITERS = new EnumMap<>(ValueType.class);
 
     static {
-        WRITERS.put(NULL, new Function<Value, JsonValue>() {
+        WRITERS.put(NULL, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return JsonValue.NULL;
             }
         });
-        WRITERS.put(BYTE, new Function<Value, JsonValue>() {
+        WRITERS.put(BYTE, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonString(value.asHexadecimalString());
             }
         });
         WRITERS.put(BINARY, WRITERS.get(BYTE));
-        WRITERS.put(BOOLEAN, new Function<Value, JsonValue>() {
+        WRITERS.put(BOOLEAN, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
             }
         });
-        WRITERS.put(INT, new Function<Value, JsonValue>() {
+        WRITERS.put(INT, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asInt());
             }
         });
-        WRITERS.put(LONG, new Function<Value, JsonValue>() {
+        WRITERS.put(LONG, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asLong());
             }
         });
-        WRITERS.put(BIG_DECIMAL, new Function<Value, JsonValue>() {
+        WRITERS.put(BIG_DECIMAL, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asBigDecimal());
             }
         });
-        WRITERS.put(STRING, new Function<Value, JsonValue>() {
+        WRITERS.put(STRING, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonString(value.asString());
             }
         });
-        WRITERS.put(DATE, new Function<Value, JsonValue>() {
+        WRITERS.put(DATE, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
+            public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asDate().getTime());
             }
         });
-        WRITERS.put(OBJECT, new Function<Value, JsonValue>() {
+        WRITERS.put(OBJECT, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
-                return writeMap(value.asMap()).build();
+            public JsonValue apply(Value value, Schema schema) {
+                return writeMap(value.asMap(), schema).build();
             }
         });
-        WRITERS.put(ARRAY, new Function<Value, JsonValue>() {
+        WRITERS.put(ARRAY, new Writer() {
             @Override
-            public JsonValue apply(Value value) {
-                return writeList(value.asList()).build();
+            public JsonValue apply(Value value, Schema schema) {
+                return writeList(value.asList(), schema).build();
             }
         });
+    }
+
+    private interface Writer {
+
+        JsonValue apply(Value value, Schema schema);
     }
 
     private ValueWriting() {
@@ -122,22 +127,38 @@ final class ValueWriting {
         return builder.build().getJsonNumber(0);
     }
 
-    public static JsonValue writeValue(Value value) {
-        return WRITERS.get(value.type()).apply(value);
+    public static JsonValue writeValue(Value value, Schema schema) {
+        return WRITERS.get(value.type()).apply(value, schema);
     }
 
-    public static JsonObjectBuilder writeMap(Map<String, Value> map) {
+    public static JsonObjectBuilder writeMap(Map<String, Value> map, Schema schema) {
         JsonObjectBuilder json = createObjectBuilder();
         for (Entry<String, Value> entry : map.entrySet()) {
-            json.add(entry.getKey(), writeValue(entry.getValue()));
+            String key = entry.getKey();
+            Value value = entry.getValue();
+            Schema subSchema = schema.properties().get(key);
+            if (!subSchema.definition().isEmpty()) {
+                Schema definition = Schema.of(key, value);
+                json.add(subSchema.definition(), definition.write());
+                json.add(key, writeValue(value, definition));
+            } else {
+                json.add(key, writeValue(value, subSchema));
+            }
         }
         return json;
     }
 
-    public static JsonArrayBuilder writeList(List<Value> list) {
+    public static JsonArrayBuilder writeList(List<Value> list, Schema schema) {
         JsonArrayBuilder array = createArrayBuilder();
-        for (Value value : list) {
-            array.add(writeValue(value));
+        List<Schema> itemsSchemas = schema.items();
+        if (itemsSchemas.size() == 1) {
+            for (Value value : list) {
+                array.add(writeValue(value, itemsSchemas.get(0)));
+            }
+        } else {
+            for (int i = 0; i < list.size(); i++) {
+                array.add(writeValue(list.get(i), itemsSchemas.get(i)));
+            }
         }
         return array;
     }

@@ -2,16 +2,24 @@ package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;
+import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import static store.common.MappableUtil.fromList;
+import static store.common.MappableUtil.toList;
+import store.common.value.Value;
 
 /**
  * Actual result of a command.
  */
-public final class CommandResult {
+public final class CommandResult implements Mappable {
 
+    private static final String TRANSACTION_ID = "transactionId";
+    private static final String OPERATION = "operation";
+    private static final String NO_OP = "noOp";
+    private static final String HEAD = "head";
     private int transactionId;
     private final Operation operation;
     private final SortedSet<Hash> head;
@@ -85,6 +93,32 @@ public final class CommandResult {
     }
 
     @Override
+    public Map<String, Value> toMap() {
+        return new MapBuilder()
+                .put(TRANSACTION_ID, transactionId)
+                .put(OPERATION, isNoOp() ? NO_OP : operation.toString())
+                .put(HEAD, toList(head))
+                .build();
+    }
+
+    /**
+     * Read a new instance from supplied map of values.
+     *
+     * @param map A map of values.
+     * @return A new instance.
+     */
+    public static CommandResult fromMap(Map<String, Value> map) {
+        int transactionId = map.get(TRANSACTION_ID).asInt();
+        SortedSet<Hash> head = fromList(map.get(HEAD).asList());
+        String opCode = map.get(OPERATION).asString();
+        if (opCode.equals(NO_OP)) {
+            return CommandResult.noOp(transactionId, head);
+        } else {
+            return CommandResult.of(transactionId, Operation.fromString(opCode), head);
+        }
+    }
+
+    @Override
     public int hashCode() {
         return hash(operation, head);
     }
@@ -96,6 +130,7 @@ public final class CommandResult {
         }
         CommandResult other = (CommandResult) obj;
         return new EqualsBuilder()
+                .append(transactionId, other.transactionId)
                 .append(operation, other.operation)
                 .append(head, other.head)
                 .build();
@@ -104,8 +139,9 @@ public final class CommandResult {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add("operation", operation == null ? "noOp" : operation)
-                .add("head", head)
+                .add(TRANSACTION_ID, transactionId)
+                .add(OPERATION, operation == null ? NO_OP : operation)
+                .add(HEAD, head)
                 .toString();
     }
 }

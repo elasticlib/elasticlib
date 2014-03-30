@@ -4,8 +4,6 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.SortedSet;
 import store.common.CommandResult;
 import store.common.ContentInfo;
@@ -14,11 +12,9 @@ import store.common.ContentInfoTree;
 import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Hash;
 import store.common.Operation;
-import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
-import store.common.value.Value;
-import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.ConflictException;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
 import store.server.exception.WriteException;
@@ -175,21 +171,8 @@ class InfoManager {
 
     private static void save(ContentInfoTree tree, Output output) {
         for (ContentInfo info : tree.list()) {
-            ObjectEncoder encoder = new ObjectEncoder()
-                    .put("hash", info.getHash().getBytes())
-                    .put("length", info.getLength())
-                    .put("rev", info.getRev().getBytes());
-
-            List<Value> list = new ArrayList<>();
-            for (Hash parent : info.getParents()) {
-                list.add(Value.of(parent.getBytes()));
-            }
-            encoder.put("parents", list);
-            if (info.isDeleted()) {
-                encoder.put("deleted", true);
-            }
-            byte[] bytes = encoder
-                    .put("metadata", info.getMetadata())
+            byte[] bytes = new ObjectEncoder()
+                    .put(info.toMap())
                     .build();
 
             output.write(bytes);
@@ -200,19 +183,8 @@ class InfoManager {
         ContentInfoTreeBuilder treeBuilder = new ContentInfoTreeBuilder();
         try (StreamDecoder streamDecoder = new StreamDecoder(input)) {
             while (streamDecoder.hasNext()) {
-                ObjectDecoder objectDecoder = streamDecoder.next();
-                ContentInfoBuilder builder = new ContentInfoBuilder();
-                for (Value value : objectDecoder.getList("parents")) {
-                    builder.withParent(new Hash(value.asByteArray()));
-                }
-                if (objectDecoder.containsKey("deleted")) {
-                    builder.withDeleted(objectDecoder.getBoolean("deleted"));
-                }
-                treeBuilder.add(builder
-                        .withHash(new Hash(objectDecoder.getByteArray("hash")))
-                        .withLength(objectDecoder.getLong("length"))
-                        .withMetadata(objectDecoder.getMap("metadata"))
-                        .build(new Hash(objectDecoder.getByteArray("rev"))));
+                ContentInfo contentInfo = ContentInfo.fromMap(streamDecoder.next().asMap());
+                treeBuilder.add(contentInfo);
             }
         }
         return treeBuilder.build();

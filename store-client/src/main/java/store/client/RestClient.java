@@ -48,13 +48,10 @@ import store.common.Event;
 import store.common.Hash;
 import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
+import store.common.Mappable;
 import store.common.Operation;
-import static store.common.json.JsonUtil.readCommandResult;
-import static store.common.json.JsonUtil.readContentInfoTree;
-import static store.common.json.JsonUtil.readContentInfos;
-import static store.common.json.JsonUtil.readEvents;
-import static store.common.json.JsonUtil.readIndexEntries;
-import static store.common.json.JsonUtil.writeContentInfo;
+import store.common.json.JsonReading;
+import static store.common.json.JsonWriting.write;
 import static store.common.metadata.MetadataUtil.metadata;
 
 /**
@@ -100,6 +97,20 @@ public class RestClient implements Closeable {
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }
         return response;
+    }
+
+    private static <T extends Mappable> T read(Response response, Class<T> clazz) {
+        JsonObject json = ensureSuccess(response).readEntity(JsonObject.class);
+        return JsonReading.read(json, clazz);
+    }
+
+    private static <T extends Mappable> List<T> readAll(Response response, Class<T> clazz) {
+        JsonArray array = ensureSuccess(response).readEntity(JsonArray.class);
+        return JsonReading.readAll(array, clazz);
+    }
+
+    private static CommandResult result(Response response) {
+        return read(response, CommandResult.class);
     }
 
     private static List<String> asStringList(JsonArray array) {
@@ -172,7 +183,7 @@ public class RestClient implements Closeable {
                     .path("repositories/{name}/info")
                     .resolveTemplate("name", repository)
                     .request()
-                    .post(entity(writeContentInfo(info), MediaType.APPLICATION_JSON_TYPE)));
+                    .post(entity(write(info), MediaType.APPLICATION_JSON_TYPE)));
 
             if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
                 return firstStepResult;
@@ -220,7 +231,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readContentInfos(ensureSuccess(response).readEntity(JsonArray.class));
+        return readAll(response, ContentInfo.class);
     }
 
     private static Set<Hash> revs(List<ContentInfo> head) {
@@ -240,10 +251,6 @@ public class RestClient implements Closeable {
         return true;
     }
 
-    private static CommandResult result(Response response) {
-        return readCommandResult(ensureSuccess(response).readEntity(JsonObject.class));
-    }
-
     public ContentInfoTree getInfoTree(String repository, Hash hash) {
         Response response = resource.path("repositories/{name}/info/{hash}")
                 .resolveTemplate("name", repository)
@@ -251,7 +258,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readContentInfoTree(ensureSuccess(response).readEntity(JsonObject.class));
+        return read(response, ContentInfoTree.class);
     }
 
     public void get(String repository, Hash hash) {
@@ -294,7 +301,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readIndexEntries(ensureSuccess(response).readEntity(JsonArray.class));
+        return readAll(response, IndexEntry.class);
     }
 
     public List<ContentInfo> findInfo(String repository, String query, int from, int size) {
@@ -306,7 +313,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readContentInfos(ensureSuccess(response).readEntity(JsonArray.class));
+        return readAll(response, ContentInfo.class);
     }
 
     public List<Event> history(String repository, boolean asc, long from, int size) {
@@ -318,7 +325,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get();
 
-        return readEvents(ensureSuccess(response).readEntity(JsonArray.class));
+        return readAll(response, Event.class);
     }
 
     @Override

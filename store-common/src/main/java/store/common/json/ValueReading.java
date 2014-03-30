@@ -4,7 +4,7 @@ import static com.google.common.io.BaseEncoding.base16;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.json.JsonArray;
@@ -15,16 +15,16 @@ import javax.json.JsonValue;
 import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.INT;
-import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 
 final class ValueReading {
@@ -121,9 +121,15 @@ final class ValueReading {
     }
 
     public static Map<String, Value> readMap(JsonObject json, Schema schema) {
-        Map<String, Value> map = new HashMap<>();
+        Map<String, Value> map = new LinkedHashMap<>();
         for (String key : json.keySet()) {
-            map.put(key, readValue(json.get(key), schema.properties().get(key)));
+            if (schema.properties().containsKey(key)) {
+                Schema subSchema = schema.properties().get(key);
+                if (!subSchema.definition().isEmpty()) {
+                    subSchema = Schema.read(json.getJsonObject(subSchema.definition()));
+                }
+                map.put(key, readValue(json.get(key), subSchema));
+            }
         }
         return map;
     }

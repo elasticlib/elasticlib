@@ -1,6 +1,12 @@
 {
-    "repositories": ["/repo/primary", "/repo/secondary"],
-    "sync": {
-        "primary": ["secondary"]
-    }
+    "repositories": [
+        "/repo/primary",
+        "/repo/secondary"
+    ],
+    "replications": [
+        {
+            "source": "primary",
+            "destination": "secondary"
+        }
+    ]
 }

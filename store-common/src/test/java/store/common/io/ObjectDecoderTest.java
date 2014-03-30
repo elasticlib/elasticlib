@@ -55,6 +55,30 @@ public class ObjectDecoderTest {
      * Test.
      */
     @Test
+    public void asMap() {
+        byte[] bytes = array(0x05, // type
+                             0x6E, 0x75, 0x6D, 0x00, // key
+                             0x00, 0x00, 0x00, 0x04, // entry
+                             0x08, // type
+                             0x73, 0x74, 0x72, 0x00, // key
+                             0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, // entry
+                             0x03, // type
+                             0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
+                             0x00); // entry
+
+        Map<String, Value> map = new HashMap<>();
+        map.put("num", Value.of(4));
+        map.put("str", Value.of("test"));
+        map.put("bool", Value.of(false));
+
+        ObjectDecoder decoder = new ObjectDecoder(bytes);
+        assertThat(decoder.asMap()).isEqualTo(map);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void decodeNull() {
         byte[] bytes = array(0x01, // type
                              0x6E, 0x75, 0x6C, 0x6C, 0x00); // key (no value)

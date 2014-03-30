@@ -23,7 +23,7 @@ final class ListSchema extends Schema {
     private final List<Schema> items;
 
     ListSchema(String title, List<Value> list) {
-        super(title, ValueType.ARRAY);
+        super(title, ValueType.ARRAY, false);
         final List<Schema> tmp = transform(list, SCHEMA_BUILDER);
         if (!tmp.isEmpty() && Iterables.all(tmp, new Predicate<Schema>() {
             @Override
@@ -38,8 +38,8 @@ final class ListSchema extends Schema {
         }
     }
 
-    ListSchema(String title, JsonObject json) {
-        super(title, ValueType.ARRAY);
+    ListSchema(String title, JsonObject json, boolean optional) {
+        super(title, ValueType.ARRAY, optional);
         if (json.get(ITEMS).getValueType() == JsonValue.ValueType.OBJECT) {
             items = singletonList(Schema.read(json.getJsonObject(ITEMS)));
         } else {

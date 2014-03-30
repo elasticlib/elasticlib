@@ -155,7 +155,7 @@ public class RepositoryTest {
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
     public void createReplicationTest() {
         repositoriesService.createReplication(ALPHA, BETA);
-        assertThat(repositoriesService.getConfig().getSync(ALPHA)).containsExactly(BETA);
+        assertThat(repositoriesService.getConfig().getReplications(ALPHA)).containsExactly(BETA);
         async(new Runnable() {
             @Override
             public void run() {

@@ -258,31 +258,6 @@ public class ObjectEncoderTest {
      * Test.
      */
     @Test
-    public void encode() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x1D, // length
-                                0x05, // type
-                                0x6E, 0x75, 0x6D, 0x00, // key
-                                0x00, 0x00, 0x00, 0x04, // entry
-                                0x08, // type
-                                0x73, 0x74, 0x72, 0x00, // key
-                                0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, // entry
-                                0x03, // type
-                                0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
-                                0x00); // entry
-
-        byte[] actual = new ObjectEncoder()
-                .put("num", 4)
-                .put("str", "test")
-                .put("bool", false)
-                .build();
-
-        assertThat(actual).isEqualTo(expected);
-    }
-
-    /**
-     * Test.
-     */
-    @Test
     public void encodeValue() {
         byte[] expected = array(0x00, 0x00, 0x00, 0x1D, // length
                                 0x05, // type
@@ -299,6 +274,34 @@ public class ObjectEncoderTest {
                 .put("num", Value.of(4))
                 .put("str", Value.of("test"))
                 .put("bool", Value.of(false))
+                .build();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void encode() {
+        byte[] expected = array(0x00, 0x00, 0x00, 0x1D, // length
+                                0x05, // type
+                                0x6E, 0x75, 0x6D, 0x00, // key
+                                0x00, 0x00, 0x00, 0x04, // entry
+                                0x08, // type
+                                0x73, 0x74, 0x72, 0x00, // key
+                                0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, // entry
+                                0x03, // type
+                                0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
+                                0x00); // entry
+
+        Map<String, Value> map = new LinkedHashMap<>();
+        map.put("num", Value.of(4));
+        map.put("str", Value.of("test"));
+        map.put("bool", Value.of(false));
+
+        byte[] actual = new ObjectEncoder()
+                .put(map)
                 .build();
 
         assertThat(actual).isEqualTo(expected);

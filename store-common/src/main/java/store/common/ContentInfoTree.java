@@ -28,8 +28,11 @@ import store.common.value.Value;
 /**
  * Represents a content info revision tree.
  */
-public class ContentInfoTree {
+public class ContentInfoTree implements Mappable {
 
+    private static final String HASH = "hash";
+    private static final String LENGTH = "length";
+    private static final String REVS = "revs";
     private final SortedSet<Hash> head;
     private final SortedSet<Hash> tail;
     private final SortedSet<Hash> unknownParents;
@@ -358,6 +361,40 @@ public class ContentInfoTree {
             }
         }
         return seed;
+    }
+
+    @Override
+    public Map<String, Value> toMap() {
+        List<Value> revisions = new ArrayList<>(nodes.size());
+        for (ContentInfo info : list()) {
+            Map<String, Value> map = info.toMap();
+            map.remove(HASH);
+            map.remove(LENGTH);
+            revisions.add(Value.of(map));
+        }
+        return new MapBuilder()
+                .put(HASH, getHash())
+                .put(LENGTH, getLength())
+                .put(REVS, revisions)
+                .build();
+    }
+
+    /**
+     * Read a new instance from supplied map of values.
+     *
+     * @param map A map of values.
+     * @return A new instance.
+     */
+    public static ContentInfoTree fromMap(Map<String, Value> map) {
+        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
+        for (Value revision : map.get(REVS).asList()) {
+            Map<String, Value> infoMap = new HashMap<>();
+            infoMap.put(HASH, map.get(HASH));
+            infoMap.put(LENGTH, map.get(LENGTH));
+            infoMap.putAll(revision.asMap());
+            builder.add(ContentInfo.fromMap(infoMap));
+        }
+        return builder.build();
     }
 
     @Override

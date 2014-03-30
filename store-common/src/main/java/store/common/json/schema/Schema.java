@@ -3,14 +3,15 @@ package store.common.json.schema;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import static java.util.Objects.requireNonNull;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
+import store.common.EqualsBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;
@@ -29,6 +30,8 @@ public class Schema {
     static final String TYPE = "type";
     static final String PROPERTIES = "properties";
     static final String ITEMS = "items";
+    static final String DEFINITION = "definition";
+    static final String OPTIONAL = "optional";
     static final Function<Value, Schema> SCHEMA_BUILDER = new Function<Value, Schema>() {
         @Override
         public Schema apply(Value value) {
@@ -42,11 +45,27 @@ public class Schema {
         }
     };
     private final String title;
+    private final String definition;
     private final ValueType type;
+    private final boolean optional;
+
+    private Schema(String title, String definition, ValueType type, boolean optional) {
+        this.title = title;
+        this.definition = definition;
+        this.type = type;
+        this.optional = optional;
+    }
+
+    Schema(String title, ValueType type, boolean optional) {
+        this(title, "", type, optional);
+    }
+
+    Schema(String title, String definition) {
+        this(title, definition, null, false);
+    }
 
     Schema(String title, ValueType type) {
-        this.title = requireNonNull(title);
-        this.type = requireNonNull(type);
+        this(title, "", type, false);
     }
 
     /**
@@ -99,16 +118,20 @@ public class Schema {
      */
     public static Schema read(JsonObject json) {
         String title = json.containsKey(TITLE) ? json.getString(TITLE) : "";
+        if (json.containsKey(DEFINITION)) {
+            return new Schema(title, json.getString(DEFINITION));
+        }
         ValueType type = ValueType.valueOf(LOWER_CAMEL.to(UPPER_UNDERSCORE, json.getString(TYPE)));
+        boolean optional = json.containsKey(OPTIONAL) ? json.getBoolean(OPTIONAL) : false;
         switch (type) {
             case OBJECT:
-                return new MapSchema(title, json);
+                return new MapSchema(title, json, optional);
 
             case ARRAY:
-                return new ListSchema(title, json);
+                return new ListSchema(title, json, optional);
 
             default:
-                return new Schema(title, type);
+                return new Schema(title, type, optional);
         }
     }
 
@@ -122,7 +145,12 @@ public class Schema {
         if (!title.isEmpty()) {
             builder.add(TITLE, title);
         }
-        builder.add(TYPE, UPPER_UNDERSCORE.to(LOWER_CAMEL, type().name()));
+        if (!definition.isEmpty()) {
+            builder.add(DEFINITION, definition);
+        }
+        if (type != null) {
+            builder.add(TYPE, UPPER_UNDERSCORE.to(LOWER_CAMEL, type.name()));
+        }
         return write(builder);
     }
 
@@ -140,17 +168,36 @@ public class Schema {
     }
 
     /**
-     * Provides the value type read property described by this schema.
+     * Provides the title of the schema defining this one, if any, or an empty string otherwise.
+     *
+     * @return A String, which may be empty.
+     */
+    public String definition() {
+        return definition;
+    }
+
+    /**
+     * Provides the value type of property described by this schema. Fails if this schema depends on an external
+     * definition.
      *
      * @return A Value type.
      */
     public ValueType type() {
-        return type;
+        return requireNonNull(type);
     }
 
     /**
-     * Provides JSON schemas read each property read the object described by this schema. Only relevant for a JSON
-     * object schema.
+     * Indicates if field defined by this schema is optional.
+     *
+     * @return true if this is the case.
+     */
+    public boolean isOptional() {
+        return optional;
+    }
+
+    /**
+     * Provides JSON schemas of each property of the object described by this schema. Only relevant for a JSON object
+     * schema.
      *
      * @return A map read JSON schemas
      */
@@ -159,7 +206,7 @@ public class Schema {
     }
 
     /**
-     * Provides JSON schemas read each property read the array described by this schema. Only relevant for a JSON array
+     * Provides JSON schemas of each property of the array described by this schema. Only relevant for a JSON array
      * schema.
      *
      * @return A list read JSON schemas
@@ -170,16 +217,19 @@ public class Schema {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(title, type);
+        return Objects.hash(title, type);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || getClass() != obj.getClass()) {
+        if (!(obj instanceof Schema)) {
             return false;
         }
         Schema other = (Schema) obj;
-        return title.equals(other.title) && type.equals(other.type);
+        return new EqualsBuilder()
+                .append(title, other.title)
+                .append(type, other.type)
+                .build();
     }
 
     @Override

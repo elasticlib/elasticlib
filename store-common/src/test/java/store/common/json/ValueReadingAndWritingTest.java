@@ -162,7 +162,7 @@ public class ValueReadingAndWritingTest {
      */
     @Test(dataProvider = "writeValueDataProvider")
     public void writeValueTest(Value value, JsonValue expected) {
-        assertThat(writeValue(value))
+        assertThat(writeValue(value, Schema.of("", value)))
                 .as(value.type().toString())
                 .isEqualTo(expected);
     }

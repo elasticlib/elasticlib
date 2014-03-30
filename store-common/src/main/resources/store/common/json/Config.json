@@ -1,0 +1,26 @@
+{
+    "title": "config",
+    "type": "object",
+    "properties": {
+        "repositories": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "replications": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string"
+                    },
+                    "destination": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

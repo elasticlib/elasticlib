@@ -36,21 +36,17 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.CommandResult;
 import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Hash;
 import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
-import static store.common.json.JsonUtil.hasBooleanValue;
-import static store.common.json.JsonUtil.hasStringValue;
-import static store.common.json.JsonUtil.isContentInfo;
-import static store.common.json.JsonUtil.isContentInfoTree;
-import static store.common.json.JsonUtil.readContentInfo;
-import static store.common.json.JsonUtil.readContentInfoTree;
-import static store.common.json.JsonUtil.writeCommandResult;
-import static store.common.json.JsonUtil.writeContentInfoTree;
-import static store.common.json.JsonUtil.writeContentInfos;
-import static store.common.json.JsonUtil.writeEvents;
-import static store.common.json.JsonUtil.writeIndexEntries;
+import static store.common.json.JsonReading.read;
+import static store.common.json.JsonValidation.hasBooleanValue;
+import static store.common.json.JsonValidation.hasStringValue;
+import static store.common.json.JsonValidation.isValid;
+import static store.common.json.JsonWriting.write;
+import static store.common.json.JsonWriting.writeAll;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import store.server.exception.BadRequestException;
@@ -232,11 +228,11 @@ public class RepositoriesResource {
     @Path("{name}/info")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postInfo(@PathParam("name") String name, JsonObject json) {
-        if (isContentInfo(json)) {
-            return response(repository(name).addInfo(readContentInfo(json)));
+        if (isValid(json, ContentInfo.class)) {
+            return response(repository(name).addInfo(read(json, ContentInfo.class)));
         }
-        if (isContentInfoTree(json)) {
-            return response(repository(name).mergeTree(readContentInfoTree(json)));
+        if (isValid(json, ContentInfoTree.class)) {
+            return response(repository(name).mergeTree(read(json, ContentInfoTree.class)));
         }
         throw new BadRequestException();
     }
@@ -267,9 +263,9 @@ public class RepositoriesResource {
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response addContent(@PathParam("name") String name,
-                                  @PathParam("hash") Hash hash,
-                                  @QueryParam("txId") int transactionId,
-                                  FormDataMultipart formData) {
+                               @PathParam("hash") Hash hash,
+                               @QueryParam("txId") int transactionId,
+                               FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next("content").getAsInputStream()) {
             return response(uriInfo.getRequestUri(), repository(name).addContent(transactionId, hash, inputStream));
@@ -308,7 +304,7 @@ public class RepositoriesResource {
     }
 
     private static Response response(CommandResult result) {
-        return Response.ok().entity(writeCommandResult(result)).build();
+        return Response.ok().entity(write(result)).build();
     }
 
     private static Response response(URI uri, CommandResult result) {
@@ -318,7 +314,7 @@ public class RepositoriesResource {
         } else {
             builder = Response.ok();
         }
-        return builder.entity(writeCommandResult(result)).build();
+        return builder.entity(write(result)).build();
     }
 
     /**
@@ -401,12 +397,12 @@ public class RepositoriesResource {
                                  @QueryParam("rev") @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
-            return writeContentInfoTree(repository(name).getInfoTree(hash));
+            return write(repository(name).getInfoTree(hash));
         }
         if (rev.equals("head")) {
-            return writeContentInfos(repository(name).getInfoHead(hash));
+            return writeAll(repository(name).getInfoHead(hash));
         }
-        return writeContentInfos(repository(name).getInfoRevisions(hash, parseRevisions(rev)));
+        return writeAll(repository(name).getInfoRevisions(hash, parseRevisions(rev)));
     }
 
     private static List<Hash> parseRevisions(String arg) {
@@ -445,7 +441,7 @@ public class RepositoriesResource {
         if (from == null) {
             from = sort.equals("asc") ? 0 : Long.MAX_VALUE;
         }
-        return writeEvents(repository(name).history(sort.equals("asc"), from, size));
+        return writeAll(repository(name).history(sort.equals("asc"), from, size));
     }
 
     /**
@@ -471,7 +467,7 @@ public class RepositoriesResource {
                           @QueryParam("query") String query,
                           @QueryParam("from") @DefaultValue("0") int from,
                           @QueryParam("size") @DefaultValue("20") int size) {
-        return writeIndexEntries(repository(name).find(query, from, size));
+        return writeAll(repository(name).find(query, from, size));
     }
 
     /**
@@ -502,7 +498,7 @@ public class RepositoriesResource {
         for (IndexEntry entry : repository.find(query, from, size)) {
             infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getHead()));
         }
-        return writeContentInfos(infos);
+        return writeAll(infos);
     }
 
     private Repository repository(String name) {

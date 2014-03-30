@@ -19,7 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.Config;
-import static store.common.json.JsonUtil.hasStringValue;
+import static store.common.json.JsonValidation.hasStringValue;
 import store.server.exception.BadRequestException;
 import store.server.service.RepositoriesService;
 
@@ -110,7 +110,7 @@ public class ReplicationsResource {
         Config config = repository.getConfig();
         for (java.nio.file.Path path : config.getRepositories()) {
             String source = path.getFileName().toString();
-            for (String target : config.getSync(source)) {
+            for (String target : config.getReplications(source)) {
                 builder.add(Json.createObjectBuilder().add("source", source).add("target", target));
             }
         }

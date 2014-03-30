@@ -9,7 +9,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 import store.common.Event;
 import store.common.Event.EventBuilder;
@@ -17,7 +16,6 @@ import store.common.Hash;
 import store.common.Operation;
 import store.common.io.ObjectDecoder;
 import store.common.io.ObjectEncoder;
-import store.common.value.Value;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
@@ -81,7 +79,10 @@ class HistoryManager {
                 .withOperation(operation)
                 .build();
 
-        byte[] bytes = bytes(event);
+        byte[] bytes = new ObjectEncoder()
+                .put(event.toMap())
+                .build();
+
         if (txContext.fileLength(latest) + bytes.length > PAGE_SIZE) {
             Deque<Event> events = loadPage(latest);
             IndexEntry lastEntry = loadIndex().peekLast();
@@ -96,7 +97,7 @@ class HistoryManager {
             }
         }
         try (Output output = txContext.openOutput(latest)) {
-            output.write(bytes(event));
+            output.write(bytes);
         }
     }
 
@@ -188,7 +189,7 @@ class HistoryManager {
         Deque<Event> events = new LinkedList<>();
         try (StreamDecoder streamDecoder = new StreamDecoder(TransactionContext.current().openInput(path))) {
             while (streamDecoder.hasNext()) {
-                Event event = readEvent(streamDecoder.next());
+                Event event = Event.fromMap(streamDecoder.next().asMap());
                 events.add(event);
             }
         }
@@ -203,34 +204,6 @@ class HistoryManager {
             }
         }
         return entries;
-    }
-
-    private static byte[] bytes(Event event) {
-        List<Value> head = new ArrayList<>();
-        for (Hash rev : event.getHead()) {
-            head.add(Value.of(rev.getBytes()));
-        }
-        return new ObjectEncoder()
-                .put("seq", event.getSeq())
-                .put("hash", event.getHash().getBytes())
-                .put("head", head)
-                .put("ts", event.getTimestamp())
-                .put("code", event.getOperation().getCode())
-                .build();
-    }
-
-    private static Event readEvent(ObjectDecoder objectDecoder) {
-        SortedSet<Hash> head = new TreeSet<>();
-        for (Value value : objectDecoder.getList("head")) {
-            head.add(new Hash(value.asByteArray()));
-        }
-        return new EventBuilder()
-                .withSeq(objectDecoder.getLong("seq"))
-                .withHash(new Hash(objectDecoder.getByteArray("hash")))
-                .withHead(head)
-                .withTimestamp(objectDecoder.getDate("ts"))
-                .withOperation(Operation.fromCode(objectDecoder.getByte("code")))
-                .build();
     }
 
     private static byte[] bytes(IndexEntry entry) {

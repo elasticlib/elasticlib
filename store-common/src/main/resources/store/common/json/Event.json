@@ -1,0 +1,24 @@
+{
+    "title": "event",
+    "type": "object",
+    "properties": {
+        "seq": {
+            "type": "long"
+        },
+        "hash": {
+            "type": "binary"
+        },
+        "head": {
+            "type": "array",
+            "items": {
+                "type": "binary"
+            }
+        },
+        "timestamp": {
+            "type": "date"
+        },
+        "operation": {
+            "type": "string"
+        }
+    }
+}

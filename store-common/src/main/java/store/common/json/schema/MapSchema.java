@@ -17,12 +17,12 @@ final class MapSchema extends Schema {
     private final Map<String, Schema> properties;
 
     MapSchema(String title, Map<String, Value> map) {
-        super(title, ValueType.OBJECT);
+        super(title, ValueType.OBJECT, false);
         properties = unmodifiableMap(transformValues(map, SCHEMA_BUILDER));
     }
 
-    MapSchema(String title, JsonObject jsonObject) {
-        super(title, ValueType.OBJECT);
+    MapSchema(String title, JsonObject jsonObject, boolean optional) {
+        super(title, ValueType.OBJECT, optional);
         properties = unmodifiableMap(transformValues(jsonObject.getJsonObject(PROPERTIES), SCHEMA_READER));
     }
 

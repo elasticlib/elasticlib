@@ -23,8 +23,8 @@ import javax.json.JsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.Config;
-import static store.common.json.JsonUtil.readConfig;
-import static store.common.json.JsonUtil.writeConfig;
+import static store.common.json.JsonReading.read;
+import static store.common.json.JsonWriting.write;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.UnknownRepositoryException;
@@ -55,7 +55,7 @@ public final class RepositoriesService {
             repositories.put(repository.getName(), repository);
         }
         for (Repository source : repositories.values()) {
-            for (String destinationName : config.getSync(source.getName())) {
+            for (String destinationName : config.getReplications(source.getName())) {
                 Repository destination = repositories.get(destinationName);
                 ReplicationAgent agent = new ReplicationAgent(source, destination);
                 replicationService.createReplication(source.getName(), destinationName, agent);
@@ -150,7 +150,7 @@ public final class RepositoriesService {
             if (source.equals(destination)) {
                 throw new SelfReplicationException();
             }
-            if (!config.sync(source, destination)) {
+            if (!config.addReplication(source, destination)) {
                 return;
             }
             saveConfig();
@@ -169,13 +169,13 @@ public final class RepositoriesService {
      * @param destination Destination repository name.
      */
     public void dropReplication(String source, String destination) {
-        LOG.info("Unsyncing {} >> {}", source, destination);
+        LOG.info("Dropping replication {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
                 throw new UnknownRepositoryException();
             }
-            if (!config.unsync(source, destination)) {
+            if (!config.removeReplication(source, destination)) {
                 return;
             }
             saveConfig();
@@ -230,7 +230,7 @@ public final class RepositoriesService {
                 Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
                 JsonReader jsonReader = Json.createReader(reader)) {
 
-            return readConfig(jsonReader.readObject());
+            return read(jsonReader.readObject(), Config.class);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -244,7 +244,7 @@ public final class RepositoriesService {
                     Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
                     JsonWriter jsonWriter = Json.createWriter(writer)) {
 
-                jsonWriter.writeObject(writeConfig(config));
+                jsonWriter.writeObject(write(config));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

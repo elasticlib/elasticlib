@@ -48,6 +48,15 @@ public class ObjectDecoder {
     }
 
     /**
+     * Returns decoded structure as a map of values.
+     *
+     * @return A set.
+     */
+    public Map<String, Value> asMap() {
+        return map;
+    }
+
+    /**
      * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
      * contain a mapping for the specified key or if the value is actually not a byte array.
      *

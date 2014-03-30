@@ -1,0 +1,18 @@
+{
+    "title": "commandResult",
+    "type": "object",
+    "properties": {
+        "transactionId": {
+            "type": "int"
+        },
+        "operation": {
+            "type": "string"
+        },
+        "head": {
+            "type": "array",
+            "items": {
+                "type": "binary"
+            }
+        }
+    }
+}

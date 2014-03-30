@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import static store.common.io.BinaryConstants.*;
 import static store.common.io.Encoding.encodeKey;
 import static store.common.io.Encoding.encodeValue;
@@ -164,6 +165,19 @@ public final class ObjectEncoder {
         arrayBuilder.append(encodeType(value.type()))
                 .append(encodeKey(key))
                 .append(encodeValue(value));
+        return this;
+    }
+
+    /**
+     * Add a map of values to binary structure to build.
+     *
+     * @param map A map of values.
+     * @return This encoder instance.
+     */
+    public ObjectEncoder put(Map<String, Value> map) {
+        for (Entry<String, Value> entry : map.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
         return this;
     }
 

@@ -2,16 +2,22 @@ package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;
+import java.util.Map;
 import static java.util.Objects.hash;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import static store.common.MappableUtil.fromList;
+import static store.common.MappableUtil.toList;
+import store.common.value.Value;
 
 /**
  * Represents an entry about a content in an index.
  */
-public final class IndexEntry {
+public final class IndexEntry implements Mappable {
 
+    private static final String HASH = "hash";
+    private static final String HEAD = "head";
     private final Hash hash;
     private final SortedSet<Hash> head;
 
@@ -41,6 +47,25 @@ public final class IndexEntry {
     }
 
     @Override
+    public Map<String, Value> toMap() {
+        return new MapBuilder()
+                .put(HASH, hash)
+                .put(HEAD, toList(head))
+                .build();
+    }
+
+    /**
+     * Read a new instance from supplied map of values.
+     *
+     * @param map A map of values.
+     * @return A new instance.
+     */
+    public static IndexEntry fromMap(Map<String, Value> map) {
+        return new IndexEntry(new Hash(map.get(HASH).asByteArray()),
+                              fromList(map.get(HEAD).asList()));
+    }
+
+    @Override
     public int hashCode() {
         return hash(hash, head);
     }
@@ -60,8 +85,8 @@ public final class IndexEntry {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add("hash", hash)
-                .add("head", head)
+                .add(HASH, hash)
+                .add(HEAD, head)
                 .toString();
     }
 }

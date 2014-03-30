@@ -1,0 +1,15 @@
+{
+    "title": "indexEntry",
+    "type": "object",
+    "properties": {
+        "hash": {
+            "type": "binary"
+        },
+        "head": {
+            "type": "array",
+            "items": {
+                "type": "binary"
+            }
+        }
+    }
+}

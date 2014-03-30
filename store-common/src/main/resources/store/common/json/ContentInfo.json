@@ -1,0 +1,28 @@
+{
+    "title": "contentInfo",
+    "type": "object",
+    "properties": {
+        "hash": {
+            "type": "binary"
+        },
+        "length": {
+            "type": "long"
+        },
+        "rev": {
+            "type": "binary"
+        },
+        "parents": {
+            "type": "array",
+            "items": {
+                "type": "binary"
+            }
+        },
+        "deleted": {
+            "type": "boolean",
+            "optional": true
+        },
+        "metadata": {
+            "definition": "schema"
+        }
+    }
+}

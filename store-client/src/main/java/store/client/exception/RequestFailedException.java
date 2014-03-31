@@ -1,4 +1,4 @@
-package store.client;
+package store.client.exception;
 
 import java.io.IOException;
 

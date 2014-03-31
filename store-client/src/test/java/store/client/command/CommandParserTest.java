@@ -7,9 +7,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import store.client.Display;
-import store.client.RestClient;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.RestClient;
+import store.client.http.Session;
 
 /**
  * Unit tests.

@@ -1,9 +1,9 @@
 package store.client.command;
 
 import java.util.List;
-import store.client.Display;
-import store.client.QuitException;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
+import store.client.exception.QuitException;
 
 class Quit extends AbstractCommand {
 

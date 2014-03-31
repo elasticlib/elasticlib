@@ -6,9 +6,9 @@ import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import jline.console.completer.Completer;
-import store.client.Display;
-import store.client.RequestFailedException;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
+import store.client.exception.RequestFailedException;
 
 /**
  * Provide actual command implementations.

@@ -1,9 +1,12 @@
-package store.client;
+package store.client.http;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class LoggingInputStream extends InputStream {
+/**
+ * An input stream that logs read progression.
+ */
+class LoggingInputStream extends InputStream {
 
     private static final int EOF = -1;
     private final String task;

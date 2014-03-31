@@ -1,10 +1,10 @@
-package store.client;
+package store.client.display;
 
 import com.google.common.base.Joiner;
 import java.text.DateFormat;
 import java.util.List;
 import java.util.Map;
-import static store.client.ByteLengthFormatter.format;
+import static store.client.display.ByteLengthFormatter.format;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -16,7 +16,7 @@ import store.common.value.Value;
 /**
  * Formating utilities.
  */
-public final class FormatUtil {
+final class FormatUtil {
 
     private static final String COMMA = " : ";
 

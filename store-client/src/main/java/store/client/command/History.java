@@ -1,9 +1,8 @@
 package store.client.command;
 
 import java.util.List;
-import store.client.Display;
-import static store.client.FormatUtil.asString;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 import store.common.Event;
 
 class History extends AbstractCommand {
@@ -22,7 +21,7 @@ class History extends AbstractCommand {
             events = session.getRestClient().history(repository, false, cursor, 20);
             for (Event event : events) {
                 cursor = event.getSeq();
-                display.print(asString(event));
+                display.print(event);
             }
         } while (!events.isEmpty() && cursor > 1);
     }

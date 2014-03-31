@@ -1,8 +1,8 @@
 package store.client.command;
 
 import java.util.List;
-import store.client.Display;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 import static store.client.command.CommandProvider.command;
 
 class Help extends AbstractCommand {

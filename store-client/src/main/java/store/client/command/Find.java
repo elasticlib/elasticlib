@@ -1,9 +1,8 @@
 package store.client.command;
 
 import java.util.List;
-import store.client.Display;
-import static store.client.FormatUtil.asString;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 import store.common.ContentInfo;
 
 class Find extends AbstractCommand {
@@ -28,7 +27,7 @@ class Find extends AbstractCommand {
             infos = session.getRestClient().findInfo(repository, query, cursor, 20);
             for (ContentInfo info : infos) {
                 cursor += infos.size();
-                display.print(asString(info));
+                display.print(info);
             }
         } while (!infos.isEmpty());
     }

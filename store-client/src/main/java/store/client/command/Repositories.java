@@ -2,8 +2,8 @@ package store.client.command;
 
 import com.google.common.base.Joiner;
 import java.util.List;
-import store.client.Display;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 
 class Repositories extends AbstractCommand {
 

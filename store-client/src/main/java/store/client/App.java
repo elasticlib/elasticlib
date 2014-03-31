@@ -1,8 +1,11 @@
 package store.client;
 
+import store.client.display.Display;
+import store.client.http.Session;
 import java.io.IOException;
 import jline.console.ConsoleReader;
 import store.client.command.CommandParser;
+import store.client.exception.QuitException;
 
 /**
  * Client starting.

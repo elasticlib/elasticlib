@@ -1,4 +1,4 @@
-package store.client;
+package store.client.http;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
@@ -6,7 +6,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class DefferedFileOutputStream extends OutputStream {
+/**
+ * A file output stream that create or truncate file in a lazy way, only when first byte is written.
+ */
+class DefferedFileOutputStream extends OutputStream {
 
     private final Path path;
     private Optional<OutputStream> outputStream;

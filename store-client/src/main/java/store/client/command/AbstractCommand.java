@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import store.client.Session;
+import store.client.http.Session;
 import store.common.IndexEntry;
 
 abstract class AbstractCommand implements Command {

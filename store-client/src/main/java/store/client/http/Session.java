@@ -1,4 +1,4 @@
-package store.client;
+package store.client.http;
 
 import java.io.Closeable;
 

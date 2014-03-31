@@ -1,4 +1,4 @@
-package store.client;
+package store.client.http;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.size;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
-import static store.client.DigestUtil.digest;
+import store.client.exception.RequestFailedException;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -48,8 +49,10 @@ import store.common.Event;
 import store.common.Hash;
 import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
+import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
 import store.common.Operation;
+import static store.common.SinkOutputStream.sink;
 import store.common.json.JsonReading;
 import static store.common.json.JsonWriting.write;
 import static store.common.metadata.MetadataUtil.metadata;
@@ -206,6 +209,14 @@ public class RestClient implements Closeable {
             }
         } catch (IOException e) {
             throw new RequestFailedException(e);
+        }
+    }
+
+    private static Digest digest(Path filepath) throws IOException {
+        try (InputStream inputStream = new LoggingInputStream("Computing content digest",
+                                                              newInputStream(filepath),
+                                                              size(filepath))) {
+            return copyAndDigest(inputStream, sink());
         }
     }
 

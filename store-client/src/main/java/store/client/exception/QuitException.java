@@ -1,4 +1,4 @@
-package store.client;
+package store.client.exception;
 
 public class QuitException extends RuntimeException {
 

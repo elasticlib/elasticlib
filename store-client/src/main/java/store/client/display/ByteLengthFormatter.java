@@ -1,4 +1,4 @@
-package store.client;
+package store.client.display;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -6,7 +6,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Iterator;
 
-public final class ByteLengthFormatter {
+/**
+ * Byte length formatting for humans.
+ */
+final class ByteLengthFormatter {
 
     private ByteLengthFormatter() {
     }

@@ -3,8 +3,8 @@ package store.client.command;
 import java.nio.file.Paths;
 import static java.util.Arrays.asList;
 import java.util.List;
-import store.client.Display;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
 

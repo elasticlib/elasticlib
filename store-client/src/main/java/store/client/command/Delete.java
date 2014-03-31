@@ -1,9 +1,8 @@
 package store.client.command;
 
 import java.util.List;
-import store.client.Display;
-import static store.client.FormatUtil.asString;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 import store.common.CommandResult;
 import store.common.Hash;
 
@@ -23,6 +22,6 @@ class Delete extends AbstractCommand {
         String repository = session.getRepository();
         Hash hash = new Hash(params.get(0));
         CommandResult result = session.getRestClient().delete(repository, hash);
-        display.print(asString(result));
+        display.print(result);
     }
 }

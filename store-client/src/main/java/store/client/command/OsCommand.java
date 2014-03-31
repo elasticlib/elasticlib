@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
-import store.client.Display;
-import store.client.Session;
+import store.client.display.Display;
+import store.client.http.Session;
 
 class OsCommand implements Command {
 

@@ -13,11 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,8 +32,36 @@ abstract class AbstractCommand implements Command {
     private static String USAGE = "Usage:";
     static final String REPOSITORY = "repository";
     static final String REPLICATION = "replication";
+    private final Map<String, List<Type>> syntax;
 
-    protected abstract Map<String, List<Type>> syntax();
+    protected AbstractCommand() {
+        this(Collections.<String, List<Type>>emptyMap());
+    }
+
+    protected AbstractCommand(Type... syntax) {
+        this("", asList(syntax));
+    }
+
+    protected AbstractCommand(String key, List<Type> syntax) {
+        this(singletonMap(key, syntax));
+    }
+
+    protected AbstractCommand(String key1, List<Type> syntax1,
+                              String key2, List<Type> syntax2) {
+
+        Map<String, List<Type>> map = new LinkedHashMap<>();
+        map.put(key1, syntax1);
+        map.put(key2, syntax2);
+        syntax = map;
+    }
+
+    private AbstractCommand(Map<String, List<Type>> syntax) {
+        this.syntax = syntax;
+    }
+
+    final Map<String, List<Type>> syntax() {
+        return syntax;
+    }
 
     @Override
     public String name() {

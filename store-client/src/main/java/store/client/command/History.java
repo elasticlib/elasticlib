@@ -1,19 +1,12 @@
 package store.client.command;
 
-import static java.util.Collections.emptyMap;
 import java.util.List;
-import java.util.Map;
 import store.client.Display;
 import static store.client.FormatUtil.asString;
 import store.client.Session;
 import store.common.Event;
 
 class History extends AbstractCommand {
-
-    @Override
-    protected Map<String, List<Type>> syntax() {
-        return emptyMap();
-    }
 
     @Override
     public String description() {

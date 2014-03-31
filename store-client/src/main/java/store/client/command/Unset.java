@@ -1,20 +1,15 @@
 package store.client.command;
 
 import java.util.Collections;
-import static java.util.Collections.singletonMap;
 import java.util.List;
-import java.util.Map;
 import store.client.Display;
 import store.client.Session;
 import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Unset extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = singletonMap(REPOSITORY, Collections.<Type>emptyList());
-
-    @Override
-    protected Map<String, List<Type>> syntax() {
-        return syntax;
+    Unset() {
+        super(REPOSITORY, Collections.<Type>emptyList());
     }
 
     @Override

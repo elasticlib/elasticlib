@@ -2,25 +2,17 @@ package store.client.command;
 
 import java.nio.file.Paths;
 import static java.util.Arrays.asList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import store.client.Display;
 import store.client.Session;
+import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
 
 class Create extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = new LinkedHashMap<>();
-
-    {
-        syntax.put(REPOSITORY, asList(Type.PATH));
-        syntax.put(REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
-    }
-
-    @Override
-    protected Map<String, List<Type>> syntax() {
-        return syntax;
+    Create() {
+        super(REPOSITORY, asList(Type.PATH),
+              REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
     }
 
     @Override

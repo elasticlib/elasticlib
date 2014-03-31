@@ -1,20 +1,14 @@
 package store.client.command;
 
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import java.util.List;
-import java.util.Map;
 import store.client.Display;
 import store.client.Session;
 import static store.client.command.CommandProvider.command;
 
 class Help extends AbstractCommand {
 
-    private final Map<String, List<Type>> syntax = singletonMap("", singletonList(Type.COMMAND));
-
-    @Override
-    protected Map<String, List<Type>> syntax() {
-        return syntax;
+    Help() {
+        super(Type.COMMAND);
     }
 
     @Override

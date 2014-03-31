@@ -28,9 +28,11 @@ public final class App {
             CommandParser parser = new CommandParser(display, session);
             consoleReader.addCompleter(parser);
             consoleReader.setExpandEvents(false);
-            String buffer;
-            while ((buffer = consoleReader.readLine()) != null) {
+
+            String buffer = consoleReader.readLine();
+            while (buffer != null) {
                 parser.execute(buffer);
+                buffer = consoleReader.readLine();
             }
         } catch (QuitException e) {
             // It's ok, just leave cleanly.

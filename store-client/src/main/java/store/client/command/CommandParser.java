@@ -7,8 +7,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import jline.console.completer.Completer;
 import store.client.display.Display;
-import store.client.http.Session;
 import store.client.exception.RequestFailedException;
+import store.client.http.Session;
 
 /**
  * Provide actual command implementations.
@@ -68,7 +68,11 @@ public final class CommandParser implements Completer {
         if (buffer.isEmpty() || buffer.endsWith(" ")) {
             argList.add("");
         }
+        fillCandidates(candidates, argList);
+        return cursor(buffer, candidates, argList);
+    }
 
+    private void fillCandidates(List<CharSequence> candidates, List<String> argList) {
         String firstArg = firstArg(argList);
         Optional<Command> commandOpt = CommandProvider.command(firstArg);
         if (commandOpt.isPresent()) {
@@ -84,7 +88,9 @@ public final class CommandParser implements Completer {
                 }
             }
         }
+    }
 
+    private static int cursor(String buffer, List<CharSequence> candidates, List<String> argList) {
         if (candidates.isEmpty()) {
             return 0;
         }

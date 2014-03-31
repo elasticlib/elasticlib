@@ -42,12 +42,16 @@ class OsCommand implements Command {
             Process process = new ProcessBuilder(params).start();
             try (BufferedReader out = reader(process.getInputStream());
                     BufferedReader err = reader(process.getErrorStream())) {
-                String buffer;
-                while ((buffer = out.readLine()) != null) {
+
+                String buffer = out.readLine();
+                while (buffer != null) {
                     display.println(buffer);
+                    buffer = out.readLine();
                 }
-                while ((buffer = err.readLine()) != null) {
+                buffer = err.readLine();
+                while (buffer != null) {
                     display.println(buffer);
+                    buffer = err.readLine();
                 }
             } finally {
                 process.destroy();

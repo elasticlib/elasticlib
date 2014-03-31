@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import static store.client.command.Type.REPOSITORY;
 import store.client.http.Session;
 import store.common.IndexEntry;
 
@@ -59,10 +60,6 @@ abstract class AbstractCommand implements Command {
         this.syntax = syntax;
     }
 
-    final Map<String, List<Type>> syntax() {
-        return syntax;
-    }
-
     @Override
     public String name() {
         return getClass().getSimpleName().toLowerCase();
@@ -71,7 +68,6 @@ abstract class AbstractCommand implements Command {
     @Override
     public String usage() {
         String name = name();
-        Map<String, List<Type>> syntax = syntax();
         if (syntax.isEmpty()) {
             return Joiner.on(" ").join(USAGE, name);
         }
@@ -100,14 +96,16 @@ abstract class AbstractCommand implements Command {
 
     @Override
     public List<String> complete(Session session, List<String> params) {
-        Map<String, List<Type>> syntax = syntax();
         if (syntax.isEmpty() || params.isEmpty()) {
             return emptyList();
         }
         if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
             return complete(session, params, getOnlyElement(syntax.values()));
         }
-        String keyword = keyword(params);
+        return complete(session, keyword(params), params);
+    }
+
+    private List<String> complete(Session session, String keyword, List<String> params) {
         if (params.size() == 1) {
             return filterStartWith(syntax.keySet(), keyword);
         }
@@ -119,7 +117,6 @@ abstract class AbstractCommand implements Command {
 
     @Override
     public boolean isValid(List<String> params) {
-        Map<String, List<Type>> syntax = syntax();
         if (syntax.isEmpty()) {
             return params.isEmpty();
         }
@@ -141,8 +138,11 @@ abstract class AbstractCommand implements Command {
             return emptyList();
         }
         int lastIndex = params.size() - 1;
-        String param = params.get(lastIndex);
-        switch (types.get(lastIndex)) {
+        return complete(session, params.get(lastIndex), types.get(lastIndex));
+    }
+
+    private static List<String> complete(Session session, String param, Type type) {
+        switch (type) {
             case REPOSITORY:
                 return filterStartWith(session.getRestClient().listRepositories(), param);
 
@@ -150,12 +150,7 @@ abstract class AbstractCommand implements Command {
                 return filterStartWith(hashes(session, param), param);
 
             case COMMAND:
-                return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {
-                    @Override
-                    public String apply(Command command) {
-                        return command.name();
-                    }
-                }), param.toLowerCase());
+                return completeCommand(param);
 
             case PATH:
                 return completePath(param);
@@ -190,6 +185,15 @@ abstract class AbstractCommand implements Command {
         }
         Collections.sort(list);
         return list;
+    }
+
+    private static List<String> completeCommand(String param) {
+        return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {
+            @Override
+            public String apply(Command command) {
+                return command.name();
+            }
+        }), param.toLowerCase());
     }
 
     private static List<String> completePath(String param) {

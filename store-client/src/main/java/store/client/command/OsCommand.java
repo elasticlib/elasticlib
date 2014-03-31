@@ -44,16 +44,16 @@ class OsCommand implements Command {
                     BufferedReader err = reader(process.getErrorStream())) {
                 String buffer;
                 while ((buffer = out.readLine()) != null) {
-                    display.print(buffer);
+                    display.println(buffer);
                 }
                 while ((buffer = err.readLine()) != null) {
-                    display.print(buffer);
+                    display.println(buffer);
                 }
             } finally {
                 process.destroy();
             }
         } catch (IOException e) {
-            display.print(e.getMessage());
+            display.println(e.getMessage());
         }
     }
 

@@ -1,11 +1,11 @@
 package store.client;
 
-import store.client.display.Display;
-import store.client.http.Session;
 import java.io.IOException;
 import jline.console.ConsoleReader;
 import store.client.command.CommandParser;
+import store.client.display.Display;
 import store.client.exception.QuitException;
+import store.client.http.Session;
 
 /**
  * Client starting.
@@ -24,7 +24,7 @@ public final class App {
     public static void main(String[] args) throws IOException {
         ConsoleReader consoleReader = new ConsoleReader();
         Display display = new Display(consoleReader);
-        try (Session session = new Session()) {
+        try (Session session = new Session(display)) {
             CommandParser parser = new CommandParser(display, session);
             consoleReader.addCompleter(parser);
             consoleReader.setExpandEvents(false);

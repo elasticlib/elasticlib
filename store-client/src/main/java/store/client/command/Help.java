@@ -24,11 +24,11 @@ class Help extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, List<String> params) {
         if (params.size() != 1 || !command(first(params)).isPresent()) {
-            display.print(CommandProvider.help());
+            display.println(CommandProvider.help());
             return;
         }
         Command command = command(first(params)).get();
-        display.print(new StringBuilder()
+        display.println(new StringBuilder()
                 .append(command.description())
                 .append(System.lineSeparator())
                 .append(command.usage())

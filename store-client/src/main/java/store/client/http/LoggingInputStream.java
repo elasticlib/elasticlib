@@ -2,6 +2,7 @@ package store.client.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import store.client.display.Display;
 
 /**
  * An input stream that logs read progression.
@@ -9,6 +10,7 @@ import java.io.InputStream;
 class LoggingInputStream extends InputStream {
 
     private static final int EOF = -1;
+    private final Display display;
     private final String task;
     private InputStream inputStream;
     private final long length;
@@ -16,7 +18,8 @@ class LoggingInputStream extends InputStream {
     private int currentProgress;
     private boolean closed;
 
-    public LoggingInputStream(String task, InputStream inputStream, long length) {
+    public LoggingInputStream(Display display, String task, InputStream inputStream, long length) {
+        this.display = display;
         this.task = task;
         this.inputStream = inputStream;
         this.length = length;
@@ -27,7 +30,7 @@ class LoggingInputStream extends InputStream {
         int newProgress = (int) ((read * 100.0d) / length);
         if (newProgress != currentProgress) {
             currentProgress = newProgress;
-            System.out.print(task + " " + currentProgress + "%\r");
+            display.print(task + " " + currentProgress + "%\r");
         }
     }
 
@@ -88,7 +91,7 @@ class LoggingInputStream extends InputStream {
                 builder.append(" ");
             }
             builder.append('\r');
-            System.out.print(builder.toString());
+            display.print(builder.toString());
 
             inputStream.close();
         }

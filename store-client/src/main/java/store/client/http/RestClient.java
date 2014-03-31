@@ -39,6 +39,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
+import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.common.CommandResult;
 import store.common.ContentInfo;
@@ -62,13 +63,18 @@ import static store.common.metadata.MetadataUtil.metadata;
  */
 public class RestClient implements Closeable {
 
+    private final Display display;
     private final Client client;
     private final WebTarget resource;
 
     /**
      * Constructor.
+     *
+     * @param display Display to use.
      */
-    public RestClient() {
+    public RestClient(Display display) {
+        this.display = display;
+
         Logger logger = Logger.getGlobal();
         logger.setLevel(Level.OFF);
 
@@ -191,7 +197,8 @@ public class RestClient implements Closeable {
             if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
                 return firstStepResult;
             }
-            try (InputStream inputStream = new LoggingInputStream("Uploading content",
+            try (InputStream inputStream = new LoggingInputStream(display,
+                                                                  "Uploading content",
                                                                   newInputStream(filepath),
                                                                   info.getLength())) {
                 MultiPart multipart = new FormDataMultiPart()
@@ -212,8 +219,9 @@ public class RestClient implements Closeable {
         }
     }
 
-    private static Digest digest(Path filepath) throws IOException {
-        try (InputStream inputStream = new LoggingInputStream("Computing content digest",
+    private Digest digest(Path filepath) throws IOException {
+        try (InputStream inputStream = new LoggingInputStream(display,
+                                                              "Computing content digest",
                                                               newInputStream(filepath),
                                                               size(filepath))) {
             return copyAndDigest(inputStream, sink());

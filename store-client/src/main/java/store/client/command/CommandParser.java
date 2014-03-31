@@ -42,20 +42,20 @@ public final class CommandParser implements Completer {
         String firstArg = firstArg(argList);
         Optional<Command> commandOpt = CommandProvider.command(firstArg);
         if (!commandOpt.isPresent()) {
-            display.print(CommandProvider.help());
+            display.println(CommandProvider.help());
             return;
         }
         Command command = commandOpt.get();
         List<String> params = params(argList);
         if (!command.isValid(params)) {
-            display.print(command.usage() + System.lineSeparator());
+            display.println(command.usage() + System.lineSeparator());
             return;
         }
         try {
             command.execute(display, session, params);
 
         } catch (RequestFailedException e) {
-            display.print(e.getMessage() + System.lineSeparator());
+            display.println(e.getMessage() + System.lineSeparator());
         }
     }
 

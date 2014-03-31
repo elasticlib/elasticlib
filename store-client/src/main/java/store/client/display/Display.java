@@ -21,24 +21,29 @@ public class Display {
     }
 
     public void print(String line) {
+        out.print(line);
+        out.flush();
+    }
+
+    public void println(String line) {
         out.println(line);
         out.flush();
     }
 
     public void print(ContentInfoTree tree) {
-        print(asString(tree));
+        println(asString(tree));
     }
 
     public void print(ContentInfo info) {
-        print(asString(info));
+        println(asString(info));
     }
 
     public void print(Event event) {
-        print(asString(event));
+        println(asString(event));
     }
 
     public void print(CommandResult result) {
-        print(asString(result));
+        println(asString(result));
     }
 
     public void setPrompt(String prompt) {

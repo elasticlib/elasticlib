@@ -1,4 +1,4 @@
-package store.common.io;
+package store.common.bson;
 
 import com.google.common.base.Function;
 import java.math.BigDecimal;
@@ -8,41 +8,41 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import static store.common.io.BinaryConstants.FALSE;
-import static store.common.io.BinaryConstants.TRUE;
-import static store.common.io.BinaryConstants.decodeType;
+import static store.common.bson.BinaryConstants.FALSE;
+import static store.common.bson.BinaryConstants.TRUE;
+import static store.common.bson.BinaryConstants.readType;
 import store.common.value.Value;
 import store.common.value.ValueType;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.INT;
-import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 
-final class Decoding {
+final class ValueReading {
 
-    private static final Map<ValueType, Function<ByteArrayReader, Value>> FUNCTIONS = new EnumMap<>(ValueType.class);
+    private static final Map<ValueType, Function<ByteArrayReader, Value>> READERS = new EnumMap<>(ValueType.class);
 
     static {
-        FUNCTIONS.put(NULL, new Function<ByteArrayReader, Value>() {
+        READERS.put(NULL, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.ofNull();
             }
         });
-        FUNCTIONS.put(BINARY, new Function<ByteArrayReader, Value>() {
+        READERS.put(BINARY, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readByteArray(reader.readInt()));
             }
         });
-        FUNCTIONS.put(BOOLEAN, new Function<ByteArrayReader, Value>() {
+        READERS.put(BOOLEAN, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 byte b = reader.readByte();
@@ -56,80 +56,80 @@ final class Decoding {
                 }
             }
         });
-        FUNCTIONS.put(BYTE, new Function<ByteArrayReader, Value>() {
+        READERS.put(BYTE, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readByte());
             }
         });
-        FUNCTIONS.put(INT, new Function<ByteArrayReader, Value>() {
+        READERS.put(INT, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readInt());
             }
         });
-        FUNCTIONS.put(LONG, new Function<ByteArrayReader, Value>() {
+        READERS.put(LONG, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readLong());
             }
         });
-        FUNCTIONS.put(BIG_DECIMAL, new Function<ByteArrayReader, Value>() {
+        READERS.put(BIG_DECIMAL, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(new BigDecimal(reader.readString(reader.readInt())));
             }
         });
-        FUNCTIONS.put(STRING, new Function<ByteArrayReader, Value>() {
+        READERS.put(STRING, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readString(reader.readInt()));
             }
         });
-        FUNCTIONS.put(DATE, new Function<ByteArrayReader, Value>() {
+        READERS.put(DATE, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(new Date(reader.readLong()));
             }
         });
-        FUNCTIONS.put(OBJECT, new Function<ByteArrayReader, Value>() {
+        READERS.put(OBJECT, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
-                return Value.of(decodeMap(reader, reader.readInt()));
+                return Value.of(readMap(reader, reader.readInt()));
             }
         });
-        FUNCTIONS.put(ARRAY, new Function<ByteArrayReader, Value>() {
+        READERS.put(ARRAY, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
-                return Value.of(decodeList(reader, reader.readInt()));
+                return Value.of(readList(reader, reader.readInt()));
             }
         });
     }
 
-    private Decoding() {
+    private ValueReading() {
     }
 
-    private static Value decodeValue(ByteArrayReader reader, ValueType type) {
-        return FUNCTIONS.get(type).apply(reader);
+    private static Value readValue(ByteArrayReader reader, ValueType type) {
+        return READERS.get(type).apply(reader);
     }
 
-    public static Map<String, Value> decodeMap(ByteArrayReader reader, int length) {
+    public static Map<String, Value> readMap(ByteArrayReader reader, int length) {
         Map<String, Value> map = new LinkedHashMap<>();
         int limit = reader.position() + length;
         while (reader.position() < limit) {
-            ValueType type = decodeType(reader.readByte());
+            ValueType type = readType(reader.readByte());
             String key = reader.readNullTerminatedString();
-            map.put(key, decodeValue(reader, type));
+            map.put(key, readValue(reader, type));
         }
         return map;
     }
 
-    public static List<Value> decodeList(ByteArrayReader reader, int length) {
+    public static List<Value> readList(ByteArrayReader reader, int length) {
         int limit = reader.position() + length;
         List<Value> list = new ArrayList<>();
         while (reader.position() < limit) {
-            ValueType type = decodeType(reader.readByte());
-            list.add(decodeValue(reader, type));
+            ValueType type = readType(reader.readByte());
+            list.add(readValue(reader, type));
         }
         return list;
     }

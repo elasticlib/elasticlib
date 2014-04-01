@@ -1,9 +1,9 @@
-package store.common.io;
+package store.common.bson;
 
 import static com.google.common.base.Charsets.UTF_8;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import static store.common.io.BinaryConstants.NULL_BYTE;
+import static store.common.bson.BinaryConstants.NULL_BYTE;
 
 class ByteArrayReader {
 

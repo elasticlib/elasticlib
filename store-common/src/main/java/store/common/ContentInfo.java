@@ -17,7 +17,7 @@ import java.util.TreeSet;
 import static store.common.MappableUtil.fromList;
 import static store.common.MappableUtil.toList;
 import static store.common.SinkOutputStream.sink;
-import store.common.io.ObjectEncoder;
+import store.common.bson.BsonWriter;
 import store.common.value.Value;
 
 /**
@@ -256,7 +256,7 @@ public class ContentInfo implements Mappable {
          * @return A new ContentInfo instance.
          */
         public ContentInfo computeRevAndBuild() {
-            ObjectEncoder encoder = new ObjectEncoder()
+            BsonWriter writer = new BsonWriter()
                     .put(HASH, hash.getBytes())
                     .put(LENGTH, hash.getBytes());
 
@@ -264,13 +264,13 @@ public class ContentInfo implements Mappable {
             for (Hash parent : parents) {
                 list.add(Value.of(parent.getBytes()));
             }
-            encoder.put(PARENTS, list);
+            writer.put(PARENTS, list);
             if (deleted) {
-                encoder.put(DELETED, deleted);
+                writer.put(DELETED, deleted);
             }
-            encoder.put(METADATA, metadata);
+            writer.put(METADATA, metadata);
             try {
-                rev = IoUtil.copyAndDigest(new ByteArrayInputStream(encoder.build()), sink()).getHash();
+                rev = IoUtil.copyAndDigest(new ByteArrayInputStream(writer.build()), sink()).getHash();
                 return new ContentInfo(this);
 
             } catch (IOException e) {

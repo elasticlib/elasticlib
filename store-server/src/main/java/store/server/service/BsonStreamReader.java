@@ -3,18 +3,18 @@ package store.server.service;
 import java.io.Closeable;
 import static java.nio.ByteBuffer.wrap;
 import java.util.NoSuchElementException;
-import store.common.io.ObjectDecoder;
+import store.common.bson.BsonReader;
 import store.server.transaction.Input;
 
-class StreamDecoder implements Closeable {
+class BsonStreamReader implements Closeable {
 
     private static final int EOF = -1;
     private final Input input;
-    private ObjectDecoder next;
+    private BsonReader next;
     private long position = 0;
     private boolean loaded;
 
-    public StreamDecoder(Input input) {
+    public BsonStreamReader(Input input) {
         this.input = input;
     }
 
@@ -27,7 +27,7 @@ class StreamDecoder implements Closeable {
         return next != null;
     }
 
-    public ObjectDecoder next() {
+    public BsonReader next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -44,12 +44,12 @@ class StreamDecoder implements Closeable {
         input.close();
     }
 
-    private ObjectDecoder loadNext() {
+    private BsonReader loadNext() {
         int length = readInt();
         if (length == 0) {
             return null;
         }
-        return new ObjectDecoder(readBytes(length));
+        return new BsonReader(readBytes(length));
     }
 
     private int readInt() {

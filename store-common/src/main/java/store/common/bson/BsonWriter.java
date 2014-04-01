@@ -1,25 +1,23 @@
-package store.common.io;
+package store.common.bson;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import static store.common.io.BinaryConstants.*;
-import static store.common.io.Encoding.encodeKey;
-import static store.common.io.Encoding.encodeValue;
+import static store.common.bson.BinaryConstants.*;
+import static store.common.bson.ValueWriting.writeKey;
+import static store.common.bson.ValueWriting.writeValue;
 import store.common.value.Value;
 
 /**
- * A JSON-like binary encoder with a fluent API.
+ * A JSON-like binary writer with a fluent API.
  * <p>
  * Serialize a sequence of key-value pairs into a JSON-like binary document. Produced format supports the embedding of
  * documents and arrays within other documents and arrays. It also contains extensions that allow representation of data
  * types that are not part of the JSON spec.
- *
- * @see ObjectDecoder
  */
-public final class ObjectEncoder {
+public final class BsonWriter {
 
     ByteArrayBuilder arrayBuilder = new ByteArrayBuilder();
 
@@ -29,7 +27,7 @@ public final class ObjectEncoder {
      * @param key Key with which the supplied value is to be associated.
      * @return This encoder instance.
      */
-    public ObjectEncoder putNull(String key) {
+    public BsonWriter putNull(String key) {
         put(key, Value.ofNull());
         return this;
     }
@@ -41,7 +39,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, byte[] value) {
+    public BsonWriter put(String key, byte[] value) {
         put(key, Value.of(value));
         return this;
     }
@@ -53,7 +51,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, boolean value) {
+    public BsonWriter put(String key, boolean value) {
         put(key, Value.of(value));
         return this;
     }
@@ -65,7 +63,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, byte value) {
+    public BsonWriter put(String key, byte value) {
         put(key, Value.of(value));
         return this;
     }
@@ -77,7 +75,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, int value) {
+    public BsonWriter put(String key, int value) {
         put(key, Value.of(value));
         return this;
     }
@@ -89,7 +87,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, long value) {
+    public BsonWriter put(String key, long value) {
         put(key, Value.of(value));
         return this;
     }
@@ -101,7 +99,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, String value) {
+    public BsonWriter put(String key, String value) {
         put(key, Value.of(value));
         return this;
     }
@@ -113,7 +111,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, BigDecimal value) {
+    public BsonWriter put(String key, BigDecimal value) {
         put(key, Value.of(value));
         return this;
     }
@@ -125,7 +123,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, Date value) {
+    public BsonWriter put(String key, Date value) {
         put(key, Value.of(value));
         return this;
     }
@@ -137,7 +135,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, Map<String, Value> value) {
+    public BsonWriter put(String key, Map<String, Value> value) {
         put(key, Value.of(value));
         return this;
     }
@@ -149,7 +147,7 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, List<Value> value) {
+    public BsonWriter put(String key, List<Value> value) {
         put(key, Value.of(value));
         return this;
     }
@@ -161,10 +159,10 @@ public final class ObjectEncoder {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(String key, Value value) {
-        arrayBuilder.append(encodeType(value.type()))
-                .append(encodeKey(key))
-                .append(encodeValue(value));
+    public BsonWriter put(String key, Value value) {
+        arrayBuilder.append(writeType(value.type()))
+                .append(writeKey(key))
+                .append(writeValue(value));
         return this;
     }
 
@@ -174,7 +172,7 @@ public final class ObjectEncoder {
      * @param map A map of values.
      * @return This encoder instance.
      */
-    public ObjectEncoder put(Map<String, Value> map) {
+    public BsonWriter put(Map<String, Value> map) {
         for (Entry<String, Value> entry : map.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }

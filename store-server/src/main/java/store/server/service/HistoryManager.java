@@ -14,8 +14,8 @@ import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
 import store.common.Operation;
-import store.common.io.ObjectDecoder;
-import store.common.io.ObjectEncoder;
+import store.common.bson.BsonReader;
+import store.common.bson.BsonWriter;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 import store.server.transaction.Output;
@@ -79,7 +79,7 @@ class HistoryManager {
                 .withOperation(operation)
                 .build();
 
-        byte[] bytes = new ObjectEncoder()
+        byte[] bytes = new BsonWriter()
                 .put(event.toMap())
                 .build();
 
@@ -187,7 +187,7 @@ class HistoryManager {
 
     private Deque<Event> loadPage(Path path) {
         Deque<Event> events = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(TransactionContext.current().openInput(path))) {
+        try (BsonStreamReader streamDecoder = new BsonStreamReader(TransactionContext.current().openInput(path))) {
             while (streamDecoder.hasNext()) {
                 Event event = Event.fromMap(streamDecoder.next().asMap());
                 events.add(event);
@@ -198,26 +198,26 @@ class HistoryManager {
 
     private Deque<IndexEntry> loadIndex() {
         Deque<IndexEntry> entries = new LinkedList<>();
-        try (StreamDecoder streamDecoder = new StreamDecoder(TransactionContext.current().openInput(index))) {
-            while (streamDecoder.hasNext()) {
-                entries.add(readEntry(streamDecoder.next()));
+        try (BsonStreamReader streamReader = new BsonStreamReader(TransactionContext.current().openInput(index))) {
+            while (streamReader.hasNext()) {
+                entries.add(readEntry(streamReader.next()));
             }
         }
         return entries;
     }
 
     private static byte[] bytes(IndexEntry entry) {
-        return new ObjectEncoder()
+        return new BsonWriter()
                 .put("name", entry.name)
                 .put("first", entry.first)
                 .put("last", entry.last)
                 .build();
     }
 
-    private IndexEntry readEntry(ObjectDecoder objectDecoder) {
-        String name = objectDecoder.getString("name");
-        long first = objectDecoder.getLong("first");
-        long last = objectDecoder.getLong("last");
+    private IndexEntry readEntry(BsonReader reader) {
+        String name = reader.getString("name");
+        long first = reader.getLong("first");
+        long last = reader.getLong("last");
         return new IndexEntry(name, first, last);
     }
 

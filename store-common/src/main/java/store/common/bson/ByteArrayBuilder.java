@@ -1,4 +1,4 @@
-package store.common.io;
+package store.common.bson;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

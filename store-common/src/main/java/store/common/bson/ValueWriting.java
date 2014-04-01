@@ -1,137 +1,137 @@
-package store.common.io;
+package store.common.bson;
 
 import static com.google.common.base.Charsets.UTF_8;
 import com.google.common.base.Function;
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
 import java.util.Map;
-import static store.common.io.BinaryConstants.*;
+import static store.common.bson.BinaryConstants.*;
 import store.common.value.Value;
 import store.common.value.ValueType;
+import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
+import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.BYTE;
-import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.INT;
-import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.NULL;
+import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
 
-final class Encoding {
+final class ValueWriting {
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-    private static final Map<ValueType, Function<Value, byte[]>> FUNCTIONS = new EnumMap<>(ValueType.class);
+    private static final Map<ValueType, Function<Value, byte[]>> WRITERS = new EnumMap<>(ValueType.class);
 
     static {
-        FUNCTIONS.put(NULL, new Function<Value, byte[]>() {
+        WRITERS.put(NULL, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return EMPTY_BYTE_ARRAY;
             }
         });
-        FUNCTIONS.put(BINARY, new Function<Value, byte[]>() {
+        WRITERS.put(BINARY, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeByteArray(value.asByteArray());
+                return writeByteArray(value.asByteArray());
             }
         });
-        FUNCTIONS.put(BOOLEAN, new Function<Value, byte[]>() {
+        WRITERS.put(BOOLEAN, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return new byte[]{value.asBoolean() ? TRUE : FALSE};
             }
         });
-        FUNCTIONS.put(BYTE, new Function<Value, byte[]>() {
+        WRITERS.put(BYTE, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return new byte[]{value.asByte()};
             }
         });
-        FUNCTIONS.put(INT, new Function<Value, byte[]>() {
+        WRITERS.put(INT, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeInt(value.asInt());
+                return writeInt(value.asInt());
             }
         });
-        FUNCTIONS.put(LONG, new Function<Value, byte[]>() {
+        WRITERS.put(LONG, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeLong(value.asLong());
+                return writeLong(value.asLong());
             }
         });
-        FUNCTIONS.put(BIG_DECIMAL, new Function<Value, byte[]>() {
+        WRITERS.put(BIG_DECIMAL, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeString(value.toString());
+                return writeString(value.toString());
             }
         });
-        FUNCTIONS.put(STRING, new Function<Value, byte[]>() {
+        WRITERS.put(STRING, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeString(value.asString());
+                return writeString(value.asString());
             }
         });
-        FUNCTIONS.put(DATE, new Function<Value, byte[]>() {
+        WRITERS.put(DATE, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return encodeLong(value.asDate().getTime());
+                return writeLong(value.asDate().getTime());
             }
         });
-        FUNCTIONS.put(OBJECT, new Function<Value, byte[]>() {
+        WRITERS.put(OBJECT, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 ByteArrayBuilder builder = new ByteArrayBuilder();
                 for (Map.Entry<String, Value> entry : value.asMap().entrySet()) {
-                    builder.append(encodeType(entry.getValue().type()))
-                            .append(encodeKey(entry.getKey()))
-                            .append(encodeValue(entry.getValue()));
+                    builder.append(writeType(entry.getValue().type()))
+                            .append(writeKey(entry.getKey()))
+                            .append(writeValue(entry.getValue()));
                 }
                 return builder.prependSizeAndBuild();
             }
         });
-        FUNCTIONS.put(ARRAY, new Function<Value, byte[]>() {
+        WRITERS.put(ARRAY, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 ByteArrayBuilder builder = new ByteArrayBuilder();
                 for (Value item : value.asList()) {
-                    builder.append(encodeType(item.type()))
-                            .append(encodeValue(item));
+                    builder.append(writeType(item.type()))
+                            .append(writeValue(item));
                 }
                 return builder.prependSizeAndBuild();
             }
         });
     }
 
-    private Encoding() {
+    private ValueWriting() {
     }
 
-    private static byte[] encodeByteArray(byte[] value) {
+    private static byte[] writeByteArray(byte[] value) {
         return new ByteArrayBuilder(value.length + 4)
-                .append(encodeInt(value.length))
+                .append(writeInt(value.length))
                 .append(value)
                 .build();
     }
 
-    private static byte[] encodeInt(int value) {
+    private static byte[] writeInt(int value) {
         return ByteBuffer.allocate(4)
                 .putInt(value)
                 .array();
     }
 
-    private static byte[] encodeLong(long value) {
+    private static byte[] writeLong(long value) {
         return ByteBuffer.allocate(8)
                 .putLong(value)
                 .array();
     }
 
-    private static byte[] encodeString(String value) {
-        return encodeByteArray(value.getBytes(UTF_8));
+    private static byte[] writeString(String value) {
+        return writeByteArray(value.getBytes(UTF_8));
     }
 
-    public static byte[] encodeKey(String key) {
+    public static byte[] writeKey(String key) {
         byte[] bytes = key.getBytes(UTF_8);
         return new ByteArrayBuilder(bytes.length + 1)
                 .append(bytes)
@@ -139,7 +139,7 @@ final class Encoding {
                 .build();
     }
 
-    public static byte[] encodeValue(Value value) {
-        return FUNCTIONS.get(value.type()).apply(value);
+    public static byte[] writeValue(Value value) {
+        return WRITERS.get(value.type()).apply(value);
     }
 }

@@ -1,4 +1,4 @@
-package store.common.io;
+package store.common.bson;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumHashBiMap;
@@ -34,11 +34,11 @@ final class BinaryConstants {
         TYPES.put(key, (byte) value);
     }
 
-    public static byte encodeType(ValueType type) {
+    public static byte writeType(ValueType type) {
         return TYPES.get(type);
     }
 
-    public static ValueType decodeType(byte b) {
+    public static ValueType readType(byte b) {
         return TYPES.inverse().get(b);
     }
 }

@@ -1,4 +1,4 @@
-package store.common.io;
+package store.common.bson;
 
 import java.math.BigDecimal;
 import static java.util.Collections.unmodifiableMap;
@@ -7,15 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import static store.common.io.Decoding.decodeMap;
+import static store.common.bson.ValueReading.readMap;
 import store.common.value.Value;
 
 /**
- * A binary decoder. Converts a JSON-like binary structure into a map.
- *
- * @see ObjectEncoder
+ * A binary reader. Converts a JSON-like binary structure into a map.
  */
-public class ObjectDecoder {
+public class BsonReader {
 
     private final Map<String, Value> map;
 
@@ -24,8 +22,8 @@ public class ObjectDecoder {
      *
      * @param bytes A JSON-like binary structure.
      */
-    public ObjectDecoder(byte[] bytes) {
-        map = unmodifiableMap(decodeMap(new ByteArrayReader(bytes), bytes.length));
+    public BsonReader(byte[] bytes) {
+        map = unmodifiableMap(readMap(new ByteArrayReader(bytes), bytes.length));
     }
 
     /**

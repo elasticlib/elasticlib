@@ -1,4 +1,4 @@
-package store.common.io;
+package store.common.bson;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import store.common.value.ValueType;
 /**
  * Unit tests.
  */
-public class ObjectDecoderTest {
+public class BsonReaderTest {
 
     /**
      * Test.
@@ -27,9 +27,9 @@ public class ObjectDecoderTest {
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                              0x01); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.containsKey("bool")).isTrue();
-        assertThat(decoder.containsKey("unknown")).isFalse();
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.containsKey("bool")).isTrue();
+        assertThat(reader.containsKey("unknown")).isFalse();
     }
 
     /**
@@ -47,8 +47,8 @@ public class ObjectDecoderTest {
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                              0x00); // entry
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.keyset()).containsExactly("num", "str", "bool");
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.keyset()).containsExactly("num", "str", "bool");
     }
 
     /**
@@ -71,132 +71,132 @@ public class ObjectDecoderTest {
         map.put("str", Value.of("test"));
         map.put("bool", Value.of(false));
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.asMap()).isEqualTo(map);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.asMap()).isEqualTo(map);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeNull() {
+    public void readNull() {
         byte[] bytes = array(0x01, // type
                              0x6E, 0x75, 0x6C, 0x6C, 0x00); // key (no value)
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.get("null").type()).isEqualTo(ValueType.NULL);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.get("null").type()).isEqualTo(ValueType.NULL);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeByteArray() {
+    public void readByteArray() {
         byte[] bytes = array(0x02, // type
                              0x62, 0x79, 0x74, 0x65, 0x73, 0x00, // key
                              0x00, 0x00, 0x00, 0x02,
                              0x12, 0x34); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getByteArray("bytes")).isEqualTo(array(0x12, 0x34));
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getByteArray("bytes")).isEqualTo(array(0x12, 0x34));
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeBoolean() {
+    public void readBoolean() {
         byte[] bytes = array(0x03, // type
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                              0x01); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getBoolean("bool")).isEqualTo(true);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getBoolean("bool")).isEqualTo(true);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeByte() {
+    public void readByte() {
         byte[] bytes = array(0x04, // type
                              0x62, 0x79, 0x74, 0x65, 0x00, // key
                              0xFF); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getByte("byte")).isEqualTo((byte) 0xFF);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getByte("byte")).isEqualTo((byte) 0xFF);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeInt() {
+    public void readInt() {
         byte[] bytes = array(0x05, // type
                              0x69, 0x6E, 0x74, 0x00, // key
                              0x00, 0x01, 0xE2, 0x40); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getInt("int")).isEqualTo(123456);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getInt("int")).isEqualTo(123456);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeLong() {
+    public void readLong() {
         byte[] bytes = array(0x06, // type
                              0x6C, 0x67, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getLong("lg")).isEqualTo(1432897L);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getLong("lg")).isEqualTo(1432897L);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeBigDecimal() {
+    public void readBigDecimal() {
         byte[] bytes = array(0x07, // type
                              0x64, 0x65, 0x63, 0x69, 0x6D, 0x61, 0x6C, 0x00, // key
                              0x00, 0x00, 0x00, 0x03, 0x31, 0x2E, 0x31); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getBigDecimal("decimal")).isEqualTo(new BigDecimal("1.1"));
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getBigDecimal("decimal")).isEqualTo(new BigDecimal("1.1"));
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeString() {
+    public void readString() {
         byte[] bytes = array(0x08, // type
                              0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getString("string")).isEqualTo("test");
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getString("string")).isEqualTo("test");
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeDate() {
+    public void readDate() {
         byte[] bytes = array(0x09, // type
                              0x64, 0x61, 0x74, 0x65, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getDate("date")).isEqualTo(new Date(1432897L));
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getDate("date")).isEqualTo(new Date(1432897L));
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeMap() {
+    public void readMap() {
         byte[] bytes = array(0x0A, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              // value
@@ -216,28 +216,28 @@ public class ObjectDecoderTest {
         map.put("str", Value.of("test"));
         map.put("bool", Value.of(false));
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getMap("map")).isEqualTo(map);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getMap("map")).isEqualTo(map);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeEmptyMap() {
+    public void readEmptyMap() {
         byte[] bytes = array(0x0A, // type
                              0x6D, 0x61, 0x70, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getMap("map")).isEmpty();
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getMap("map")).isEmpty();
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeList() {
+    public void readList() {
         byte[] bytes = array(0x0B, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              // value
@@ -251,28 +251,28 @@ public class ObjectDecoderTest {
         list.add(Value.of(10));
         list.add(Value.of("test"));
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getList("list")).isEqualTo(list);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getList("list")).isEqualTo(list);
     }
 
     /**
      * Test.
      */
     @Test
-    public void decodeEmptyList() {
+    public void readEmptyList() {
         byte[] bytes = array(0x0B, // type
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              0x00, 0x00, 0x00, 0x00); // value (length only)
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getList("list")).isEmpty();
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getList("list")).isEmpty();
     }
 
     /**
      * Test.
      */
     @Test
-    public void decode() {
+    public void read() {
         byte[] bytes = array(0x05, // type
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x04, // entry
@@ -283,10 +283,10 @@ public class ObjectDecoderTest {
                              0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                              0x00); // entry
 
-        ObjectDecoder decoder = new ObjectDecoder(bytes);
-        assertThat(decoder.getInt("num")).isEqualTo(4);
-        assertThat(decoder.getString("str")).isEqualTo("test");
-        assertThat(decoder.getBoolean("bool")).isEqualTo(false);
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getInt("num")).isEqualTo(4);
+        assertThat(reader.getString("str")).isEqualTo("test");
+        assertThat(reader.getBoolean("bool")).isEqualTo(false);
     }
 
     /**
@@ -294,6 +294,6 @@ public class ObjectDecoderTest {
      */
     @Test(expectedExceptions = NoSuchElementException.class)
     public void getUnknownKey() {
-        new ObjectDecoder(new byte[0]).get("unknown");
+        new BsonReader(new byte[0]).get("unknown");
     }
 }

@@ -12,7 +12,7 @@ import store.common.ContentInfoTree;
 import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Hash;
 import store.common.Operation;
-import store.common.io.ObjectEncoder;
+import store.common.bson.BsonWriter;
 import store.server.exception.ConflictException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
@@ -171,7 +171,7 @@ class InfoManager {
 
     private static void save(ContentInfoTree tree, Output output) {
         for (ContentInfo info : tree.list()) {
-            byte[] bytes = new ObjectEncoder()
+            byte[] bytes = new BsonWriter()
                     .put(info.toMap())
                     .build();
 
@@ -181,9 +181,9 @@ class InfoManager {
 
     private static ContentInfoTree load(Input input) {
         ContentInfoTreeBuilder treeBuilder = new ContentInfoTreeBuilder();
-        try (StreamDecoder streamDecoder = new StreamDecoder(input)) {
-            while (streamDecoder.hasNext()) {
-                ContentInfo contentInfo = ContentInfo.fromMap(streamDecoder.next().asMap());
+        try (BsonStreamReader streamReader = new BsonStreamReader(input)) {
+            while (streamReader.hasNext()) {
+                ContentInfo contentInfo = ContentInfo.fromMap(streamReader.next().asMap());
                 treeBuilder.add(contentInfo);
             }
         }

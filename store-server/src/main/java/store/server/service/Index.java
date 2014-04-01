@@ -23,7 +23,6 @@ import static org.apache.lucene.document.DateTools.dateToString;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
@@ -50,9 +49,7 @@ import store.common.value.Value;
 import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.BYTE;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -171,11 +168,6 @@ class Index {
         switch (value.type()) {
             case BOOLEAN:
                 document.add(new TextField(key, value.asBoolean() ? "true" : "false", Store.NO));
-                return;
-
-            case BYTE:
-            case INT:
-                document.add(new IntField(key, value.asInt(), Store.NO));
                 return;
 
             case LONG:

@@ -78,28 +78,6 @@ public class BsonReader {
 
     /**
      * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
-     * contain a mapping for the specified key or if the value is actually not a byte.
-     *
-     * @param key The key whose associated value is to be returned.
-     * @return A byte.
-     */
-    public byte getByte(String key) {
-        return get(key).asByte();
-    }
-
-    /**
-     * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
-     * contain a mapping for the specified key or if the value is actually not an integer.
-     *
-     * @param key The key whose associated value is to be returned.
-     * @return An integer.
-     */
-    public int getInt(String key) {
-        return get(key).asInt();
-    }
-
-    /**
-     * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
      * contain a mapping for the specified key or if the value is actually not a long.
      *
      * @param key The key whose associated value is to be returned.

@@ -18,14 +18,6 @@ public enum ValueType {
      */
     BOOLEAN,
     /**
-     * A byte.
-     */
-    BYTE,
-    /**
-     * An integer.
-     */
-    INT,
-    /**
      * A long.
      */
     LONG,

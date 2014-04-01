@@ -17,7 +17,7 @@
         "coefficients": {
             "type": "array",
             "items": {
-                "type": "int"
+                "type": "long"
             }
         },
         "mapping": {
@@ -27,7 +27,7 @@
                     "type": "boolean"
                 },
                 "answer": {
-                    "type": "int"
+                    "type": "long"
                 }
             }
         }

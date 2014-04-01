@@ -35,22 +35,6 @@ public abstract class Value {
     }
 
     /**
-     * @param value A byte.
-     * @return A value of the supplied byte.
-     */
-    public static Value of(byte value) {
-        return new ByteValue(value);
-    }
-
-    /**
-     * @param value An integer.
-     * @return A value of the supplied integer.
-     */
-    public static Value of(int value) {
-        return new IntegerValue(value);
-    }
-
-    /**
      * @param value A long.
      * @return A value of the supplied long.
      */
@@ -124,22 +108,6 @@ public abstract class Value {
      * @throws UnsupportedOperationException If this value is actually not a boolean.
      */
     public boolean asBoolean() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @return This value as a byte.
-     * @throws UnsupportedOperationException If this value is actually not a byte.
-     */
-    public byte asByte() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @return This value as an integer.
-     * @throws UnsupportedOperationException If this value is actually not an integer.
-     */
-    public int asInt() {
         throw new UnsupportedOperationException();
     }
 

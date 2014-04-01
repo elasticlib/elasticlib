@@ -8,7 +8,7 @@ final class ReadWriteTransactionContext extends TransactionContext {
 
     private final Session session;
 
-    ReadWriteTransactionContext(TransactionManager transactionManager, Session session, int id) {
+    ReadWriteTransactionContext(TransactionManager transactionManager, Session session, long id) {
         super(transactionManager, session, true, id);
         this.session = session;
     }

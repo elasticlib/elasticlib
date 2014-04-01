@@ -19,9 +19,7 @@ import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.BYTE;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -38,23 +36,16 @@ final class ValueWriting {
                 return JsonValue.NULL;
             }
         });
-        WRITERS.put(BYTE, new Writer() {
+        WRITERS.put(BINARY, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
                 return jsonString(value.asHexadecimalString());
             }
         });
-        WRITERS.put(BINARY, WRITERS.get(BYTE));
         WRITERS.put(BOOLEAN, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
                 return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
-            }
-        });
-        WRITERS.put(INT, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonNumber(value.asInt());
             }
         });
         WRITERS.put(LONG, new Writer() {
@@ -107,12 +98,6 @@ final class ValueWriting {
         JsonArrayBuilder builder = createArrayBuilder();
         builder.add(value);
         return builder.build().getJsonString(0);
-    }
-
-    private static JsonNumber jsonNumber(int value) {
-        JsonArrayBuilder builder = createArrayBuilder();
-        builder.add(value);
-        return builder.build().getJsonNumber(0);
     }
 
     private static JsonNumber jsonNumber(long value) {

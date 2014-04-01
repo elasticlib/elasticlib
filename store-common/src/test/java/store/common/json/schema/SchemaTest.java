@@ -35,7 +35,7 @@ public class SchemaTest {
         metadata.put("coefficients", Value.of(asList(Value.of(10), Value.of(20), Value.of(30))));
         metadata.put("mapping", Value.of(ImmutableMap.of("yes", Value.of(true),
                                                          "answer", Value.of(42))));
-        listing = asList(Value.of(2014L),
+        listing = asList(Value.of(2014),
                          Value.of("test"),
                          Value.of(false));
 

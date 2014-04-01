@@ -187,7 +187,7 @@ class Volume {
      * @param source Content.
      * @return Operation result.
      */
-    public CommandResult addContent(final int transactionId, final Hash hash, final InputStream source) {
+    public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
         LOG.info("[{}] Adding content {}", name, hash);
         return transactionManager.inTransaction(transactionId, new Command() {
             @Override

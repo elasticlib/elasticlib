@@ -20,11 +20,11 @@ public final class CommandResult implements Mappable {
     private static final String OPERATION = "operation";
     private static final String NO_OP = "noOp";
     private static final String HEAD = "head";
-    private int transactionId;
+    private long transactionId;
     private final Operation operation;
     private final SortedSet<Hash> head;
 
-    private CommandResult(int transactionId, Operation operation, SortedSet<Hash> head) {
+    private CommandResult(long transactionId, Operation operation, SortedSet<Hash> head) {
         this.transactionId = transactionId;
         this.operation = operation;
         this.head = unmodifiableSortedSet(new TreeSet<>(head));
@@ -38,7 +38,7 @@ public final class CommandResult implements Mappable {
      * @param head New head after command execution.
      * @return A new instance.
      */
-    public static CommandResult of(int transactionId, Operation operation, SortedSet<Hash> head) {
+    public static CommandResult of(long transactionId, Operation operation, SortedSet<Hash> head) {
         return new CommandResult(transactionId, requireNonNull(operation), head);
     }
 
@@ -49,7 +49,7 @@ public final class CommandResult implements Mappable {
      * @param head Head after (and before) command execution.
      * @return A new instance.
      */
-    public static CommandResult noOp(int transactionId, SortedSet<Hash> head) {
+    public static CommandResult noOp(long transactionId, SortedSet<Hash> head) {
         return new CommandResult(transactionId, null, head);
     }
 
@@ -58,7 +58,7 @@ public final class CommandResult implements Mappable {
      *
      * @return A transaction identifier.
      */
-    public int getTransactionId() {
+    public long getTransactionId() {
         return transactionId;
     }
 
@@ -108,7 +108,7 @@ public final class CommandResult implements Mappable {
      * @return A new instance.
      */
     public static CommandResult fromMap(Map<String, Value> map) {
-        int transactionId = map.get(TRANSACTION_ID).asInt();
+        long transactionId = map.get(TRANSACTION_ID).asLong();
         SortedSet<Hash> head = fromList(map.get(HEAD).asList());
         String opCode = map.get(OPERATION).asString();
         if (opCode.equals(NO_OP)) {

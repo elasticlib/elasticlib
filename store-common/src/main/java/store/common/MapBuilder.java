@@ -25,16 +25,6 @@ class MapBuilder {
         return this;
     }
 
-    public MapBuilder put(String key, byte value) {
-        map.put(key, Value.of(value));
-        return this;
-    }
-
-    public MapBuilder put(String key, int value) {
-        map.put(key, Value.of(value));
-        return this;
-    }
-
     public MapBuilder put(String key, long value) {
         map.put(key, Value.of(value));
         return this;

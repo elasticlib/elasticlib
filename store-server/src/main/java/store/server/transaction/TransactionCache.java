@@ -19,15 +19,15 @@ class TransactionCache {
 
     private static final int SIZE = 20;
     private static final int TTL = 60;
-    private final Cache<Integer, TransactionContext> cache;
+    private final Cache<Long, TransactionContext> cache;
 
     public TransactionCache() {
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
                 .expireAfterWrite(TTL, TimeUnit.SECONDS)
-                .removalListener(new RemovalListener<Integer, TransactionContext>() {
+                .removalListener(new RemovalListener<Long, TransactionContext>() {
             @Override
-            public void onRemoval(RemovalNotification<Integer, TransactionContext> notification) {
+            public void onRemoval(RemovalNotification<Long, TransactionContext> notification) {
                 // Value can not be null as whe use strong references.
                 requireNonNull(notification.getValue()).rollbackIfSuspended();
             }
@@ -53,7 +53,7 @@ class TransactionCache {
         cache.put(context.getId(), context);
     }
 
-    public TransactionContext resume(int key) {
+    public TransactionContext resume(long key) {
         TransactionContext context = cache.getIfPresent(key);
         if (context != null && context.resume()) {
             cache.invalidate(key);

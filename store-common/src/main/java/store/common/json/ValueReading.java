@@ -19,9 +19,7 @@ import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.BYTE;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -38,12 +36,6 @@ final class ValueReading {
                 return Value.ofNull();
             }
         });
-        READERS.put(BYTE, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(base16().decode(asString(json).toUpperCase())[0]);
-            }
-        });
         READERS.put(BINARY, new Reader() {
             @Override
             public Value apply(JsonValue json, Schema schema) {
@@ -54,12 +46,6 @@ final class ValueReading {
             @Override
             public Value apply(JsonValue json, Schema schema) {
                 return Value.of(json.getValueType() == JsonValue.ValueType.TRUE);
-            }
-        });
-        READERS.put(INT, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(jsonNumber(json).intValueExact());
             }
         });
         READERS.put(LONG, new Reader() {

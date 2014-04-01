@@ -160,7 +160,7 @@ public class Repository {
      * @param source Content.
      * @return Operation result.
      */
-    public CommandResult addContent(int transactionId, Hash hash, InputStream source) {
+    public CommandResult addContent(long transactionId, Hash hash, InputStream source) {
         CommandResult result = volume.addContent(transactionId, hash, source);
         agent.signal();
         replicationService.signal(getName());

@@ -29,12 +29,12 @@ public abstract class TransactionContext {
     private final TransactionManager transactionManager;
     private final Session session;
     private final boolean lockExclusively;
-    private final int id;
+    private final long id;
     private boolean suspended = false;
     private boolean detached = false;
     private boolean closed = false;
 
-    TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively, int id) {
+    TransactionContext(TransactionManager transactionManager, Session session, boolean lockExclusively, long id) {
         this.transactionManager = transactionManager;
         this.session = session;
         this.lockExclusively = lockExclusively;
@@ -44,7 +44,7 @@ public abstract class TransactionContext {
     static TransactionContext newTransactionContext(TransactionManager transactionManager,
                                                     Session session,
                                                     boolean readOnly,
-                                                    int id) {
+                                                    long id) {
         TransactionContext txContext;
         if (readOnly) {
             txContext = new ReadOnlyTransactionContext(transactionManager, session, id);
@@ -186,7 +186,7 @@ public abstract class TransactionContext {
      *
      * @return This transaction identifier.
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 

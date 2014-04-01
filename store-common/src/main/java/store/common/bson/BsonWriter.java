@@ -57,30 +57,6 @@ public final class BsonWriter {
     }
 
     /**
-     * Add a byte to binary structure to build.
-     *
-     * @param key Key with which the supplied value is to be associated.
-     * @param value Value to be associated with the supplied key.
-     * @return This encoder instance.
-     */
-    public BsonWriter put(String key, byte value) {
-        put(key, Value.of(value));
-        return this;
-    }
-
-    /**
-     * Add an integer to binary structure to build.
-     *
-     * @param key Key with which the supplied value is to be associated.
-     * @param value Value to be associated with the supplied key.
-     * @return This encoder instance.
-     */
-    public BsonWriter put(String key, int value) {
-        put(key, Value.of(value));
-        return this;
-    }
-
-    /**
      * Add a long to binary structure to build.
      *
      * @param key Key with which the supplied value is to be associated.

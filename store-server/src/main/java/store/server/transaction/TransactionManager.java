@@ -29,7 +29,7 @@ public final class TransactionManager {
     private final Deque<TransactionContext> txContexts = new ConcurrentLinkedDeque<>();
     private XAFileSystem filesystem;
     private boolean started;
-    private int nextId;
+    private long nextId;
 
     private TransactionManager(Path path) {
         String dir = path.toAbsolutePath().toString();
@@ -164,7 +164,7 @@ public final class TransactionManager {
      * @param command Command to execute.
      * @return Supplied command invocation result.
      */
-    public CommandResult inTransaction(int key, Command command) {
+    public CommandResult inTransaction(long key, Command command) {
         return inTransaction(cache.resume(key), command);
     }
 

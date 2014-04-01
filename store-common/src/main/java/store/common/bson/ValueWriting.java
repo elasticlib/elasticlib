@@ -12,9 +12,7 @@ import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.BYTE;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -42,18 +40,6 @@ final class ValueWriting {
             @Override
             public byte[] apply(Value value) {
                 return new byte[]{value.asBoolean() ? TRUE : FALSE};
-            }
-        });
-        WRITERS.put(BYTE, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return new byte[]{value.asByte()};
-            }
-        });
-        WRITERS.put(INT, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeInt(value.asInt());
             }
         });
         WRITERS.put(LONG, new Function<Value, byte[]>() {

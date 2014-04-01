@@ -264,7 +264,7 @@ public class RepositoriesResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response addContent(@PathParam("name") String name,
                                @PathParam("hash") Hash hash,
-                               @QueryParam("txId") int transactionId,
+                               @QueryParam("txId") long transactionId,
                                FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next("content").getAsInputStream()) {

@@ -17,9 +17,7 @@ import static store.common.value.ValueType.ARRAY;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.BYTE;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.INT;
 import static store.common.value.ValueType.LONG;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -54,18 +52,6 @@ final class ValueReading {
                     default:
                         throw new IllegalArgumentException(String.format("0x%02x", b));
                 }
-            }
-        });
-        READERS.put(BYTE, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(reader.readByte());
-            }
-        });
-        READERS.put(INT, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(reader.readInt());
             }
         });
         READERS.put(LONG, new Function<ByteArrayReader, Value>() {

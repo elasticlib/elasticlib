@@ -15,7 +15,6 @@ import store.common.json.schema.Schema;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
-import static store.common.value.ValueType.BYTE;
 
 /**
  * JSON validation utils.
@@ -156,9 +155,6 @@ public final class JsonValidation {
 
     private static boolean isValid(String value, ValueType type) {
         switch (type) {
-            case BYTE:
-                return value.matches("[0-9a-fA-F]{2}");
-
             case BINARY:
                 return value.matches("[0-9a-fA-F]*");
 
@@ -175,17 +171,10 @@ public final class JsonValidation {
     }
 
     private static boolean isValid(JsonNumber value, ValueType type) {
-        switch (type) {
-            case INT:
-                return isInt(value);
-
-            case LONG:
-            case DATE:
-                return isLong(value);
-
-            default:
-                return false;
+        if (type != ValueType.LONG && type != ValueType.DATE) {
+            return false;
         }
+        return isLong(value);
     }
 
     @SuppressWarnings("ResultOfObjectAllocationIgnored")
@@ -195,16 +184,6 @@ public final class JsonValidation {
             return true;
 
         } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private static boolean isInt(JsonNumber value) {
-        try {
-            value.intValueExact();
-            return true;
-
-        } catch (ArithmeticException e) {
             return false;
         }
     }

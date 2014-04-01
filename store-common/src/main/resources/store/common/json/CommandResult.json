@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "transactionId": {
-            "type": "int"
+            "type": "long"
         },
         "operation": {
             "type": "string"

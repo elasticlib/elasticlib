@@ -38,7 +38,7 @@ public class BsonReaderTest {
      */
     @Test
     public void keySet() {
-        byte[] bytes = array(LONG,
+        byte[] bytes = array(INTEGER,
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                              STRING,
@@ -57,7 +57,7 @@ public class BsonReaderTest {
      */
     @Test
     public void asMap() {
-        byte[] bytes = array(LONG,
+        byte[] bytes = array(INTEGER,
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                              STRING,
@@ -120,7 +120,7 @@ public class BsonReaderTest {
      */
     @Test
     public void readLong() {
-        byte[] bytes = array(LONG,
+        byte[] bytes = array(INTEGER,
                              0x6C, 0x67, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
@@ -133,7 +133,7 @@ public class BsonReaderTest {
      */
     @Test
     public void readBigDecimal() {
-        byte[] bytes = array(BIG_DECIMAL,
+        byte[] bytes = array(DECIMAL,
                              0x64, 0x65, 0x63, 0x69, 0x6D, 0x61, 0x6C, 0x00, // key
                              0x00, 0x00, 0x00, 0x03, 0x31, 0x2E, 0x31); // value
 
@@ -176,7 +176,7 @@ public class BsonReaderTest {
                              0x6D, 0x61, 0x70, 0x00, // key
                              // value
                              0x00, 0x00, 0x00, 0x21, // length
-                             LONG,
+                             INTEGER,
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                              STRING,
@@ -217,7 +217,7 @@ public class BsonReaderTest {
                              0x6C, 0x69, 0x73, 0x74, 0x00, // key
                              // value
                              0x00, 0x00, 0x00, 0x12, // length
-                             LONG,
+                             INTEGER,
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, // entry
                              STRING,
                              0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74); // entry
@@ -248,7 +248,7 @@ public class BsonReaderTest {
      */
     @Test
     public void read() {
-        byte[] bytes = array(LONG,
+        byte[] bytes = array(INTEGER,
                              0x6E, 0x75, 0x6D, 0x00, // key
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                              STRING,

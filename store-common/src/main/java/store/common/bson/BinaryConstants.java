@@ -16,8 +16,8 @@ final class BinaryConstants {
         map(NULL, 0x01);
         map(BINARY, 0x02);
         map(BOOLEAN, 0x03);
-        map(LONG, 0x04);
-        map(BIG_DECIMAL, 0x05);
+        map(INTEGER, 0x04);
+        map(DECIMAL, 0x05);
         map(STRING, 0x06);
         map(DATE, 0x07);
         map(OBJECT, 0x08);

@@ -39,7 +39,7 @@ public abstract class Value {
      * @return A value of the supplied long.
      */
     public static Value of(long value) {
-        return new LongValue(value);
+        return new IntegerValue(value);
     }
 
     /**
@@ -47,7 +47,7 @@ public abstract class Value {
      * @return A value of the supplied big decimal.
      */
     public static Value of(BigDecimal value) {
-        return new BigDecimalValue(value);
+        return new DecimalValue(value);
     }
 
     /**

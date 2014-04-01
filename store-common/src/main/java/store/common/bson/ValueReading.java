@@ -14,11 +14,11 @@ import static store.common.bson.BinaryConstants.readType;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;
-import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.LONG;
+import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
@@ -54,13 +54,13 @@ final class ValueReading {
                 }
             }
         });
-        READERS.put(LONG, new Function<ByteArrayReader, Value>() {
+        READERS.put(INTEGER, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(reader.readLong());
             }
         });
-        READERS.put(BIG_DECIMAL, new Function<ByteArrayReader, Value>() {
+        READERS.put(DECIMAL, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(new BigDecimal(reader.readString(reader.readInt())));

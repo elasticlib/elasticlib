@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "seq": {
-            "type": "long"
+            "type": "integer"
         },
         "hash": {
             "type": "binary"

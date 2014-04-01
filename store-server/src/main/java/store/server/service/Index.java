@@ -46,14 +46,6 @@ import store.common.ContentInfoTree;
 import store.common.Hash;
 import store.common.IndexEntry;
 import store.common.value.Value;
-import static store.common.value.ValueType.ARRAY;
-import static store.common.value.ValueType.BINARY;
-import static store.common.value.ValueType.BOOLEAN;
-import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.LONG;
-import static store.common.value.ValueType.NULL;
-import static store.common.value.ValueType.OBJECT;
-import static store.common.value.ValueType.STRING;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
@@ -170,11 +162,11 @@ class Index {
                 document.add(new TextField(key, value.asBoolean() ? "true" : "false", Store.NO));
                 return;
 
-            case LONG:
+            case INTEGER:
                 document.add(new LongField(key, value.asLong(), Store.NO));
                 return;
 
-            case BIG_DECIMAL:
+            case DECIMAL:
                 document.add(new DoubleField(key, value.asBigDecimal().doubleValue(), Store.NO));
                 return;
 

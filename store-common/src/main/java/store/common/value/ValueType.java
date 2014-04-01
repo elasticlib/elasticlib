@@ -10,7 +10,7 @@ public enum ValueType {
      */
     NULL,
     /**
-     * A byte array.
+     * Some binary data.
      */
     BINARY,
     /**
@@ -18,13 +18,13 @@ public enum ValueType {
      */
     BOOLEAN,
     /**
-     * A long.
+     * An integral number.
      */
-    LONG,
+    INTEGER,
     /**
-     * A big decimal.
+     * A decimal number.
      */
-    BIG_DECIMAL,
+    DECIMAL,
     /**
      * A string.
      */

@@ -16,11 +16,11 @@ import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;
-import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.LONG;
+import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
@@ -48,13 +48,13 @@ final class ValueWriting {
                 return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
             }
         });
-        WRITERS.put(LONG, new Writer() {
+        WRITERS.put(INTEGER, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asLong());
             }
         });
-        WRITERS.put(BIG_DECIMAL, new Writer() {
+        WRITERS.put(DECIMAL, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
                 return jsonNumber(value.asBigDecimal());

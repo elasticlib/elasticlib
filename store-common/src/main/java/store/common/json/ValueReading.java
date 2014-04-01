@@ -16,11 +16,11 @@ import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;
-import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.LONG;
+import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
@@ -48,13 +48,13 @@ final class ValueReading {
                 return Value.of(json.getValueType() == JsonValue.ValueType.TRUE);
             }
         });
-        READERS.put(LONG, new Reader() {
+        READERS.put(INTEGER, new Reader() {
             @Override
             public Value apply(JsonValue json, Schema schema) {
                 return Value.of(jsonNumber(json).longValueExact());
             }
         });
-        READERS.put(BIG_DECIMAL, new Reader() {
+        READERS.put(DECIMAL, new Reader() {
             @Override
             public Value apply(JsonValue json, Schema schema) {
                 return Value.of(jsonNumber(json).bigDecimalValue());

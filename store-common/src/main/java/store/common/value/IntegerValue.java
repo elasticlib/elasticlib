@@ -1,16 +1,16 @@
 package store.common.value;
 
-class LongValue extends Value {
+class IntegerValue extends Value {
 
     private final long value;
 
-    public LongValue(long value) {
+    public IntegerValue(long value) {
         this.value = value;
     }
 
     @Override
     public ValueType type() {
-        return ValueType.LONG;
+        return ValueType.INTEGER;
     }
 
     @Override

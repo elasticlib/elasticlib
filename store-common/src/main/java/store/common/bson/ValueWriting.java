@@ -9,11 +9,11 @@ import static store.common.bson.BinaryConstants.*;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;
-import static store.common.value.ValueType.BIG_DECIMAL;
 import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
-import static store.common.value.ValueType.LONG;
+import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
 import static store.common.value.ValueType.STRING;
@@ -42,13 +42,13 @@ final class ValueWriting {
                 return new byte[]{value.asBoolean() ? TRUE : FALSE};
             }
         });
-        WRITERS.put(LONG, new Function<Value, byte[]>() {
+        WRITERS.put(INTEGER, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return writeLong(value.asLong());
             }
         });
-        WRITERS.put(BIG_DECIMAL, new Function<Value, byte[]>() {
+        WRITERS.put(DECIMAL, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
                 return writeString(value.toString());

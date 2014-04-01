@@ -6,7 +6,7 @@
             "type": "binary"
         },
         "length": {
-            "type": "long"
+            "type": "integer"
         },
         "revs": {
             "type": "array",

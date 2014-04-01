@@ -2,7 +2,7 @@
     "title": "listing",
     "type": "array",
     "items": [
-        {"type": "long"},
+        {"type": "integer"},
         {"type": "string"},
         {"type": "boolean"}
     ]

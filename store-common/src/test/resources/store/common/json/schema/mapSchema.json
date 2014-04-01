@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "pi": {
-            "type": "bigDecimal"
+            "type": "decimal"
         },
         "checksum": {
             "type": "binary"
@@ -17,7 +17,7 @@
         "coefficients": {
             "type": "array",
             "items": {
-                "type": "long"
+                "type": "integer"
             }
         },
         "mapping": {
@@ -27,7 +27,7 @@
                     "type": "boolean"
                 },
                 "answer": {
-                    "type": "long"
+                    "type": "integer"
                 }
             }
         }

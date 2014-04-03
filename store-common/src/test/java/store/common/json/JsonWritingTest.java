@@ -2,6 +2,7 @@ package store.common.json;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import static store.common.TestData.*;
 import static store.common.json.JsonTestData.*;
 import static store.common.json.JsonWriting.write;
 import static store.common.json.JsonWriting.writeAll;

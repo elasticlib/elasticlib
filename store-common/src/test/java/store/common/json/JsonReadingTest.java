@@ -8,6 +8,7 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import static store.common.TestData.*;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonReading.readAll;
 import static store.common.json.JsonTestData.*;

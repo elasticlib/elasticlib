@@ -1,0 +1,7 @@
+seq: 1
+hash: !sha1 '0827c43f0aad546501f99b11f0bd44be42d68870'
+head:
+- !sha1 '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
+- !sha1 'a0b87ac4b04a0bed394517d0b01792635531aa42'
+timestamp: 1970-01-01 01:02:03
+operation: delete

@@ -43,6 +43,14 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>Sonatype-public</id>
+            <name>Sonatype public repository</name>
+            <url>http://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -60,6 +68,12 @@
                 <groupId>javax.resource</groupId>
                 <artifactId>connector-api</artifactId>
                 <version>1.5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>1.13</version>
             </dependency>
 
             <dependency>

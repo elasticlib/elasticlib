@@ -41,9 +41,33 @@ public final class TestUtil {
         return (JsonArray) readJson(clazz, filename);
     }
 
+    /**
+     * Read resource file to a string. File is expected to be located in same "package" as calling class.
+     *
+     * @param clazz Calling class.
+     * @param filename Resource filename.
+     * @return A String.
+     */
+    public static String readString(Class<?> clazz, String filename) {
+        try (InputStream inputStream = newInputStream(clazz, filename);
+                Reader streamReader = new InputStreamReader(inputStream, Charsets.UTF_8)) {
+
+            StringBuilder builder = new StringBuilder();
+            char[] buffer = new char[1024];
+            int length = streamReader.read(buffer);
+            while (length > 0) {
+                builder.append(buffer, 0, length);
+                length = streamReader.read(buffer);
+            }
+            return builder.toString();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static JsonStructure readJson(Class<?> clazz, String filename) {
-        String resource = clazz.getPackage().getName().replace(".", "/") + "/" + filename;
-        try (InputStream inputStream = clazz.getClassLoader().getResourceAsStream(resource);
+        try (InputStream inputStream = newInputStream(clazz, filename);
                 Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
                 JsonReader jsonReader = Json.createReader(reader)) {
 
@@ -52,6 +76,11 @@ public final class TestUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static InputStream newInputStream(Class<?> clazz, String filename) {
+        String resource = clazz.getPackage().getName().replace(".", "/") + "/" + filename;
+        return clazz.getClassLoader().getResourceAsStream(resource);
     }
 
     /**

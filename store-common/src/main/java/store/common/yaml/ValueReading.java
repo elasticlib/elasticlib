@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import org.joda.time.Instant;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.constructor.SafeConstructor.ConstructYamlBool;
 import org.yaml.snakeyaml.constructor.SafeConstructor.ConstructYamlTimestamp;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Node;

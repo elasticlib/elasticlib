@@ -61,6 +61,7 @@ public final class CommandParser implements Completer {
         } catch (ProcessingException e) {
             String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
             display.println(message + System.lineSeparator());
+            session.disconnect();
         }
     }
 

@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "hash": {
-            "type": "binary"
+            "type": "hash"
         },
         "length": {
             "type": "integer"
@@ -14,12 +14,12 @@
                 "type": "object",
                 "properties": {
                     "rev": {
-                        "type": "binary"
+                        "type": "hash"
                     },
                     "parents": {
                         "type": "array",
                         "items": {
-                            "type": "binary"
+                            "type": "hash"
                         }
                     },
                     "deleted": {

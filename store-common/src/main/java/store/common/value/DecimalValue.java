@@ -3,7 +3,7 @@ package store.common.value;
 import java.math.BigDecimal;
 import static java.util.Objects.requireNonNull;
 
-class DecimalValue extends Value {
+final class DecimalValue extends Value {
 
     private final BigDecimal value;
 

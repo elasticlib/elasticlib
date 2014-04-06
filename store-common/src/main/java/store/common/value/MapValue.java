@@ -4,7 +4,7 @@ import static java.util.Collections.unmodifiableMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-class MapValue extends Value {
+final class MapValue extends Value {
 
     private final Map<String, Value> value;
 

@@ -1,6 +1,6 @@
 package store.common.json;
 
-import static com.google.common.io.BaseEncoding.base16;
+import static com.google.common.io.BaseEncoding.base64;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -12,6 +12,7 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import org.joda.time.Instant;
+import store.common.Hash;
 import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -20,6 +21,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -36,10 +38,16 @@ final class ValueReading {
                 return Value.ofNull();
             }
         });
+        READERS.put(HASH, new Reader() {
+            @Override
+            public Value apply(JsonValue json, Schema schema) {
+                return Value.of(new Hash(asString(json)));
+            }
+        });
         READERS.put(BINARY, new Reader() {
             @Override
             public Value apply(JsonValue json, Schema schema) {
-                return Value.of(base16().decode(asString(json).toUpperCase()));
+                return Value.of(base64().decode(asString(json)));
             }
         });
         READERS.put(BOOLEAN, new Reader() {

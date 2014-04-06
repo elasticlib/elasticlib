@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.Instant;
+import store.common.Hash;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.TRUE;
 import static store.common.bson.BinaryConstants.readType;
@@ -18,6 +19,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -26,12 +28,19 @@ import static store.common.value.ValueType.STRING;
 final class ValueReading {
 
     private static final Map<ValueType, Function<ByteArrayReader, Value>> READERS = new EnumMap<>(ValueType.class);
+    private static final int HASH_LENGTH = 20;
 
     static {
         READERS.put(NULL, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.ofNull();
+            }
+        });
+        READERS.put(HASH, new Function<ByteArrayReader, Value>() {
+            @Override
+            public Value apply(ByteArrayReader reader) {
+                return Value.of(new Hash(reader.readByteArray(HASH_LENGTH)));
             }
         });
         READERS.put(BINARY, new Function<ByteArrayReader, Value>() {

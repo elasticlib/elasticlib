@@ -10,6 +10,10 @@ public enum ValueType {
      */
     NULL,
     /**
+     * A hash.
+     */
+    HASH,
+    /**
      * Some binary data.
      */
     BINARY,

@@ -111,7 +111,7 @@ public class ContentInfo implements Mappable {
      */
     public static ContentInfo fromMap(Map<String, Value> map) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
-                .withHash(new Hash(map.get(HASH).asByteArray()))
+                .withHash(map.get(HASH).asHash())
                 .withLength(map.get(LENGTH).asLong())
                 .withParents(fromList(map.get(PARENTS).asList()))
                 .withMetadata(map.get(METADATA).asMap());
@@ -119,7 +119,7 @@ public class ContentInfo implements Mappable {
         if (map.containsKey(DELETED)) {
             builder.withDeleted(map.get(DELETED).asBoolean());
         }
-        return builder.build(new Hash(map.get(REV).asByteArray()));
+        return builder.build(map.get(REV).asHash());
     }
 
     @Override

@@ -2,6 +2,7 @@ package store.common.json;
 
 import com.google.common.collect.ImmutableMap;
 import static com.google.common.io.BaseEncoding.base16;
+import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
 import java.util.EnumMap;
@@ -16,6 +17,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import store.common.Hash;
 import static store.common.json.ValueReading.readValue;
 import static store.common.json.ValueWriting.writeValue;
 import store.common.json.schema.Schema;
@@ -37,9 +39,13 @@ public class ValueReadingAndWritingTest {
         put(Value.ofNull(),
             JsonValue.NULL);
 
-        put(Value.of(base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb")),
-            jsonString("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"));
+        byte[] bytes = base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb");
 
+        put(Value.of(new Hash(bytes)),
+            jsonString(base16().lowerCase().encode(bytes)));
+
+        put(Value.of(bytes),
+            jsonString(base64().encode(bytes)));
 
         put(Value.of(true),
             JsonValue.TRUE);

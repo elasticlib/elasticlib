@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.joda.time.Instant;
+import store.common.Hash;
 import static store.common.bson.BinaryConstants.*;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;
@@ -29,6 +30,18 @@ public final class BsonWriter {
      */
     public BsonWriter putNull(String key) {
         put(key, Value.ofNull());
+        return this;
+    }
+
+    /**
+     * Add a hash to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
+    public BsonWriter put(String key, Hash value) {
+        put(key, Value.of(value));
         return this;
     }
 

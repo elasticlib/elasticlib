@@ -14,14 +14,15 @@ final class BinaryConstants {
 
     static {
         map(NULL, 0x01);
-        map(BINARY, 0x02);
-        map(BOOLEAN, 0x03);
-        map(INTEGER, 0x04);
-        map(DECIMAL, 0x05);
-        map(STRING, 0x06);
-        map(DATE, 0x07);
-        map(OBJECT, 0x08);
-        map(ARRAY, 0x09);
+        map(HASH, 0x02);
+        map(BINARY, 0x03);
+        map(BOOLEAN, 0x04);
+        map(INTEGER, 0x05);
+        map(DECIMAL, 0x06);
+        map(STRING, 0x07);
+        map(DATE, 0x08);
+        map(OBJECT, 0x09);
+        map(ARRAY, 0x0A);
     }
 
     private BinaryConstants() {

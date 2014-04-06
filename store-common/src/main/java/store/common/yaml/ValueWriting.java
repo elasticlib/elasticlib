@@ -1,6 +1,7 @@
 package store.common.yaml;
 
 import com.google.common.base.Function;
+import static com.google.common.io.BaseEncoding.base64;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -29,7 +31,7 @@ import static store.common.value.ValueType.STRING;
 final class ValueWriting {
 
     private static final Map<ValueType, Function<Value, Node>> WRITERS = new EnumMap<>(ValueType.class);
-    private static final Tag SHA1 = new Tag("!sha1");
+    private static final Tag HASH_TAG = new Tag("!hash");
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     static {
@@ -39,10 +41,16 @@ final class ValueWriting {
                 return newScalarNode(Tag.NULL, "null");
             }
         });
+        WRITERS.put(HASH, new Function<Value, Node>() {
+            @Override
+            public Node apply(Value value) {
+                return newScalarNode(HASH_TAG, value.asHash().encode());
+            }
+        });
         WRITERS.put(BINARY, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                return newScalarNode(SHA1, value.asHexadecimalString());
+                return newScalarNode(Tag.BINARY, base64().encode(value.asByteArray()));
             }
         });
         WRITERS.put(BOOLEAN, new Function<Value, Node>() {

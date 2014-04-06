@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import static java.util.Collections.unmodifiableList;
 import java.util.List;
 
-class ListValue extends Value {
+final class ListValue extends Value {
 
     private final List<Value> value;
 

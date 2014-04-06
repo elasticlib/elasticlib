@@ -3,12 +3,12 @@
     "type": "object",
     "properties": {
         "hash": {
-            "type": "binary"
+            "type": "hash"
         },
         "head": {
             "type": "array",
             "items": {
-                "type": "binary"
+                "type": "hash"
             }
         }
     }

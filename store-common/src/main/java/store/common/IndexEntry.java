@@ -61,7 +61,7 @@ public final class IndexEntry implements Mappable {
      * @return A new instance.
      */
     public static IndexEntry fromMap(Map<String, Value> map) {
-        return new IndexEntry(new Hash(map.get(HASH).asByteArray()),
+        return new IndexEntry(map.get(HASH).asHash(),
                               fromList(map.get(HEAD).asList()));
     }
 

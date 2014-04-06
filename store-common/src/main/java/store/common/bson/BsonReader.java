@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import org.joda.time.Instant;
+import store.common.Hash;
 import static store.common.bson.ValueReading.readMap;
 import store.common.value.Value;
 
@@ -52,6 +53,17 @@ public class BsonReader {
      */
     public Map<String, Value> asMap() {
         return map;
+    }
+
+    /**
+     * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
+     * contain a mapping for the specified key or if the value is actually not a hash.
+     *
+     * @param key The key whose associated value is to be returned.
+     * @return A hash.
+     */
+    public Hash getHash(String key) {
+        return get(key).asHash();
     }
 
     /**

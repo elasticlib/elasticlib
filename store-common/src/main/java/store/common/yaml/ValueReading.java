@@ -1,6 +1,7 @@
 package store.common.yaml;
 
 import com.google.common.base.Function;
+import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,19 +26,25 @@ import store.common.value.Value;
 final class ValueReading {
 
     private static final Map<Tag, Function<Node, Value>> READERS = new HashMap<>();
-    private static final Tag SHA1 = new Tag("!sha1");
+    private static final Tag HASH_TAG = new Tag("!hash");
 
     static {
-        READERS.put(SHA1, new Function<Node, Value>() {
+        READERS.put(HASH_TAG, new Function<Node, Value>() {
             @Override
             public Value apply(Node node) {
-                return Value.of(new Hash(value(node)).getBytes());
+                return Value.of(new Hash(value(node)));
             }
         });
         READERS.put(Tag.NULL, new Function<Node, Value>() {
             @Override
             public Value apply(Node node) {
                 return Value.ofNull();
+            }
+        });
+        READERS.put(Tag.BINARY, new Function<Node, Value>() {
+            @Override
+            public Value apply(Node node) {
+                return Value.of(base64().decode(value(node)));
             }
         });
         READERS.put(Tag.BOOL, new Function<Node, Value>() {

@@ -12,7 +12,7 @@ class MapBuilder {
     private final Map<String, Value> map = new LinkedHashMap<>();
 
     public MapBuilder put(String key, Hash value) {
-        return put(key, value.getBytes());
+        return put(key, Value.of(value));
     }
 
     public MapBuilder put(String key, byte[] value) {

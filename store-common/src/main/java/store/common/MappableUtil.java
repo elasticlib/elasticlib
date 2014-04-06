@@ -19,7 +19,7 @@ public final class MappableUtil {
     static List<Value> toList(SortedSet<Hash> hashes) {
         List<Value> values = new ArrayList<>();
         for (Hash hash : hashes) {
-            values.add(Value.of(hash.getBytes()));
+            values.add(Value.of(hash));
         }
         return values;
     }
@@ -27,7 +27,7 @@ public final class MappableUtil {
     static SortedSet<Hash> fromList(List<Value> values) {
         SortedSet<Hash> hashes = new TreeSet<>();
         for (Value value : values) {
-            hashes.add(new Hash(value.asByteArray()));
+            hashes.add(value.asHash());
         }
         return hashes;
     }

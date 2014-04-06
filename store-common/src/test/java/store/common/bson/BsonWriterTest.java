@@ -9,6 +9,7 @@ import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.Test;
+import store.common.Hash;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.*;
 import store.common.value.Value;
@@ -28,6 +29,24 @@ public class BsonWriterTest {
                                 0x6E, 0x75, 0x6C, 0x6C, 0x00); // key (no value)
         byte[] actual = new BsonWriter()
                 .putNull("null")
+                .build();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeHash() {
+        byte[] expected = array(0x00, 0x00, 0x00, 0x1A, // length
+                                HASH,
+                                0x68, 0x61, 0x73, 0x68, 0x00, // key
+                                0x8D, 0x5F, 0x3C, 0x77, 0xE9, 0x4A, 0x0C, 0xAD, 0x3A, 0x32,
+                                0x34, 0x0D, 0x34, 0x21, 0x35, 0xF4, 0x3D, 0xBB, 0x7C, 0xBB); // value
+
+        byte[] actual = new BsonWriter()
+                .put("hash", new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))
                 .build();
 
         assertThat(actual).isEqualTo(expected);

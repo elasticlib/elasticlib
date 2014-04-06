@@ -1,15 +1,13 @@
 package store.common.value;
 
-import java.text.DateFormat;
-import java.util.Date;
 import org.joda.time.Instant;
 
-class DateValue extends Value {
+final class DateValue extends Value {
 
-    private final long time;
+    private final Instant value;
 
     public DateValue(Instant value) {
-        time = value.getMillis();
+        this.value = value;
     }
 
     @Override
@@ -19,16 +17,11 @@ class DateValue extends Value {
 
     @Override
     public Instant asInstant() {
-        return new Instant(time);
-    }
-
-    @Override
-    public String toString() {
-        return DateFormat.getDateTimeInstance().format(new Date(time));
+        return value;
     }
 
     @Override
     Object value() {
-        return time;
+        return value;
     }
 }

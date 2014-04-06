@@ -13,8 +13,8 @@ import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
 import store.common.json.schema.Schema;
 import store.common.value.ValueType;
-import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 
 /**
  * JSON validation utils.
@@ -155,8 +155,11 @@ public final class JsonValidation {
 
     private static boolean isValid(String value, ValueType type) {
         switch (type) {
+            case HASH:
+                return value.length() == 40 && value.matches("[0-9a-fA-F]*");
+
             case BINARY:
-                return value.matches("[0-9a-fA-F]*");
+                return value.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
             case DECIMAL:
                 return isBigDecimal(value);

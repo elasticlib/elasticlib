@@ -13,6 +13,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -28,6 +29,12 @@ final class ValueWriting {
             @Override
             public byte[] apply(Value value) {
                 return EMPTY_BYTE_ARRAY;
+            }
+        });
+        WRITERS.put(HASH, new Function<Value, byte[]>() {
+            @Override
+            public byte[] apply(Value value) {
+                return value.asHash().getBytes();
             }
         });
         WRITERS.put(BINARY, new Function<Value, byte[]>() {

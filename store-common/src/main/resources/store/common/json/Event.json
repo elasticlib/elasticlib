@@ -6,12 +6,12 @@
             "type": "integer"
         },
         "hash": {
-            "type": "binary"
+            "type": "hash"
         },
         "head": {
             "type": "array",
             "items": {
-                "type": "binary"
+                "type": "hash"
             }
         },
         "timestamp": {

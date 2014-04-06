@@ -1,5 +1,6 @@
 package store.common.json;
 
+import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
 import static store.common.value.ValueType.OBJECT;
@@ -36,10 +38,16 @@ final class ValueWriting {
                 return JsonValue.NULL;
             }
         });
+        WRITERS.put(HASH, new Writer() {
+            @Override
+            public JsonValue apply(Value value, Schema schema) {
+                return jsonString(value.asHash().encode());
+            }
+        });
         WRITERS.put(BINARY, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
-                return jsonString(value.asHexadecimalString());
+                return jsonString(base64().encode(value.asByteArray()));
             }
         });
         WRITERS.put(BOOLEAN, new Writer() {

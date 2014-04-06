@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.Test;
+import store.common.Hash;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.*;
 import store.common.value.Value;
@@ -86,6 +87,20 @@ public class BsonReaderTest {
 
         BsonReader reader = new BsonReader(bytes);
         assertThat(reader.get("null").type()).isEqualTo(ValueType.NULL);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readHash() {
+        byte[] bytes = array(HASH,
+                             0x68, 0x61, 0x73, 0x68, 0x00, // key
+                             0x8D, 0x5F, 0x3C, 0x77, 0xE9, 0x4A, 0x0C, 0xAD, 0x3A, 0x32,
+                             0x34, 0x0D, 0x34, 0x21, 0x35, 0xF4, 0x3D, 0xBB, 0x7C, 0xBB); // value
+
+        BsonReader reader = new BsonReader(bytes);
+        assertThat(reader.getHash("hash")).isEqualTo(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"));
     }
 
     /**

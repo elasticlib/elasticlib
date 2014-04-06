@@ -1,22 +1,23 @@
 package store.common.value;
 
 import static java.util.Objects.requireNonNull;
+import store.common.Hash;
 
-final class StringValue extends Value {
+final class HashValue extends Value {
 
-    private final String value;
+    private final Hash value;
 
-    public StringValue(String value) {
+    HashValue(Hash value) {
         this.value = requireNonNull(value);
     }
 
     @Override
     public ValueType type() {
-        return ValueType.STRING;
+        return ValueType.HASH;
     }
 
     @Override
-    public String asString() {
+    public Hash asHash() {
         return value;
     }
 

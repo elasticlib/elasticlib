@@ -1,6 +1,6 @@
 package store.common.value;
 
-class IntegerValue extends Value {
+final class IntegerValue extends Value {
 
     private final long value;
 

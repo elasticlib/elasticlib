@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.joda.time.Instant;
+import store.common.Hash;
 
 /**
  * Represents a dynamically typed value. Immutable.
@@ -16,6 +17,14 @@ public abstract class Value {
      */
     public static Value ofNull() {
         return NullValue.getInstance();
+    }
+
+    /**
+     * @param value A hash.
+     * @return A value of the supplied hash.
+     */
+    public static Value of(Hash value) {
+        return new HashValue(value);
     }
 
     /**
@@ -88,18 +97,18 @@ public abstract class Value {
     public abstract ValueType type();
 
     /**
-     * @return This value as a byte array.
-     * @throws UnsupportedOperationException If this value is actually not a byte array.
+     * @return This value as a hash.
+     * @throws UnsupportedOperationException If this value is actually not a hash.
      */
-    public byte[] asByteArray() {
+    public Hash asHash() {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * @return This value as a base 16 encoded String.
-     * @throws UnsupportedOperationException If this value is actually not a byte nor a byte array.
+     * @return This value as a byte array.
+     * @throws UnsupportedOperationException If this value is actually not a byte array.
      */
-    public String asHexadecimalString() {
+    public byte[] asByteArray() {
         throw new UnsupportedOperationException();
     }
 

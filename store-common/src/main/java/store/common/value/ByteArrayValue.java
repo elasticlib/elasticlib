@@ -3,10 +3,7 @@ package store.common.value;
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;
 
-/**
- * Represents a byte array value
- */
-public final class ByteArrayValue extends Value {
+final class ByteArrayValue extends Value {
 
     private final byte[] value;
 
@@ -30,15 +27,10 @@ public final class ByteArrayValue extends Value {
     }
 
     @Override
-    public String asHexadecimalString() {
+    public String toString() {
         return base16()
                 .lowerCase()
                 .encode(value);
-    }
-
-    @Override
-    public String toString() {
-        return asHexadecimalString();
     }
 
     @Override

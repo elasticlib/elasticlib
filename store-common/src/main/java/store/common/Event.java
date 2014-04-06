@@ -100,7 +100,7 @@ public class Event implements Mappable {
     public static Event fromMap(Map<String, Value> map) {
         return new EventBuilder()
                 .withSeq(map.get(SEQ).asLong())
-                .withHash(new Hash(map.get(HASH).asByteArray()))
+                .withHash(map.get(HASH).asHash())
                 .withHead(fromList(map.get(HEAD).asList()))
                 .withTimestamp(map.get(TIMESTAMP).asInstant())
                 .withOperation(Operation.fromString(map.get(OPERATION).asString()))

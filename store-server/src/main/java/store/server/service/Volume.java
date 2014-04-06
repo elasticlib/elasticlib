@@ -17,7 +17,7 @@ import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
-import store.common.Hash;
+import store.common.hash.Hash;
 import store.common.Operation;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;

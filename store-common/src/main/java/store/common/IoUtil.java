@@ -3,7 +3,8 @@ package store.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import store.common.Digest.DigestBuilder;
+import store.common.hash.Digest;
+import store.common.hash.Digest.DigestBuilder;
 
 public final class IoUtil {
 

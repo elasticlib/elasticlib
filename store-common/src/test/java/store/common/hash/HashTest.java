@@ -1,4 +1,4 @@
-package store.common;
+package store.common.hash;
 
 import java.util.Set;
 import static org.fest.assertions.api.Assertions.assertThat;

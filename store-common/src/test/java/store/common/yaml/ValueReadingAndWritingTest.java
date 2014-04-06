@@ -12,7 +12,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.Tag;
-import store.common.Hash;
+import store.common.hash.Hash;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.yaml.ValueReading.read;

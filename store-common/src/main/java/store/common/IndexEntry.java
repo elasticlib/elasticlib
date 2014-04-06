@@ -9,6 +9,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import static store.common.MappableUtil.fromList;
 import static store.common.MappableUtil.toList;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

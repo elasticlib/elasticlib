@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import org.joda.time.Instant;
-import store.common.Hash;
 import static store.common.bson.ValueReading.readMap;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

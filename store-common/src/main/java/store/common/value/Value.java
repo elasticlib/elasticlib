@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.joda.time.Instant;
-import store.common.Hash;
+import store.common.hash.Hash;
 
 /**
  * Represents a dynamically typed value. Immutable.

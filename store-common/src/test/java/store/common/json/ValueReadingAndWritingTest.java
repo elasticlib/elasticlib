@@ -18,7 +18,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import store.common.Hash;
+import store.common.hash.Hash;
 import static store.common.json.ValueReading.readValue;
 import static store.common.json.ValueWriting.writeValue;
 import store.common.json.schema.Schema;

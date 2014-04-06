@@ -1,7 +1,7 @@
 package store.common.value;
 
 import static java.util.Objects.requireNonNull;
-import store.common.Hash;
+import store.common.hash.Hash;
 
 final class HashValue extends Value {
 

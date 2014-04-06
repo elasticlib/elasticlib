@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import store.common.ContentInfo.ContentInfoBuilder;
 import static store.common.Diff.diff;
 import static store.common.Diff.mergeDiff;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

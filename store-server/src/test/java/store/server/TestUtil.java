@@ -7,7 +7,7 @@ import static java.nio.file.Files.walkFileTree;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import store.common.Hash;
+import store.common.hash.Hash;
 
 /**
  * Test utilities.

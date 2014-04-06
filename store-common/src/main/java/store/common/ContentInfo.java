@@ -18,6 +18,7 @@ import static store.common.MappableUtil.fromList;
 import static store.common.MappableUtil.toList;
 import static store.common.SinkOutputStream.sink;
 import store.common.bson.BsonWriter;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

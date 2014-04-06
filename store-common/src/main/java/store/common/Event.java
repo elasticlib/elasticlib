@@ -9,6 +9,7 @@ import java.util.SortedSet;
 import org.joda.time.Instant;
 import static store.common.MappableUtil.fromList;
 import static store.common.MappableUtil.toList;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

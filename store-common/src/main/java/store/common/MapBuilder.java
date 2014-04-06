@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.Instant;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 class MapBuilder {

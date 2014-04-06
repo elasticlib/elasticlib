@@ -7,6 +7,7 @@ import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.TreeSet;
 import org.joda.time.Instant;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

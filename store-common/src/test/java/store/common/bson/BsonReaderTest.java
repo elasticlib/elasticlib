@@ -9,9 +9,9 @@ import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.Test;
-import store.common.Hash;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.*;
+import store.common.hash.Hash;
 import store.common.value.Value;
 import store.common.value.ValueType;
 

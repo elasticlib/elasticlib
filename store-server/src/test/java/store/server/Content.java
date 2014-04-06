@@ -9,9 +9,9 @@ import java.util.SortedSet;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.ContentInfoTree;
-import store.common.Digest;
-import store.common.Hash;
 import static store.common.IoUtil.copyAndDigest;
+import store.common.hash.Digest;
+import store.common.hash.Hash;
 
 /**
  * Represents a test content.

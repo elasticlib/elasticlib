@@ -1,4 +1,4 @@
-package store.common;
+package store.common.hash;
 
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.Arrays;

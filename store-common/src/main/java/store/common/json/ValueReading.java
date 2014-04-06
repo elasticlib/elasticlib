@@ -12,7 +12,7 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import org.joda.time.Instant;
-import store.common.Hash;
+import store.common.hash.Hash;
 import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;

@@ -12,6 +12,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.ContentInfoTree.ContentInfoTreeBuilder;
+import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**

@@ -60,7 +60,7 @@ public class Session implements Closeable {
     }
 
     public void stopUse(String repositoryName) {
-        if (repository.equals(repositoryName)) {
+        if (repository != null && repository.equals(repositoryName)) {
             repository = null;
             if (server == null) {
                 display.resetPrompt();

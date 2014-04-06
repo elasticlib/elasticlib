@@ -17,7 +17,6 @@ import store.common.value.Value;
 public final class IndexEntry implements Mappable {
 
     private static final String CONTENT = "content";
-    private static final String REVISION = "revision";
     private static final String REVISIONS = "revisions";
     private final Hash content;
     private final SortedSet<Hash> revisions;

@@ -20,7 +20,6 @@ public final class CommandResult implements Mappable {
     private static final String OPERATION = "operation";
     private static final String NO_OP = "noOp";
     private static final String CONTENT = "content";
-    private static final String REVISION = "revision";
     private static final String REVISIONS = "revisions";
     private long transactionId;
     private final Operation operation;

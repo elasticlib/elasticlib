@@ -18,7 +18,6 @@ public class Event implements Mappable {
 
     private static final String SEQ = "seq";
     private static final String CONTENT = "content";
-    private static final String REVISION = "revision";
     private static final String REVISIONS = "revisions";
     private static final String TIMESTAMP = "timestamp";
     private static final String OPERATION = "operation";

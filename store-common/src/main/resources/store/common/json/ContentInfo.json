@@ -11,8 +11,13 @@
         "revision": {
             "type": "hash"
         },
+        "parent": {
+            "type": "hash",
+            "optional": true
+        },
         "parents": {
             "type": "array",
+            "optional": true,
             "items": {
                 "type": "hash"
             }
@@ -22,7 +27,8 @@
             "optional": true
         },
         "metadata": {
-            "definition": "schema"
+            "definition": "schema",
+            "optional": true
         }
     }
 }

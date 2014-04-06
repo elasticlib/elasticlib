@@ -60,8 +60,8 @@ public class Schema {
         this(title, "", type, optional);
     }
 
-    Schema(String title, String definition) {
-        this(title, definition, null, false);
+    Schema(String title, String definition, boolean optional) {
+        this(title, definition, null, optional);
     }
 
     Schema(String title, ValueType type) {
@@ -118,11 +118,11 @@ public class Schema {
      */
     public static Schema read(JsonObject json) {
         String title = json.containsKey(TITLE) ? json.getString(TITLE) : "";
+        boolean optional = json.containsKey(OPTIONAL) ? json.getBoolean(OPTIONAL) : false;
         if (json.containsKey(DEFINITION)) {
-            return new Schema(title, json.getString(DEFINITION));
+            return new Schema(title, json.getString(DEFINITION), optional);
         }
         ValueType type = ValueType.valueOf(LOWER_CAMEL.to(UPPER_UNDERSCORE, json.getString(TYPE)));
-        boolean optional = json.containsKey(OPTIONAL) ? json.getBoolean(OPTIONAL) : false;
         switch (type) {
             case OBJECT:
                 return new MapSchema(title, json, optional);
@@ -150,6 +150,9 @@ public class Schema {
         }
         if (type != null) {
             builder.add(TYPE, UPPER_UNDERSCORE.to(LOWER_CAMEL, type.name()));
+        }
+        if (optional) {
+            builder.add(OPTIONAL, true);
         }
         return write(builder);
     }
@@ -228,7 +231,9 @@ public class Schema {
         Schema other = (Schema) obj;
         return new EqualsBuilder()
                 .append(title, other.title)
+                .append(definition, other.definition)
                 .append(type, other.type)
+                .append(optional, other.optional)
                 .build();
     }
 

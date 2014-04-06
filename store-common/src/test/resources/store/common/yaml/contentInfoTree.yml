@@ -2,10 +2,7 @@ content: !hash '8d5f3c77e94a0cad3a32340d342135f43dbb7cbb'
 length: 10
 revisions:
 - revision: !hash 'a0b87ac4b04a0bed394517d0b01792635531aa42'
-  parents:
-  - !hash '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
-  metadata: {}
+  parent: !hash '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
 - revision: !hash '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
-  parents: []
   metadata:
     text: ipsum lorem

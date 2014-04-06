@@ -84,8 +84,8 @@ public final class JsonValidation {
     }
 
     private static boolean isPropertyValid(JsonObject json, String key, Schema propertySchema) {
-        if (propertySchema.isOptional()) {
-            return true;
+        if (!json.containsKey(key)) {
+            return propertySchema.isOptional();
         }
         if (!propertySchema.definition().isEmpty()) {
             if (!json.containsKey(propertySchema.definition())) {
@@ -93,7 +93,7 @@ public final class JsonValidation {
             }
             propertySchema = Schema.read(json.getJsonObject(propertySchema.definition()));
         }
-        return json.containsKey(key) && isValid(json.get(key), propertySchema);
+        return isValid(json.get(key), propertySchema);
     }
 
     private static boolean isValid(JsonArray array, Schema schema) {

@@ -28,6 +28,7 @@ public class ContentInfo implements Mappable {
     private static final String CONTENT = "content";
     private static final String LENGTH = "length";
     private static final String REVISION = "revision";
+    private static final String PARENT = "parent";
     private static final String PARENTS = "parents";
     private static final String DELETED = "deleted";
     private static final String METADATA = "metadata";
@@ -94,13 +95,25 @@ public class ContentInfo implements Mappable {
         MapBuilder builder = new MapBuilder()
                 .put(CONTENT, content)
                 .put(LENGTH, length)
-                .put(REVISION, revision)
-                .put(PARENTS, toList(parents));
+                .put(REVISION, revision);
 
+        switch (parents.size()) {
+            case 0:
+                break;
+            case 1:
+                builder.put(PARENT, parents.first());
+                break;
+            default:
+                builder.put(PARENTS, toList(parents));
+                break;
+        }
         if (deleted) {
             builder.put(DELETED, deleted);
         }
-        return builder.put(METADATA, metadata).build();
+        if (!metadata.isEmpty()) {
+            builder.put(METADATA, metadata);
+        }
+        return builder.build();
     }
 
     /**
@@ -112,12 +125,19 @@ public class ContentInfo implements Mappable {
     public static ContentInfo fromMap(Map<String, Value> map) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
                 .withContent(map.get(CONTENT).asHash())
-                .withLength(map.get(LENGTH).asLong())
-                .withParents(fromList(map.get(PARENTS).asList()))
-                .withMetadata(map.get(METADATA).asMap());
+                .withLength(map.get(LENGTH).asLong());
 
+        if (map.containsKey(PARENT)) {
+            builder.withParent(map.get(PARENT).asHash());
+        }
+        if (map.containsKey(PARENTS)) {
+            builder.withParents(fromList(map.get(PARENTS).asList()));
+        }
         if (map.containsKey(DELETED)) {
             builder.withDeleted(map.get(DELETED).asBoolean());
+        }
+        if (map.containsKey(METADATA)) {
+            builder.withMetadata(map.get(METADATA).asMap());
         }
         return builder.build(map.get(REVISION).asHash());
     }

@@ -36,8 +36,8 @@ public final class Content {
             bytes = outputStream.toByteArray();
             info = new ContentInfoBuilder()
                     .withLength(digest.getLength())
-                    .withHash(digest.getHash())
-                    .computeRevAndBuild();
+                    .withContent(digest.getHash())
+                    .computeRevisionAndBuild();
 
             tree = new ContentInfoTree.ContentInfoTreeBuilder().add(info).build();
 
@@ -64,7 +64,7 @@ public final class Content {
      * @return This content's hash.
      */
     public Hash getHash() {
-        return tree.getHash();
+        return tree.getContent();
     }
 
     /**

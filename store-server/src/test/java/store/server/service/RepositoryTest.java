@@ -91,7 +91,7 @@ public class RepositoryTest {
             Repository alpha = repository(ALPHA);
             CommandResult firstStepResult = alpha.addInfo(LOREM_IPSUM.getInfo());
             CommandResult secondStepResult = alpha.addContent(firstStepResult.getTransactionId(),
-                                                              LOREM_IPSUM.getInfo().getHash(),
+                                                              LOREM_IPSUM.getInfo().getContent(),
                                                               inputStream);
 
             assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
@@ -214,18 +214,18 @@ public class RepositoryTest {
     public void deleteAlreadyDeletedTest() {
         ContentInfo rev0 = LOREM_IPSUM.getInfo();
         ContentInfo rev1 = new ContentInfoBuilder()
-                .withHash(rev0.getHash())
+                .withContent(rev0.getContent())
                 .withLength(rev0.getLength())
-                .withParent(rev0.getRev())
+                .withParent(rev0.getRevision())
                 .withDeleted(true)
-                .computeRevAndBuild();
+                .computeRevisionAndBuild();
 
         ContentInfoTree tree = new ContentInfoTreeBuilder()
                 .add(rev0)
                 .add(rev1)
                 .build();
 
-        CommandResult result = repository(ALPHA).deleteContent(tree.getHash(), tree.getHead());
+        CommandResult result = repository(ALPHA).deleteContent(tree.getContent(), tree.getHead());
         assertThat(result.isNoOp()).isTrue();
     }
 
@@ -256,7 +256,7 @@ public class RepositoryTest {
 
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getOperation()).isEqualTo(Operation.CREATE);
-        assertThat(events.get(0).getHash()).isEqualTo(Content.getHash());
+        assertThat(events.get(0).getContent()).isEqualTo(Content.getHash());
     }
 
     private void assertDeleted(Repository repository, Content Content) {
@@ -264,7 +264,7 @@ public class RepositoryTest {
 
         assertThat(events).hasSize(2);
         assertThat(events.get(1).getOperation()).isEqualTo(Operation.DELETE);
-        assertThat(events.get(1).getHash()).isEqualTo(Content.getHash());
+        assertThat(events.get(1).getContent()).isEqualTo(Content.getHash());
     }
 
     private void async(Runnable runnable) {

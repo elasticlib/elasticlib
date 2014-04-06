@@ -46,20 +46,20 @@ class ReplicationAgent extends Agent {
 
         @Override
         protected boolean process(Event event) {
-            ContentInfoTree tree = source.getInfoTree(event.getHash());
+            ContentInfoTree tree = source.getInfoTree(event.getContent());
             if (tree.isDeleted()) {
                 destination.mergeTree(tree);
                 return true;
 
             } else {
-                Optional<InputStream> inputStreamOpt = source.getContent(tree.getHash(), tree.getHead());
+                Optional<InputStream> inputStreamOpt = source.getContent(tree.getContent(), tree.getHead());
                 if (!inputStreamOpt.isPresent()) {
                     return false;
                 }
                 try (InputStream inputStream = inputStreamOpt.get()) {
                     CommandResult result = destination.mergeTree(tree);
                     if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
-                        destination.addContent(result.getTransactionId(), tree.getHash(), inputStream);
+                        destination.addContent(result.getTransactionId(), tree.getContent(), inputStream);
                     }
                     return true;
 

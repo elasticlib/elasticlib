@@ -2,18 +2,18 @@
     "title": "contentInfoTree",
     "type": "object",
     "properties": {
-        "hash": {
+        "content": {
             "type": "hash"
         },
         "length": {
             "type": "integer"
         },
-        "revs": {
+        "revisions": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "rev": {
+                    "revision": {
                         "type": "hash"
                     },
                     "parents": {

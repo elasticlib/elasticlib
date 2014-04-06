@@ -44,13 +44,13 @@ class IndexingAgent extends Agent {
 
         @Override
         protected boolean process(Event event) {
-            ContentInfoTree tree = volume.getInfoTree(event.getHash());
+            ContentInfoTree tree = volume.getInfoTree(event.getContent());
             if (tree.isDeleted()) {
-                index.delete(tree.getHash());
+                index.delete(tree.getContent());
                 return true;
 
             } else {
-                Optional<InputStream> inputStreamOpt = volume.getContent(tree.getHash(), tree.getHead());
+                Optional<InputStream> inputStreamOpt = volume.getContent(tree.getContent(), tree.getHead());
                 if (!inputStreamOpt.isPresent()) {
                     return false;
                 }

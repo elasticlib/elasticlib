@@ -2,13 +2,13 @@
     "title": "contentInfo",
     "type": "object",
     "properties": {
-        "hash": {
+        "content": {
             "type": "hash"
         },
         "length": {
             "type": "integer"
         },
-        "rev": {
+        "revision": {
             "type": "hash"
         },
         "parents": {

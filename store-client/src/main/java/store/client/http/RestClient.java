@@ -182,11 +182,11 @@ public class RestClient implements Closeable {
                 throw new RequestFailedException("This content is already stored");
             }
             ContentInfo info = new ContentInfoBuilder()
-                    .withHash(digest.getHash())
+                    .withContent(digest.getHash())
                     .withLength(digest.getLength())
                     .withParents(revs(head))
                     .withMetadata(metadata(filepath))
-                    .computeRevAndBuild();
+                    .computeRevisionAndBuild();
 
             CommandResult firstStepResult = result(resource
                     .path("repositories/{name}/info")
@@ -209,7 +209,7 @@ public class RestClient implements Closeable {
 
                 return result(resource.path("repositories/{name}/content/{hash}")
                         .resolveTemplate("name", repository)
-                        .resolveTemplate("hash", info.getHash())
+                        .resolveTemplate("hash", info.getContent())
                         .queryParam("txId", firstStepResult.getTransactionId())
                         .request()
                         .put(entity(multipart, addBoundary(multipart.getMediaType()))));
@@ -256,7 +256,7 @@ public class RestClient implements Closeable {
     private static Set<Hash> revs(List<ContentInfo> head) {
         Set<Hash> revs = new HashSet<>();
         for (ContentInfo info : head) {
-            revs.add(info.getRev());
+            revs.add(info.getRevision());
         }
         return revs;
     }

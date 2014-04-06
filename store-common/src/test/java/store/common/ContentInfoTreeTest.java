@@ -98,7 +98,7 @@ public class ContentInfoTreeTest {
 
     private static ContentInfoBuilder builder(String... parents) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
-                .withHash(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))
+                .withContent(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))
                 .withLength(1024);
 
         for (String parent : parents) {
@@ -120,7 +120,7 @@ public class ContentInfoTreeTest {
     private static Hash[] revisions(ContentInfo... infos) {
         Hash[] revisions = new Hash[infos.length];
         for (int i = 0; i < infos.length; i++) {
-            revisions[i] = infos[i].getRev();
+            revisions[i] = infos[i].getRevision();
         }
         return revisions;
     }
@@ -131,7 +131,7 @@ public class ContentInfoTreeTest {
     @Test
     public void getTest() {
         ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
-        Hash rev = a3.getRev();
+        Hash rev = a3.getRevision();
 
         assertThat(tree.get(rev)).isEqualTo(a3);
     }
@@ -142,7 +142,7 @@ public class ContentInfoTreeTest {
     @Test
     public void getBulkTest() {
         ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
-        Collection<Hash> revs = Arrays.asList(b2.getRev(), a4.getRev());
+        Collection<Hash> revs = Arrays.asList(b2.getRevision(), a4.getRevision());
 
         assertThat(tree.get(revs)).containsExactly(b2, a4);
     }
@@ -154,8 +154,8 @@ public class ContentInfoTreeTest {
     public void containsTest() {
         ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
 
-        assertThat(tree.contains(a3.getRev())).isTrue();
-        assertThat(tree.contains(d5.getRev())).isFalse();
+        assertThat(tree.contains(a3.getRevision())).isTrue();
+        assertThat(tree.contains(d5.getRevision())).isFalse();
     }
 
     /**
@@ -163,7 +163,7 @@ public class ContentInfoTreeTest {
      */
     @Test(expectedExceptions = NoSuchElementException.class)
     public void getUnknownTest() {
-        tree(a0, a1, a2, a3, b2, a4).get(d5.getRev());
+        tree(a0, a1, a2, a3, b2, a4).get(d5.getRevision());
     }
 
     /**

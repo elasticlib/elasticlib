@@ -48,13 +48,13 @@ public final class TestData {
                                      "a0b87ac4b04a0bed394517d0b01792635531aa42"};
 
         CONTENT_INFOS.add(new ContentInfo.ContentInfoBuilder()
-                .withHash(new Hash(HASHES[0]))
+                .withContent(new Hash(HASHES[0]))
                 .withLength(10)
                 .with("text", Value.of("ipsum lorem"))
                 .build(new Hash(REVS[0])));
 
         CONTENT_INFOS.add(new ContentInfo.ContentInfoBuilder()
-                .withHash(new Hash(HASHES[1]))
+                .withContent(new Hash(HASHES[1]))
                 .withLength(120)
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])));
@@ -62,7 +62,7 @@ public final class TestData {
         CONTENT_INFO_TREE = new ContentInfoTree.ContentInfoTreeBuilder()
                 .add(CONTENT_INFOS.get(0))
                 .add(new ContentInfo.ContentInfoBuilder()
-                .withHash(new Hash(HASHES[0]))
+                .withContent(new Hash(HASHES[0]))
                 .withLength(10)
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])))
@@ -75,7 +75,7 @@ public final class TestData {
 
         EVENTS.add(new Event.EventBuilder()
                 .withSeq(0)
-                .withHash(new Hash(HASHES[0]))
+                .withContent(new Hash(HASHES[0]))
                 .withHead(new TreeSet<>(singleton(new Hash(REVS[0]))))
                 .withTimestamp(new Instant(0))
                 .withOperation(Operation.CREATE)
@@ -83,7 +83,7 @@ public final class TestData {
 
         EVENTS.add(new Event.EventBuilder()
                 .withSeq(1)
-                .withHash(new Hash(HASHES[1]))
+                .withContent(new Hash(HASHES[1]))
                 .withHead(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))
                 .withTimestamp(new Instant(123000))
                 .withOperation(Operation.DELETE)

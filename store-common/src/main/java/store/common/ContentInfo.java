@@ -25,23 +25,23 @@ import store.common.value.Value;
  */
 public class ContentInfo implements Mappable {
 
-    private static final String HASH = "hash";
+    private static final String CONTENT = "content";
     private static final String LENGTH = "length";
-    private static final String REV = "rev";
+    private static final String REVISION = "revision";
     private static final String PARENTS = "parents";
     private static final String DELETED = "deleted";
     private static final String METADATA = "metadata";
-    private final Hash hash;
+    private final Hash content;
     private final long length;
-    private final Hash rev;
+    private final Hash revision;
     private final SortedSet<Hash> parents;
     private final boolean deleted;
     private final Map<String, Value> metadata;
 
     private ContentInfo(ContentInfoBuilder builder) {
-        hash = requireNonNull(builder.hash);
+        content = requireNonNull(builder.content);
         length = requireNonNull(builder.length);
-        rev = requireNonNull(builder.rev);
+        revision = requireNonNull(builder.revision);
         parents = unmodifiableSortedSet(builder.parents);
         deleted = requireNonNull(builder.deleted);
         metadata = unmodifiableMap(builder.metadata);
@@ -50,8 +50,8 @@ public class ContentInfo implements Mappable {
     /**
      * @return The associated content hash.
      */
-    public Hash getHash() {
-        return hash;
+    public Hash getContent() {
+        return content;
     }
 
     /**
@@ -64,8 +64,8 @@ public class ContentInfo implements Mappable {
     /**
      * @return The hash of this revision.
      */
-    public Hash getRev() {
-        return rev;
+    public Hash getRevision() {
+        return revision;
     }
 
     /**
@@ -92,9 +92,9 @@ public class ContentInfo implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
-                .put(HASH, hash)
+                .put(CONTENT, content)
                 .put(LENGTH, length)
-                .put(REV, rev)
+                .put(REVISION, revision)
                 .put(PARENTS, toList(parents));
 
         if (deleted) {
@@ -111,7 +111,7 @@ public class ContentInfo implements Mappable {
      */
     public static ContentInfo fromMap(Map<String, Value> map) {
         ContentInfoBuilder builder = new ContentInfoBuilder()
-                .withHash(map.get(HASH).asHash())
+                .withContent(map.get(CONTENT).asHash())
                 .withLength(map.get(LENGTH).asLong())
                 .withParents(fromList(map.get(PARENTS).asList()))
                 .withMetadata(map.get(METADATA).asMap());
@@ -119,14 +119,14 @@ public class ContentInfo implements Mappable {
         if (map.containsKey(DELETED)) {
             builder.withDeleted(map.get(DELETED).asBoolean());
         }
-        return builder.build(map.get(REV).asHash());
+        return builder.build(map.get(REVISION).asHash());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hash,
+        return Objects.hash(content,
                             length,
-                            rev,
+                            revision,
                             parents,
                             deleted,
                             metadata);
@@ -139,9 +139,9 @@ public class ContentInfo implements Mappable {
         }
         ContentInfo other = (ContentInfo) obj;
         return new EqualsBuilder()
-                .append(hash, other.hash)
+                .append(content, other.content)
                 .append(length, other.length)
-                .append(rev, other.rev)
+                .append(revision, other.revision)
                 .append(parents, other.parents)
                 .append(deleted, other.deleted)
                 .append(metadata, other.metadata)
@@ -151,9 +151,9 @@ public class ContentInfo implements Mappable {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add(HASH, hash)
+                .add(CONTENT, content)
                 .add(LENGTH, length)
-                .add(REV, rev)
+                .add(REVISION, revision)
                 .add(PARENTS, parents)
                 .add(DELETED, deleted)
                 .add(METADATA, metadata)
@@ -165,9 +165,9 @@ public class ContentInfo implements Mappable {
      */
     public static class ContentInfoBuilder {
 
-        private Hash hash;
+        private Hash content;
         private Long length;
-        private Hash rev;
+        private Hash revision;
         private final SortedSet<Hash> parents = new TreeSet<>();
         private boolean deleted;
         private final Map<String, Value> metadata = new TreeMap<>();
@@ -178,8 +178,8 @@ public class ContentInfo implements Mappable {
          * @param hash The associated content hash.
          * @return this
          */
-        public ContentInfoBuilder withHash(Hash hash) {
-            this.hash = hash;
+        public ContentInfoBuilder withContent(Hash hash) {
+            this.content = hash;
             return this;
         }
 
@@ -255,10 +255,10 @@ public class ContentInfo implements Mappable {
          *
          * @return A new ContentInfo instance.
          */
-        public ContentInfo computeRevAndBuild() {
+        public ContentInfo computeRevisionAndBuild() {
             BsonWriter writer = new BsonWriter()
-                    .put(HASH, hash.getBytes())
-                    .put(LENGTH, hash.getBytes());
+                    .put(CONTENT, content.getBytes())
+                    .put(LENGTH, content.getBytes());
 
             List<Value> list = new ArrayList<>();
             for (Hash parent : parents) {
@@ -270,7 +270,7 @@ public class ContentInfo implements Mappable {
             }
             writer.put(METADATA, metadata);
             try {
-                rev = IoUtil.copyAndDigest(new ByteArrayInputStream(writer.build()), sink()).getHash();
+                revision = IoUtil.copyAndDigest(new ByteArrayInputStream(writer.build()), sink()).getHash();
                 return new ContentInfo(this);
 
             } catch (IOException e) {
@@ -282,11 +282,11 @@ public class ContentInfo implements Mappable {
         /**
          * Build.
          *
-         * @param rev The hash of this revision.
+         * @param revision The hash of this revision.
          * @return A new ContentInfo instance.
          */
-        public ContentInfo build(Hash rev) {
-            this.rev = rev;
+        public ContentInfo build(Hash revision) {
+            this.revision = revision;
             return new ContentInfo(this);
         }
     }

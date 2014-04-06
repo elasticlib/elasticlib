@@ -1,5 +1,5 @@
 seq: 1
-hash: !hash '0827c43f0aad546501f99b11f0bd44be42d68870'
+content: !hash '0827c43f0aad546501f99b11f0bd44be42d68870'
 head:
 - !hash '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
 - !hash 'a0b87ac4b04a0bed394517d0b01792635531aa42'

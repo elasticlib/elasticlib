@@ -114,19 +114,19 @@ class Index {
      * @param inputStream Input stream of the content to index.
      */
     public void index(ContentInfoTree contentInfoTree, InputStream inputStream) {
-        LOG.info("[{}] Indexing {}, with head {}", name, contentInfoTree.getHash(), contentInfoTree.getHead());
-        Optional<IndexEntry> existing = getEntry(contentInfoTree.getHash());
+        LOG.info("[{}] Indexing {}, with head {}", name, contentInfoTree.getContent(), contentInfoTree.getHead());
+        Optional<IndexEntry> existing = getEntry(contentInfoTree.getContent());
         if (existing.isPresent() && existing.get().getHead().equals(contentInfoTree.getHead())) {
             // already indexed !
             return;
         }
         try (IndexWriter writer = newIndexWriter()) {
             // First delete any existing document.
-            writer.deleteDocuments(new Term("hash", contentInfoTree.getHash().asHexadecimalString()));
+            writer.deleteDocuments(new Term("hash", contentInfoTree.getContent().asHexadecimalString()));
 
             // Then (re)create the document.
             Document document = new Document();
-            document.add(new TextField("hash", contentInfoTree.getHash().asHexadecimalString(), Store.YES));
+            document.add(new TextField("hash", contentInfoTree.getContent().asHexadecimalString(), Store.YES));
             for (Hash rev : contentInfoTree.getHead()) {
                 document.add(new TextField("rev", rev.asHexadecimalString(), Store.YES));
             }

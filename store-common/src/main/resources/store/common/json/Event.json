@@ -5,7 +5,7 @@
         "seq": {
             "type": "integer"
         },
-        "hash": {
+        "content": {
             "type": "hash"
         },
         "head": {

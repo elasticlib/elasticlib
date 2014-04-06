@@ -149,12 +149,12 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult addInfo(final ContentInfo contentInfo) {
-        LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getHash(), contentInfo.getParents());
+        LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getContent(), contentInfo.getParents());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfo);
-                handleCommandResult(result, contentInfo.getHash());
+                handleCommandResult(result, contentInfo.getContent());
                 return result;
             }
         });
@@ -168,12 +168,12 @@ class Volume {
      * @return Actual operation result.
      */
     public CommandResult mergeTree(final ContentInfoTree contentInfoTree) {
-        LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getHash());
+        LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getContent());
         return transactionManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfoTree);
-                handleCommandResult(result, contentInfoTree.getHash());
+                handleCommandResult(result, contentInfoTree.getContent());
                 return result;
             }
         });

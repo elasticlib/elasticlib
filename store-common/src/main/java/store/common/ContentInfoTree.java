@@ -30,9 +30,9 @@ import store.common.value.Value;
  */
 public class ContentInfoTree implements Mappable {
 
-    private static final String HASH = "hash";
+    private static final String CONTENT = "content";
     private static final String LENGTH = "length";
-    private static final String REVS = "revs";
+    private static final String REVISIONS = "revisions";
     private final SortedSet<Hash> head;
     private final SortedSet<Hash> tail;
     private final SortedSet<Hash> unknownParents;
@@ -55,8 +55,8 @@ public class ContentInfoTree implements Mappable {
         }
         SortedSet<Hash> head = new TreeSet<>();
         for (ContentInfo info : nodes.values()) {
-            if (!nonRoots.contains(info.getRev())) {
-                head.add(info.getRev());
+            if (!nonRoots.contains(info.getRevision())) {
+                head.add(info.getRevision());
             }
         }
         return head;
@@ -66,7 +66,7 @@ public class ContentInfoTree implements Mappable {
         SortedSet<Hash> tail = new TreeSet<>();
         for (ContentInfo info : nodes.values()) {
             if (intersection(info.getParents(), nodes.keySet()).isEmpty()) {
-                tail.add(info.getRev());
+                tail.add(info.getRevision());
             }
         }
         return tail;
@@ -89,8 +89,8 @@ public class ContentInfoTree implements Mappable {
      *
      * @return A hash.
      */
-    public Hash getHash() {
-        return nodes.values().iterator().next().getHash();
+    public Hash getContent() {
+        return nodes.values().iterator().next().getContent();
     }
 
     /**
@@ -148,14 +148,14 @@ public class ContentInfoTree implements Mappable {
     /**
      * Provides revision associated to supplied hash.
      *
-     * @param rev A revision hash.
+     * @param revision A revision hash.
      * @return Associated revision.
      */
-    public ContentInfo get(Hash rev) {
-        if (!nodes.containsKey(rev)) {
+    public ContentInfo get(Hash revision) {
+        if (!nodes.containsKey(revision)) {
             throw new NoSuchElementException();
         }
-        return nodes.get(rev);
+        return nodes.get(revision);
     }
 
     /**
@@ -173,11 +173,13 @@ public class ContentInfoTree implements Mappable {
     }
 
     /**
-     * @param rev A revision hash.
+     * Checks if this tree contains the revision associated to supplied revision hash.
+     *
+     * @param revision A revision hash.
      * @return true if this tree contains the revision associated to supplied hash.
      */
-    public boolean contains(Hash rev) {
-        return nodes.containsKey(rev);
+    public boolean contains(Hash revision) {
+        return nodes.containsKey(revision);
     }
 
     /**
@@ -279,12 +281,12 @@ public class ContentInfoTree implements Mappable {
             }
         }
         return add(new ContentInfoBuilder()
-                .withHash(mergeHead.getHash())
+                .withContent(mergeHead.getContent())
                 .withLength(mergeHead.getLength())
                 .withParents(head)
                 .withDeleted(mergeHead.isDeleted())
                 .withMetadata(mergeHead.getMetadata())
-                .computeRevAndBuild());
+                .computeRevisionAndBuild());
     }
 
     private Optional<ContentInfo> merge(ContentInfo left, ContentInfo right) {
@@ -329,13 +331,13 @@ public class ContentInfoTree implements Mappable {
             return Optional.absent();
         }
         return Optional.of(new ContentInfoBuilder()
-                .withHash(left.getHash())
+                .withContent(left.getContent())
                 .withLength(left.getLength())
-                .withParent(left.getRev())
-                .withParent(right.getRev())
+                .withParent(left.getRevision())
+                .withParent(right.getRevision())
                 .withDeleted(left.isDeleted() && right.isDeleted())
                 .withMetadata(diff.get().apply(base))
-                .computeRevAndBuild());
+                .computeRevisionAndBuild());
     }
 
     private Set<ContentInfo> latestCommonAncestors(ContentInfo left, ContentInfo right) {
@@ -368,14 +370,14 @@ public class ContentInfoTree implements Mappable {
         List<Value> revisions = new ArrayList<>(nodes.size());
         for (ContentInfo info : list()) {
             Map<String, Value> map = info.toMap();
-            map.remove(HASH);
+            map.remove(CONTENT);
             map.remove(LENGTH);
             revisions.add(Value.of(map));
         }
         return new MapBuilder()
-                .put(HASH, getHash())
+                .put(CONTENT, getContent())
                 .put(LENGTH, getLength())
-                .put(REVS, revisions)
+                .put(REVISIONS, revisions)
                 .build();
     }
 
@@ -387,9 +389,9 @@ public class ContentInfoTree implements Mappable {
      */
     public static ContentInfoTree fromMap(Map<String, Value> map) {
         ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
-        for (Value revision : map.get(REVS).asList()) {
+        for (Value revision : map.get(REVISIONS).asList()) {
             Map<String, Value> infoMap = new HashMap<>();
-            infoMap.put(HASH, map.get(HASH));
+            infoMap.put(CONTENT, map.get(CONTENT));
             infoMap.put(LENGTH, map.get(LENGTH));
             infoMap.putAll(revision.asMap());
             builder.add(ContentInfo.fromMap(infoMap));
@@ -430,7 +432,7 @@ public class ContentInfoTree implements Mappable {
          * @return this
          */
         public ContentInfoTreeBuilder add(ContentInfo info) {
-            nodes.put(info.getRev(), info);
+            nodes.put(info.getRevision(), info);
             return this;
         }
 
@@ -442,7 +444,7 @@ public class ContentInfoTree implements Mappable {
          */
         public ContentInfoTreeBuilder addAll(Collection<ContentInfo> infos) {
             for (ContentInfo info : infos) {
-                nodes.put(info.getRev(), info);
+                nodes.put(info.getRevision(), info);
             }
             return this;
         }

@@ -37,9 +37,9 @@ final class FormatUtil {
             return asString(revisions.get(0));
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("Hash")
+        builder.append("Content")
                 .append(COMMA)
-                .append(tree.getHash())
+                .append(tree.getContent())
                 .append(System.lineSeparator())
                 .append("Length")
                 .append(COMMA)
@@ -61,9 +61,9 @@ final class FormatUtil {
      */
     public static String asString(ContentInfo info) {
         return new StringBuilder()
-                .append("Hash")
+                .append("Content")
                 .append(COMMA)
-                .append(info.getHash())
+                .append(info.getContent())
                 .append(System.lineSeparator())
                 .append("Length")
                 .append(COMMA)
@@ -77,7 +77,7 @@ final class FormatUtil {
         StringBuilder builder = new StringBuilder();
         builder.append("Revision")
                 .append(COMMA)
-                .append(info.getRev())
+                .append(info.getRevision())
                 .append(System.lineSeparator());
 
         if (info.getParents().size() == 1) {
@@ -125,9 +125,9 @@ final class FormatUtil {
                 .append(COMMA)
                 .append(formatDate(event.getTimestamp()))
                 .append(System.lineSeparator())
-                .append("Hash")
+                .append("Content")
                 .append(COMMA)
-                .append(event.getHash())
+                .append(event.getContent())
                 .append(System.lineSeparator())
                 .append("Head")
                 .append(COMMA)

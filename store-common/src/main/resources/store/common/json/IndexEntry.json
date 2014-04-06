@@ -2,7 +2,7 @@
     "title": "indexEntry",
     "type": "object",
     "properties": {
-        "hash": {
+        "content": {
             "type": "hash"
         },
         "head": {

@@ -16,19 +16,19 @@ import store.common.value.Value;
  */
 public final class IndexEntry implements Mappable {
 
-    private static final String HASH = "hash";
+    private static final String CONTENT = "content";
     private static final String HEAD = "head";
-    private final Hash hash;
+    private final Hash content;
     private final SortedSet<Hash> head;
 
     /**
      * Constructor.
      *
-     * @param hash Content hash.
+     * @param content Content hash.
      * @param head Hashes of the content head revisions.
      */
-    public IndexEntry(Hash hash, Set<Hash> head) {
-        this.hash = hash;
+    public IndexEntry(Hash content, Set<Hash> head) {
+        this.content = content;
         this.head = unmodifiableSortedSet(new TreeSet<>(head));
     }
 
@@ -36,7 +36,7 @@ public final class IndexEntry implements Mappable {
      * @return The content hash.
      */
     public Hash getHash() {
-        return hash;
+        return content;
     }
 
     /**
@@ -49,7 +49,7 @@ public final class IndexEntry implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         return new MapBuilder()
-                .put(HASH, hash)
+                .put(CONTENT, content)
                 .put(HEAD, toList(head))
                 .build();
     }
@@ -61,13 +61,13 @@ public final class IndexEntry implements Mappable {
      * @return A new instance.
      */
     public static IndexEntry fromMap(Map<String, Value> map) {
-        return new IndexEntry(map.get(HASH).asHash(),
+        return new IndexEntry(map.get(CONTENT).asHash(),
                               fromList(map.get(HEAD).asList()));
     }
 
     @Override
     public int hashCode() {
-        return hash(hash, head);
+        return hash(content, head);
     }
 
     @Override
@@ -77,7 +77,7 @@ public final class IndexEntry implements Mappable {
         }
         IndexEntry other = (IndexEntry) obj;
         return new EqualsBuilder()
-                .append(hash, other.hash)
+                .append(content, other.content)
                 .append(head, other.head)
                 .build();
     }
@@ -85,7 +85,7 @@ public final class IndexEntry implements Mappable {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add(HASH, hash)
+                .add(CONTENT, content)
                 .add(HEAD, head)
                 .toString();
     }

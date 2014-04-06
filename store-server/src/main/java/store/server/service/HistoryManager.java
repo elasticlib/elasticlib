@@ -69,11 +69,11 @@ class HistoryManager {
         return new HistoryManager(path);
     }
 
-    public void add(Hash hash, Operation operation, SortedSet<Hash> head) {
+    public void add(Hash content, Operation operation, SortedSet<Hash> head) {
         TransactionContext txContext = TransactionContext.current();
         Event event = new EventBuilder()
                 .withSeq(nextSeq.getAndIncrement())
-                .withHash(hash)
+                .withContent(content)
                 .withHead(head)
                 .withTimestamp(new Instant())
                 .withOperation(operation)

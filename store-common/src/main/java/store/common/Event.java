@@ -17,19 +17,19 @@ import store.common.value.Value;
 public class Event implements Mappable {
 
     private static final String SEQ = "seq";
-    private static final String HASH = "hash";
+    private static final String CONTENT = "content";
     private static final String HEAD = "head";
     private static final String TIMESTAMP = "timestamp";
     private static final String OPERATION = "operation";
     private final long seq;
-    private final Hash hash;
+    private final Hash content;
     private final SortedSet<Hash> head;
     private final Instant timestamp;
     private final Operation operation;
 
     private Event(EventBuilder builder) {
         this.seq = builder.seq;
-        this.hash = requireNonNull(builder.hash);
+        this.content = requireNonNull(builder.content);
         this.head = unmodifiableSortedSet(builder.head);
         this.timestamp = requireNonNull(builder.timestamp);
         this.operation = requireNonNull(builder.operation);
@@ -49,8 +49,8 @@ public class Event implements Mappable {
      *
      * @return A hash.
      */
-    public Hash getHash() {
-        return hash;
+    public Hash getContent() {
+        return content;
     }
 
     /**
@@ -84,7 +84,7 @@ public class Event implements Mappable {
     public Map<String, Value> toMap() {
         return new MapBuilder()
                 .put(SEQ, seq)
-                .put(HASH, hash)
+                .put(CONTENT, content)
                 .put(HEAD, toList(head))
                 .put(TIMESTAMP, timestamp)
                 .put(OPERATION, operation.toString())
@@ -100,7 +100,7 @@ public class Event implements Mappable {
     public static Event fromMap(Map<String, Value> map) {
         return new EventBuilder()
                 .withSeq(map.get(SEQ).asLong())
-                .withHash(map.get(HASH).asHash())
+                .withContent(map.get(CONTENT).asHash())
                 .withHead(fromList(map.get(HEAD).asList()))
                 .withTimestamp(map.get(TIMESTAMP).asInstant())
                 .withOperation(Operation.fromString(map.get(OPERATION).asString()))
@@ -111,7 +111,7 @@ public class Event implements Mappable {
     public String toString() {
         return toStringHelper(this)
                 .add(SEQ, seq)
-                .add(HASH, hash)
+                .add(CONTENT, content)
                 .add(HEAD, head)
                 .add(TIMESTAMP, timestamp)
                 .add(OPERATION, operation)
@@ -120,7 +120,7 @@ public class Event implements Mappable {
 
     @Override
     public int hashCode() {
-        return hash(seq, hash, head, timestamp, operation);
+        return hash(seq, content, head, timestamp, operation);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class Event implements Mappable {
         Event other = (Event) obj;
         return new EqualsBuilder()
                 .append(seq, other.seq)
-                .append(hash, other.hash)
+                .append(content, other.content)
                 .append(head, other.head)
                 .append(timestamp, other.timestamp)
                 .append(operation, other.operation)
@@ -144,7 +144,7 @@ public class Event implements Mappable {
     public static class EventBuilder {
 
         private Long seq;
-        private Hash hash;
+        private Hash content;
         private SortedSet<Hash> head;
         private Instant timestamp;
         private Operation operation;
@@ -161,13 +161,13 @@ public class Event implements Mappable {
         }
 
         /**
-         * Set hash.
+         * Set content hash.
          *
-         * @param hash Hash.
+         * @param hash Content hash.
          * @return this
          */
-        public EventBuilder withHash(Hash hash) {
-            this.hash = hash;
+        public EventBuilder withContent(Hash hash) {
+            this.content = hash;
             return this;
         }
 

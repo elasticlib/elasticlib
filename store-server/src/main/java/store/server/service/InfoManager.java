@@ -52,7 +52,7 @@ class InfoManager {
     }
 
     public CommandResult put(ContentInfo info) {
-        Optional<ContentInfoTree> existing = get(info.getHash());
+        Optional<ContentInfoTree> existing = get(info.getContent());
         ContentInfoTree updated;
         if (!existing.isPresent()) {
             if (!info.getParents().isEmpty()) {
@@ -74,7 +74,7 @@ class InfoManager {
     }
 
     public CommandResult put(ContentInfoTree tree) {
-        Optional<ContentInfoTree> existing = get(tree.getHash());
+        Optional<ContentInfoTree> existing = get(tree.getContent());
         ContentInfoTree updated;
         if (!existing.isPresent()) {
             updated = tree;
@@ -100,11 +100,11 @@ class InfoManager {
             updated = existing.get();
         } else {
             updated = existing.get().add(new ContentInfoBuilder()
-                    .withHash(hash)
+                    .withContent(hash)
                     .withLength(existing.get().getLength())
                     .withParents(existing.get().getHead())
                     .withDeleted(true)
-                    .computeRevAndBuild());
+                    .computeRevisionAndBuild());
         }
         save(updated);
         return result(existing, updated);
@@ -128,7 +128,7 @@ class InfoManager {
         if (!tree.getUnknownParents().isEmpty()) {
             throw new UnknownRevisionException();
         }
-        Path path = path(tree.getHash());
+        Path path = path(tree.getContent());
         TransactionContext txContext = TransactionContext.current();
         if (!txContext.exists(path)) {
             txContext.create(path);

@@ -20,15 +20,19 @@ public final class CommandResult implements Mappable {
     private static final String TRANSACTION_ID = "transactionId";
     private static final String OPERATION = "operation";
     private static final String NO_OP = "noOp";
-    private static final String HEAD = "head";
+    private static final String CONTENT = "content";
+    private static final String REVISION = "revision";
+    private static final String REVISIONS = "revisions";
     private long transactionId;
     private final Operation operation;
-    private final SortedSet<Hash> head;
+    private final Hash content;
+    private final SortedSet<Hash> revisions;
 
-    private CommandResult(long transactionId, Operation operation, SortedSet<Hash> head) {
+    private CommandResult(long transactionId, Operation operation, Hash content, SortedSet<Hash> revisions) {
         this.transactionId = transactionId;
         this.operation = operation;
-        this.head = unmodifiableSortedSet(new TreeSet<>(head));
+        this.content = content;
+        this.revisions = unmodifiableSortedSet(new TreeSet<>(revisions));
     }
 
     /**
@@ -36,22 +40,24 @@ public final class CommandResult implements Mappable {
      *
      * @param transactionId Associated transaction identifier.
      * @param operation Operation executed.
-     * @param head New head after command execution.
+     * @param content Associated content hash.
+     * @param revisions New head revisions after command execution.
      * @return A new instance.
      */
-    public static CommandResult of(long transactionId, Operation operation, SortedSet<Hash> head) {
-        return new CommandResult(transactionId, requireNonNull(operation), head);
+    public static CommandResult of(long transactionId, Operation operation, Hash content, SortedSet<Hash> revisions) {
+        return new CommandResult(transactionId, requireNonNull(operation), content, revisions);
     }
 
     /**
      * Specific static factory method for no-op command result.
      *
      * @param transactionId Associated transaction identifier.
-     * @param head Head after (and before) command execution.
+     * @param content Associated content hash.
+     * @param revisions Head revisions after (and before) command execution.
      * @return A new instance.
      */
-    public static CommandResult noOp(long transactionId, SortedSet<Hash> head) {
-        return new CommandResult(transactionId, null, head);
+    public static CommandResult noOp(long transactionId, Hash content, SortedSet<Hash> revisions) {
+        return new CommandResult(transactionId, null, content, revisions);
     }
 
     /**
@@ -85,21 +91,36 @@ public final class CommandResult implements Mappable {
     }
 
     /**
-     * Provides head after command execution.
+     * Provides this command associated content hash.
      *
-     * @return A sorted set of revisions.
+     * @return A hash.
      */
-    public SortedSet<Hash> getHead() {
-        return head;
+    public Hash getContent() {
+        return content;
+    }
+
+    /**
+     * Provides revision hashes after command execution.
+     *
+     * @return A sorted set of revision hashes.
+     */
+    public SortedSet<Hash> getRevisions() {
+        return revisions;
     }
 
     @Override
     public Map<String, Value> toMap() {
-        return new MapBuilder()
+        MapBuilder builder = new MapBuilder()
                 .put(TRANSACTION_ID, transactionId)
                 .put(OPERATION, isNoOp() ? NO_OP : operation.toString())
-                .put(HEAD, toList(head))
-                .build();
+                .put(CONTENT, content);
+
+        if (revisions.size() == 1) {
+            builder.put(REVISION, revisions.first());
+        } else {
+            builder.put(REVISIONS, toList(revisions));
+        }
+        return builder.build();
     }
 
     /**
@@ -110,18 +131,25 @@ public final class CommandResult implements Mappable {
      */
     public static CommandResult fromMap(Map<String, Value> map) {
         long transactionId = map.get(TRANSACTION_ID).asLong();
-        SortedSet<Hash> head = fromList(map.get(HEAD).asList());
+        Hash content = map.get(CONTENT).asHash();
+        SortedSet<Hash> revisions;
+        if (map.containsKey(REVISION)) {
+            revisions = new TreeSet<>();
+            revisions.add(map.get(REVISION).asHash());
+        } else {
+            revisions = fromList(map.get(REVISIONS).asList());
+        }
         String opCode = map.get(OPERATION).asString();
         if (opCode.equals(NO_OP)) {
-            return CommandResult.noOp(transactionId, head);
+            return CommandResult.noOp(transactionId, content, revisions);
         } else {
-            return CommandResult.of(transactionId, Operation.fromString(opCode), head);
+            return CommandResult.of(transactionId, Operation.fromString(opCode), content, revisions);
         }
     }
 
     @Override
     public int hashCode() {
-        return hash(operation, head);
+        return hash(transactionId, operation, content, revisions);
     }
 
     @Override
@@ -133,7 +161,8 @@ public final class CommandResult implements Mappable {
         return new EqualsBuilder()
                 .append(transactionId, other.transactionId)
                 .append(operation, other.operation)
-                .append(head, other.head)
+                .append(content, other.content)
+                .append(revisions, other.revisions)
                 .build();
     }
 
@@ -142,7 +171,8 @@ public final class CommandResult implements Mappable {
         return toStringHelper(this)
                 .add(TRANSACTION_ID, transactionId)
                 .add(OPERATION, operation == null ? NO_OP : operation)
-                .add(HEAD, head)
+                .add(CONTENT, content)
+                .add(REVISIONS, revisions)
                 .toString();
     }
 }

@@ -148,9 +148,9 @@ class InfoManager {
         long id = TransactionContext.current().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
-            return CommandResult.noOp(id, after.getHead());
+            return CommandResult.noOp(id, after.getContent(), after.getHead());
         }
-        return CommandResult.of(id, operation.get(), after.getHead());
+        return CommandResult.of(id, operation.get(), after.getContent(), after.getHead());
     }
 
     private static Optional<Operation> operation(Optional<ContentInfoTree> before, ContentInfoTree after) {

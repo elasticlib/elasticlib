@@ -8,8 +8,16 @@
         "operation": {
             "type": "string"
         },
-        "head": {
+        "content": {
+            "type": "hash"
+        },
+        "revision": {
+            "type": "hash",
+            "optional": true
+        },
+        "revisions": {
             "type": "array",
+            "optional": true,
             "items": {
                 "type": "hash"
             }

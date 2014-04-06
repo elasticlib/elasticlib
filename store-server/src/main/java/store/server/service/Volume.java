@@ -17,8 +17,8 @@ import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
-import store.common.hash.Hash;
 import store.common.Operation;
+import store.common.hash.Hash;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
@@ -200,7 +200,7 @@ class Volume {
                 ContentInfoTree tree = treeOpt.get();
                 contentManager.add(hash, tree.getLength(), source);
                 historyManager.add(hash, Operation.CREATE, tree.getHead());
-                return CommandResult.of(transactionId, Operation.CREATE, tree.getHead());
+                return CommandResult.of(transactionId, Operation.CREATE, hash, tree.getHead());
             }
         });
     }
@@ -236,7 +236,7 @@ class Volume {
         if (operation == Operation.DELETE) {
             contentManager.delete(hash);
         }
-        historyManager.add(hash, operation, result.getHead());
+        historyManager.add(hash, operation, result.getRevisions());
     }
 
     /**

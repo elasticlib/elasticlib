@@ -4,9 +4,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import java.util.Date;
 import java.util.List;
 import java.util.TreeSet;
+import org.joda.time.Instant;
 import store.common.value.Value;
 
 /**
@@ -77,7 +77,7 @@ public final class TestData {
                 .withSeq(0)
                 .withHash(new Hash(HASHES[0]))
                 .withHead(new TreeSet<>(singleton(new Hash(REVS[0]))))
-                .withTimestamp(new Date(0))
+                .withTimestamp(new Instant(0))
                 .withOperation(Operation.CREATE)
                 .build());
 
@@ -85,7 +85,7 @@ public final class TestData {
                 .withSeq(1)
                 .withHash(new Hash(HASHES[1]))
                 .withHead(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))
-                .withTimestamp(new Date(123456))
+                .withTimestamp(new Instant(123000))
                 .withOperation(Operation.DELETE)
                 .build());
 

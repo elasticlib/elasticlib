@@ -3,11 +3,11 @@ package store.common.bson;
 import com.google.common.base.Function;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.TRUE;
 import static store.common.bson.BinaryConstants.readType;
@@ -75,7 +75,7 @@ final class ValueReading {
         READERS.put(DATE, new Function<ByteArrayReader, Value>() {
             @Override
             public Value apply(ByteArrayReader reader) {
-                return Value.of(new Date(reader.readLong()));
+                return Value.of(new Instant(reader.readLong()));
             }
         });
         READERS.put(OBJECT, new Function<ByteArrayReader, Value>() {

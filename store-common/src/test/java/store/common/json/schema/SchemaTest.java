@@ -4,12 +4,12 @@ import com.google.common.collect.ImmutableMap;
 import static com.google.common.io.BaseEncoding.base16;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
+import org.joda.time.Instant;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.readJsonObject;
 import store.common.value.Value;
@@ -31,7 +31,7 @@ public class SchemaTest {
         metadata.put("pi", Value.of(new BigDecimal("3.1415")));
         metadata.put("checksum", Value.of(base16().lowerCase().decode("8d5f3c77e9")));
         metadata.put("text", Value.of("hello"));
-        metadata.put("epoch", Value.of(new Date(0)));
+        metadata.put("epoch", Value.of(new Instant(0)));
         metadata.put("coefficients", Value.of(asList(Value.of(10), Value.of(20), Value.of(30))));
         metadata.put("mapping", Value.of(ImmutableMap.of("yes", Value.of(true),
                                                          "answer", Value.of(42))));

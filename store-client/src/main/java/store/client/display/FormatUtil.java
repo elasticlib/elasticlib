@@ -1,9 +1,11 @@
 package store.client.display;
 
 import com.google.common.base.Joiner;
-import java.text.DateFormat;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
+import org.joda.time.format.DateTimeFormat;
 import static store.client.display.ByteLengthFormatter.format;
 import store.common.CommandResult;
 import store.common.ContentInfo;
@@ -121,7 +123,7 @@ final class FormatUtil {
                 .append(System.lineSeparator())
                 .append("Date")
                 .append(COMMA)
-                .append(DateFormat.getDateTimeInstance().format(event.getTimestamp()))
+                .append(formatDate(event.getTimestamp()))
                 .append(System.lineSeparator())
                 .append("Hash")
                 .append(COMMA)
@@ -136,6 +138,10 @@ final class FormatUtil {
 
     private static String toPascalCase(String lowerCase) {
         return Character.toUpperCase(lowerCase.charAt(0)) + lowerCase.substring(1);
+    }
+
+    private static String formatDate(Instant instant) {
+        return DateTimeFormat.longDateTime().withZone(DateTimeZone.getDefault()).print(instant);
     }
 
     /**

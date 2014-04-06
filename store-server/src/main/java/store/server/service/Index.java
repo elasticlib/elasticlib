@@ -19,7 +19,7 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools.Resolution;
-import static org.apache.lucene.document.DateTools.dateToString;
+import static org.apache.lucene.document.DateTools.timeToString;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field.Store;
@@ -175,7 +175,8 @@ class Index {
                 return;
 
             case DATE:
-                document.add(new TextField(key, dateToString(value.asDate(), Resolution.SECOND), Store.NO));
+                String formatted = timeToString(value.asInstant().getMillis(), Resolution.SECOND);
+                document.add(new TextField(key, formatted, Store.NO));
                 return;
 
             case BINARY:

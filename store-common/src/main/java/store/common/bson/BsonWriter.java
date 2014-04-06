@@ -1,10 +1,10 @@
 package store.common.bson;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.*;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;
@@ -99,7 +99,7 @@ public final class BsonWriter {
      * @param value Value to be associated with the supplied key.
      * @return This encoder instance.
      */
-    public BsonWriter put(String key, Date value) {
+    public BsonWriter put(String key, Instant value) {
         put(key, Value.of(value));
         return this;
     }

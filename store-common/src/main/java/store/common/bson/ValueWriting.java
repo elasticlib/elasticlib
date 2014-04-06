@@ -63,7 +63,7 @@ final class ValueWriting {
         WRITERS.put(DATE, new Function<Value, byte[]>() {
             @Override
             public byte[] apply(Value value) {
-                return writeLong(value.asDate().getTime());
+                return writeLong(value.asInstant().getMillis());
             }
         });
         WRITERS.put(OBJECT, new Function<Value, byte[]>() {

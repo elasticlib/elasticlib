@@ -2,11 +2,11 @@ package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;
-import java.util.Date;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
+import org.joda.time.Instant;
 import static store.common.MappableUtil.fromList;
 import static store.common.MappableUtil.toList;
 import store.common.value.Value;
@@ -24,7 +24,7 @@ public class Event implements Mappable {
     private final long seq;
     private final Hash hash;
     private final SortedSet<Hash> head;
-    private final Date timestamp;
+    private final Instant timestamp;
     private final Operation operation;
 
     private Event(EventBuilder builder) {
@@ -67,7 +67,7 @@ public class Event implements Mappable {
      *
      * @return A date.
      */
-    public Date getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 
@@ -102,7 +102,7 @@ public class Event implements Mappable {
                 .withSeq(map.get(SEQ).asLong())
                 .withHash(new Hash(map.get(HASH).asByteArray()))
                 .withHead(fromList(map.get(HEAD).asList()))
-                .withTimestamp(map.get(TIMESTAMP).asDate())
+                .withTimestamp(map.get(TIMESTAMP).asInstant())
                 .withOperation(Operation.fromString(map.get(OPERATION).asString()))
                 .build();
     }
@@ -146,7 +146,7 @@ public class Event implements Mappable {
         private Long seq;
         private Hash hash;
         private SortedSet<Hash> head;
-        private Date timestamp;
+        private Instant timestamp;
         private Operation operation;
 
         /**
@@ -188,7 +188,7 @@ public class Event implements Mappable {
          * @param timestamp Timestamp.
          * @return this
          */
-        public EventBuilder withTimestamp(Date timestamp) {
+        public EventBuilder withTimestamp(Instant timestamp) {
             this.timestamp = timestamp;
             return this;
         }

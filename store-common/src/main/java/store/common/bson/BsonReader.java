@@ -2,11 +2,11 @@ package store.common.bson;
 
 import java.math.BigDecimal;
 import static java.util.Collections.unmodifiableMap;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.joda.time.Instant;
 import static store.common.bson.ValueReading.readMap;
 import store.common.value.Value;
 
@@ -111,13 +111,13 @@ public class BsonReader {
 
     /**
      * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
-     * contain a mapping for the specified key or if the value is actually not a date.
+     * contain a mapping for the specified key or if the value is actually not an instant.
      *
      * @param key The key whose associated value is to be returned.
-     * @return A date.
+     * @return An instant.
      */
-    public Date getDate(String key) {
-        return get(key).asDate();
+    public Instant getInstant(String key) {
+        return get(key).asInstant();
     }
 
     /**

@@ -2,13 +2,14 @@ package store.common.value;
 
 import java.text.DateFormat;
 import java.util.Date;
+import org.joda.time.Instant;
 
 class DateValue extends Value {
 
     private final long time;
 
-    public DateValue(Date value) {
-        time = value.getTime();
+    public DateValue(Instant value) {
+        time = value.getMillis();
     }
 
     @Override
@@ -17,8 +18,8 @@ class DateValue extends Value {
     }
 
     @Override
-    public Date asDate() {
-        return new Date(time);
+    public Instant asInstant() {
+        return new Instant(time);
     }
 
     @Override

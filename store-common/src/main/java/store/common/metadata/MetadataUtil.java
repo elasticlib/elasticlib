@@ -16,6 +16,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
+import org.joda.time.Instant;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import store.common.metadata.Properties.Audio;
@@ -141,7 +142,7 @@ public final class MetadataUtil {
         private Value getDate(org.apache.tika.metadata.Property tikaKey) {
             Date date = metadata.getDate(tikaKey);
             if (date != null) {
-                return Value.of(date);
+                return Value.of(new Instant(date));
             }
             return Value.of(metadata.get(tikaKey));
         }

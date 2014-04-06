@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicLong;
+import org.joda.time.Instant;
 import store.common.Event;
 import store.common.Event.EventBuilder;
 import store.common.Hash;
@@ -75,7 +75,7 @@ class HistoryManager {
                 .withSeq(nextSeq.getAndIncrement())
                 .withHash(hash)
                 .withHead(head)
-                .withTimestamp(new Date())
+                .withTimestamp(new Instant())
                 .withOperation(operation)
                 .build();
 

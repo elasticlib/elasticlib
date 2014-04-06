@@ -1,12 +1,13 @@
 package store.common.yaml;
 
 import com.google.common.base.Function;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.NodeTuple;
@@ -71,8 +72,8 @@ final class ValueWriting {
         WRITERS.put(DATE, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                return newScalarNode(Tag.TIMESTAMP, formatter.format(value.asDate()));
+                DateTimeFormatter formatter = DateTimeFormat.forPattern(DATE_FORMAT);
+                return newScalarNode(Tag.TIMESTAMP, formatter.print(value.asInstant()));
             }
         });
         WRITERS.put(OBJECT, new Function<Value, Node>() {

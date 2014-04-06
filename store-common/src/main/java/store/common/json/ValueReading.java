@@ -2,7 +2,6 @@ package store.common.json;
 
 import static com.google.common.io.BaseEncoding.base16;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,6 +11,7 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import org.joda.time.Instant;
 import store.common.json.schema.Schema;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -69,7 +69,7 @@ final class ValueReading {
         READERS.put(DATE, new Reader() {
             @Override
             public Value apply(JsonValue json, Schema schema) {
-                return Value.of(new Date(jsonNumber(json).longValueExact()));
+                return Value.of(new Instant(jsonNumber(json).longValueExact()));
             }
         });
         READERS.put(OBJECT, new Reader() {

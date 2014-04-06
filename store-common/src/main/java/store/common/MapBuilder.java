@@ -1,10 +1,10 @@
 package store.common;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.Instant;
 import store.common.value.Value;
 
 class MapBuilder {
@@ -40,7 +40,7 @@ class MapBuilder {
         return this;
     }
 
-    public MapBuilder put(String key, Date value) {
+    public MapBuilder put(String key, Instant value) {
         map.put(key, Value.of(value));
         return this;
     }

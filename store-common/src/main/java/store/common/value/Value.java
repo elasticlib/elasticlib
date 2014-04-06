@@ -1,10 +1,10 @@
 package store.common.value;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.joda.time.Instant;
 
 /**
  * Represents a dynamically typed value. Immutable.
@@ -59,10 +59,10 @@ public abstract class Value {
     }
 
     /**
-     * @param value A date.
-     * @return A value of the supplied date.
+     * @param value An instant.
+     * @return A value of the supplied instant.
      */
-    public static Value of(Date value) {
+    public static Value of(Instant value) {
         return new DateValue(value);
     }
 
@@ -136,10 +136,10 @@ public abstract class Value {
     }
 
     /**
-     * @return This value as a date.
-     * @throws UnsupportedOperationException If this value is actually not a date.
+     * @return This value as an instant.
+     * @throws UnsupportedOperationException If this value is actually not an instant.
      */
-    public Date asDate() {
+    public Instant asInstant() {
         throw new UnsupportedOperationException();
     }
 

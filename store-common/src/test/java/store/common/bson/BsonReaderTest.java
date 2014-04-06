@@ -2,12 +2,12 @@ package store.common.bson;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
+import org.joda.time.Instant;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.*;
@@ -164,7 +164,7 @@ public class BsonReaderTest {
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
 
         BsonReader reader = new BsonReader(bytes);
-        assertThat(reader.getDate("date")).isEqualTo(new Date(1432897));
+        assertThat(reader.getInstant("date")).isEqualTo(new Instant(1432897));
     }
 
     /**

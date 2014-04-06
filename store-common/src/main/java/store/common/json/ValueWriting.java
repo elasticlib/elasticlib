@@ -69,7 +69,7 @@ final class ValueWriting {
         WRITERS.put(DATE, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
-                return jsonNumber(value.asDate().getTime());
+                return jsonNumber(value.asInstant().getMillis());
             }
         });
         WRITERS.put(OBJECT, new Writer() {

@@ -41,7 +41,7 @@ final class ValueWriting {
         WRITERS.put(HASH, new Writer() {
             @Override
             public JsonValue apply(Value value, Schema schema) {
-                return jsonString(value.asHash().encode());
+                return jsonString(value.asHash().asHexadecimalString());
             }
         });
         WRITERS.put(BINARY, new Writer() {

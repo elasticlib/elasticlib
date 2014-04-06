@@ -44,7 +44,7 @@ final class ValueWriting {
         WRITERS.put(HASH, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                return newScalarNode(HASH_TAG, value.asHash().encode());
+                return newScalarNode(HASH_TAG, value.asHash().asHexadecimalString());
             }
         });
         WRITERS.put(BINARY, new Function<Value, Node>() {

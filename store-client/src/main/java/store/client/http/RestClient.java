@@ -287,7 +287,7 @@ public class RestClient implements Closeable {
                 .request()
                 .get());
 
-        Path path = Paths.get(fileName(response).or(hash.encode()));
+        Path path = Paths.get(fileName(response).or(hash.asHexadecimalString()));
         try (InputStream inputStream = response.readEntity(InputStream.class);
                 OutputStream outputStream = new DefferedFileOutputStream(path)) {
             copy(inputStream, outputStream);

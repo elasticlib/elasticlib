@@ -86,6 +86,6 @@ class ContentManager {
     private Path path(Hash hash) {
         return root
                 .resolve(hash.key(KEY_LENGTH))
-                .resolve(hash.encode());
+                .resolve(hash.asHexadecimalString());
     }
 }

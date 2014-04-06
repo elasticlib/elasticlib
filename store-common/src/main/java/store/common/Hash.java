@@ -27,12 +27,12 @@ public final class Hash implements Comparable<Hash> {
     /**
      * Hexadecimal string based constructor.
      *
-     * @param encoded Hexadecimal encoded bytes. Case unsensitive.
+     * @param hexadecimal Hexadecimal encoded bytes. Case unsensitive.
      */
-    public Hash(String encoded) {
+    public Hash(String hexadecimal) {
         this(base16()
                 .lowerCase()
-                .decode(encoded.toLowerCase()));
+                .decode(hexadecimal.toLowerCase()));
     }
 
     /**
@@ -45,7 +45,7 @@ public final class Hash implements Comparable<Hash> {
     /**
      * @return This hash encoded as an hexadecimal lower-case string.
      */
-    public String encode() {
+    public String asHexadecimalString() {
         return base16()
                 .lowerCase()
                 .encode(bytes);
@@ -58,7 +58,7 @@ public final class Hash implements Comparable<Hash> {
      * @return This hash encoded and truncated to supplied length.
      */
     public String key(int length) {
-        return encode().substring(0, length);
+        return asHexadecimalString().substring(0, length);
     }
 
     /**
@@ -97,7 +97,7 @@ public final class Hash implements Comparable<Hash> {
 
     @Override
     public String toString() {
-        return encode();
+        return asHexadecimalString();
     }
 
     @Override
@@ -116,6 +116,6 @@ public final class Hash implements Comparable<Hash> {
 
     @Override
     public int compareTo(Hash that) {
-        return encode().compareTo(that.encode());
+        return asHexadecimalString().compareTo(that.asHexadecimalString());
     }
 }

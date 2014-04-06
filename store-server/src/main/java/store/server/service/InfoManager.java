@@ -141,7 +141,7 @@ class InfoManager {
     private Path path(Hash hash) {
         return root
                 .resolve(hash.key(KEY_LENGTH))
-                .resolve(hash.encode());
+                .resolve(hash.asHexadecimalString());
     }
 
     private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {

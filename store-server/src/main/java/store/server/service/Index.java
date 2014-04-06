@@ -122,13 +122,13 @@ class Index {
         }
         try (IndexWriter writer = newIndexWriter()) {
             // First delete any existing document.
-            writer.deleteDocuments(new Term("hash", contentInfoTree.getHash().encode()));
+            writer.deleteDocuments(new Term("hash", contentInfoTree.getHash().asHexadecimalString()));
 
             // Then (re)create the document.
             Document document = new Document();
-            document.add(new TextField("hash", contentInfoTree.getHash().encode(), Store.YES));
+            document.add(new TextField("hash", contentInfoTree.getHash().asHexadecimalString(), Store.YES));
             for (Hash rev : contentInfoTree.getHead()) {
-                document.add(new TextField("rev", rev.encode(), Store.YES));
+                document.add(new TextField("rev", rev.asHexadecimalString(), Store.YES));
             }
             document.add(new LongField("length", contentInfoTree.getLength(), Store.NO));
             for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
@@ -210,7 +210,7 @@ class Index {
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
-                TermQuery query = new TermQuery(new Term("hash", hash.encode()));
+                TermQuery query = new TermQuery(new Term("hash", hash.asHexadecimalString()));
                 ScoreDoc[] hits = searcher.search(query, 1).scoreDocs;
                 if (hits.length == 0) {
                     return Optional.absent();
@@ -230,7 +230,7 @@ class Index {
     public void delete(Hash hash) {
         LOG.info("[{}] Deleting {}", name, hash);
         try (IndexWriter writer = newIndexWriter()) {
-            writer.deleteDocuments(new Term("hash", hash.encode()));
+            writer.deleteDocuments(new Term("hash", hash.asHexadecimalString()));
 
         } catch (IOException e) {
             throw new WriteException(e);

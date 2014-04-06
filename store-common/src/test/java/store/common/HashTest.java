@@ -11,7 +11,7 @@ import static store.common.TestUtil.array;
 public class HashTest {
 
     private static final byte[] BYTES = array(0x8d, 0x5f, 0x3c, 0x77, 0xe9, 0x4a, 0x0c, 0xad, 0x3a, 0x32);
-    private static final String ENCODED = "8d5f3c77e94a0cad3a32";
+    private static final String HEXADECIMAL = "8d5f3c77e94a0cad3a32";
     private static final String LESS = "2827c43f0aad546501f9";
     private static final String MORE = "9c42e74cae7674273aba";
     private static final char[] ALPHABET = new char[]{'0', '1', '2', '3',
@@ -23,8 +23,8 @@ public class HashTest {
      * Test.
      */
     @Test
-    public void encodeTest() {
-        assertThat(new Hash(BYTES).encode()).isEqualTo(ENCODED);
+    public void asHexadecimalStringTest() {
+        assertThat(new Hash(BYTES).asHexadecimalString()).isEqualTo(HEXADECIMAL);
     }
 
     /**
@@ -32,7 +32,7 @@ public class HashTest {
      */
     @Test
     public void getBytesTest() {
-        assertThat(new Hash(ENCODED).getBytes()).isEqualTo(BYTES);
+        assertThat(new Hash(HEXADECIMAL).getBytes()).isEqualTo(BYTES);
     }
 
     /**
@@ -92,8 +92,8 @@ public class HashTest {
      */
     @Test
     public void hashCodeTest() {
-        int actual = new Hash(ENCODED).hashCode();
-        int same = new Hash(ENCODED).hashCode();
+        int actual = new Hash(HEXADECIMAL).hashCode();
+        int same = new Hash(HEXADECIMAL).hashCode();
         int other = new Hash(LESS).hashCode();
         assertThat(actual).isEqualTo(same);
         assertThat(actual).isNotEqualTo(other);
@@ -105,8 +105,8 @@ public class HashTest {
     @Test
     @SuppressWarnings({"ObjectEqualsNull", "IncompatibleEquals"})
     public void equalsTest() {
-        Hash hash = new Hash(ENCODED);
-        Hash same = new Hash(ENCODED);
+        Hash hash = new Hash(HEXADECIMAL);
+        Hash same = new Hash(HEXADECIMAL);
         Hash other = new Hash(LESS);
 
         assertThat(hash.equals(same)).isTrue();
@@ -120,8 +120,8 @@ public class HashTest {
      */
     @Test
     public void compareToTest() {
-        Hash hash = new Hash(ENCODED);
-        Hash same = new Hash(ENCODED);
+        Hash hash = new Hash(HEXADECIMAL);
+        Hash same = new Hash(HEXADECIMAL);
         Hash less = new Hash(LESS);
         Hash more = new Hash(MORE);
 

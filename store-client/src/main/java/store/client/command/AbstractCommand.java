@@ -168,7 +168,7 @@ abstract class AbstractCommand implements Command {
         for (IndexEntry entry : session.getRestClient().find(session.getRepository(),
                                                              Joiner.on("").join("hash:", prefix.toLowerCase(), "*"),
                                                              0, 100)) {
-            hashes.add(entry.getHash().encode());
+            hashes.add(entry.getHash().asHexadecimalString());
         }
         return hashes;
     }

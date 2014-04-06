@@ -4,16 +4,29 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import org.joda.time.Instant;
+import static store.common.MappableUtil.toList;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
 class MapBuilder {
 
+    private static final String REVISION = "revision";
+    private static final String REVISIONS = "revisions";
     private final Map<String, Value> map = new LinkedHashMap<>();
 
     public MapBuilder put(String key, Hash value) {
         return put(key, Value.of(value));
+    }
+
+    public MapBuilder putRevisions(SortedSet<Hash> revisions) {
+        if (revisions.size() == 1) {
+            put(REVISION, revisions.first());
+        } else {
+            put(REVISIONS, toList(revisions));
+        }
+        return this;
     }
 
     public MapBuilder put(String key, byte[] value) {

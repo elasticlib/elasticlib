@@ -7,8 +7,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import org.joda.time.Instant;
-import static store.common.MappableUtil.fromList;
-import static store.common.MappableUtil.toList;
+import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -19,19 +18,20 @@ public class Event implements Mappable {
 
     private static final String SEQ = "seq";
     private static final String CONTENT = "content";
-    private static final String HEAD = "head";
+    private static final String REVISION = "revision";
+    private static final String REVISIONS = "revisions";
     private static final String TIMESTAMP = "timestamp";
     private static final String OPERATION = "operation";
     private final long seq;
     private final Hash content;
-    private final SortedSet<Hash> head;
+    private final SortedSet<Hash> revisions;
     private final Instant timestamp;
     private final Operation operation;
 
     private Event(EventBuilder builder) {
         this.seq = builder.seq;
         this.content = requireNonNull(builder.content);
-        this.head = unmodifiableSortedSet(builder.head);
+        this.revisions = unmodifiableSortedSet(builder.revisions);
         this.timestamp = requireNonNull(builder.timestamp);
         this.operation = requireNonNull(builder.operation);
     }
@@ -55,12 +55,12 @@ public class Event implements Mappable {
     }
 
     /**
-     * Provides head of info after this event.
+     * Provides head revisions hashes after this event.
      *
-     * @return A sorted set of revisions.
+     * @return A sorted set of hashes.
      */
-    public SortedSet<Hash> getHead() {
-        return head;
+    public SortedSet<Hash> getRevisions() {
+        return revisions;
     }
 
     /**
@@ -86,7 +86,7 @@ public class Event implements Mappable {
         return new MapBuilder()
                 .put(SEQ, seq)
                 .put(CONTENT, content)
-                .put(HEAD, toList(head))
+                .putRevisions(revisions)
                 .put(TIMESTAMP, timestamp)
                 .put(OPERATION, operation.toString())
                 .build();
@@ -102,7 +102,7 @@ public class Event implements Mappable {
         return new EventBuilder()
                 .withSeq(map.get(SEQ).asLong())
                 .withContent(map.get(CONTENT).asHash())
-                .withHead(fromList(map.get(HEAD).asList()))
+                .withRevisions(revisions(map))
                 .withTimestamp(map.get(TIMESTAMP).asInstant())
                 .withOperation(Operation.fromString(map.get(OPERATION).asString()))
                 .build();
@@ -113,7 +113,7 @@ public class Event implements Mappable {
         return toStringHelper(this)
                 .add(SEQ, seq)
                 .add(CONTENT, content)
-                .add(HEAD, head)
+                .add(REVISIONS, revisions)
                 .add(TIMESTAMP, timestamp)
                 .add(OPERATION, operation)
                 .toString();
@@ -121,7 +121,7 @@ public class Event implements Mappable {
 
     @Override
     public int hashCode() {
-        return hash(seq, content, head, timestamp, operation);
+        return hash(seq, content, revisions, timestamp, operation);
     }
 
     @Override
@@ -133,7 +133,7 @@ public class Event implements Mappable {
         return new EqualsBuilder()
                 .append(seq, other.seq)
                 .append(content, other.content)
-                .append(head, other.head)
+                .append(revisions, other.revisions)
                 .append(timestamp, other.timestamp)
                 .append(operation, other.operation)
                 .build();
@@ -146,7 +146,7 @@ public class Event implements Mappable {
 
         private Long seq;
         private Hash content;
-        private SortedSet<Hash> head;
+        private SortedSet<Hash> revisions;
         private Instant timestamp;
         private Operation operation;
 
@@ -173,13 +173,13 @@ public class Event implements Mappable {
         }
 
         /**
-         * Set head.
+         * Set head revisions hashes.
          *
-         * @param head Head.
+         * @param revisions Head revisions hashes.
          * @return this
          */
-        public EventBuilder withHead(SortedSet<Hash> head) {
-            this.head = head;
+        public EventBuilder withRevisions(SortedSet<Hash> revisions) {
+            this.revisions = revisions;
             return this;
         }
 

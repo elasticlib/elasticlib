@@ -77,7 +77,7 @@ public final class TestData {
         EVENTS.add(new Event.EventBuilder()
                 .withSeq(0)
                 .withContent(new Hash(HASHES[0]))
-                .withHead(new TreeSet<>(singleton(new Hash(REVS[0]))))
+                .withRevisions(new TreeSet<>(singleton(new Hash(REVS[0]))))
                 .withTimestamp(new Instant(0))
                 .withOperation(Operation.CREATE)
                 .build());
@@ -85,7 +85,7 @@ public final class TestData {
         EVENTS.add(new Event.EventBuilder()
                 .withSeq(1)
                 .withContent(new Hash(HASHES[1]))
-                .withHead(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))
+                .withRevisions(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))
                 .withTimestamp(new Instant(123000))
                 .withOperation(Operation.DELETE)
                 .build());

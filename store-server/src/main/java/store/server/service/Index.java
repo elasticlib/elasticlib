@@ -55,6 +55,10 @@ import store.server.exception.WriteException;
  */
 class Index {
 
+    private static final String CONTENT = "content";
+    private static final String LENGTH = "length";
+    private static final String REVISION = "revision";
+    private static final String BODY = "body";
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
     private final String name;
     private final Directory directory;
@@ -114,30 +118,30 @@ class Index {
      * @param inputStream Input stream of the content to index.
      */
     public void index(ContentInfoTree contentInfoTree, InputStream inputStream) {
-        LOG.info("[{}] Indexing {}, with head {}", name, contentInfoTree.getContent(), contentInfoTree.getHead());
+        LOG.info("[{}] Indexing {}, at revision {}", name, contentInfoTree.getContent(), contentInfoTree.getHead());
         Optional<IndexEntry> existing = getEntry(contentInfoTree.getContent());
-        if (existing.isPresent() && existing.get().getHead().equals(contentInfoTree.getHead())) {
+        if (existing.isPresent() && existing.get().getRevisions().equals(contentInfoTree.getHead())) {
             // already indexed !
             return;
         }
         try (IndexWriter writer = newIndexWriter()) {
             // First delete any existing document.
-            writer.deleteDocuments(new Term("hash", contentInfoTree.getContent().asHexadecimalString()));
+            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
 
             // Then (re)create the document.
             Document document = new Document();
-            document.add(new TextField("hash", contentInfoTree.getContent().asHexadecimalString(), Store.YES));
+            document.add(new TextField(CONTENT, contentInfoTree.getContent().asHexadecimalString(), Store.YES));
             for (Hash rev : contentInfoTree.getHead()) {
-                document.add(new TextField("rev", rev.asHexadecimalString(), Store.YES));
+                document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
             }
-            document.add(new LongField("length", contentInfoTree.getLength(), Store.NO));
+            document.add(new LongField(LENGTH, contentInfoTree.getLength(), Store.NO));
             for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
                 String key = entry.getKey();
                 for (Value value : entry.getValue()) {
                     add(document, key, value);
                 }
             }
-            document.add(new TextField("content", new Tika().parse(inputStream)));
+            document.add(new TextField(BODY, new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);
 
         } catch (IOException e) {
@@ -210,7 +214,7 @@ class Index {
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
-                TermQuery query = new TermQuery(new Term("hash", hash.asHexadecimalString()));
+                TermQuery query = new TermQuery(new Term(CONTENT, hash.asHexadecimalString()));
                 ScoreDoc[] hits = searcher.search(query, 1).scoreDocs;
                 if (hits.length == 0) {
                     return Optional.absent();
@@ -230,7 +234,7 @@ class Index {
     public void delete(Hash hash) {
         LOG.info("[{}] Deleting {}", name, hash);
         try (IndexWriter writer = newIndexWriter()) {
-            writer.deleteDocuments(new Term("hash", hash.asHexadecimalString()));
+            writer.deleteDocuments(new Term(CONTENT, hash.asHexadecimalString()));
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -257,15 +261,15 @@ class Index {
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
-                QueryParser parser = new QueryParser(Version.LUCENE_46, "content", analyzer);
+                QueryParser parser = new QueryParser(Version.LUCENE_46, BODY, analyzer);
                 ScoreDoc[] hits = searcher.search(parser.parse(query), first + number).scoreDocs;
                 List<IndexEntry> entries = new ArrayList<>(number);
                 int last = min(first + number, hits.length);
                 for (int i = first; i < last; i++) {
                     Document document = searcher.doc(hits[i].doc);
-                    Hash hash = new Hash(document.getValues("hash")[0]);
+                    Hash hash = new Hash(document.getValues(CONTENT)[0]);
                     Set<Hash> head = new HashSet<>();
-                    for (String value : document.getValues("rev")) {
+                    for (String value : document.getValues(REVISION)) {
                         head.add(new Hash(value));
                     }
                     entries.add(new IndexEntry(hash, head));
@@ -281,9 +285,9 @@ class Index {
     }
 
     private IndexEntry newIndexEntry(Document document) {
-        Hash hash = new Hash(document.getValues("hash")[0]);
+        Hash hash = new Hash(document.getValues(CONTENT)[0]);
         Set<Hash> head = new HashSet<>();
-        for (String value : document.getValues("rev")) {
+        for (String value : document.getValues(REVISION)) {
             head.add(new Hash(value));
         }
         return new IndexEntry(hash, head);

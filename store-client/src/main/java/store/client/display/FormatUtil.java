@@ -118,7 +118,7 @@ final class FormatUtil {
      * @return A human readable string
      */
     public static String asString(Event event) {
-        return new StringBuilder()
+        StringBuilder builder = new StringBuilder()
                 .append(toPascalCase(event.getOperation().toString()))
                 .append(System.lineSeparator())
                 .append("Date")
@@ -128,12 +128,18 @@ final class FormatUtil {
                 .append("Content")
                 .append(COMMA)
                 .append(event.getContent())
-                .append(System.lineSeparator())
-                .append("Head")
-                .append(COMMA)
-                .append(Joiner.on(", ").join(event.getHead()))
-                .append(System.lineSeparator())
-                .toString();
+                .append(System.lineSeparator());
+
+        if (event.getRevisions().size() == 1) {
+            builder.append("Revision")
+                    .append(COMMA)
+                    .append(event.getRevisions().first());
+        } else {
+            builder.append("Revisions")
+                    .append(COMMA)
+                    .append(Joiner.on(", ").join(event.getRevisions()));
+        }
+        return builder.append(System.lineSeparator()).toString();
     }
 
     private static String toPascalCase(String lowerCase) {

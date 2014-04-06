@@ -14,6 +14,9 @@ import store.common.value.Value;
  */
 public final class MappableUtil {
 
+    private static final String REVISION = "revision";
+    private static final String REVISIONS = "revisions";
+
     private MappableUtil() {
     }
 
@@ -31,6 +34,17 @@ public final class MappableUtil {
             hashes.add(value.asHash());
         }
         return hashes;
+    }
+
+    static SortedSet<Hash> revisions(Map<String, Value> values) {
+        if (values.containsKey(REVISION)) {
+            SortedSet<Hash> revisions = new TreeSet<>();
+            revisions.add(values.get(REVISION).asHash());
+            return revisions;
+
+        } else {
+            return fromList(values.get(REVISIONS).asList());
+        }
     }
 
     /**

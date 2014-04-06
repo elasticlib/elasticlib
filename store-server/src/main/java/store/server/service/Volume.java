@@ -199,7 +199,7 @@ class Volume {
                 }
                 ContentInfoTree tree = treeOpt.get();
                 contentManager.add(hash, tree.getLength(), source);
-                historyManager.add(hash, Operation.CREATE, tree.getHead());
+                historyManager.add(Operation.CREATE, hash, tree.getHead());
                 return CommandResult.of(transactionId, Operation.CREATE, hash, tree.getHead());
             }
         });
@@ -236,7 +236,7 @@ class Volume {
         if (operation == Operation.DELETE) {
             contentManager.delete(hash);
         }
-        historyManager.add(hash, operation, result.getRevisions());
+        historyManager.add(operation, hash, result.getRevisions());
     }
 
     /**

@@ -496,7 +496,7 @@ public class RepositoriesResource {
         List<ContentInfo> infos = new ArrayList<>(size);
         Repository repository = repository(name);
         for (IndexEntry entry : repository.find(query, from, size)) {
-            infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getHead()));
+            infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getRevisions()));
         }
         return writeAll(infos);
     }

@@ -5,8 +5,13 @@
         "content": {
             "type": "hash"
         },
-        "head": {
+        "revision": {
+            "type": "hash",
+            "optional": true
+        },
+        "revisions": {
             "type": "array",
+            "optional": true,
             "items": {
                 "type": "hash"
             }

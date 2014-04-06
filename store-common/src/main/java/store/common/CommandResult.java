@@ -7,8 +7,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import static store.common.MappableUtil.fromList;
-import static store.common.MappableUtil.toList;
+import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -110,17 +109,12 @@ public final class CommandResult implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        MapBuilder builder = new MapBuilder()
+        return new MapBuilder()
                 .put(TRANSACTION_ID, transactionId)
                 .put(OPERATION, isNoOp() ? NO_OP : operation.toString())
-                .put(CONTENT, content);
-
-        if (revisions.size() == 1) {
-            builder.put(REVISION, revisions.first());
-        } else {
-            builder.put(REVISIONS, toList(revisions));
-        }
-        return builder.build();
+                .put(CONTENT, content)
+                .putRevisions(revisions)
+                .build();
     }
 
     /**
@@ -132,13 +126,7 @@ public final class CommandResult implements Mappable {
     public static CommandResult fromMap(Map<String, Value> map) {
         long transactionId = map.get(TRANSACTION_ID).asLong();
         Hash content = map.get(CONTENT).asHash();
-        SortedSet<Hash> revisions;
-        if (map.containsKey(REVISION)) {
-            revisions = new TreeSet<>();
-            revisions.add(map.get(REVISION).asHash());
-        } else {
-            revisions = fromList(map.get(REVISIONS).asList());
-        }
+        SortedSet<Hash> revisions = revisions(map);
         String opCode = map.get(OPERATION).asString();
         if (opCode.equals(NO_OP)) {
             return CommandResult.noOp(transactionId, content, revisions);

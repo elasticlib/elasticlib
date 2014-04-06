@@ -1,9 +1,9 @@
 package store.client.command;
 
 import java.util.List;
+import static store.client.command.CommandProvider.command;
 import store.client.display.Display;
 import store.client.http.Session;
-import static store.client.command.CommandProvider.command;
 
 class Help extends AbstractCommand {
 
@@ -32,6 +32,7 @@ class Help extends AbstractCommand {
                 .append(command.description())
                 .append(System.lineSeparator())
                 .append(command.usage())
+                .append(System.lineSeparator())
                 .toString());
     }
 

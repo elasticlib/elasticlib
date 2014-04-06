@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,12 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import static store.client.command.Type.REPOSITORY;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.common.IndexEntry;
 
 abstract class AbstractCommand implements Command {
 
-    private static String USAGE = "Usage:";
+    private static final List<String> URLS = Arrays.asList("127.0.0.1", "localhost");
+    private static final String USAGE = "Usage:";
+    static final String OK = "ok" + System.lineSeparator();
     static final String REPOSITORY = "repository";
     static final String REPLICATION = "replication";
     private final Map<String, List<Type>> syntax;
@@ -142,22 +146,40 @@ abstract class AbstractCommand implements Command {
     }
 
     private static List<String> complete(Session session, String param, Type type) {
-        switch (type) {
-            case REPOSITORY:
-                return filterStartWith(session.getRestClient().listRepositories(), param);
+        try {
+            switch (type) {
+                case URL:
+                    return completeUrl(param);
 
-            case HASH:
-                return filterStartWith(hashes(session, param), param);
+                case REPOSITORY:
+                    return filterStartWith(session.getRestClient().listRepositories(), param);
 
-            case COMMAND:
-                return completeCommand(param);
+                case HASH:
+                    return filterStartWith(hashes(session, param), param);
 
-            case PATH:
-                return completePath(param);
+                case COMMAND:
+                    return completeCommand(param);
 
-            default:
-                return emptyList();
+                case PATH:
+                    return completePath(param);
+
+                default:
+                    return emptyList();
+            }
+        } catch (RequestFailedException e) {
+            return emptyList();
         }
+    }
+
+    private static List<String> completeUrl(final String param) {
+        List<String> list = newArrayList(Iterables.filter(URLS, new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return input.startsWith(param.toLowerCase());
+            }
+        }));
+        Collections.sort(list);
+        return list;
     }
 
     private static Collection<String> hashes(Session session, String prefix) {

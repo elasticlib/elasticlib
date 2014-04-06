@@ -5,6 +5,7 @@ import com.google.common.base.Splitter;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
+import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
@@ -56,6 +57,10 @@ public final class CommandParser implements Completer {
 
         } catch (RequestFailedException e) {
             display.println(e.getMessage() + System.lineSeparator());
+
+        } catch (ProcessingException e) {
+            String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
+            display.println(message + System.lineSeparator());
         }
     }
 

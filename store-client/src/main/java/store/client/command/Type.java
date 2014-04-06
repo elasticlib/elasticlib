@@ -6,6 +6,10 @@ package store.client.command;
 enum Type {
 
     /**
+     * A network URL.
+     */
+    URL,
+    /**
      * A file-system path.
      */
     PATH,

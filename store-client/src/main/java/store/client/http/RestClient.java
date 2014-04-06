@@ -7,7 +7,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.size;
 import java.nio.file.Path;
@@ -29,7 +28,6 @@ import static javax.ws.rs.client.Entity.entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -70,9 +68,10 @@ public class RestClient implements Closeable {
     /**
      * Constructor.
      *
+     * @param url Server url.
      * @param display Display to use.
      */
-    public RestClient(Display display) {
+    public RestClient(String url, Display display) {
         this.display = display;
 
         Logger logger = Logger.getGlobal();
@@ -86,14 +85,7 @@ public class RestClient implements Closeable {
                 .register(new LoggingFilter(logger, true));
 
         client = ClientBuilder.newClient(clientConfig);
-        resource = client.target(localhost(8080));
-    }
-
-    private static URI localhost(int port) {
-        return UriBuilder.fromUri("http:/")
-                .host("localhost")
-                .port(port)
-                .build();
+        resource = client.target(url);
     }
 
     private static Response ensureSuccess(Response response) {
@@ -128,6 +120,21 @@ public class RestClient implements Closeable {
             list.add(value.getString());
         }
         return list;
+    }
+
+    public void testConnection() {
+        ensureSuccess(resource.path("repositories")
+                .request()
+                .get())
+                .close();
+    }
+
+    public void testRepository(String name) {
+        ensureSuccess(resource.path("repositories/{name}")
+                .resolveTemplate("name", name)
+                .request()
+                .get())
+                .close();
     }
 
     public void createRepository(Path path) {

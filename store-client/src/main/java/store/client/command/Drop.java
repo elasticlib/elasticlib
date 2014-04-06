@@ -2,10 +2,11 @@ package store.client.command;
 
 import static java.util.Arrays.asList;
 import java.util.List;
-import store.client.display.Display;
-import store.client.http.Session;
+import static store.client.command.AbstractCommand.OK;
 import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
+import store.client.display.Display;
+import store.client.http.Session;
 
 class Drop extends AbstractCommand {
 
@@ -24,6 +25,7 @@ class Drop extends AbstractCommand {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
                 session.getRestClient().dropRepository(params.get(1));
+                session.stopUse(params.get(1));
                 break;
 
             case REPLICATION:
@@ -33,5 +35,6 @@ class Drop extends AbstractCommand {
             default:
                 throw new IllegalArgumentException(params.get(0));
         }
+        display.println(OK);
     }
 }

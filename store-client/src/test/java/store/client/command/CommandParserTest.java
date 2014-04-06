@@ -37,15 +37,15 @@ public class CommandParserTest {
     @DataProvider(name = "dataProvider")
     public Object[][] dataProvider() {
         return new Object[][]{
-            {"se", asList("set"), 0},
-            {"set", asList(" "), 3},
-            {"set ", asList("repository"), 4},
-            {"set repo", asList("repository"), 4},
-            {"set repository", asList(" "), 14},
-            {"set repository ", asList("primary", "secondary"), 15},
-            {"set repository p", asList("primary"), 15},
-            {"set repository primary", asList(" "), 22},
-            {"set repository primary ", asList(), 0},
+            {"dr", asList("drop"), 0},
+            {"drop", asList(" "), 4},
+            {"drop ", asList("replication", "repository"), 5},
+            {"drop repo", asList("repository"), 5},
+            {"drop repository", asList(" "), 15},
+            {"drop repository ", asList("primary", "secondary"), 16},
+            {"drop repository p", asList("primary"), 16},
+            {"drop repository primary", asList(" "), 23},
+            {"drop repository primary ", asList(), 0},
             {"create repli", asList("replication"), 7}
         };
     }

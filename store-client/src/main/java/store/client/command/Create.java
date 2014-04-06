@@ -3,10 +3,11 @@ package store.client.command;
 import java.nio.file.Paths;
 import static java.util.Arrays.asList;
 import java.util.List;
-import store.client.display.Display;
-import store.client.http.Session;
+import static store.client.command.AbstractCommand.OK;
 import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
+import store.client.display.Display;
+import store.client.http.Session;
 
 class Create extends AbstractCommand {
 
@@ -34,5 +35,6 @@ class Create extends AbstractCommand {
             default:
                 throw new IllegalArgumentException(params.get(0));
         }
+        display.println(OK);
     }
 }

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import static java.util.Arrays.asList;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArrayBuilder;
@@ -112,10 +113,12 @@ public class ValueReadingAndWritingTest {
      */
     @DataProvider(name = "readValueDataProvider")
     public Object[][] readValueDataProvider() {
-        ValueType[] types = ValueType.values();
-        Object[][] data = new Object[types.length][];
-        for (int i = 0; i < types.length; i++) {
-            data[i] = new Object[]{JSON.get(types[i]), VALUES.get(types[i])};
+        Set<ValueType> types = VALUES.keySet();
+        Object[][] data = new Object[types.size()][];
+        int i = 0;
+        for (ValueType type : types) {
+            data[i] = new Object[]{JSON.get(type), VALUES.get(type)};
+            i++;
         }
         return data;
     }
@@ -127,10 +130,12 @@ public class ValueReadingAndWritingTest {
      */
     @DataProvider(name = "writeValueDataProvider")
     public Object[][] writeValueDataProvider() {
-        ValueType[] types = ValueType.values();
-        Object[][] data = new Object[types.length][];
-        for (int i = 0; i < types.length; i++) {
-            data[i] = new Object[]{VALUES.get(types[i]), JSON.get(types[i])};
+        Set<ValueType> types = VALUES.keySet();
+        Object[][] data = new Object[types.size()][];
+        int i = 0;
+        for (ValueType type : types) {
+            data[i] = new Object[]{VALUES.get(type), JSON.get(type)};
+            i++;
         }
         return data;
     }

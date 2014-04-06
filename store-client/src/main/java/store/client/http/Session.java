@@ -16,7 +16,7 @@ public class Session implements Closeable {
     private static final String NO_REPOSITORY = "No repository selected";
     private static final String HTTP_SCHEME = "http://";
     private final Display display;
-    private RestClient restClient;
+    private HttpClient restClient;
     private String server;
     private String repository;
 
@@ -40,7 +40,7 @@ public class Session implements Closeable {
             throw new RequestFailedException("Malformed URL");
         }
         server = parts.get(0);
-        restClient = new RestClient(HTTP_SCHEME + server, display);
+        restClient = new HttpClient(HTTP_SCHEME + server, display);
         if (parts.size() == 2) {
             use(parts.get(1));
         } else {
@@ -80,7 +80,7 @@ public class Session implements Closeable {
         return repository;
     }
 
-    public RestClient getRestClient() {
+    public HttpClient getClient() {
         if (restClient == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }

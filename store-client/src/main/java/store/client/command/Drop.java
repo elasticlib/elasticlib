@@ -24,12 +24,12 @@ class Drop extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
-                session.getRestClient().dropRepository(params.get(1));
+                session.getClient().dropRepository(params.get(1));
                 session.stopUse(params.get(1));
                 break;
 
             case REPLICATION:
-                session.getRestClient().dropReplication(params.get(1), params.get(2));
+                session.getClient().dropReplication(params.get(1), params.get(2));
                 break;
 
             default:

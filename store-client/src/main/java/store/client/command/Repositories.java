@@ -14,7 +14,7 @@ class Repositories extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        List<String> repositories = session.getRestClient().listRepositories();
+        List<String> repositories = session.getClient().listRepositories();
         if (!repositories.isEmpty()) {
             display.println(Joiner.on(System.lineSeparator()).join(repositories) + System.lineSeparator());
         }

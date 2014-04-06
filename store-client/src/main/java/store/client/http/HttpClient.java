@@ -57,9 +57,9 @@ import static store.common.json.JsonWriting.write;
 import static store.common.metadata.MetadataUtil.metadata;
 
 /**
- * REST Client.
+ * HTTP Client.
  */
-public class RestClient implements Closeable {
+public class HttpClient implements Closeable {
 
     private final Display display;
     private final Client client;
@@ -71,7 +71,7 @@ public class RestClient implements Closeable {
      * @param url Server url.
      * @param display Display to use.
      */
-    public RestClient(String url, Display display) {
+    public HttpClient(String url, Display display) {
         this.display = display;
 
         Logger logger = Logger.getGlobal();

@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.client.display.Display;
-import store.client.http.RestClient;
+import store.client.http.HttpClient;
 import store.client.http.Session;
 
 /**
@@ -19,12 +19,12 @@ public class CommandParserTest {
     private final CommandParser parser;
 
     {
-        RestClient restClient = mock(RestClient.class);
-        when(restClient.listRepositories()).thenReturn(asList("primary", "secondary"));
+        HttpClient client = mock(HttpClient.class);
+        when(client.listRepositories()).thenReturn(asList("primary", "secondary"));
 
         Display display = mock(Display.class);
         Session session = mock(Session.class);
-        when(session.getRestClient()).thenReturn(restClient);
+        when(session.getClient()).thenReturn(client);
 
         parser = new CommandParser(display, session);
     }

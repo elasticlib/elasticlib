@@ -24,7 +24,7 @@ class Find extends AbstractCommand {
         int cursor = 0;
         List<ContentInfo> infos;
         do {
-            infos = session.getRestClient().findInfo(repository, query, cursor, 20);
+            infos = session.getClient().findInfo(repository, query, cursor, 20);
             for (ContentInfo info : infos) {
                 cursor += infos.size();
                 display.print(info);

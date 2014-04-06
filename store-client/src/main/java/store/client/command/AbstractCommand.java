@@ -152,7 +152,7 @@ abstract class AbstractCommand implements Command {
                     return completeUrl(param);
 
                 case REPOSITORY:
-                    return filterStartWith(session.getRestClient().listRepositories(), param);
+                    return filterStartWith(session.getClient().listRepositories(), param);
 
                 case HASH:
                     return filterStartWith(hashes(session, param), param);
@@ -187,7 +187,7 @@ abstract class AbstractCommand implements Command {
             return emptyList();
         }
         Collection<String> hashes = new ArrayList<>();
-        for (IndexEntry entry : session.getRestClient().find(session.getRepository(),
+        for (IndexEntry entry : session.getClient().find(session.getRepository(),
                                                              Joiner.on("").join("content:", prefix.toLowerCase(), "*"),
                                                              0, 100)) {
             hashes.add(entry.getHash().asHexadecimalString());

@@ -22,7 +22,7 @@ class Put extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         String repository = session.getRepository();
         Path path = Paths.get(params.get(0));
-        CommandResult result = session.getRestClient().put(repository, path);
+        CommandResult result = session.getClient().put(repository, path);
         display.print(result);
     }
 }

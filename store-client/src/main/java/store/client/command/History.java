@@ -18,7 +18,7 @@ class History extends AbstractCommand {
         long cursor = Long.MAX_VALUE;
         List<Event> events;
         do {
-            events = session.getRestClient().history(repository, false, cursor, 20);
+            events = session.getClient().history(repository, false, cursor, 20);
             for (Event event : events) {
                 cursor = event.getSeq();
                 display.print(event);

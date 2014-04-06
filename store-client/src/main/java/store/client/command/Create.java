@@ -25,11 +25,11 @@ class Create extends AbstractCommand {
     public void execute(Display display, Session session, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
-                session.getRestClient().createRepository(Paths.get(params.get(1)));
+                session.getClient().createRepository(Paths.get(params.get(1)));
                 break;
 
             case REPLICATION:
-                session.getRestClient().createReplication(params.get(1), params.get(2));
+                session.getClient().createReplication(params.get(1), params.get(2));
                 break;
 
             default:

@@ -122,14 +122,19 @@ public class HttpClient implements Closeable {
         return list;
     }
 
-    public void testConnection() {
-        ensureSuccess(resource.path("repositories")
-                .request()
-                .get())
-                .close();
+    /**
+     * Tests connection to current server. Fails if connection is down.
+     */
+    void testConnection() {
+        listRepositories();
     }
 
-    public void testRepository(String name) {
+    /**
+     * Tests that supplied repository really exists. Fails if it does not.
+     *
+     * @param name Repository name.
+     */
+    void testRepository(String name) {
         ensureSuccess(resource.path("repositories/{name}")
                 .resolveTemplate("name", name)
                 .request()
@@ -137,6 +142,11 @@ public class HttpClient implements Closeable {
                 .close();
     }
 
+    /**
+     * Creates a new repository at supplied path.
+     *
+     * @param path Repository path (from server perspective).
+     */
     public void createRepository(Path path) {
         JsonObject json = createObjectBuilder()
                 .add("path", path.toAbsolutePath().toString())
@@ -147,6 +157,11 @@ public class HttpClient implements Closeable {
                 .post(Entity.json(json)));
     }
 
+    /**
+     * Deletes an existing repository.
+     *
+     * @param name Repository name.
+     */
     public void dropRepository(String name) {
         ensureSuccess(resource.path("repositories/{name}")
                 .resolveTemplate("name", name)
@@ -154,6 +169,11 @@ public class HttpClient implements Closeable {
                 .delete());
     }
 
+    /**
+     * Lists existing repositories.
+     *
+     * @return A list of repository names.
+     */
     public List<String> listRepositories() {
         Response response = ensureSuccess(resource.path("repositories")
                 .request()
@@ -162,6 +182,12 @@ public class HttpClient implements Closeable {
         return asStringList(response.readEntity(JsonArray.class));
     }
 
+    /**
+     * Creates a new replication.
+     *
+     * @param source Source repository.
+     * @param target Target repository.
+     */
     public void createReplication(String source, String target) {
         JsonObject json = createObjectBuilder()
                 .add("source", source)
@@ -173,6 +199,12 @@ public class HttpClient implements Closeable {
                 .post(Entity.json(json)));
     }
 
+    /**
+     * Deletes an existing replication.
+     *
+     * @param source Source repository.
+     * @param target Target repository.
+     */
     public void dropReplication(String source, String target) {
         ensureSuccess(resource.path("replications")
                 .queryParam("source", source)
@@ -181,6 +213,13 @@ public class HttpClient implements Closeable {
                 .delete());
     }
 
+    /**
+     * Add a new Content to a repository. Info is extracted from content an added along.
+     *
+     * @param repository Repository name.
+     * @param filepath Content path (from client perspective).
+     * @return Actual command result.
+     */
     public CommandResult put(String repository, Path filepath) {
         try {
             Digest digest = digest(filepath);
@@ -235,6 +274,13 @@ public class HttpClient implements Closeable {
         }
     }
 
+    /**
+     * Delete an exising content from a repository.
+     *
+     * @param repository Repository name.
+     * @param hash Content hash.
+     * @return Actual command result.
+     */
     public CommandResult delete(String repository, Hash hash) {
         List<ContentInfo> head = head(repository, hash);
         if (isDeleted(head)) {
@@ -277,6 +323,13 @@ public class HttpClient implements Closeable {
         return true;
     }
 
+    /**
+     * Provides content info tree for a given content.
+     *
+     * @param repository Repository name.
+     * @param hash Content hash.
+     * @return
+     */
     public ContentInfoTree getInfoTree(String repository, Hash hash) {
         Response response = resource.path("repositories/{name}/info/{hash}")
                 .resolveTemplate("name", repository)
@@ -287,6 +340,12 @@ public class HttpClient implements Closeable {
         return read(response, ContentInfoTree.class);
     }
 
+    /**
+     * Download a content from a repository. Downloaded content is saved in client working directory.
+     *
+     * @param repository Repository name.
+     * @param hash Content hash.
+     */
     public void get(String repository, Hash hash) {
         Response response = ensureSuccess(resource.path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
@@ -318,6 +377,15 @@ public class HttpClient implements Closeable {
         return Optional.absent();
     }
 
+    /**
+     * Find index entries matching a given query in a paginated way.
+     *
+     * @param repository Repository name.
+     * @param query Query.
+     * @param from First item to return.
+     * @param size Number of items to return.
+     * @return A list of index entries.
+     */
     public List<IndexEntry> find(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/index")
                 .resolveTemplate("name", repository)
@@ -330,6 +398,15 @@ public class HttpClient implements Closeable {
         return readAll(response, IndexEntry.class);
     }
 
+    /**
+     * Find content infos matching a given query in a paginated way.
+     *
+     * @param repository Repository name.
+     * @param query Query.
+     * @param from First item to return.
+     * @param size Number of items to return.
+     * @return A list of content infos.
+     */
     public List<ContentInfo> findInfo(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/info")
                 .resolveTemplate("name", repository)
@@ -342,6 +419,15 @@ public class HttpClient implements Closeable {
         return readAll(response, ContentInfo.class);
     }
 
+    /**
+     * Provides history in a paginated way.
+     *
+     * @param repository Repository name.
+     * @param asc If true, returned list is sorted chronologically.
+     * @param from First item to return.
+     * @param size Number of items to return.
+     * @return A list of history events.
+     */
     public List<Event> history(String repository, boolean asc, long from, int size) {
         Response response = resource.path("repositories/{name}/history")
                 .resolveTemplate("name", repository)

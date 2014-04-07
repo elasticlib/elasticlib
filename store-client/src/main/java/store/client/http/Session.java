@@ -29,6 +29,11 @@ public class Session implements Closeable {
         this.display = display;
     }
 
+    /**
+     * Connects to server at supplied URL. If URL contains a path fragment, it is interpreted as a repository name.
+     *
+     * @param url Server URL.
+     */
     public void connect(String url) {
         close();
         url = url.trim();
@@ -49,16 +54,29 @@ public class Session implements Closeable {
         }
     }
 
+    /**
+     * Disconnects from current server. Idempotent.
+     */
     public void disconnect() {
         close();
     }
 
+    /**
+     * Selects a repository to use.
+     *
+     * @param repositoryName Repository name.
+     */
     public void use(String repositoryName) {
         restClient.testRepository(repositoryName);
         display.setPrompt(Joiner.on('/').join(server, repositoryName));
         repository = repositoryName;
     }
 
+    /**
+     * Stop using repository which name is supplied, if applicable. Does nothing otherwise.
+     *
+     * @param repositoryName Repository name.
+     */
     public void stopUse(String repositoryName) {
         if (repository != null && repository.equals(repositoryName)) {
             repository = null;
@@ -70,6 +88,11 @@ public class Session implements Closeable {
         }
     }
 
+    /**
+     * Provides current repository name. Fails if there is currently no selected repository.
+     *
+     * @return A repository name.
+     */
     public String getRepository() {
         if (restClient == null) {
             throw new RequestFailedException(NOT_CONNECTED);
@@ -80,6 +103,11 @@ public class Session implements Closeable {
         return repository;
     }
 
+    /**
+     * Provides current HTTP client. Fails if there is currently no alive connection.
+     *
+     * @return A HTTP client.
+     */
     public HttpClient getClient() {
         if (restClient == null) {
             throw new RequestFailedException(NOT_CONNECTED);

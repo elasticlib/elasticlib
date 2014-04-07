@@ -64,7 +64,7 @@ final class MappableFormatting {
 
     private interface Formatter {
 
-        public Value apply(Value value);
+        Value apply(Value value);
     }
 
     private MappableFormatting() {
@@ -73,18 +73,21 @@ final class MappableFormatting {
     public static Map<String, Value> format(Mappable mappable) {
         Map<String, Value> map = new LinkedHashMap<>();
         for (Entry<String, Value> entry : mappable.toMap().entrySet()) {
-            String key = entry.getKey();
-            Value value = entry.getValue();
-            if (REMOVALS.contains(key)) {
-                continue;
-            }
-            if (key.equals(LENGTH)) {
-                map.put(key, Value.of(ByteLengthFormatter.format(entry.getValue().asLong())));
-                continue;
-            }
-            map.put(key, formatValue(value));
+            formatAndPut(map, entry.getKey(), entry.getValue());
         }
         return map;
+    }
+
+    private static void formatAndPut(Map<String, Value> map, String key, Value value) {
+        if (REMOVALS.contains(key)) {
+            return;
+        }
+        if (key.equals(LENGTH)) {
+            map.put(key, Value.of(ByteLengthFormatter.format(value.asLong())));
+
+        } else {
+            map.put(key, formatValue(value));
+        }
     }
 
     private static Value formatValue(Value value) {

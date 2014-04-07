@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.ws.rs.ProcessingException;
 import static store.client.command.Type.REPOSITORY;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
@@ -166,7 +167,7 @@ abstract class AbstractCommand implements Command {
                 default:
                     return emptyList();
             }
-        } catch (RequestFailedException e) {
+        } catch (RequestFailedException | ProcessingException e) {
             return emptyList();
         }
     }
@@ -188,8 +189,8 @@ abstract class AbstractCommand implements Command {
         }
         Collection<String> hashes = new ArrayList<>();
         for (IndexEntry entry : session.getClient().find(session.getRepository(),
-                                                             Joiner.on("").join("content:", prefix.toLowerCase(), "*"),
-                                                             0, 100)) {
+                                                         Joiner.on("").join("content:", prefix.toLowerCase(), "*"),
+                                                         0, 100)) {
             hashes.add(entry.getHash().asHexadecimalString());
         }
         return hashes;

@@ -126,7 +126,7 @@ public class HttpClient implements Closeable {
      * Tests connection to current server. Fails if connection is down.
      */
     void testConnection() {
-        listRepositories();
+        ensureSuccess(resource.request().get()).close();
     }
 
     /**

@@ -57,7 +57,7 @@ import store.server.service.Repository;
 import store.server.service.Status;
 
 /**
- * Volumes REST resource.
+ * Repositories REST resource.
  */
 @Path("repositories")
 public class RepositoriesResource {

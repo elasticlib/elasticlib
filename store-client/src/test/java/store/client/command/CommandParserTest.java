@@ -1,5 +1,6 @@
 package store.client.command;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.testng.annotations.Test;
 import store.client.display.Display;
 import store.client.http.HttpClient;
 import store.client.http.Session;
+import store.common.RepositoryDef;
 
 /**
  * Unit tests.
@@ -20,8 +22,8 @@ public class CommandParserTest {
 
     {
         HttpClient client = mock(HttpClient.class);
-        when(client.listRepositories()).thenReturn(asList("primary", "secondary"));
-
+        when(client.listRepositoryDefs()).thenReturn(asList(new RepositoryDef("primary", Paths.get("/repo/primary")),
+                                                            new RepositoryDef("secondary", Paths.get("/repo/secondary"))));
         Display display = mock(Display.class);
         Session session = mock(Session.class);
         when(session.getClient()).thenReturn(client);

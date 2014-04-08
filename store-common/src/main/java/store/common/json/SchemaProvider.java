@@ -11,11 +11,12 @@ import static java.util.Objects.requireNonNull;
 import javax.json.Json;
 import javax.json.JsonObject;
 import store.common.CommandResult;
-import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
 import store.common.json.schema.Schema;
 
 final class SchemaProvider {
@@ -24,11 +25,12 @@ final class SchemaProvider {
 
     static {
         register(CommandResult.class,
-                 Config.class,
                  ContentInfo.class,
                  ContentInfoTree.class,
                  Event.class,
-                 IndexEntry.class);
+                 IndexEntry.class,
+                 RepositoryDef.class,
+                 ReplicationDef.class);
     }
 
     private SchemaProvider() {

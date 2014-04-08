@@ -4,9 +4,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.transform;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -26,10 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.ProcessingException;
+import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.REPOSITORY;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.common.IndexEntry;
+import store.common.RepositoryDef;
 
 abstract class AbstractCommand implements Command {
 
@@ -153,10 +156,10 @@ abstract class AbstractCommand implements Command {
                     return completeUrl(param);
 
                 case REPOSITORY:
-                    return filterStartWith(session.getClient().listRepositories(), param);
+                    return completeRepository(session, param);
 
                 case HASH:
-                    return filterStartWith(hashes(session, param), param);
+                    return completeHash(session, param);
 
                 case COMMAND:
                     return completeCommand(param);
@@ -183,21 +186,42 @@ abstract class AbstractCommand implements Command {
         return list;
     }
 
-    private static Collection<String> hashes(Session session, String prefix) {
-        if (session.getRepository() == null || prefix.isEmpty()) {
+    private static List<String> completeRepository(Session session, String param) {
+        List<String> repositories = transform(session.getClient().listRepositoryDefs(),
+                                              new Function<RepositoryDef, String>() {
+            @Override
+            public String apply(RepositoryDef repository) {
+                return repository.getName();
+            }
+        });
+        return filterStartWith(repositories, param);
+    }
+
+    private static List<String> completeHash(Session session, String param) {
+        if (param.isEmpty()) {
             return emptyList();
         }
-        Collection<String> hashes = new ArrayList<>();
+        List<String> hashes = new ArrayList<>();
         for (IndexEntry entry : session.getClient().find(session.getRepository(),
-                                                         Joiner.on("").join("content:", prefix.toLowerCase(), "*"),
+                                                         Joiner.on("").join("content:", param.toLowerCase(), "*"),
                                                          0, 100)) {
             hashes.add(entry.getHash().asHexadecimalString());
         }
-        return hashes;
+        return filterStartWith(hashes, param);
+    }
+
+    private static List<String> completeCommand(String param) {
+        List<String> commands = transform(commands(), new Function<Command, String>() {
+            @Override
+            public String apply(Command command) {
+                return command.name();
+            }
+        });
+        return filterStartWith(commands, param.toLowerCase());
     }
 
     private static List<String> filterStartWith(Collection<String> collection, final String param) {
-        List<String> list = newArrayList(Iterables.filter(collection, new Predicate<String>() {
+        List<String> list = newArrayList(filter(collection, new Predicate<String>() {
             @Override
             public boolean apply(String input) {
                 return input.startsWith(param);
@@ -208,15 +232,6 @@ abstract class AbstractCommand implements Command {
         }
         Collections.sort(list);
         return list;
-    }
-
-    private static List<String> completeCommand(String param) {
-        return filterStartWith(Lists.transform(CommandProvider.commands(), new Function<Command, String>() {
-            @Override
-            public String apply(Command command) {
-                return command.name();
-            }
-        }), param.toLowerCase());
     }
 
     private static List<String> completePath(String param) {
@@ -238,7 +253,7 @@ abstract class AbstractCommand implements Command {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RequestFailedException(e);
         }
         return list;
     }

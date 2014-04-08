@@ -5,7 +5,6 @@ import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.CommandResult;
-import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
@@ -61,7 +60,6 @@ public class JsonValidationTest {
             assertThat(isValid(json, ContentInfo.class)).isTrue();
         }
         assertThat(isValid(CONTENT_INFO_TREE_JSON, ContentInfo.class)).isFalse();
-        assertThat(isValid(CONFIG_JSON, ContentInfo.class)).isFalse();
     }
 
     /**
@@ -71,17 +69,6 @@ public class JsonValidationTest {
     public void isValidContentInfoTreeTest() {
         assertThat(isValid(CONTENT_INFO_TREE_JSON, ContentInfoTree.class)).isTrue();
         assertThat(isValid(CONTENT_INFOS_JSON.get(0), ContentInfoTree.class)).isFalse();
-        assertThat(isValid(CONFIG_JSON, ContentInfoTree.class)).isFalse();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void isValidConfigTest() {
-        assertThat(isValid(CONFIG_JSON, Config.class)).isTrue();
-        assertThat(isValid(CONTENT_INFOS_JSON.get(0), Config.class)).isFalse();
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, Config.class)).isFalse();
     }
 
     /**
@@ -104,7 +91,6 @@ public class JsonValidationTest {
         for (JsonObject json : EVENTS_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, Event.class)).isTrue();
         }
-        assertThat(isValid(CONFIG_JSON, Event.class)).isFalse();
         assertThat(isValid(CONTENT_INFO_TREE_JSON, Event.class)).isFalse();
     }
 
@@ -116,7 +102,6 @@ public class JsonValidationTest {
         for (JsonObject json : INDEX_ENTRIES_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, IndexEntry.class)).isTrue();
         }
-        assertThat(isValid(CONFIG_JSON, IndexEntry.class)).isFalse();
         assertThat(isValid(CONTENT_INFO_TREE_JSON, IndexEntry.class)).isFalse();
     }
 }

@@ -55,4 +55,20 @@ public class YamlWritingTest {
     public void writeIndexEntryTest() {
         assertThat(writeAll(INDEX_ENTRIES)).isEqualTo(INDEX_ENTRIES_YAML);
     }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllRepositoryDefsTest() {
+        assertThat(writeAll(REPOSITORY_DEFS)).isEqualTo(REPOSITORY_DEFS_YAML);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllReplicationDefsTest() {
+        assertThat(writeAll(REPLICATION_DEFS)).isEqualTo(REPLICATION_DEFS_YAML);
+    }
 }

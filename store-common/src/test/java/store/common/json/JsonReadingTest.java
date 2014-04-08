@@ -3,11 +3,12 @@ package store.common.json;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.CommandResult;
-import store.common.Config;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
 import static store.common.TestData.*;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonReading.readAll;
@@ -40,14 +41,6 @@ public class JsonReadingTest {
      * Test.
      */
     @Test
-    public void readConfigTest() {
-        assertThat(read(CONFIG_JSON, Config.class)).isEqualTo(CONFIG);
-    }
-
-    /**
-     * Test.
-     */
-    @Test
     public void readAllEventsTest() {
         assertThat(readAll(EVENTS_ARRAY, Event.class)).isEqualTo(EVENTS);
     }
@@ -68,5 +61,21 @@ public class JsonReadingTest {
     @Test
     public void readAllIndexEntriesTest() {
         assertThat(readAll(INDEX_ENTRIES_ARRAY, IndexEntry.class)).isEqualTo(INDEX_ENTRIES);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllRepositoryDefsTest() {
+        assertThat(readAll(REPOSITORY_DEFS_ARRAY, RepositoryDef.class)).isEqualTo(REPOSITORY_DEFS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllReplicationDefsTest() {
+        assertThat(readAll(REPLICATION_DEFS_ARRAY, ReplicationDef.class)).isEqualTo(REPLICATION_DEFS);
     }
 }

@@ -1,30 +1,23 @@
 package store.server.service;
 
-import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Lists.newArrayList;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import javax.json.Json;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import store.common.Config;
-import static store.common.json.JsonReading.read;
-import static store.common.json.JsonWriting.write;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.UnknownRepositoryException;
@@ -33,13 +26,12 @@ import store.server.exception.WriteException;
 /**
  * Manage repositories and replication between them.
  */
-public final class RepositoriesService {
+public class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
-    private final Path home;
     private final ReplicationService replicationService = new ReplicationService();
+    private final StorageService storageService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Config config;
     private final Map<String, Repository> repositories = new HashMap<>();
 
     /**
@@ -48,18 +40,16 @@ public final class RepositoriesService {
      * @param home The repositories service home directory.
      */
     public RepositoriesService(Path home) {
-        this.home = home;
-        config = loadConfig();
-        for (Path path : config.getRepositories()) {
-            Repository repository = Repository.open(path, replicationService);
+        storageService = new StorageService(home);
+        for (RepositoryDef def : storageService.loadAll(RepositoryDef.class)) {
+            Repository repository = Repository.open(def.getPath(), replicationService);
             repositories.put(repository.getName(), repository);
         }
-        for (Repository source : repositories.values()) {
-            for (String destinationName : config.getReplications(source.getName())) {
-                Repository destination = repositories.get(destinationName);
-                ReplicationAgent agent = new ReplicationAgent(source, destination);
-                replicationService.createReplication(source.getName(), destinationName, agent);
-            }
+        for (ReplicationDef def : storageService.loadAll(ReplicationDef.class)) {
+            Repository source = repositories.get(def.getSource());
+            Repository destination = repositories.get(def.getDestination());
+            ReplicationAgent agent = new ReplicationAgent(source, destination);
+            replicationService.createReplication(source.getName(), destination.getName(), agent);
         }
     }
 
@@ -76,8 +66,8 @@ public final class RepositoriesService {
                 throw new RepositoryAlreadyExistsException();
             }
             Repository repository = Repository.create(path, replicationService);
-            config.addRepository(path);
-            saveConfig();
+            RepositoryDef def = new RepositoryDef(repository.getName(), path);
+            storageService.add(RepositoryDef.class, def);
             repositories.put(repository.getName(), repository);
 
         } finally {
@@ -90,7 +80,7 @@ public final class RepositoriesService {
      *
      * @param name Repository name
      */
-    public void dropRepository(String name) {
+    public void dropRepository(final String name) {
         LOG.info("Dropping repository {}", name);
         lock.writeLock().lock();
         try {
@@ -98,12 +88,20 @@ public final class RepositoriesService {
                 throw new UnknownRepositoryException();
             }
             Path path = repositories.get(name).getPath();
-
-            config.removeRepository(name);
+            RepositoryDef repositoryDef = new RepositoryDef(name, path);
+            List<ReplicationDef> replicationDefs = newArrayList(filter(storageService.loadAll(ReplicationDef.class),
+                                                                       new Predicate<ReplicationDef>() {
+                @Override
+                public boolean apply(ReplicationDef def) {
+                    return !def.getSource().equals(name) && !def.getDestination().equals(name);
+                }
+            }));
             replicationService.dropReplications(name);
             repositories.remove(name).stop();
-            saveConfig();
+            storageService.saveAll(ReplicationDef.class, replicationDefs);
+            storageService.remove(RepositoryDef.class, repositoryDef);
             recursiveDelete(path);
+
         } finally {
             lock.writeLock().unlock();
         }
@@ -150,10 +148,10 @@ public final class RepositoriesService {
             if (source.equals(destination)) {
                 throw new SelfReplicationException();
             }
-            if (!config.addReplication(source, destination)) {
+            ReplicationDef def = new ReplicationDef(source, destination);
+            if (!storageService.add(ReplicationDef.class, def)) {
                 return;
             }
-            saveConfig();
             ReplicationAgent agent = new ReplicationAgent(repositories.get(source), repositories.get(destination));
             replicationService.createReplication(source, destination, agent);
 
@@ -175,10 +173,10 @@ public final class RepositoriesService {
             if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
                 throw new UnknownRepositoryException();
             }
-            if (!config.removeReplication(source, destination)) {
+            ReplicationDef def = new ReplicationDef(source, destination);
+            if (!storageService.remove(ReplicationDef.class, def)) {
                 return;
             }
-            saveConfig();
             replicationService.dropReplication(source, destination);
 
         } finally {
@@ -187,15 +185,31 @@ public final class RepositoriesService {
     }
 
     /**
-     * Provides a snapshot of the current repositories config.
+     * Provides a snapshot of all currently defined repositories.
      *
-     * @return This config.
+     * @return A list of repository definitions.
      */
-    public Config getConfig() {
-        LOG.info("Returning config");
+    public List<RepositoryDef> listRepositoryDefs() {
+        LOG.info("Returning repository definitions");
         lock.readLock().lock();
         try {
-            return new Config(config);
+            return storageService.loadAll(RepositoryDef.class);
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Provides a snapshot of all currently defined replications.
+     *
+     * @return A list of replication definitions.
+     */
+    public List<ReplicationDef> listReplicationDefs() {
+        LOG.info("Returning replication definitions");
+        lock.readLock().lock();
+        try {
+            return storageService.loadAll(ReplicationDef.class);
 
         } finally {
             lock.readLock().unlock();
@@ -218,36 +232,6 @@ public final class RepositoriesService {
 
         } finally {
             lock.readLock().unlock();
-        }
-    }
-
-    private Config loadConfig() {
-        Path path = home.resolve("config");
-        if (!Files.exists(path)) {
-            return new Config();
-        }
-        try (InputStream inputStream = Files.newInputStream(path);
-                Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8);
-                JsonReader jsonReader = Json.createReader(reader)) {
-
-            return read(jsonReader.readObject(), Config.class);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void saveConfig() {
-        try {
-            Path path = home.resolve("config");
-            try (OutputStream outputStream = Files.newOutputStream(path);
-                    Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8);
-                    JsonWriter jsonWriter = Json.createWriter(writer)) {
-
-                jsonWriter.writeObject(write(config));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

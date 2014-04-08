@@ -2,9 +2,7 @@ package store.server.resources;
 
 import java.net.URI;
 import javax.inject.Inject;
-import javax.json.Json;
 import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,8 +16,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import store.common.Config;
 import static store.common.json.JsonValidation.hasStringValue;
+import static store.common.json.JsonWriting.writeAll;
 import store.server.exception.BadRequestException;
 import store.server.service.RepositoriesService;
 
@@ -30,7 +28,7 @@ import store.server.service.RepositoriesService;
 public class ReplicationsResource {
 
     @Inject
-    private RepositoriesService repository;
+    private RepositoriesService repositoriesService;
     @Context
     private UriInfo uriInfo;
 
@@ -57,7 +55,7 @@ public class ReplicationsResource {
         }
         String source = json.getString("source");
         String target = json.getString("target");
-        repository.createReplication(source, target);
+        repositoriesService.createReplication(source, target);
         URI location = UriBuilder
                 .fromUri(uriInfo.getRequestUri())
                 .queryParam("source", source)
@@ -88,7 +86,7 @@ public class ReplicationsResource {
         if (source == null || target == null) {
             throw new BadRequestException();
         }
-        repository.dropReplication(source, target);
+        repositoriesService.dropReplication(source, target);
         return Response.ok().build();
     }
 
@@ -106,14 +104,6 @@ public class ReplicationsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
-        JsonArrayBuilder builder = Json.createArrayBuilder();
-        Config config = repository.getConfig();
-        for (java.nio.file.Path path : config.getRepositories()) {
-            String source = path.getFileName().toString();
-            for (String target : config.getReplications(source)) {
-                builder.add(Json.createObjectBuilder().add("source", source).add("target", target));
-            }
-        }
-        return builder.build();
+        return writeAll(repositoriesService.listReplicationDefs());
     }
 }

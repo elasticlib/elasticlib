@@ -11,7 +11,6 @@ import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.size;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +19,6 @@ import java.util.logging.Logger;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonString;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -49,6 +47,7 @@ import static store.common.IoUtil.copy;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
 import store.common.Operation;
+import store.common.RepositoryDef;
 import static store.common.SinkOutputStream.sink;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
@@ -114,14 +113,6 @@ public class HttpClient implements Closeable {
         return read(response, CommandResult.class);
     }
 
-    private static List<String> asStringList(JsonArray array) {
-        List<String> list = new ArrayList<>();
-        for (JsonString value : array.getValuesAs(JsonString.class)) {
-            list.add(value.getString());
-        }
-        return list;
-    }
-
     /**
      * Tests connection to current server. Fails if connection is down.
      */
@@ -172,14 +163,27 @@ public class HttpClient implements Closeable {
     /**
      * Lists existing repositories.
      *
-     * @return A list of repository names.
+     * @return A list of repository definitions.
      */
-    public List<String> listRepositories() {
-        Response response = ensureSuccess(resource.path("repositories")
+    public List<RepositoryDef> listRepositoryDefs() {
+        Response response = resource.path("repositories")
                 .request()
-                .get());
+                .get();
 
-        return asStringList(response.readEntity(JsonArray.class));
+        return readAll(response, RepositoryDef.class);
+    }
+
+    /**
+     * Lists existing replications.
+     *
+     * @return A list of replication definitions.
+     */
+    public List<RepositoryDef> listReplicationDefs() {
+        Response response = resource.path("replications")
+                .request()
+                .get();
+
+        return readAll(response, RepositoryDef.class);
     }
 
     /**

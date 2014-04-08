@@ -20,6 +20,8 @@ import store.common.Event;
 import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
 import store.common.hash.Hash;
 import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
@@ -75,7 +77,8 @@ public class RepositoryTest {
         repositoriesService.createRepository(alphaPath);
         repositoriesService.createRepository(betaPath);
 
-        assertThat(repositoriesService.getConfig().getRepositories()).containsExactly(alphaPath, betaPath);
+        assertThat(repositoriesService.listRepositoryDefs()).containsExactly(new RepositoryDef(ALPHA, alphaPath),
+                                                                            new RepositoryDef(BETA, betaPath));
         assertThat(repository(ALPHA).history(true, 0, 10)).isEmpty();
         assertThat(repository(BETA).history(true, 0, 10)).isEmpty();
     }
@@ -155,7 +158,7 @@ public class RepositoryTest {
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
     public void createReplicationTest() {
         repositoriesService.createReplication(ALPHA, BETA);
-        assertThat(repositoriesService.getConfig().getReplications(ALPHA)).containsExactly(BETA);
+        assertThat(repositoriesService.listReplicationDefs()).containsExactly(new ReplicationDef(ALPHA, BETA));
         async(new Runnable() {
             @Override
             public void run() {

@@ -14,7 +14,6 @@ import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonStructure;
 import javax.ws.rs.Consumes;
@@ -174,11 +173,7 @@ public class RepositoriesResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listRepositories() {
-        JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (java.nio.file.Path path : repositoriesService.getConfig().getRepositories()) {
-            builder.add(path.getFileName().toString());
-        }
-        return builder.build();
+        return writeAll(repositoriesService.listRepositoryDefs());
     }
 
     /**

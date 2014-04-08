@@ -34,14 +34,6 @@ public class JsonWritingTest {
      * Test.
      */
     @Test
-    public void writeConfigTest() {
-        assertThat(write(CONFIG)).isEqualTo(CONFIG_JSON);
-    }
-
-    /**
-     * Test.
-     */
-    @Test
     public void writeAllEventsTest() {
         assertThat(writeAll(EVENTS)).isEqualTo(EVENTS_ARRAY);
     }
@@ -62,5 +54,21 @@ public class JsonWritingTest {
     @Test
     public void writeAllIndexEntriesTest() {
         assertThat(writeAll(INDEX_ENTRIES)).isEqualTo(INDEX_ENTRIES_ARRAY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllRepositoryDefsTest() {
+        assertThat(writeAll(REPOSITORY_DEFS)).isEqualTo(REPOSITORY_DEFS_ARRAY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllReplicationDefsTest() {
+        assertThat(writeAll(REPLICATION_DEFS)).isEqualTo(REPLICATION_DEFS_ARRAY);
     }
 }

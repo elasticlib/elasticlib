@@ -1,9 +1,9 @@
 package store.client.command;
 
-import com.google.common.base.Joiner;
 import java.util.List;
 import store.client.display.Display;
 import store.client.http.Session;
+import store.common.RepositoryDef;
 
 class Repositories extends AbstractCommand {
 
@@ -14,9 +14,8 @@ class Repositories extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, List<String> params) {
-        List<String> repositories = session.getClient().listRepositories();
-        if (!repositories.isEmpty()) {
-            display.println(Joiner.on(System.lineSeparator()).join(repositories) + System.lineSeparator());
+        for (RepositoryDef def : session.getClient().listRepositoryDefs()) {
+            display.print(def);
         }
     }
 }

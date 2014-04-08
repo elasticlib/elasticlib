@@ -1,0 +1,8 @@
+---
+source: primary
+destination: secondary
+...
+---
+source: secondary
+destination: primary
+...

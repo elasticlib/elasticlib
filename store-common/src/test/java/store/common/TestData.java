@@ -24,10 +24,6 @@ public final class TestData {
      */
     public static final ContentInfoTree CONTENT_INFO_TREE;
     /**
-     * A Config instance.
-     */
-    public static final Config CONFIG;
-    /**
      * Some Event instances.
      */
     public static final List<Event> EVENTS = new ArrayList<>();
@@ -39,6 +35,14 @@ public final class TestData {
      * Some IndexEntry instances.
      */
     public static final List<IndexEntry> INDEX_ENTRIES = new ArrayList<>();
+    /**
+     * Some RepositoryDef instances.
+     */
+    public static final List<RepositoryDef> REPOSITORY_DEFS = new ArrayList<>();
+    /**
+     * Some ReplicationDef instances.
+     */
+    public static final List<ReplicationDef> REPLICATION_DEFS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -68,11 +72,6 @@ public final class TestData {
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])))
                 .build();
-
-        CONFIG = new Config();
-        CONFIG.addRepository(Paths.get("/repo/primary"));
-        CONFIG.addRepository(Paths.get("/repo/secondary"));
-        CONFIG.addReplication("primary", "secondary");
 
         EVENTS.add(new Event.EventBuilder()
                 .withSeq(0)
@@ -104,6 +103,15 @@ public final class TestData {
 
         INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[1]),
                                          new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
+
+        REPOSITORY_DEFS.add(new RepositoryDef("primary",
+                                              Paths.get("/repo/primary")));
+
+        REPOSITORY_DEFS.add(new RepositoryDef("secondary",
+                                              Paths.get("/repo/secondary")));
+
+        REPLICATION_DEFS.add(new ReplicationDef("primary", "secondary"));
+        REPLICATION_DEFS.add(new ReplicationDef("secondary", "primary"));
     }
 
     private TestData() {

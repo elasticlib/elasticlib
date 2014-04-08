@@ -1,0 +1,10 @@
+[
+    {
+        "name": "primary",
+        "path": "/repo/primary"
+    },
+    {
+        "name": "secondary",
+        "path": "/repo/secondary"
+    }
+]

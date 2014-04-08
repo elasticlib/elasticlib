@@ -1,0 +1,12 @@
+{
+    "title": "replicationDef",
+    "type": "object",
+    "properties": {
+        "source": {
+            "type": "string"
+        },
+        "destination": {
+            "type": "string"
+        }
+    }
+}

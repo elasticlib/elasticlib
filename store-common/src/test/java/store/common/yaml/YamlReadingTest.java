@@ -7,6 +7,8 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
 import static store.common.TestData.*;
 import static store.common.yaml.YamlReading.read;
 import static store.common.yaml.YamlReading.readAll;
@@ -59,5 +61,21 @@ public class YamlReadingTest {
     @Test
     public void readIndexEntryTest() {
         assertThat(readAll(INDEX_ENTRIES_YAML, IndexEntry.class)).isEqualTo(INDEX_ENTRIES);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllRepositoryDefsTest() {
+        assertThat(readAll(REPOSITORY_DEFS_YAML, RepositoryDef.class)).isEqualTo(REPOSITORY_DEFS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllReplicationDefsTest() {
+        assertThat(readAll(REPLICATION_DEFS_YAML, ReplicationDef.class)).isEqualTo(REPLICATION_DEFS);
     }
 }

@@ -9,6 +9,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import static store.common.TestData.*;
 import static store.common.yaml.YamlReading.read;
+import static store.common.yaml.YamlReading.readAll;
 import static store.common.yaml.YamlTestData.*;
 
 /**
@@ -39,9 +40,7 @@ public class YamlReadingTest {
      */
     @Test
     public void readEventTest() {
-        for (int i = 0; i < EVENTS_YAML.size(); i++) {
-            assertThat(read(EVENTS_YAML.get(i), Event.class)).isEqualTo(EVENTS.get(i));
-        }
+        assertThat(readAll(EVENTS_YAML, Event.class)).isEqualTo(EVENTS);
     }
 
     /**
@@ -59,8 +58,6 @@ public class YamlReadingTest {
      */
     @Test
     public void readIndexEntryTest() {
-        for (int i = 0; i < INDEX_ENTRIES_YAML.size(); i++) {
-            assertThat(read(INDEX_ENTRIES_YAML.get(i), IndexEntry.class)).isEqualTo(INDEX_ENTRIES.get(i));
-        }
+        assertThat(readAll(INDEX_ENTRIES_YAML, IndexEntry.class)).isEqualTo(INDEX_ENTRIES);
     }
 }

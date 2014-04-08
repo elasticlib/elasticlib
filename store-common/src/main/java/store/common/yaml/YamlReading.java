@@ -3,7 +3,8 @@ package store.common.yaml;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
 import store.common.Mappable;
@@ -27,22 +28,53 @@ public final class YamlReading {
      * @return Corresponding mappable instance.
      */
     public static <T extends Mappable> T read(String yaml, Class<T> clazz) {
-        return MappableUtil.fromMap(read(yaml), clazz);
+        return MappableUtil.fromMap(readValue(yaml).asMap(), clazz);
     }
 
     /**
-     * Deserialize a map of values from a YAML document.
+     * Deserialize a list of mappables from a YAML document.
      *
+     * @param <T> Actual class to deserialize to.
      * @param yaml A YAML document.
-     * @return Corresponding map of values.
+     * @param clazz Actual class to deserialize to.
+     * @return Corresponding list of mappable instances.
      */
-    public static Map<String, Value> read(String yaml) {
-        return ValueReading.read(compose(yaml)).asMap();
+    public static <T extends Mappable> List<T> readAll(String yaml, Class<T> clazz) {
+        List<T> list = new ArrayList<>();
+        for (Value value : readValues(yaml)) {
+            list.add(MappableUtil.fromMap(value.asMap(), clazz));
+        }
+        return list;
     }
 
-    private static Node compose(String yaml) {
+    /**
+     * Deserialize a value from a YAML document.
+     *
+     * @param yaml A YAML document.
+     * @return Corresponding value.
+     */
+    public static Value readValue(String yaml) {
         try (Reader reader = new StringReader(yaml)) {
-            return new Yaml().compose(reader);
+            return ValueReading.read(new Yaml().compose(reader));
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Deserialize a list of values from a YAML document.
+     *
+     * @param yaml A YAML document.
+     * @return Corresponding list of values.
+     */
+    public static List<Value> readValues(String yaml) {
+        try (Reader reader = new StringReader(yaml)) {
+            List<Value> list = new ArrayList<>();
+            for (Node node : new Yaml().composeAll(reader)) {
+                list.add(ValueReading.read(node));
+            }
+            return list;
 
         } catch (IOException e) {
             throw new AssertionError(e);

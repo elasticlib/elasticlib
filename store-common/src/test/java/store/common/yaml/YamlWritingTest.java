@@ -5,6 +5,7 @@ import org.testng.annotations.Test;
 import static store.common.TestData.*;
 import static store.common.yaml.YamlTestData.*;
 import static store.common.yaml.YamlWriting.write;
+import static store.common.yaml.YamlWriting.writeAll;
 
 /**
  * Unit tests.
@@ -34,9 +35,7 @@ public class YamlWritingTest {
      */
     @Test
     public void writeEventTest() {
-        for (int i = 0; i < EVENTS.size(); i++) {
-            assertThat(write(EVENTS.get(i))).isEqualTo(EVENTS_YAML.get(i));
-        }
+        assertThat(writeAll(EVENTS)).isEqualTo(EVENTS_YAML);
     }
 
     /**
@@ -54,8 +53,6 @@ public class YamlWritingTest {
      */
     @Test
     public void writeIndexEntryTest() {
-        for (int i = 0; i < INDEX_ENTRIES.size(); i++) {
-            assertThat(write(INDEX_ENTRIES.get(i))).isEqualTo(INDEX_ENTRIES_YAML.get(i));
-        }
+        assertThat(writeAll(INDEX_ENTRIES)).isEqualTo(INDEX_ENTRIES_YAML);
     }
 }

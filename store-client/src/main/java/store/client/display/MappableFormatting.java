@@ -70,12 +70,12 @@ final class MappableFormatting {
     private MappableFormatting() {
     }
 
-    public static Map<String, Value> format(Mappable mappable) {
+    public static Value format(Mappable mappable) {
         Map<String, Value> map = new LinkedHashMap<>();
         for (Entry<String, Value> entry : mappable.toMap().entrySet()) {
             formatAndPut(map, entry.getKey(), entry.getValue());
         }
-        return map;
+        return Value.of(map);
     }
 
     private static void formatAndPut(Map<String, Value> map, String key, Value value) {

@@ -87,13 +87,22 @@ final class ValueWriting {
         WRITERS.put(OBJECT, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                return writeMap(value.asMap());
+                List<NodeTuple> tuples = new ArrayList<>();
+                for (Entry<String, Value> entry : value.asMap().entrySet()) {
+                    tuples.add(new NodeTuple(writeString(entry.getKey()),
+                                             writeValue(entry.getValue())));
+                }
+                return new MappingNode(Tag.MAP, tuples, false);
             }
         });
         WRITERS.put(ARRAY, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                return writeList(value.asList());
+                List<Node> nodes = new ArrayList<>();
+                for (Value item : value.asList()) {
+                    nodes.add(writeValue(item));
+                }
+                return new SequenceNode(Tag.SEQ, nodes, false);
             }
         });
     }
@@ -109,36 +118,6 @@ final class ValueWriting {
      */
     public static Node writeValue(Value value) {
         return WRITERS.get(value.type()).apply(value);
-    }
-
-    /**
-     * Convert a map of values to a YAML Node.
-     *
-     * @param map A map of values.
-     * @return Corresponding YAML Node.
-     */
-    public static Node writeMap(Map<String, Value> map) {
-        List<NodeTuple> tuples = new ArrayList<>(map.size());
-        for (Entry<String, Value> entry : map.entrySet()) {
-            Node key = writeString(entry.getKey());
-            Node value = writeValue(entry.getValue());
-            tuples.add(new NodeTuple(key, value));
-        }
-        return new MappingNode(Tag.MAP, tuples, false);
-    }
-
-    /**
-     * Convert a list of values to a YAML Node.
-     *
-     * @param list A list of values.
-     * @return Corresponding YAML Node.
-     */
-    public static Node writeList(List<Value> list) {
-        List<Node> nodes = new ArrayList<>(list.size());
-        for (Value value : list) {
-            nodes.add(writeValue(value));
-        }
-        return new SequenceNode(Tag.SEQ, nodes, false);
     }
 
     private static Node writeString(String str) {

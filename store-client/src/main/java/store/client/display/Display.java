@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import jline.console.ConsoleReader;
 import static store.client.display.MappableFormatting.format;
 import store.common.Mappable;
-import static store.common.yaml.YamlWriting.write;
+import static store.common.yaml.YamlWriting.writeValue;
 
 /**
  * Console display interface.
@@ -52,7 +52,7 @@ public class Display {
      * @param mappable Mappable to print.
      */
     public void print(Mappable mappable) {
-        println(write(format(mappable)));
+        println(writeValue(format(mappable)));
     }
 
     /**

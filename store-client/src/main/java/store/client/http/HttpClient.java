@@ -47,6 +47,7 @@ import static store.common.IoUtil.copy;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
 import store.common.Operation;
+import store.common.ReplicationDef;
 import store.common.RepositoryDef;
 import static store.common.SinkOutputStream.sink;
 import store.common.hash.Digest;
@@ -178,12 +179,12 @@ public class HttpClient implements Closeable {
      *
      * @return A list of replication definitions.
      */
-    public List<RepositoryDef> listReplicationDefs() {
+    public List<ReplicationDef> listReplicationDefs() {
         Response response = resource.path("replications")
                 .request()
                 .get();
 
-        return readAll(response, RepositoryDef.class);
+        return readAll(response, ReplicationDef.class);
     }
 
     /**

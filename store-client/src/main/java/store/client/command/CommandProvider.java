@@ -14,6 +14,7 @@ final class CommandProvider {
                                                                          new Create(),
                                                                          new Drop(),
                                                                          new Repositories(),
+                                                                         new Replications(),
                                                                          new Put(),
                                                                          new Delete(),
                                                                          new Get(),

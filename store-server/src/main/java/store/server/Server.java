@@ -12,6 +12,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import store.common.config.Config;
 import store.server.service.RepositoriesService;
 
 /**
@@ -19,7 +20,7 @@ import store.server.service.RepositoriesService;
  */
 public class Server {
 
-    private final ServerConfig conf;
+    private final Config config;
     private final HttpServer httpServer;
     private final Path home;
 
@@ -29,7 +30,7 @@ public class Server {
      * @param home Path to repository's home-directory.
      */
     public Server(Path home) {
-        conf = new ServerConfig(home.resolve("server.properties"));
+        config = ServerConfig.load(home.resolve("config.yml"));
         this.home = home;
 
         ResourceConfig resourceConfig = new ResourceConfig()
@@ -50,21 +51,21 @@ public class Server {
 
     private LoggingFilter loggingFilter() {
         Logger logger = Logger.getLogger(LoggingFilter.class.getName());
-        if (!conf.getBoolean(ServerConfig.LOG_LOGGING_FILTER)) {
+        if (!config.getBoolean(ServerConfig.LOG_LOGGING_FILTER)) {
             logger.setLevel(Level.OFF);
             return new LoggingFilter(logger, false);
         }
-        if (conf.getBoolean(ServerConfig.LOG_PRINT_ENTITY)) {
-            return new LoggingFilter(logger, conf.getInt(ServerConfig.LOG_MAX_ENTITY_SIZE));
+        if (config.getBoolean(ServerConfig.LOG_PRINT_ENTITY)) {
+            return new LoggingFilter(logger, config.getInt(ServerConfig.LOG_MAX_ENTITY_SIZE));
         }
         return new LoggingFilter(logger, false);
     }
 
     private URI host() {
         return UriBuilder.fromUri("http:/")
-                .host(conf.getString(ServerConfig.WEB_HOST))
-                .port(conf.getInt(ServerConfig.WEB_PORT))
-                .path(conf.getString(ServerConfig.WEB_CONTEXT))
+                .host(config.getString(ServerConfig.WEB_HOST))
+                .port(config.getInt(ServerConfig.WEB_PORT))
+                .path(config.getString(ServerConfig.WEB_CONTEXT))
                 .build();
     }
 

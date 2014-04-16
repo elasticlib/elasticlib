@@ -1,0 +1,4 @@
+web:
+  host: localhost
+  port: 80
+  context: ctx

@@ -7,6 +7,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import org.joda.time.Instant;
+import static store.common.MappableUtil.putRevisions;
 import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
 import store.common.value.Value;
@@ -82,10 +83,11 @@ public class Event implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        return new MapBuilder()
+        MapBuilder builder = new MapBuilder()
                 .put(SEQ, seq)
-                .put(CONTENT, content)
-                .putRevisions(revisions)
+                .put(CONTENT, content);
+
+        return putRevisions(builder, revisions)
                 .put(TIMESTAMP, timestamp)
                 .put(OPERATION, operation.toString())
                 .build();

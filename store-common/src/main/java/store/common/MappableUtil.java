@@ -36,6 +36,13 @@ public final class MappableUtil {
         return hashes;
     }
 
+    static MapBuilder putRevisions(MapBuilder builder, SortedSet<Hash> revisions) {
+        if (revisions.size() == 1) {
+            return builder.put(REVISION, revisions.first());
+        }
+        return builder.put(REVISIONS, toList(revisions));
+    }
+
     static SortedSet<Hash> revisions(Map<String, Value> values) {
         if (values.containsKey(REVISION)) {
             SortedSet<Hash> revisions = new TreeSet<>();

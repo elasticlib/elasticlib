@@ -7,6 +7,7 @@ import static java.util.Objects.hash;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import static store.common.MappableUtil.putRevisions;
 import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
 import store.common.value.Value;
@@ -48,10 +49,10 @@ public final class IndexEntry implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        return new MapBuilder()
-                .put(CONTENT, content)
-                .putRevisions(revisions)
-                .build();
+        MapBuilder builder = new MapBuilder()
+                .put(CONTENT, content);
+
+        return putRevisions(builder, revisions).build();
     }
 
     /**

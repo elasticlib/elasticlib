@@ -7,6 +7,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import static store.common.MappableUtil.putRevisions;
 import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
 import store.common.value.Value;
@@ -108,12 +109,12 @@ public final class CommandResult implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        return new MapBuilder()
+        MapBuilder builder = new MapBuilder()
                 .put(TRANSACTION_ID, transactionId)
                 .put(OPERATION, isNoOp() ? NO_OP : operation.toString())
-                .put(CONTENT, content)
-                .putRevisions(revisions)
-                .build();
+                .put(CONTENT, content);
+
+        return putRevisions(builder, revisions).build();
     }
 
     /**

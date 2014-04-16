@@ -76,13 +76,7 @@ public class ConfigTest {
      */
     @Test
     public void readNonExistingFileTest() throws IOException {
-        Path path = Files.createTempFile("config", "yml");
-        try {
-            assertThat(ConfigReadWrite.read(path).isPresent()).isFalse();
-
-        } finally {
-            Files.deleteIfExists(path);
-        }
+        assertThat(ConfigReadWrite.read(path("empty.yml").resolve("../absent.yml")).isPresent()).isFalse();
     }
 
     /**
@@ -111,6 +105,14 @@ public class ConfigTest {
     @Test
     public void asValueTest() {
         assertThat(config.asValue().asMap()).isEqualTo(rootValue);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = ConfigException.class)
+    public void getUndefinedTest() {
+        config.get("absent");
     }
 
     /**

@@ -96,7 +96,7 @@ public class Config {
         if (value.isPresent()) {
             return value.get();
         }
-        throw new IllegalArgumentException("Undefined config key '" + key + "'");
+        throw new ConfigException("Undefined config key '" + key + "'");
     }
 
     /**
@@ -136,7 +136,7 @@ public class Config {
      * @return Corresponding value.
      */
     public int getInt(String key) {
-        return Ints.checkedCast(getWithType(key, ValueType.INTEGER).asLong());
+        return Ints.checkedCast(getLong(key));
     }
 
     private Value getWithType(String key, ValueType expected) {

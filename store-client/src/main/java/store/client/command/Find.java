@@ -8,6 +8,8 @@ import store.common.ContentInfo;
 
 class Find extends AbstractCommand {
 
+    private static final int CHUNK_SIZE = 20;
+
     Find() {
         super(Type.QUERY);
     }
@@ -25,11 +27,11 @@ class Find extends AbstractCommand {
         int cursor = 0;
         List<ContentInfo> infos;
         do {
-            infos = session.getClient().findInfo(repository, query, cursor, 20);
+            infos = session.getClient().findInfo(repository, query, cursor, CHUNK_SIZE);
             for (ContentInfo info : infos) {
                 cursor += infos.size();
                 display.print(info);
             }
-        } while (!infos.isEmpty());
+        } while (infos.size() >= CHUNK_SIZE);
     }
 }

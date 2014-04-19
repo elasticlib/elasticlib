@@ -8,6 +8,8 @@ import store.common.Event;
 
 class History extends AbstractCommand {
 
+    private static final int CHUNK_SIZE = 20;
+
     @Override
     public String description() {
         return "Print current repository history";
@@ -19,11 +21,11 @@ class History extends AbstractCommand {
         long cursor = Long.MAX_VALUE;
         List<Event> events;
         do {
-            events = session.getClient().history(repository, false, cursor, 20);
+            events = session.getClient().history(repository, false, cursor, CHUNK_SIZE);
             for (Event event : events) {
                 cursor = event.getSeq();
                 display.print(event);
             }
-        } while (!events.isEmpty() && cursor > 1);
+        } while (events.size() >= CHUNK_SIZE && cursor > 1);
     }
 }

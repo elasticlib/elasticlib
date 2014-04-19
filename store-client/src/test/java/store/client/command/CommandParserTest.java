@@ -8,6 +8,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.HttpClient;
 import store.client.http.Session;
@@ -26,9 +27,10 @@ public class CommandParserTest {
                                                             new RepositoryDef("secondary", Paths.get("/repo/secondary"))));
         Display display = mock(Display.class);
         Session session = mock(Session.class);
+        ClientConfig config = mock(ClientConfig.class);
         when(session.getClient()).thenReturn(client);
 
-        parser = new CommandParser(display, session);
+        parser = new CommandParser(display, session, config);
     }
 
     /**

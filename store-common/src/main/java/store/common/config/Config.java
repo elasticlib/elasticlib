@@ -5,6 +5,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
+import java.util.ArrayList;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 import java.util.LinkedHashMap;
@@ -53,15 +54,6 @@ public class Config {
         return new Config(extend(root, extension.get("")));
     }
 
-    /**
-     * Provides root value of this config.
-     *
-     * @return A value.
-     */
-    public Value asValue() {
-        return root;
-    }
-
     private static Value extend(Value base, Value extension) {
         if (base.type() != ValueType.OBJECT || extension.type() != ValueType.OBJECT) {
             return extension;
@@ -82,6 +74,50 @@ public class Config {
             }
         }
         return Value.of(result);
+    }
+
+    /**
+     * Checks if this config is empty.
+     *
+     * @return true if this is the case.
+     */
+    public boolean isEmpty() {
+        return root.type() == ValueType.OBJECT && root.asMap().isEmpty();
+    }
+
+    /**
+     * Provides root value of this config.
+     *
+     * @return A value.
+     */
+    public Value asValue() {
+        return root;
+    }
+
+    /**
+     * List keys of this config.
+     *
+     * @return A list of keys.
+     */
+    public List<String> listKeys() {
+        return listKeys("", root);
+    }
+
+    private List<String> listKeys(String path, Value node) {
+        if (node.type() != ValueType.OBJECT) {
+            return Collections.emptyList();
+        }
+        List<String> keys = new ArrayList<>();
+        for (Entry<String, Value> entry : node.asMap().entrySet()) {
+            String key = path.isEmpty() ? entry.getKey() : key(path, entry.getKey());
+            List<String> subKeys = listKeys(key, entry.getValue());
+            if (subKeys.isEmpty()) {
+                keys.add(key);
+            } else {
+                keys.addAll(subKeys);
+            }
+        }
+        return keys;
     }
 
     /**
@@ -229,6 +265,31 @@ public class Config {
         }
         Map<String, Value> parentTree = new LinkedHashMap<>(parent.get().asMap());
         parentTree.put(tail, value);
+        return set(tree, head, Value.of(parentTree));
+    }
+
+    /**
+     * Remove value associated with supplied key, if any. If an empty key is supplied, the root config value is cleared.
+     *
+     * @param key A key.
+     * @return A new config instance without removed value.
+     */
+    public Config unset(String key) {
+        return new Config(unset(root, path(key)));
+    }
+
+    private static Value unset(Value tree, List<String> path) {
+        if (path.isEmpty()) {
+            return Value.of(Collections.<String, Value>emptyMap());
+        }
+        List<String> head = path.subList(0, path.size() - 1);
+        String tail = path.get(path.size() - 1);
+        Optional<Value> parent = get(tree, head);
+        if (!parent.isPresent() || parent.get().type() != ValueType.OBJECT) {
+            return tree;
+        }
+        Map<String, Value> parentTree = new LinkedHashMap<>(parent.get().asMap());
+        parentTree.remove(tail);
         return set(tree, head, Value.of(parentTree));
     }
 

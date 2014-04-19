@@ -7,6 +7,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
@@ -18,16 +19,19 @@ public final class CommandParser implements Completer {
 
     private final Display display;
     private final Session session;
+    private final ClientConfig config;
 
     /**
      * Constructor.
      *
      * @param display Display to inject.
      * @param session Session to inject.
+     * @param config Config to inject.
      */
-    public CommandParser(Display display, Session session) {
+    public CommandParser(Display display, Session session, ClientConfig config) {
         this.display = display;
         this.session = session;
+        this.config = config;
     }
 
     /**
@@ -53,10 +57,10 @@ public final class CommandParser implements Completer {
             return;
         }
         try {
-            command.execute(display, session, params);
+            command.execute(display, session, config, params);
 
         } catch (RequestFailedException e) {
-            display.println(e.getMessage() + System.lineSeparator());
+            display.print(e);
 
         } catch (ProcessingException e) {
             String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);

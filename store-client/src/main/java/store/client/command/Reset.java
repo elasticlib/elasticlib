@@ -1,22 +1,21 @@
 package store.client.command;
 
 import java.util.List;
+import static store.client.command.AbstractCommand.OK;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.ReplicationDef;
 
-class Replications extends AbstractCommand {
+public class Reset extends AbstractCommand {
 
     @Override
     public String description() {
-        return "List existing replications";
+        return "Reset config";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (ReplicationDef def : session.getClient().listReplicationDefs()) {
-            display.print(def);
-        }
+        config.reset();
+        display.println(OK);
     }
 }

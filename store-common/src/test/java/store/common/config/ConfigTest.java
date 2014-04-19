@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import static java.util.Arrays.asList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.BeforeClass;
@@ -83,6 +85,36 @@ public class ConfigTest {
      * Test.
      */
     @Test
+    public void isEmptyTest() {
+        assertThat(new Config().isEmpty()).isTrue();
+        assertThat(new Config(Value.ofNull()).isEmpty()).isFalse();
+        assertThat(new Config().set("root", "val").isEmpty()).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void listKeysEmptyTest() {
+        assertThat(new Config().listKeys()).isEmpty();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void listKeysTest() {
+        assertThat(config.listKeys()).isEqualTo(asList(key(WEB, SCHEME),
+                                                       key(WEB, HOST),
+                                                       key(WEB, PORT),
+                                                       key(WEB, CONTEXT),
+                                                       key(LOG)));
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void getTest() {
         assertThat(config.getString(key(WEB, SCHEME))).isEqualTo("http");
         assertThat(config.getString(key(WEB, HOST))).isEqualTo("localhost");
@@ -139,6 +171,46 @@ public class ConfigTest {
     public void setRootTest() {
         Config updated = config.set("", Value.of("test"));
         assertThat(updated.asValue().asString()).isEqualTo("test");
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void unsetTest() {
+        Map<String, Value> actual = config.unset(key(WEB, CONTEXT)).get(WEB).asMap();
+        Map<String, Value> expected = new LinkedHashMap<>(webValue);
+        expected.remove(CONTEXT);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void unsetMapTest() {
+        Map<String, Value> actual = config.unset(key(WEB)).asValue().asMap();
+        Map<String, Value> expected = new LinkedHashMap<>(rootValue);
+        expected.remove(WEB);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void unsetUndefinedTest() {
+        assertThat(config.unset(key(WEB, "absent"))).isEqualTo(config);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void unsetRootTest() {
+        assertThat(config.unset("").isEmpty()).isTrue();
     }
 
     /**

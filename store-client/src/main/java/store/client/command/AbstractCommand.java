@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import javax.ws.rs.ProcessingException;
 import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.REPOSITORY;
+import store.client.config.ClientConfig;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.common.IndexEntry;
@@ -152,6 +153,9 @@ abstract class AbstractCommand implements Command {
     private static List<String> complete(Session session, String param, Type type) {
         try {
             switch (type) {
+                case KEY:
+                    return completeConfigKey(param);
+
                 case URL:
                     return completeUrl(param);
 
@@ -173,6 +177,10 @@ abstract class AbstractCommand implements Command {
         } catch (RequestFailedException | ProcessingException e) {
             return emptyList();
         }
+    }
+
+    private static List<String> completeConfigKey(final String param) {
+        return filterStartWith(ClientConfig.listKeys(), param.toLowerCase());
     }
 
     private static List<String> completeUrl(final String param) {

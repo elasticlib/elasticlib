@@ -1,6 +1,7 @@
 package store.client.command;
 
 import java.util.List;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 import store.common.ContentInfo;
@@ -17,7 +18,7 @@ class Find extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> params) {
+    public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         String repository = session.getRepository();
         String query = params.get(0);
 

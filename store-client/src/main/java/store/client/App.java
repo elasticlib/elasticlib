@@ -1,10 +1,13 @@
 package store.client;
 
 import java.io.IOException;
+import javax.ws.rs.ProcessingException;
 import jline.console.ConsoleReader;
 import store.client.command.CommandParser;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.QuitException;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 
 /**
@@ -23,9 +26,18 @@ public final class App {
      */
     public static void main(String[] args) throws IOException {
         ConsoleReader consoleReader = new ConsoleReader();
-        Display display = new Display(consoleReader);
-        try (Session session = new Session(display)) {
-            CommandParser parser = new CommandParser(display, session);
+        ClientConfig config = new ClientConfig();
+        Display display = new Display(consoleReader, config);
+        try (Session session = new Session(display, config)) {
+            try {
+                config.init();
+                display.println("Using config:" + System.lineSeparator() + config.print());
+                session.init();
+
+            } catch (ProcessingException | RequestFailedException e) {
+                display.print(e);
+            }
+            CommandParser parser = new CommandParser(display, session, config);
             consoleReader.addCompleter(parser);
             consoleReader.setExpandEvents(false);
 

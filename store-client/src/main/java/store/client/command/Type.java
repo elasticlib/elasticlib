@@ -6,6 +6,14 @@ package store.client.command;
 enum Type {
 
     /**
+     * A config key.
+     */
+    KEY,
+    /**
+     * A config value.
+     */
+    VALUE,
+    /**
      * A network URL.
      */
     URL,

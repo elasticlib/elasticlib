@@ -1,6 +1,7 @@
 package store.client.command;
 
 import java.util.List;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
@@ -49,5 +50,5 @@ interface Command {
      * @param session Session to execute against.
      * @param params Parameters (Exclude command name).
      */
-    void execute(Display display, Session session, List<String> params);
+    void execute(Display display, Session session, ClientConfig config, List<String> params);
 }

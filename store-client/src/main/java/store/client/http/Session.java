@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import java.io.Closeable;
 import java.util.List;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 
@@ -16,6 +17,7 @@ public class Session implements Closeable {
     private static final String NO_REPOSITORY = "No repository selected";
     private static final String HTTP_SCHEME = "http://";
     private final Display display;
+    private final ClientConfig config;
     private HttpClient restClient;
     private String server;
     private String repository;
@@ -24,9 +26,26 @@ public class Session implements Closeable {
      * Constructor.
      *
      * @param display Display.
+     * @param config Config.
      */
-    public Session(Display display) {
+    public Session(Display display, ClientConfig config) {
         this.display = display;
+        this.config = config;
+
+    }
+
+    /**
+     * Initialisation. Set default connection, if any.
+     */
+    public void init() {
+        if (config.getDefaultConnection().isEmpty()) {
+            return;
+        }
+        connect(config.getDefaultConnection());
+        if (config.getDefaultRepository().isEmpty()) {
+            return;
+        }
+        use(config.getDefaultRepository());
     }
 
     /**

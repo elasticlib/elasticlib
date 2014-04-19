@@ -8,7 +8,11 @@ import java.util.List;
 
 final class CommandProvider {
 
-    private static final List<Command> COMMANDS = Arrays.<Command>asList(new Connect(),
+    private static final List<Command> COMMANDS = Arrays.<Command>asList(new Config(),
+                                                                         new Set(),
+                                                                         new Unset(),
+                                                                         new Reset(),
+                                                                         new Connect(),
                                                                          new Disconnect(),
                                                                          new Use(),
                                                                          new Create(),

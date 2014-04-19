@@ -5,6 +5,7 @@ import java.util.List;
 import static store.client.command.AbstractCommand.OK;
 import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
@@ -21,7 +22,7 @@ class Drop extends AbstractCommand {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> params) {
+    public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
                 session.getClient().dropRepository(params.get(1));

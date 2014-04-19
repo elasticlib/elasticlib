@@ -1,7 +1,5 @@
 package store.client.exception;
 
-import java.io.IOException;
-
 /**
  * Thrown if a requests fails for any reason.
  */
@@ -23,7 +21,17 @@ public class RequestFailedException extends RuntimeException {
      *
      * @param e The cause of this exception.
      */
-    public RequestFailedException(IOException e) {
+    public RequestFailedException(Exception e) {
         super(e.getMessage());
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param message Error message.
+     * @param e The cause of this exception.
+     */
+    public RequestFailedException(String message, Exception e) {
+        super(message + System.lineSeparator() + e.getMessage());
     }
 }

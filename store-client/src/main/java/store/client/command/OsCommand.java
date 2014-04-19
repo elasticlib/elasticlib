@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
@@ -37,7 +38,7 @@ class OsCommand implements Command {
     }
 
     @Override
-    public void execute(Display display, Session session, List<String> params) {
+    public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         try {
             Process process = new ProcessBuilder(params).start();
             try (BufferedReader out = reader(process.getInputStream());

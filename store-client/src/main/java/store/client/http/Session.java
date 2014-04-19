@@ -104,18 +104,27 @@ public class Session implements Closeable {
     }
 
     /**
-     * Stop using repository which name is supplied, if applicable. Does nothing otherwise.
-     *
-     * @param repositoryName Repository name.
+     * Stop using current repository, if any.
      */
-    public void stopUse(String repositoryName) {
-        if (repository != null && repository.equals(repositoryName)) {
+    public void leave() {
+        if (repository != null) {
             repository = null;
             if (server == null) {
                 display.resetPrompt();
             } else {
                 display.setPrompt(server);
             }
+        }
+    }
+
+    /**
+     * Stop using repository which name is supplied, if applicable. Does nothing otherwise.
+     *
+     * @param repositoryName Repository name.
+     */
+    public void leave(String repositoryName) {
+        if (repository != null && repository.equals(repositoryName)) {
+            leave();
         }
     }
 

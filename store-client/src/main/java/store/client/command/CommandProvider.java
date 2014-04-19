@@ -15,6 +15,7 @@ final class CommandProvider {
                                                                          new Connect(),
                                                                          new Disconnect(),
                                                                          new Use(),
+                                                                         new Leave(),
                                                                          new Create(),
                                                                          new Drop(),
                                                                          new Repositories(),

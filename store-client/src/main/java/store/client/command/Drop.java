@@ -26,7 +26,7 @@ class Drop extends AbstractCommand {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
                 session.getClient().dropRepository(params.get(1));
-                session.stopUse(params.get(1));
+                session.leave(params.get(1));
                 break;
 
             case REPLICATION:

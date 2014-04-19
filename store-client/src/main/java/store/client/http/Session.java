@@ -1,9 +1,7 @@
 package store.client.http;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import java.io.Closeable;
-import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
@@ -59,17 +57,26 @@ public class Session implements Closeable {
         if (url.startsWith(HTTP_SCHEME)) {
             url = url.substring(HTTP_SCHEME.length());
         }
-        List<String> parts = Splitter.on('/').trimResults().omitEmptyStrings().splitToList(url);
-        if (parts.size() > 2) {
-            throw new RequestFailedException("Malformed URL");
-        }
-        server = parts.get(0);
-        restClient = new HttpClient(HTTP_SCHEME + server, display);
-        if (parts.size() == 2) {
-            use(parts.get(1));
-        } else {
+        server = url;
+        restClient = new HttpClient(HTTP_SCHEME + server, display, config);
+        restClient.printHttpDialog(true);
+        try {
             restClient.testConnection();
             display.setPrompt(server);
+
+        } finally {
+            restClient.printHttpDialog(false);
+        }
+    }
+
+    /**
+     * Set if HTTP dialog should be printed.
+     *
+     * @param val If this feature should be activated.
+     */
+    public void printHttpDialog(boolean val) {
+        if (restClient != null) {
+            restClient.printHttpDialog(val);
         }
     }
 
@@ -86,9 +93,14 @@ public class Session implements Closeable {
      * @param repositoryName Repository name.
      */
     public void use(String repositoryName) {
-        restClient.testRepository(repositoryName);
-        display.setPrompt(Joiner.on('/').join(server, repositoryName));
-        repository = repositoryName;
+        restClient.printHttpDialog(true);
+        try {
+            restClient.testRepository(repositoryName);
+            display.setPrompt(Joiner.on('/').join(server, repositoryName));
+            repository = repositoryName;
+        } finally {
+            restClient.printHttpDialog(false);
+        }
     }
 
     /**

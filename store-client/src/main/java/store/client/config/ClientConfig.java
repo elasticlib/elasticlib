@@ -21,12 +21,14 @@ public class ClientConfig {
     private static final String DEFAULT_REPOSITORY = "default.repository";
     private static final String DISPLAY_FORMAT = "display.format";
     private static final String DISPLAY_PRETTY = "display.pretty";
+    private static final String DISPLAY_HTTP = "display.http";
     private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".storeconfig.yml");
     private static final Config DEFAULT = new Config()
             .set(DEFAULT_CONNECTION, "")
             .set(DEFAULT_REPOSITORY, "")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
-            .set(DISPLAY_PRETTY, true);
+            .set(DISPLAY_PRETTY, true)
+            .set(DISPLAY_HTTP, false);
     private Config extended;
     private Config config;
 
@@ -100,6 +102,13 @@ public class ClientConfig {
     }
 
     /**
+     * @return If HTTP dialog should be displayed.
+     */
+    public boolean isDisplayHttp() {
+        return extended.getBoolean(DISPLAY_HTTP);
+    }
+
+    /**
      * Set a config key.
      *
      * @param key Key.
@@ -117,6 +126,7 @@ public class ClientConfig {
                 break;
 
             case DISPLAY_PRETTY:
+            case DISPLAY_HTTP:
                 config = config.set(key, asBoolean(value));
                 break;
 

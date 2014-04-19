@@ -19,7 +19,7 @@ import store.common.yaml.YamlWriting;
  */
 public class Display {
 
-    private static final String PROMPT = "> ";
+    private static final String PROMPT = "$ ";
     private final ConsoleReader consoleReader;
     private final ClientConfig config;
     private final PrintWriter out;

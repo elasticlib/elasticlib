@@ -57,6 +57,7 @@ public final class CommandParser implements Completer {
             return;
         }
         try {
+            session.printHttpDialog(true);
             command.execute(display, session, config, params);
 
         } catch (RequestFailedException e) {
@@ -66,6 +67,9 @@ public final class CommandParser implements Completer {
             String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
             display.println(message + System.lineSeparator());
             session.disconnect();
+
+        } finally {
+            session.printHttpDialog(false);
         }
     }
 

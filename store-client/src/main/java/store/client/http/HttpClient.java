@@ -27,7 +27,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.filter.LoggingFilter;
 import static org.glassfish.jersey.media.multipart.Boundary.addBoundary;
@@ -35,6 +34,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.common.CommandResult;
@@ -64,28 +64,41 @@ public class HttpClient implements Closeable {
     private final Display display;
     private final Client client;
     private final WebTarget resource;
+    private final PrintingFilter printingFilter;
 
     /**
      * Constructor.
      *
      * @param url Server url.
      * @param display Display to use.
+     * @param config Config to use.
      */
-    public HttpClient(String url, Display display) {
+    public HttpClient(String url, Display display, ClientConfig config) {
         this.display = display;
+        printingFilter = new PrintingFilter(display, config);
 
         Logger logger = Logger.getGlobal();
         logger.setLevel(Level.OFF);
 
-        ClientConfig clientConfig = new ClientConfig()
+        org.glassfish.jersey.client.ClientConfig clientConfig = new org.glassfish.jersey.client.ClientConfig()
                 .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024)
                 .connectorProvider(new ApacheConnectorProvider())
                 .register(MultiPartFeature.class)
                 .register(new HeaderRestoringWriterInterceptor())
-                .register(new LoggingFilter(logger, true));
+                .register(new LoggingFilter(logger, true))
+                .register(printingFilter);
 
         client = ClientBuilder.newClient(clientConfig);
         resource = client.target(url);
+    }
+
+    /**
+     * Set if HTTP dialog should be printed.
+     *
+     * @param val If this feature should be activated.
+     */
+    public void printHttpDialog(boolean val) {
+        printingFilter.printHttpDialog(val);
     }
 
     private static Response ensureSuccess(Response response) {

@@ -8,6 +8,10 @@ import store.client.http.Session;
 
 class Quit extends AbstractCommand {
 
+    Quit() {
+        super(Category.MISC);
+    }
+
     @Override
     public String description() {
         return "Leave this console";

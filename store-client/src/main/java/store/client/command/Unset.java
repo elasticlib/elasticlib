@@ -9,7 +9,7 @@ import store.client.http.Session;
 public class Unset extends AbstractCommand {
 
     Unset() {
-        super(Type.KEY);
+        super(Category.CONFIG, Type.KEY);
     }
 
     @Override

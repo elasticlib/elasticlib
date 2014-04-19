@@ -11,7 +11,7 @@ class Find extends AbstractCommand {
     private static final int CHUNK_SIZE = 20;
 
     Find() {
-        super(Type.QUERY);
+        super(Category.REPOSITORY, Type.QUERY);
     }
 
     @Override

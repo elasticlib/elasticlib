@@ -8,6 +8,10 @@ import store.client.http.Session;
 
 class Leave extends AbstractCommand {
 
+    Leave() {
+        super(Category.CONNECTION);
+    }
+
     @Override
     public String description() {
         return "Stop using current repository";

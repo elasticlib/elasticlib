@@ -6,7 +6,11 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
-public class Reset extends AbstractCommand {
+class Reset extends AbstractCommand {
+
+    Reset() {
+        super(Category.CONFIG);
+    }
 
     @Override
     public String description() {

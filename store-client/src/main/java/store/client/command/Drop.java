@@ -12,7 +12,8 @@ import store.client.http.Session;
 class Drop extends AbstractCommand {
 
     Drop() {
-        super(REPOSITORY, asList(Type.REPOSITORY),
+        super(Category.SERVER,
+              REPOSITORY, asList(Type.REPOSITORY),
               REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
     }
 

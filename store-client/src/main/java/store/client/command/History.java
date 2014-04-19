@@ -10,6 +10,10 @@ class History extends AbstractCommand {
 
     private static final int CHUNK_SIZE = 20;
 
+    History() {
+        super(Category.REPOSITORY);
+    }
+
     @Override
     public String description() {
         return "Print current repository history";

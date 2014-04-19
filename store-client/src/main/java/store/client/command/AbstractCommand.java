@@ -3,6 +3,7 @@ package store.client.command;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -20,9 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,36 +41,41 @@ abstract class AbstractCommand implements Command {
     static final String OK = "ok" + System.lineSeparator();
     static final String REPOSITORY = "repository";
     static final String REPLICATION = "replication";
+    private final Category category;
     private final Map<String, List<Type>> syntax;
 
-    protected AbstractCommand() {
-        this(Collections.<String, List<Type>>emptyMap());
+    protected AbstractCommand(Category category) {
+        this(category, Collections.<String, List<Type>>emptyMap());
     }
 
-    protected AbstractCommand(Type... syntax) {
-        this("", asList(syntax));
+    protected AbstractCommand(Category category, Type... syntax) {
+        this(category, ImmutableMap.of("", asList(syntax)));
     }
 
-    protected AbstractCommand(String key, List<Type> syntax) {
-        this(singletonMap(key, syntax));
+    protected AbstractCommand(Category category, String key, List<Type> syntax) {
+        this(category, ImmutableMap.of(key, syntax));
     }
 
-    protected AbstractCommand(String key1, List<Type> syntax1,
+    protected AbstractCommand(Category category,
+                              String key1, List<Type> syntax1,
                               String key2, List<Type> syntax2) {
 
-        Map<String, List<Type>> map = new LinkedHashMap<>();
-        map.put(key1, syntax1);
-        map.put(key2, syntax2);
-        syntax = map;
+        this(category, ImmutableMap.of(key1, syntax1, key2, syntax2));
     }
 
-    private AbstractCommand(Map<String, List<Type>> syntax) {
+    private AbstractCommand(Category category, Map<String, List<Type>> syntax) {
+        this.category = category;
         this.syntax = syntax;
     }
 
     @Override
     public String name() {
         return getClass().getSimpleName().toLowerCase();
+    }
+
+    @Override
+    public Category category() {
+        return category;
     }
 
     @Override

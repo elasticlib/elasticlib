@@ -10,7 +10,7 @@ import store.common.hash.Hash;
 class Delete extends AbstractCommand {
 
     Delete() {
-        super(Type.HASH);
+        super(Category.REPOSITORY, Type.HASH);
     }
 
     @Override

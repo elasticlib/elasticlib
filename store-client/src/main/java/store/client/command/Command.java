@@ -16,6 +16,11 @@ interface Command {
     String name();
 
     /**
+     * @return This command category.
+     */
+    Category category();
+
+    /**
      * @return Description of this command.
      */
     String description();

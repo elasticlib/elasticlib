@@ -8,7 +8,7 @@ import store.client.http.Session;
 class Connect extends AbstractCommand {
 
     Connect() {
-        super(Type.URL);
+        super(Category.CONNECTION, Type.URL);
     }
 
     @Override

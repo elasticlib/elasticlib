@@ -8,6 +8,10 @@ import store.common.ReplicationDef;
 
 class Replications extends AbstractCommand {
 
+    Replications() {
+        super(Category.SERVER);
+    }
+
     @Override
     public String description() {
         return "List existing replications";

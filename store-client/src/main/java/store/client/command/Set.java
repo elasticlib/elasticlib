@@ -6,10 +6,10 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
-public class Set extends AbstractCommand {
+class Set extends AbstractCommand {
 
     Set() {
-        super(Type.KEY, Type.VALUE);
+        super(Category.CONFIG, Type.KEY, Type.VALUE);
     }
 
     @Override

@@ -18,6 +18,11 @@ class OsCommand implements Command {
     }
 
     @Override
+    public Category category() {
+        return Category.MISC;
+    }
+
+    @Override
     public String description() {
         return "Execute an OS specific command";
     }

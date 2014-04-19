@@ -13,7 +13,8 @@ import store.client.http.Session;
 class Create extends AbstractCommand {
 
     Create() {
-        super(REPOSITORY, asList(Type.PATH),
+        super(Category.SERVER,
+              REPOSITORY, asList(Type.PATH),
               REPLICATION, asList(Type.REPOSITORY, Type.REPOSITORY));
     }
 

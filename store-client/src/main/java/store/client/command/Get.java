@@ -9,7 +9,7 @@ import store.common.hash.Hash;
 class Get extends AbstractCommand {
 
     Get() {
-        super(Type.HASH);
+        super(Category.REPOSITORY, Type.HASH);
     }
 
     @Override

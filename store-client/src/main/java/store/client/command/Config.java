@@ -7,6 +7,10 @@ import store.client.http.Session;
 
 class Config extends AbstractCommand {
 
+    Config() {
+        super(Category.CONFIG);
+    }
+
     @Override
     public String description() {
         return "Display current config";

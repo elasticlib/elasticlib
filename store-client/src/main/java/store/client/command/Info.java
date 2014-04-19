@@ -10,7 +10,7 @@ import store.common.hash.Hash;
 class Info extends AbstractCommand {
 
     Info() {
-        super(Type.HASH);
+        super(Category.REPOSITORY, Type.HASH);
     }
 
     @Override

@@ -9,7 +9,7 @@ import store.client.http.Session;
 class Help extends AbstractCommand {
 
     Help() {
-        super(Type.COMMAND);
+        super(Category.MISC, Type.COMMAND);
     }
 
     @Override

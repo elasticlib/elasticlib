@@ -8,6 +8,10 @@ import store.common.RepositoryDef;
 
 class Repositories extends AbstractCommand {
 
+    Repositories() {
+        super(Category.SERVER);
+    }
+
     @Override
     public String description() {
         return "List existing repositories";

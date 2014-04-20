@@ -52,6 +52,9 @@ class Update extends AbstractCommand {
             throw new RequestFailedException("This content is deleted");
         }
         ContentInfo updated = update(editor, head);
+        if (head.size() == 1 && head.get(0).getMetadata().equals(updated.getMetadata())) {
+            throw new RequestFailedException("Not modified");
+        }
         CommandResult result = session.getClient().update(repository, updated);
         display.print(result);
     }
@@ -84,9 +87,16 @@ class Update extends AbstractCommand {
 
     private static void write(List<ContentInfo> head, Path file) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file, Charsets.UTF_8)) {
-            for (ContentInfo info : head) {
-                writer.write(YamlWriting.writeValue(Value.of(info.getMetadata())));
-                writer.newLine();
+            if (head.size() == 1) {
+                writer.write(YamlWriting.writeValue(Value.of(head.get(0).getMetadata())));
+
+            } else {
+                for (ContentInfo info : head) {
+                    writer.write("#revision " + info.getRevision().asHexadecimalString());
+                    writer.newLine();
+                    writer.write(YamlWriting.writeValue(Value.of(info.getMetadata())));
+                    writer.newLine();
+                }
             }
         }
     }

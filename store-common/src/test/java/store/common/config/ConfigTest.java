@@ -201,6 +201,24 @@ public class ConfigTest {
      * Test.
      */
     @Test
+    public void unsetRecursivelyTest() {
+        Map<String, Value> actual = new Config()
+                .set(key(LOG), true)
+                .set(key(WEB, SCHEME), "http")
+                .unset(key(WEB, SCHEME))
+                .asValue()
+                .asMap();
+
+        Map<String, Value> expected = new LinkedHashMap<>(rootValue);
+        expected.remove(WEB);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void unsetUndefinedTest() {
         assertThat(config.unset(key(WEB, "absent"))).isEqualTo(config);
     }

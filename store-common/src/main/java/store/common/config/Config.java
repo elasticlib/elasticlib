@@ -288,7 +288,11 @@ public class Config {
         if (!parent.isPresent() || parent.get().type() != ValueType.OBJECT) {
             return tree;
         }
-        Map<String, Value> parentTree = new LinkedHashMap<>(parent.get().asMap());
+        Map<String, Value> parentTree = parent.get().asMap();
+        if (parentTree.size() == 1 && parentTree.containsKey(tail)) {
+            return unset(tree, head);
+        }
+        parentTree = new LinkedHashMap<>(parentTree);
         parentTree.remove(tail);
         return set(tree, head, Value.of(parentTree));
     }

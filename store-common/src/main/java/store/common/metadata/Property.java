@@ -6,13 +6,7 @@ package store.common.metadata;
 public interface Property {
 
     /**
-     * @return This property as a string key, intended for internal use (content's info, index...).
+     * @return This property as a string key.
      */
     String key();
-
-    /**
-     *
-     * @return This property as a string label, intended for human display.
-     */
-    String label();
 }

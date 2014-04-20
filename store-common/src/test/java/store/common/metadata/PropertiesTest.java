@@ -18,13 +18,4 @@ public class PropertiesTest {
         assertThat(FILE_NAME.key()).isEqualTo("fileName");
         assertThat(ENCODING.key()).isEqualTo("encoding");
     }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void label() {
-        assertThat(FILE_NAME.label()).isEqualTo("File name");
-        assertThat(ENCODING.label()).isEqualTo("Encoding");
-    }
 }

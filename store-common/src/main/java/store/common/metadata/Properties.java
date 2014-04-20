@@ -2,9 +2,6 @@ package store.common.metadata;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Enumerates properties.
@@ -15,93 +12,106 @@ public final class Properties {
     }
 
     /**
-     * List existing properties.
-     *
-     * @return All properties.
+     * Common properties.
      */
-    public static List<Property> list() {
-        List<Property> list = new ArrayList<>();
-        list.addAll(Arrays.asList(Common.values()));
-        list.addAll(Arrays.asList(Text.values()));
-        list.addAll(Arrays.asList(Audio.values()));
-        list.addAll(Arrays.asList(Image.values()));
-        return list;
-    }
+    public static enum Common implements Property {
 
-    static enum Common implements Property {
-
+        /**
+         * File name.
+         */
         FILE_NAME,
+        /**
+         * Content type.
+         */
         CONTENT_TYPE;
 
         @Override
         public String key() {
             return key(name());
         }
-
-        @Override
-        public String label() {
-            return label(name());
-        }
     }
 
-    static enum Text implements Property {
+    /**
+     * Text properties.
+     */
+    public static enum Text implements Property {
 
+        /**
+         * Encoding.
+         */
         ENCODING;
 
         @Override
         public String key() {
             return key(name());
         }
-
-        @Override
-        public String label() {
-            return label(name());
-        }
     }
 
-    static enum Audio implements Property {
+    /**
+     * Audio properties.
+     */
+    public static enum Audio implements Property {
 
+        /**
+         * Artist.
+         */
         ARTIST,
+        /**
+         * Album.
+         */
         ALBUM,
+        /**
+         * Title.
+         */
         TITLE,
+        /**
+         * Genre.
+         */
         GENRE,
+        /**
+         * Track number.
+         */
         TRACK_NUMBER,
+        /**
+         * Album duration.
+         */
         DURATION,
+        /**
+         * Album release date.
+         */
         RELEASE_DATE;
 
         @Override
         public String key() {
             return key(name());
         }
-
-        @Override
-        public String label() {
-            return label(name());
-        }
     }
 
-    static enum Image implements Property {
+    /**
+     * Image properties.
+     */
+    public static enum Image implements Property {
 
+        /**
+         * Image height.
+         */
         HEIGHT,
+        /**
+         * Image width.
+         */
         WIDTH,
+        /**
+         * Image original date.
+         */
         ORIGINAL_DATE;
 
         @Override
         public String key() {
             return key(name());
         }
-
-        @Override
-        public String label() {
-            return label(name());
-        }
     }
 
     private static String key(String name) {
         return UPPER_UNDERSCORE.to(LOWER_CAMEL, name);
-    }
-
-    private static String label(String name) {
-        return name.charAt(0) + name.substring(1).toLowerCase().replaceAll("_", " ");
     }
 }

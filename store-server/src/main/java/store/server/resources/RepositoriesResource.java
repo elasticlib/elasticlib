@@ -45,6 +45,7 @@ import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import static store.common.json.JsonWriting.write;
 import static store.common.json.JsonWriting.writeAll;
+import store.common.metadata.Properties.Common;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import store.server.exception.BadRequestException;
@@ -337,11 +338,11 @@ public class RepositoriesResource {
                 }
             });
             Map<String, Value> metadata = metadata(repository, hash);
-            String contentType = value(metadata, "contentType");
+            String contentType = value(metadata, Common.CONTENT_TYPE.key());
             if (!contentType.isEmpty()) {
                 response.type(contentType);
             }
-            String fileName = value(metadata, "fileName");
+            String fileName = value(metadata, Common.FILE_NAME.key());
             if (!fileName.isEmpty()) {
                 response.header("Content-Disposition", "attachment; filename=" + fileName);
             }

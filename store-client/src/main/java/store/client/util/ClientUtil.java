@@ -1,8 +1,9 @@
-package store.client.http;
+package store.client.util;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import store.client.exception.RequestFailedException;
 import store.common.ContentInfo;
 import store.common.hash.Hash;
 
@@ -12,6 +13,13 @@ import store.common.hash.Hash;
 public final class ClientUtil {
 
     private ClientUtil() {
+    }
+
+    public static Hash parseHash(String arg) {
+        if (!arg.matches("[a-zA-Z0-9]{40}")) {
+            throw new RequestFailedException("Invalid hash");
+        }
+        return new Hash(arg);
     }
 
     /**

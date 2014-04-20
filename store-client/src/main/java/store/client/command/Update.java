@@ -14,9 +14,10 @@ import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
-import static store.client.http.ClientUtil.isDeleted;
-import static store.client.http.ClientUtil.revisions;
 import store.client.http.Session;
+import static store.client.util.ClientUtil.isDeleted;
+import static store.client.util.ClientUtil.parseHash;
+import static store.client.util.ClientUtil.revisions;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -46,7 +47,7 @@ class Update extends AbstractCommand {
             throw new RequestFailedException("No defined editor");
         }
         String repository = session.getRepository();
-        Hash hash = new Hash(params.get(0));
+        Hash hash = parseHash(params.get(0));
         List<ContentInfo> head = session.getClient().getInfoHead(repository, hash);
         if (isDeleted(head)) {
             throw new RequestFailedException("This content is deleted");

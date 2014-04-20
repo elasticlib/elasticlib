@@ -11,9 +11,8 @@ import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.size;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import static java.util.Collections.emptyList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.json.Json.createObjectBuilder;
@@ -26,6 +25,7 @@ import static javax.ws.rs.client.Entity.entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -37,6 +37,8 @@ import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
+import static store.client.http.ClientUtil.isDeleted;
+import static store.client.http.ClientUtil.revisions;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -241,43 +243,23 @@ public class HttpClient implements Closeable {
     public CommandResult put(String repository, Path filepath) {
         try {
             Digest digest = digest(filepath);
-            List<ContentInfo> head = head(repository, digest.getHash());
+            List<ContentInfo> head = headIfAny(repository, digest.getHash());
             if (!isDeleted(head)) {
                 throw new RequestFailedException("This content is already stored");
             }
             ContentInfo info = new ContentInfoBuilder()
                     .withContent(digest.getHash())
                     .withLength(digest.getLength())
-                    .withParents(revs(head))
+                    .withParents(revisions(head))
                     .withMetadata(metadata(filepath))
                     .computeRevisionAndBuild();
 
-            CommandResult firstStepResult = result(resource
-                    .path("repositories/{name}/info")
-                    .resolveTemplate("name", repository)
-                    .request()
-                    .post(entity(write(info), MediaType.APPLICATION_JSON_TYPE)));
-
+            CommandResult firstStepResult = post(repository, info);
             if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
                 return firstStepResult;
             }
-            try (InputStream inputStream = new LoggingInputStream(display,
-                                                                  "Uploading content",
-                                                                  newInputStream(filepath),
-                                                                  info.getLength())) {
-                MultiPart multipart = new FormDataMultiPart()
-                        .bodyPart(new StreamDataBodyPart("content",
-                                                         inputStream,
-                                                         filepath.getFileName().toString(),
-                                                         MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            return putContent(repository, firstStepResult.getTransactionId(), info, filepath);
 
-                return result(resource.path("repositories/{name}/content/{hash}")
-                        .resolveTemplate("name", repository)
-                        .resolveTemplate("hash", info.getContent())
-                        .queryParam("txId", firstStepResult.getTransactionId())
-                        .request()
-                        .put(entity(multipart, addBoundary(multipart.getMediaType()))));
-            }
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
@@ -292,6 +274,57 @@ public class HttpClient implements Closeable {
         }
     }
 
+    private CommandResult putContent(String repository,
+                                     long transactionId,
+                                     ContentInfo info,
+                                     Path filepath) throws IOException {
+
+        try (InputStream inputStream = new LoggingInputStream(display,
+                                                              "Uploading content",
+                                                              newInputStream(filepath),
+                                                              info.getLength())) {
+            MultiPart multipart = new FormDataMultiPart()
+                    .bodyPart(new StreamDataBodyPart("content",
+                                                     inputStream,
+                                                     filepath.getFileName().toString(),
+                                                     MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+            return result(resource.path("repositories/{name}/content/{hash}")
+                    .resolveTemplate("name", repository)
+                    .resolveTemplate("hash", info.getContent())
+                    .queryParam("txId", transactionId)
+                    .request()
+                    .put(entity(multipart, addBoundary(multipart.getMediaType()))));
+        }
+    }
+
+    private List<ContentInfo> headIfAny(String repository, Hash hash) {
+        Response response = head(repository, hash);
+        if (response.getStatusInfo().getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
+            return emptyList();
+        }
+        return readAll(response, ContentInfo.class);
+    }
+
+    /**
+     * Update an exising content in a repository.
+     *
+     * @param repository Repository name.
+     * @param info New head revision.
+     * @return Actual command result.
+     */
+    public CommandResult update(String repository, ContentInfo info) {
+        return post(repository, info);
+    }
+
+    private CommandResult post(String repository, ContentInfo info) {
+        return result(resource
+                .path("repositories/{name}/info")
+                .resolveTemplate("name", repository)
+                .request()
+                .post(entity(write(info), MediaType.APPLICATION_JSON_TYPE)));
+    }
+
     /**
      * Delete an exising content from a repository.
      *
@@ -300,7 +333,10 @@ public class HttpClient implements Closeable {
      * @return Actual command result.
      */
     public CommandResult delete(String repository, Hash hash) {
-        List<ContentInfo> head = head(repository, hash);
+        List<ContentInfo> head = getInfoHead(repository, hash);
+        if (head.isEmpty()) {
+            throw new RequestFailedException("This content is already deleted");
+        }
         if (isDeleted(head)) {
             throw new RequestFailedException("This content is already deleted");
         }
@@ -308,37 +344,9 @@ public class HttpClient implements Closeable {
                 .path("repositories/{name}/content/{hash}")
                 .resolveTemplate("name", repository)
                 .resolveTemplate("hash", hash)
-                .queryParam("rev", Joiner.on('-').join(revs(head)))
+                .queryParam("rev", Joiner.on('-').join(revisions(head)))
                 .request()
                 .delete());
-    }
-
-    private List<ContentInfo> head(String repository, Hash hash) {
-        Response response = resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", hash)
-                .queryParam("rev", "head")
-                .request()
-                .get();
-
-        return readAll(response, ContentInfo.class);
-    }
-
-    private static Set<Hash> revs(List<ContentInfo> head) {
-        Set<Hash> revs = new HashSet<>();
-        for (ContentInfo info : head) {
-            revs.add(info.getRevision());
-        }
-        return revs;
-    }
-
-    private static boolean isDeleted(List<ContentInfo> head) {
-        for (ContentInfo info : head) {
-            if (!info.isDeleted()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -346,7 +354,7 @@ public class HttpClient implements Closeable {
      *
      * @param repository Repository name.
      * @param hash Content hash.
-     * @return
+     * @return Corresponding info tree.
      */
     public ContentInfoTree getInfoTree(String repository, Hash hash) {
         Response response = resource.path("repositories/{name}/info/{hash}")
@@ -356,6 +364,26 @@ public class HttpClient implements Closeable {
                 .get();
 
         return read(response, ContentInfoTree.class);
+    }
+
+    /**
+     * Provides info head revisions for a given content.
+     *
+     * @param repository Repository name.
+     * @param hash Content hash.
+     * @return Corresponding info head.
+     */
+    public List<ContentInfo> getInfoHead(String repository, Hash hash) {
+        return readAll(head(repository, hash), ContentInfo.class);
+    }
+
+    private Response head(String repository, Hash hash) {
+        return resource.path("repositories/{name}/info/{hash}")
+                .resolveTemplate("name", repository)
+                .resolveTemplate("hash", hash)
+                .queryParam("rev", "head")
+                .request()
+                .get();
     }
 
     /**

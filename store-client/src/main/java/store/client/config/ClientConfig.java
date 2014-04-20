@@ -22,13 +22,16 @@ public class ClientConfig {
     private static final String DISPLAY_FORMAT = "display.format";
     private static final String DISPLAY_PRETTY = "display.pretty";
     private static final String DISPLAY_HTTP = "display.http";
-    private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".storeconfig.yml");
+    private static final String EDITOR = "editor";
+    private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".store");
+    private static final Path CONFIG_PATH = HOME_PATH.resolve("config.yml");
     private static final Config DEFAULT = new Config()
             .set(DEFAULT_CONNECTION, "")
             .set(DEFAULT_REPOSITORY, "")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
             .set(DISPLAY_PRETTY, true)
-            .set(DISPLAY_HTTP, false);
+            .set(DISPLAY_HTTP, false)
+            .set(EDITOR, "");
     private Config extended;
     private Config config;
 
@@ -37,7 +40,7 @@ public class ClientConfig {
      */
     public void init() {
         try {
-            Optional<Config> loaded = ConfigReadWrite.read(HOME_PATH);
+            Optional<Config> loaded = ConfigReadWrite.read(CONFIG_PATH);
             if (loaded.isPresent()) {
                 List<String> validKeys = listKeys();
                 for (String key : loaded.get().listKeys()) {
@@ -109,6 +112,13 @@ public class ClientConfig {
     }
 
     /**
+     * @return External editor to use.
+     */
+    public String getEditor() {
+        return extended.getString(EDITOR);
+    }
+
+    /**
      * Set a config key.
      *
      * @param key Key.
@@ -118,6 +128,7 @@ public class ClientConfig {
         switch (key) {
             case DEFAULT_CONNECTION:
             case DEFAULT_REPOSITORY:
+            case EDITOR:
                 config = config.set(key, value);
                 break;
 
@@ -178,7 +189,7 @@ public class ClientConfig {
      */
     public void reset() {
         try {
-            Files.deleteIfExists(HOME_PATH);
+            Files.deleteIfExists(CONFIG_PATH);
 
         } catch (IOException e) {
             throw new RequestFailedException(e);
@@ -189,9 +200,16 @@ public class ClientConfig {
 
     private void save() {
         extended = DEFAULT.extend(config);
-        if (!config.isEmpty()) {
-            ConfigReadWrite.write(HOME_PATH, config);
+        if (config.isEmpty()) {
+            return;
         }
+        try {
+            Files.createDirectories(HOME_PATH);
+
+        } catch (IOException e) {
+            throw new RequestFailedException(e);
+        }
+        ConfigReadWrite.write(CONFIG_PATH, config);
     }
 
     private static String undefinedConfigKey(String key) {

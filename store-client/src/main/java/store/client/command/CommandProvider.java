@@ -23,6 +23,7 @@ final class CommandProvider {
                                                                          new Repositories(),
                                                                          new Replications(),
                                                                          new Put(),
+                                                                         new Update(),
                                                                          new Delete(),
                                                                          new Get(),
                                                                          new Info(),

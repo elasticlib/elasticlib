@@ -8,7 +8,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.SortedSet;
 import org.slf4j.Logger;
@@ -267,17 +266,8 @@ class Volume {
      */
     public List<ContentInfo> getInfoHead(final Hash hash) {
         LOG.info("[{}] Returning info head {}", name, hash);
-        return transactionManager.inTransaction(new Query<List<ContentInfo>>() {
-            @Override
-            public List<ContentInfo> apply() {
-                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
-                if (!treeOpt.isPresent()) {
-                    return emptyList();
-                }
-                ContentInfoTree tree = treeOpt.get();
-                return tree.get(tree.getHead());
-            }
-        });
+        ContentInfoTree tree = getInfoTree(hash);
+        return tree.get(tree.getHead());
     }
 
     /**

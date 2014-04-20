@@ -31,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import store.common.CommandResult;
 import store.common.ContentInfo;
@@ -89,7 +88,7 @@ public class RepositoriesResource {
         java.nio.file.Path path = Paths.get(json.getString("path"));
         repositoriesService.createRepository(path);
         return Response
-                .created(UriBuilder.fromUri(uriInfo.getRequestUri()).path(path.getFileName().toString()).build())
+                .created(uriInfo.getAbsolutePathBuilder().path(path.getFileName().toString()).build())
                 .build();
     }
 
@@ -263,7 +262,7 @@ public class RepositoriesResource {
                                FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next("content").getAsInputStream()) {
-            return response(uriInfo.getRequestUri(), repository(name).addContent(transactionId, hash, inputStream));
+            return response(uriInfo.getAbsolutePath(), repository(name).addContent(transactionId, hash, inputStream));
 
         } catch (IOException e) {
             throw new WriteException(e);

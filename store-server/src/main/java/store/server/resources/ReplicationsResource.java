@@ -14,7 +14,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonWriting.writeAll;
@@ -56,8 +55,7 @@ public class ReplicationsResource {
         String source = json.getString("source");
         String target = json.getString("target");
         repositoriesService.createReplication(source, target);
-        URI location = UriBuilder
-                .fromUri(uriInfo.getRequestUri())
+        URI location = uriInfo.getAbsolutePathBuilder()
                 .queryParam("source", source)
                 .queryParam("target", target)
                 .build();

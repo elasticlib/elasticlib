@@ -26,6 +26,8 @@ import store.server.service.RepositoriesService;
 @Path("replications")
 public class ReplicationsResource {
 
+    private static final String SOURCE = "source";
+    private static final String TARGET = "target";
     @Inject
     private RepositoriesService repositoriesService;
     @Context
@@ -49,15 +51,15 @@ public class ReplicationsResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createReplication(JsonObject json) {
-        if (!hasStringValue(json, "source") || !hasStringValue(json, "target")) {
+        if (!hasStringValue(json, SOURCE) || !hasStringValue(json, TARGET)) {
             throw new BadRequestException();
         }
-        String source = json.getString("source");
-        String target = json.getString("target");
+        String source = json.getString(SOURCE);
+        String target = json.getString(TARGET);
         repositoriesService.createReplication(source, target);
         URI location = uriInfo.getAbsolutePathBuilder()
-                .queryParam("source", source)
-                .queryParam("target", target)
+                .queryParam(SOURCE, source)
+                .queryParam(TARGET, target)
                 .build();
 
         return Response.created(location).build();
@@ -80,7 +82,7 @@ public class ReplicationsResource {
      * @return HTTP response
      */
     @DELETE
-    public Response deleteReplication(@QueryParam("source") String source, @QueryParam("target") String target) {
+    public Response deleteReplication(@QueryParam(SOURCE) String source, @QueryParam(TARGET) String target) {
         if (source == null || target == null) {
             throw new BadRequestException();
         }

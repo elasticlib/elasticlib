@@ -63,6 +63,25 @@ import static store.common.metadata.MetadataUtil.metadata;
  */
 public class HttpClient implements Closeable {
 
+    private static final String NAME = "name";
+    private static final String PATH = "path";
+    private static final String REPOSITORIES = "repositories";
+    private static final String REPLICATIONS = "replications";
+    private static final String SOURCE = "source";
+    private static final String TARGET = "target";
+    private static final String CONTENT = "content";
+    private static final String HASH = "hash";
+    private static final String REV = "rev";
+    private static final String HEAD = "head";
+    private static final String TX_ID = "txId";
+    private static final String CONTENT_DISPOSITION = "Content-Disposition";
+    private static final String FILENAME = "filename";
+    private static final String QUERY = "query";
+    private static final String FROM = "from";
+    private static final String SIZE = "size";
+    private static final String SORT = "sort";
+    private static final String ASC = "asc";
+    private static final String DESC = "desc";
     private final Display display;
     private final Client client;
     private final WebTarget resource;
@@ -143,7 +162,7 @@ public class HttpClient implements Closeable {
      */
     void testRepository(String name) {
         ensureSuccess(resource.path("repositories/{name}")
-                .resolveTemplate("name", name)
+                .resolveTemplate(NAME, name)
                 .request()
                 .get())
                 .close();
@@ -156,10 +175,10 @@ public class HttpClient implements Closeable {
      */
     public void createRepository(Path path) {
         JsonObject json = createObjectBuilder()
-                .add("path", path.toAbsolutePath().toString())
+                .add(PATH, path.toAbsolutePath().toString())
                 .build();
 
-        ensureSuccess(resource.path("repositories")
+        ensureSuccess(resource.path(REPOSITORIES)
                 .request()
                 .post(Entity.json(json)));
     }
@@ -171,7 +190,7 @@ public class HttpClient implements Closeable {
      */
     public void dropRepository(String name) {
         ensureSuccess(resource.path("repositories/{name}")
-                .resolveTemplate("name", name)
+                .resolveTemplate(NAME, name)
                 .request()
                 .delete());
     }
@@ -182,7 +201,7 @@ public class HttpClient implements Closeable {
      * @return A list of repository definitions.
      */
     public List<RepositoryDef> listRepositoryDefs() {
-        Response response = resource.path("repositories")
+        Response response = resource.path(REPOSITORIES)
                 .request()
                 .get();
 
@@ -195,7 +214,7 @@ public class HttpClient implements Closeable {
      * @return A list of replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs() {
-        Response response = resource.path("replications")
+        Response response = resource.path(REPLICATIONS)
                 .request()
                 .get();
 
@@ -210,11 +229,11 @@ public class HttpClient implements Closeable {
      */
     public void createReplication(String source, String target) {
         JsonObject json = createObjectBuilder()
-                .add("source", source)
-                .add("target", target)
+                .add(SOURCE, source)
+                .add(TARGET, target)
                 .build();
 
-        ensureSuccess(resource.path("replications")
+        ensureSuccess(resource.path(REPLICATIONS)
                 .request()
                 .post(Entity.json(json)));
     }
@@ -226,9 +245,9 @@ public class HttpClient implements Closeable {
      * @param target Target repository.
      */
     public void dropReplication(String source, String target) {
-        ensureSuccess(resource.path("replications")
-                .queryParam("source", source)
-                .queryParam("target", target)
+        ensureSuccess(resource.path(REPLICATIONS)
+                .queryParam(SOURCE, source)
+                .queryParam(TARGET, target)
                 .request()
                 .delete());
     }
@@ -284,15 +303,15 @@ public class HttpClient implements Closeable {
                                                               newInputStream(filepath),
                                                               info.getLength())) {
             MultiPart multipart = new FormDataMultiPart()
-                    .bodyPart(new StreamDataBodyPart("content",
+                    .bodyPart(new StreamDataBodyPart(CONTENT,
                                                      inputStream,
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
             return result(resource.path("repositories/{name}/content/{hash}")
-                    .resolveTemplate("name", repository)
-                    .resolveTemplate("hash", info.getContent())
-                    .queryParam("txId", transactionId)
+                    .resolveTemplate(NAME, repository)
+                    .resolveTemplate(HASH, info.getContent())
+                    .queryParam(TX_ID, transactionId)
                     .request()
                     .put(entity(multipart, addBoundary(multipart.getMediaType()))));
         }
@@ -320,7 +339,7 @@ public class HttpClient implements Closeable {
     private CommandResult post(String repository, ContentInfo info) {
         return result(resource
                 .path("repositories/{name}/info")
-                .resolveTemplate("name", repository)
+                .resolveTemplate(NAME, repository)
                 .request()
                 .post(entity(write(info), MediaType.APPLICATION_JSON_TYPE)));
     }
@@ -334,17 +353,14 @@ public class HttpClient implements Closeable {
      */
     public CommandResult delete(String repository, Hash hash) {
         List<ContentInfo> head = getInfoHead(repository, hash);
-        if (head.isEmpty()) {
-            throw new RequestFailedException("This content is already deleted");
-        }
         if (isDeleted(head)) {
             throw new RequestFailedException("This content is already deleted");
         }
         return result(resource
                 .path("repositories/{name}/content/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", hash)
-                .queryParam("rev", Joiner.on('-').join(revisions(head)))
+                .resolveTemplate(NAME, repository)
+                .resolveTemplate(HASH, hash)
+                .queryParam(REV, Joiner.on('-').join(revisions(head)))
                 .request()
                 .delete());
     }
@@ -358,8 +374,8 @@ public class HttpClient implements Closeable {
      */
     public ContentInfoTree getInfoTree(String repository, Hash hash) {
         Response response = resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", hash)
+                .resolveTemplate(NAME, repository)
+                .resolveTemplate(HASH, hash)
                 .request()
                 .get();
 
@@ -379,9 +395,9 @@ public class HttpClient implements Closeable {
 
     private Response head(String repository, Hash hash) {
         return resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", hash)
-                .queryParam("rev", "head")
+                .resolveTemplate(NAME, repository)
+                .resolveTemplate(HASH, hash)
+                .queryParam(REV, HEAD)
                 .request()
                 .get();
     }
@@ -394,8 +410,8 @@ public class HttpClient implements Closeable {
      */
     public void get(String repository, Hash hash) {
         Response response = ensureSuccess(resource.path("repositories/{name}/content/{hash}")
-                .resolveTemplate("name", repository)
-                .resolveTemplate("hash", hash)
+                .resolveTemplate(NAME, repository)
+                .resolveTemplate(HASH, hash)
                 .request()
                 .get());
 
@@ -410,13 +426,13 @@ public class HttpClient implements Closeable {
     }
 
     private static Optional<String> fileName(Response response) {
-        String header = response.getHeaders().getFirst("Content-Disposition").toString();
+        String header = response.getHeaders().getFirst(CONTENT_DISPOSITION).toString();
         if (header == null || header.isEmpty()) {
             return Optional.absent();
         }
         for (String param : Splitter.on(';').trimResults().omitEmptyStrings().split(header)) {
             List<String> parts = Splitter.on('=').trimResults().omitEmptyStrings().splitToList(param);
-            if (parts.size() == 2 && parts.get(0).equalsIgnoreCase("filename")) {
+            if (parts.size() == 2 && parts.get(0).equalsIgnoreCase(FILENAME)) {
                 return Optional.of(parts.get(1));
             }
         }
@@ -434,10 +450,10 @@ public class HttpClient implements Closeable {
      */
     public List<IndexEntry> find(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/index")
-                .resolveTemplate("name", repository)
-                .queryParam("query", query)
-                .queryParam("from", from)
-                .queryParam("size", size)
+                .resolveTemplate(NAME, repository)
+                .queryParam(QUERY, query)
+                .queryParam(FROM, from)
+                .queryParam(SIZE, size)
                 .request()
                 .get();
 
@@ -455,10 +471,10 @@ public class HttpClient implements Closeable {
      */
     public List<ContentInfo> findInfo(String repository, String query, int from, int size) {
         Response response = resource.path("repositories/{name}/info")
-                .resolveTemplate("name", repository)
-                .queryParam("query", query)
-                .queryParam("from", from)
-                .queryParam("size", size)
+                .resolveTemplate(NAME, repository)
+                .queryParam(QUERY, query)
+                .queryParam(FROM, from)
+                .queryParam(SIZE, size)
                 .request()
                 .get();
 
@@ -476,10 +492,10 @@ public class HttpClient implements Closeable {
      */
     public List<Event> history(String repository, boolean asc, long from, int size) {
         Response response = resource.path("repositories/{name}/history")
-                .resolveTemplate("name", repository)
-                .queryParam("sort", asc ? "asc" : "desc")
-                .queryParam("from", from)
-                .queryParam("size", size)
+                .resolveTemplate(NAME, repository)
+                .queryParam(SORT, asc ? ASC : DESC)
+                .queryParam(FROM, from)
+                .queryParam(SIZE, size)
                 .request()
                 .get();
 

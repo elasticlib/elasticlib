@@ -27,6 +27,7 @@ public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
 
     private static final String JSON = "json";
     private static final String PLUS_JSON = "+json";
+    private static final String PRETTY = "pretty";
     @Context
     private UriInfo uriInfo;
 
@@ -65,7 +66,7 @@ public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
     private JsonWriterFactory writerFactory() {
         Map<String, Object> properties = new HashMap<>();
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        if (params.containsKey("pretty") && params.getFirst("pretty").equalsIgnoreCase("true")) {
+        if (params.containsKey(PRETTY) && params.getFirst(PRETTY).equalsIgnoreCase("true")) {
             properties.put(JsonGenerator.PRETTY_PRINTING, true);
         }
         return Json.createWriterFactory(properties);

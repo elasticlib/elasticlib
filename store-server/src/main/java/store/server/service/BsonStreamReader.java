@@ -8,6 +8,7 @@ import store.server.transaction.Input;
 
 class BsonStreamReader implements Closeable {
 
+    private static final String UNEXPECTED_END_OF_STREAM = "Unexpected end of stream";
     private static final int EOF = -1;
     private final Input input;
     private BsonReader next;
@@ -58,7 +59,7 @@ class BsonStreamReader implements Closeable {
             return 0;
         }
         if (bytes.length != 4) {
-            throw new IllegalStateException("Unexpected end of stream");
+            throw new IllegalStateException(UNEXPECTED_END_OF_STREAM);
         }
         return wrap(bytes)
                 .getInt();
@@ -67,7 +68,7 @@ class BsonStreamReader implements Closeable {
     private byte[] readBytes(int length) {
         byte[] bytes = new byte[length];
         if (input.read(bytes) != length) {
-            throw new IllegalStateException("Unexpected end of stream");
+            throw new IllegalStateException(UNEXPECTED_END_OF_STREAM);
         }
         return bytes;
     }

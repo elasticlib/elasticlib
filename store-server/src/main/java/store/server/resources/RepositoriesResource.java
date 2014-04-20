@@ -61,6 +61,22 @@ import store.server.service.Status;
 @Path("repositories")
 public class RepositoriesResource {
 
+    private static final String PATH = "path";
+    private static final String STARTED = "started";
+    private static final String NAME = "name";
+    private static final String HASH = "hash";
+    private static final String REV = "rev";
+    private static final String TX_ID = "txId";
+    private static final String HEAD = "head";
+    private static final String CONTENT = "content";
+    private static final String QUERY = "query";
+    private static final String SORT = "sort";
+    private static final String FROM = "from";
+    private static final String SIZE = "size";
+    private static final String ASC = "asc";
+    private static final String DESC = "desc";
+    private static final String DEFAULT_FROM = "0";
+    private static final String DEFAULT_SIZE = "20";
     @Inject
     private RepositoriesService repositoriesService;
     @Context
@@ -83,10 +99,10 @@ public class RepositoriesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createRepository(JsonObject json) {
-        if (!hasStringValue(json, "path")) {
+        if (!hasStringValue(json, PATH)) {
             throw new BadRequestException();
         }
-        java.nio.file.Path path = Paths.get(json.getString("path"));
+        java.nio.file.Path path = Paths.get(json.getString(PATH));
         repositoriesService.createRepository(path);
         return Response
                 .created(uriInfo.getAbsolutePathBuilder().path(path.getFileName().toString()).build())
@@ -104,11 +120,11 @@ public class RepositoriesResource {
     @PUT
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createRepository(@PathParam("name") String name, JsonObject json) {
-        if (!hasStringValue(json, "path")) {
+    public Response createRepository(@PathParam(NAME) String name, JsonObject json) {
+        if (!hasStringValue(json, PATH)) {
             throw new BadRequestException();
         }
-        repositoriesService.createRepository(Paths.get(json.getString("path")).resolve(name));
+        repositoriesService.createRepository(Paths.get(json.getString(PATH)).resolve(name));
         return Response.created(uriInfo.getRequestUri()).build();
     }
 
@@ -124,7 +140,7 @@ public class RepositoriesResource {
      */
     @DELETE
     @Path("{name}")
-    public Response dropRepository(@PathParam("name") String name) {
+    public Response dropRepository(@PathParam(NAME) String name) {
         repositoriesService.dropRepository(name);
         return Response.ok().build();
     }
@@ -147,11 +163,11 @@ public class RepositoriesResource {
     @POST
     @Path("{name}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateRepository(@PathParam("name") String name, JsonObject json) {
-        if (!hasBooleanValue(json, "started")) {
+    public Response updateRepository(@PathParam(NAME) String name, JsonObject json) {
+        if (!hasBooleanValue(json, STARTED)) {
             throw new BadRequestException();
         }
-        if (json.getBoolean("started")) {
+        if (json.getBoolean(STARTED)) {
             repository(name).start();
         } else {
             repository(name).stop();
@@ -194,12 +210,12 @@ public class RepositoriesResource {
     @GET
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getRepository(@PathParam("name") String name) {
+    public JsonObject getRepository(@PathParam(NAME) String name) {
         Status status = repository(name).getStatus();
         return Json.createObjectBuilder()
-                .add("name", name)
-                .add("path", status.getPath().toString())
-                .add("started", status.isStarted())
+                .add(NAME, name)
+                .add(PATH, status.getPath().toString())
+                .add(STARTED, status.isStarted())
                 .build();
     }
 
@@ -222,7 +238,7 @@ public class RepositoriesResource {
     @POST
     @Path("{name}/info")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response postInfo(@PathParam("name") String name, JsonObject json) {
+    public Response postInfo(@PathParam(NAME) String name, JsonObject json) {
         if (isValid(json, ContentInfo.class)) {
             return response(repository(name).addInfo(read(json, ContentInfo.class)));
         }
@@ -257,12 +273,12 @@ public class RepositoriesResource {
     @PUT
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response addContent(@PathParam("name") String name,
-                               @PathParam("hash") Hash hash,
-                               @QueryParam("txId") long transactionId,
+    public Response addContent(@PathParam(NAME) String name,
+                               @PathParam(HASH) Hash hash,
+                               @QueryParam(TX_ID) long transactionId,
                                FormDataMultipart formData) {
 
-        try (InputStream inputStream = formData.next("content").getAsInputStream()) {
+        try (InputStream inputStream = formData.next(CONTENT).getAsInputStream()) {
             return response(uriInfo.getAbsolutePath(), repository(name).addContent(transactionId, hash, inputStream));
 
         } catch (IOException e) {
@@ -291,9 +307,9 @@ public class RepositoriesResource {
     @DELETE
     @Path("{name}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response deleteContent(@PathParam("name") String name,
-                                  @QueryParam("rev") @DefaultValue("") String rev,
-                                  @PathParam("hash") Hash hash) {
+    public Response deleteContent(@PathParam(NAME) String name,
+                                  @QueryParam(REV) @DefaultValue("") String rev,
+                                  @PathParam(HASH) Hash hash) {
 
         return response(repository(name).deleteContent(hash, new TreeSet<>(parseRevisions(rev))));
     }
@@ -326,7 +342,7 @@ public class RepositoriesResource {
      */
     @GET
     @Path("{name}/content/{hash}")
-    public Response getContent(@PathParam("name") final String name, @PathParam("hash") final Hash hash) {
+    public Response getContent(@PathParam(NAME) final String name, @PathParam(HASH) final Hash hash) {
         while (true) {
             final Repository repository = repository(name);
             ResponseBuilder response = Response.ok(new StreamingOutput() {
@@ -387,14 +403,14 @@ public class RepositoriesResource {
      */
     @GET
     @Path("{name}/info/{hash}")
-    public JsonStructure getInfo(@PathParam("name") String name,
-                                 @PathParam("hash") Hash hash,
-                                 @QueryParam("rev") @DefaultValue("") String rev) {
+    public JsonStructure getInfo(@PathParam(NAME) String name,
+                                 @PathParam(HASH) Hash hash,
+                                 @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
             return write(repository(name).getInfoTree(hash));
         }
-        if (rev.equals("head")) {
+        if (rev.equals(HEAD)) {
             return writeAll(repository(name).getInfoHead(hash));
         }
         return writeAll(repository(name).getInfoRevisions(hash, parseRevisions(rev)));
@@ -425,18 +441,17 @@ public class RepositoriesResource {
      */
     @GET
     @Path("{name}/history")
-    public JsonArray history(@PathParam("name") String name,
-                             @QueryParam("sort") @DefaultValue("desc") String sort,
-                             @QueryParam("from") Long from,
-                             @QueryParam("size") @DefaultValue("20") int size) {
-
-        if (!sort.equals("asc") && !sort.equals("desc")) {
+    public JsonArray history(@PathParam(NAME) String name,
+                             @QueryParam(SORT) @DefaultValue(DESC) String sort,
+                             @QueryParam(FROM) Long from,
+                             @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
+        if (!sort.equals(ASC) && !sort.equals(DESC)) {
             throw new BadRequestException();
         }
         if (from == null) {
-            from = sort.equals("asc") ? 0 : Long.MAX_VALUE;
+            from = sort.equals(ASC) ? 0 : Long.MAX_VALUE;
         }
-        return writeAll(repository(name).history(sort.equals("asc"), from, size));
+        return writeAll(repository(name).history(sort.equals(ASC), from, size));
     }
 
     /**
@@ -458,10 +473,10 @@ public class RepositoriesResource {
     @GET
     @Path("{name}/index")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray find(@PathParam("name") String name,
-                          @QueryParam("query") String query,
-                          @QueryParam("from") @DefaultValue("0") int from,
-                          @QueryParam("size") @DefaultValue("20") int size) {
+    public JsonArray find(@PathParam(NAME) String name,
+                          @QueryParam(QUERY) String query,
+                          @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
+                          @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         return writeAll(repository(name).find(query, from, size));
     }
 
@@ -484,10 +499,10 @@ public class RepositoriesResource {
     @GET
     @Path("{name}/info")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray findInfo(@PathParam("name") String name,
-                              @QueryParam("query") String query,
-                              @QueryParam("from") @DefaultValue("0") int from,
-                              @QueryParam("size") @DefaultValue("20") int size) {
+    public JsonArray findInfo(@PathParam(NAME) String name,
+                              @QueryParam(QUERY) String query,
+                              @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
+                              @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
         Repository repository = repository(name);
         for (IndexEntry entry : repository.find(query, from, size)) {

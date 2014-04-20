@@ -25,6 +25,8 @@ import store.server.exception.WriteException;
  */
 public class Repository {
 
+    private static final String VOLUME = "volume";
+    private static final String INDEX = "index";
     private final Path path;
     private final ReplicationService replicationService;
     private final Volume volume;
@@ -58,8 +60,8 @@ public class Repository {
         String name = path.getFileName().toString();
         return new Repository(path,
                               replicationService,
-                              Volume.create(name, path.resolve("volume")),
-                              Index.create(name, path.resolve("index")));
+                              Volume.create(name, path.resolve(VOLUME)),
+                              Index.create(name, path.resolve(INDEX)));
     }
 
     private static boolean isEmptyDir(Path dir) throws IOException {
@@ -79,8 +81,8 @@ public class Repository {
         String name = path.getFileName().toString();
         return new Repository(path,
                               replicationService,
-                              Volume.open(name, path.resolve("volume")),
-                              Index.open(name, path.resolve("index")));
+                              Volume.open(name, path.resolve(VOLUME)),
+                              Index.open(name, path.resolve(INDEX)));
     }
 
     /**

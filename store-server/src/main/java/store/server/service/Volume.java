@@ -33,6 +33,10 @@ import store.server.transaction.TransactionManager;
  */
 class Volume {
 
+    private static final String TRANSACTIONS = "transactions";
+    private static final String HISTORY = "history";
+    private static final String INFO = "info";
+    private static final String CONTENT = "content";
     private static final Logger LOG = LoggerFactory.getLogger(Volume.class);
     private final String name;
     private final TransactionManager transactionManager;
@@ -68,15 +72,15 @@ class Volume {
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        final TransactionManager txManager = TransactionManager.create(path.resolve("transactions"));
+        final TransactionManager txManager = TransactionManager.create(path.resolve(TRANSACTIONS));
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
                 return new Volume(name,
                                   txManager,
-                                  HistoryManager.create(path.resolve("history")),
-                                  InfoManager.create(path.resolve("info")),
-                                  ContentManager.create(path.resolve("content")));
+                                  HistoryManager.create(path.resolve(HISTORY)),
+                                  InfoManager.create(path.resolve(INFO)),
+                                  ContentManager.create(path.resolve(CONTENT)));
             }
         });
     }
@@ -95,15 +99,15 @@ class Volume {
      * @return Opened volume.
      */
     public static Volume open(final String name, final Path path) {
-        final TransactionManager txManager = TransactionManager.open(path.resolve("transactions"));
+        final TransactionManager txManager = TransactionManager.open(path.resolve(TRANSACTIONS));
         return txManager.inTransaction(new Query<Volume>() {
             @Override
             public Volume apply() {
                 return new Volume(name,
                                   txManager,
-                                  HistoryManager.open(path.resolve("history")),
-                                  InfoManager.open(path.resolve("info")),
-                                  ContentManager.open(path.resolve("content")));
+                                  HistoryManager.open(path.resolve(HISTORY)),
+                                  InfoManager.open(path.resolve(INFO)),
+                                  ContentManager.open(path.resolve(CONTENT)));
             }
         });
     }

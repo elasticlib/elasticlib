@@ -23,6 +23,8 @@ import store.server.transaction.TransactionContext;
 
 class HistoryManager {
 
+    private static final String LATEST = "latest";
+    private static final String INDEX = "index";
     private static final int PAGE_SIZE = 8192;
     private final AtomicLong nextSeq;
     private final Path root;
@@ -31,8 +33,8 @@ class HistoryManager {
 
     private HistoryManager(Path root) {
         this.root = root;
-        latest = root.resolve("latest");
-        index = root.resolve("index");
+        latest = root.resolve(LATEST);
+        index = root.resolve(INDEX);
         nextSeq = new AtomicLong(initNextSeq());
     }
 
@@ -51,8 +53,8 @@ class HistoryManager {
     public static HistoryManager create(Path path) {
         try {
             Files.createDirectory(path);
-            Files.createFile(path.resolve("latest"));
-            Files.createFile(path.resolve("index"));
+            Files.createFile(path.resolve(LATEST));
+            Files.createFile(path.resolve(INDEX));
             return new HistoryManager(path);
 
         } catch (IOException e) {
@@ -62,8 +64,8 @@ class HistoryManager {
 
     public static HistoryManager open(Path path) {
         if (!Files.isDirectory(path) ||
-                !Files.exists(path.resolve("latest")) ||
-                !Files.exists(path.resolve("index"))) {
+                !Files.exists(path.resolve(LATEST)) ||
+                !Files.exists(path.resolve(INDEX))) {
             throw new InvalidRepositoryPathException();
         }
         return new HistoryManager(path);

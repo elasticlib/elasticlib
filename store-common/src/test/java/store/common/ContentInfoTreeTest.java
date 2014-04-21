@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -203,10 +204,7 @@ public class ContentInfoTreeTest {
             new Object[]{tree(a0), array(a0)},
             new Object[]{tree(a3, b2), array(a3, b2)},
             new Object[]{tree(a1, a2, a3), array(a3, a2, a1)},
-            new Object[]{tree(a0, a1, a2, a3), array(a3, a2, a1, a0)},
-            new Object[]{tree(a0, a1, a2, a3, b2), array(a3, b2, a2, a1, a0)},
-            new Object[]{tree(a0, a1, a2, a3, b2, a4), array(a4, a3, b2, a2, a1, a0)}
-        };
+            new Object[]{tree(a0, a1, a2, a3), array(a3, a2, a1, a0)},};
     }
 
     /**
@@ -218,6 +216,37 @@ public class ContentInfoTreeTest {
     @Test(dataProvider = "listTestDataProvider")
     public void listTest(ContentInfoTree tree, ContentInfo[] expected) {
         assertThat(tree.list()).containsExactly(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void listWithBranchesTest() {
+        List<ContentInfo> list = tree(a0, a1, a2, a3, b2, a4).list();
+
+        //     A4
+        //     | \
+        //     |  \
+        //     A3 |
+        //     |  B2
+        //     A2 |
+        //     |  /
+        //     A1
+        //     |
+        //     A0
+        //
+
+        assertOrder(list, a4, a3);
+        assertOrder(list, a3, a2);
+        assertOrder(list, a2, a1);
+        assertOrder(list, a1, a0);
+        assertOrder(list, a4, b2);
+        assertOrder(list, b2, a1);
+    }
+
+    private static <T> void assertOrder(List<T> list, T first, T second) {
+        assertThat(list.indexOf(first)).isLessThan(list.indexOf(second));
     }
 
     /**

@@ -189,47 +189,20 @@ public class ContentInfoTree implements Mappable {
      * @return A collection of revisions.
      */
     public List<ContentInfo> list() {
-        List<ContentInfo> list = new ArrayList<>();
-        List<ContentInfo> toAdd = new ArrayList<>();
-        Set<Hash> sorted = new HashSet<>();
-        Set<Hash> current = new HashSet<>();
-        Set<Hash> next = new HashSet<>();
-        current.addAll(head);
-        while (!current.isEmpty()) {
-            for (Hash rev : difference(current, sorted)) {
-                if (contains(rev)) {
-                    ContentInfo info = get(rev);
-                    toAdd.add(info);
-                    for (Hash parentRev : info.getParents()) {
-                        next.add(parentRev);
-                    }
+        List<ContentInfo> list = new ArrayList<>(nodes.values());
+        Collections.sort(list, new Comparator<ContentInfo>() {
+            @Override
+            public int compare(ContentInfo lhs, ContentInfo rhs) {
+                if (lhs.getParents().contains(rhs.getRevision())) {
+                    return -1;
                 }
+                if (rhs.getParents().contains(lhs.getRevision())) {
+                    return 1;
+                }
+                return 0;
             }
-            Collections.sort(toAdd, new TopologicalComparator());
-            moveAll(toAdd, list);
-            moveAll(current, sorted);
-            moveAll(next, current);
-        }
+        });
         return list;
-    }
-
-    private <T> void moveAll(Collection<T> src, Collection<T> dest) {
-        dest.addAll(src);
-        src.clear();
-    }
-
-    private final class TopologicalComparator implements Comparator<  ContentInfo> {
-
-        @Override
-        public int compare(ContentInfo info1, ContentInfo info2) {
-            if (ancestors(info1).contains(info2)) {
-                return -1;
-            }
-            if (ancestors(info2).contains(info1)) {
-                return 1;
-            }
-            return 0;
-        }
     }
 
     /**

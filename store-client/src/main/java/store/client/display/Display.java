@@ -1,5 +1,6 @@
 package store.client.display;
 
+import static com.google.common.base.Joiner.on;
 import com.google.common.collect.ImmutableMap;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -105,13 +106,17 @@ public class Display {
      * @param prompt Prompt to display (excluding actual prompt-separator).
      */
     public void setPrompt(String prompt) {
-        consoleReader.setPrompt(prompt + PROMPT);
+        if (config.isDisplayColor()) {
+            consoleReader.setPrompt(on("").join(Color.BOLD_GREEN, prompt, Color.BOLD_BLUE, PROMPT, Color.RESET));
+        } else {
+            consoleReader.setPrompt(prompt + PROMPT);
+        }
     }
 
     /**
      * Clear displayed prompt (excluding separator).
      */
     public void resetPrompt() {
-        consoleReader.setPrompt(PROMPT);
+        setPrompt("");
     }
 }

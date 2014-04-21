@@ -20,6 +20,7 @@ public class ClientConfig {
     private static final String DEFAULT_CONNECTION = "default.connection";
     private static final String DEFAULT_REPOSITORY = "default.repository";
     private static final String DISPLAY_FORMAT = "display.format";
+    private static final String DISPLAY_COLOR = "display.color";
     private static final String DISPLAY_PRETTY = "display.pretty";
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
@@ -29,6 +30,7 @@ public class ClientConfig {
             .set(DEFAULT_CONNECTION, "")
             .set(DEFAULT_REPOSITORY, "")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
+            .set(DISPLAY_COLOR, true)
             .set(DISPLAY_PRETTY, true)
             .set(DISPLAY_HTTP, false)
             .set(EDITOR, "");
@@ -112,6 +114,13 @@ public class ClientConfig {
     }
 
     /**
+     * @return If console output should be colored.
+     */
+    public boolean isDisplayColor() {
+        return extended.getBoolean(DISPLAY_COLOR);
+    }
+
+    /**
      * @return External editor to use.
      */
     public String getEditor() {
@@ -137,6 +146,7 @@ public class ClientConfig {
                 break;
 
             case DISPLAY_PRETTY:
+            case DISPLAY_COLOR:
             case DISPLAY_HTTP:
                 config = config.set(key, asBoolean(value));
                 break;

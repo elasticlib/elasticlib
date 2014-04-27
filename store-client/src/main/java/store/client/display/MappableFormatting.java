@@ -90,7 +90,7 @@ final class MappableFormatting {
         }
     }
 
-    private static Value formatValue(Value value) {
+    public static Value formatValue(Value value) {
         if (!FORMATTERS.containsKey(value.type())) {
             return value;
         }

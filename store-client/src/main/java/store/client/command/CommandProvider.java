@@ -27,6 +27,8 @@ final class CommandProvider {
                                                                          new Delete(),
                                                                          new Get(),
                                                                          new Info(),
+                                                                         new Head(),
+                                                                         new Tree(),
                                                                          new Find(),
                                                                          new History(),
                                                                          new Quit(),

@@ -10,6 +10,8 @@ import javax.json.stream.JsonGenerator;
 import jline.console.ConsoleReader;
 import store.client.config.ClientConfig;
 import static store.client.display.MappableFormatting.format;
+import store.common.ContentInfo;
+import store.common.ContentInfoTree;
 import store.common.Mappable;
 import store.common.json.JsonWriting;
 import store.common.value.Value;
@@ -75,6 +77,19 @@ public class Display {
      */
     public void print(Mappable mappable) {
         println(write(mappable));
+    }
+
+    /**
+     * Print a text-based representation of supplied tree.
+     *
+     * @param tree A content info tree.
+     */
+    public void printTree(ContentInfoTree tree) {
+        TreePrinter printer = new TreePrinter(2, new RevisionFormatter(config.isDisplayPretty()));
+        for (ContentInfo info : tree.list()) {
+            printer.add(info);
+        }
+        println(printer.print());
     }
 
     private String write(Mappable mappable) {

@@ -193,10 +193,10 @@ public class ContentInfoTree implements Mappable {
         Collections.sort(list, new Comparator<ContentInfo>() {
             @Override
             public int compare(ContentInfo lhs, ContentInfo rhs) {
-                if (lhs.getParents().contains(rhs.getRevision())) {
+                if (ancestors(lhs).contains(rhs)) {
                     return -1;
                 }
-                if (rhs.getParents().contains(lhs.getRevision())) {
+                if (ancestors(rhs).contains(lhs)) {
                     return 1;
                 }
                 return 0;

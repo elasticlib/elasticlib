@@ -9,6 +9,7 @@ import store.client.display.Display;
 import store.client.exception.QuitException;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
+import store.client.util.EscapingCompletionHandler;
 
 /**
  * Client starting.
@@ -39,6 +40,7 @@ public final class App {
             }
             CommandParser parser = new CommandParser(display, session, config);
             consoleReader.addCompleter(parser);
+            consoleReader.setCompletionHandler(new EscapingCompletionHandler());
             consoleReader.setExpandEvents(false);
 
             String buffer = consoleReader.readLine();

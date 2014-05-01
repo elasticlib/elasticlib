@@ -2,8 +2,7 @@ package store.client.command;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
-import static com.google.common.collect.Iterables.getLast;
-import static com.google.common.collect.Lists.newArrayList;
+import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
@@ -11,6 +10,9 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
+import store.client.tokenizing.Tokenizing;
+import static store.client.tokenizing.Tokenizing.argList;
+import static store.client.tokenizing.Tokenizing.isComplete;
 
 /**
  * Provide actual command implementations.
@@ -35,9 +37,9 @@ public final class CommandParser implements Completer {
     }
 
     /**
-     * Parse and execute supplied command-line buffer.
+     * Parse and execute supplied command line buffer.
      *
-     * @param buffer Command-line buffer.
+     * @param buffer Command line buffer.
      */
     public void execute(String buffer) {
         List<String> argList = argList(buffer);
@@ -79,55 +81,29 @@ public final class CommandParser implements Completer {
             return 0;
         }
         List<String> argList = argList(buffer);
-        if (buffer.isEmpty() || buffer.endsWith(" ")) {
+        boolean emptyArg = buffer.isEmpty() || (isComplete(buffer) && buffer.endsWith(" "));
+        if (emptyArg) {
+            argList = new ArrayList<>(argList);
             argList.add("");
         }
-        fillCandidates(candidates, argList);
-        return cursor(buffer, candidates, argList);
+        List<String> completions = completions(argList);
+        candidates.addAll(completions);
+        return emptyArg ? buffer.length() : Tokenizing.lastArgumentPosition(buffer);
     }
 
-    private void fillCandidates(List<CharSequence> candidates, List<String> argList) {
+    private List<String> completions(List<String> argList) {
         String firstArg = firstArg(argList);
         Optional<Command> commandOpt = CommandProvider.command(firstArg);
-        if (commandOpt.isPresent()) {
-            if (argList.size() == 1) {
-                candidates.add(" ");
-            } else {
-                candidates.addAll(commandOpt.get().complete(session, params(argList)));
-            }
-        } else {
-            for (Command command : CommandProvider.commands()) {
-                if (command.name().startsWith(firstArg)) {
-                    candidates.add(command.name());
-                }
+        if (commandOpt.isPresent() && argList.size() > 1) {
+            return commandOpt.get().complete(session, params(argList));
+        }
+        List<String> completions = new ArrayList<>();
+        for (Command command : CommandProvider.commands()) {
+            if (command.name().startsWith(firstArg)) {
+                completions.add(command.name());
             }
         }
-    }
-
-    private static int cursor(String buffer, List<CharSequence> candidates, List<String> argList) {
-        if (candidates.isEmpty()) {
-            return 0;
-        }
-        if (buffer.isEmpty() || buffer.endsWith(" ") || (candidates.size() == 1 && candidates.get(0).equals(" "))) {
-            return buffer.length();
-        }
-        int i = 0;
-        for (String arg : argList) {
-            i = buffer.indexOf(arg, i) + arg.length();
-        }
-        return i - getLast(argList).length();
-    }
-
-    private static List<String> argList(String buffer) {
-        String trimmed = buffer.trim();
-        if (trimmed.startsWith("!")) {
-            trimmed = "! " + trimmed.substring(1);
-        }
-        return newArrayList(Splitter
-                .on(" ")
-                .trimResults()
-                .omitEmptyStrings()
-                .split(trimmed));
+        return completions;
     }
 
     private static String firstArg(List<String> argList) {

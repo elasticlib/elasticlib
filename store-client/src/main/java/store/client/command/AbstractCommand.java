@@ -20,7 +20,6 @@ import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -239,9 +238,6 @@ abstract class AbstractCommand implements Command {
                 return input.startsWith(param);
             }
         }));
-        if (list.size() == 1 && list.get(0).equalsIgnoreCase(param)) {
-            return singletonList(" ");
-        }
         Collections.sort(list);
         return list;
     }

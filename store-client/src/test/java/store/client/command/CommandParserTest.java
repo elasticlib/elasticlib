@@ -42,14 +42,14 @@ public class CommandParserTest {
     public Object[][] dataProvider() {
         return new Object[][]{
             {"dr", asList("drop"), 0},
-            {"drop", asList(" "), 4},
+            {"drop", asList("drop"), 0},
             {"drop ", asList("replication", "repository"), 5},
             {"drop repo", asList("repository"), 5},
-            {"drop repository", asList(" "), 15},
+            {"drop repository", asList("repository"), 5},
             {"drop repository ", asList("primary", "secondary"), 16},
             {"drop repository p", asList("primary"), 16},
-            {"drop repository primary", asList(" "), 23},
-            {"drop repository primary ", asList(), 0},
+            {"drop repository primary", asList("primary"), 16},
+            {"drop repository primary ", asList(), 24},
             {"create repli", asList("replication"), 7}
         };
     }
@@ -66,7 +66,7 @@ public class CommandParserTest {
         List<CharSequence> actualCandidates = new ArrayList<>();
         int actualIndex = parser.complete(buffer, buffer.length(), actualCandidates);
 
-        assertThat(actualCandidates).isEqualTo(expectedCandidates);
-        assertThat(actualIndex).isEqualTo(expectedIndex);
+        assertThat(actualCandidates).as(buffer).isEqualTo(expectedCandidates);
+        assertThat(actualIndex).as(buffer).isEqualTo(expectedIndex);
     }
 }

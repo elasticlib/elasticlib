@@ -122,7 +122,40 @@ public class HttpClient implements Closeable {
         printingFilter.printHttpDialog(val);
     }
 
-    private static Response ensureSuccess(Response response) {
+    private static void ensureSuccess(Response response) {
+        try {
+            checkStatus(response);
+
+        } finally {
+            response.close();
+        }
+    }
+
+    private static <T extends Mappable> T read(Response response, Class<T> clazz) {
+        try {
+            JsonObject json = checkStatus(response).readEntity(JsonObject.class);
+            return JsonReading.read(json, clazz);
+
+        } finally {
+            response.close();
+        }
+    }
+
+    private static <T extends Mappable> List<T> readAll(Response response, Class<T> clazz) {
+        try {
+            JsonArray array = checkStatus(response).readEntity(JsonArray.class);
+            return JsonReading.readAll(array, clazz);
+
+        } finally {
+            response.close();
+        }
+    }
+
+    private static CommandResult result(Response response) {
+        return read(response, CommandResult.class);
+    }
+
+    private static Response checkStatus(Response response) {
         if (response.getStatus() >= 400) {
             if (response.hasEntity() && response.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 String reason = response.getStatusInfo().getReasonPhrase();
@@ -134,25 +167,11 @@ public class HttpClient implements Closeable {
         return response;
     }
 
-    private static <T extends Mappable> T read(Response response, Class<T> clazz) {
-        JsonObject json = ensureSuccess(response).readEntity(JsonObject.class);
-        return JsonReading.read(json, clazz);
-    }
-
-    private static <T extends Mappable> List<T> readAll(Response response, Class<T> clazz) {
-        JsonArray array = ensureSuccess(response).readEntity(JsonArray.class);
-        return JsonReading.readAll(array, clazz);
-    }
-
-    private static CommandResult result(Response response) {
-        return read(response, CommandResult.class);
-    }
-
     /**
      * Tests connection to current server. Fails if connection is down.
      */
     void testConnection() {
-        ensureSuccess(resource.request().get()).close();
+        ensureSuccess(resource.request().get());
     }
 
     /**
@@ -164,8 +183,7 @@ public class HttpClient implements Closeable {
         ensureSuccess(resource.path("repositories/{name}")
                 .resolveTemplate(NAME, name)
                 .request()
-                .get())
-                .close();
+                .get());
     }
 
     /**
@@ -319,10 +337,15 @@ public class HttpClient implements Closeable {
 
     private List<ContentInfo> headIfAny(String repository, Hash hash) {
         Response response = head(repository, hash);
-        if (response.getStatusInfo().getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
-            return emptyList();
+        try {
+            if (response.getStatusInfo().getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
+                return emptyList();
+            }
+            return readAll(response, ContentInfo.class);
+
+        } finally {
+            response.close();
         }
-        return readAll(response, ContentInfo.class);
     }
 
     /**
@@ -409,19 +432,24 @@ public class HttpClient implements Closeable {
      * @param hash Content hash.
      */
     public void get(String repository, Hash hash) {
-        Response response = ensureSuccess(resource.path("repositories/{name}/content/{hash}")
+        Response response = resource.path("repositories/{name}/content/{hash}")
                 .resolveTemplate(NAME, repository)
                 .resolveTemplate(HASH, hash)
                 .request()
-                .get());
+                .get();
 
-        Path path = Paths.get(fileName(response).or(hash.asHexadecimalString()));
-        try (InputStream inputStream = response.readEntity(InputStream.class);
-                OutputStream outputStream = new DefferedFileOutputStream(path)) {
-            copy(inputStream, outputStream);
+        try {
+            checkStatus(response);
+            Path path = Paths.get(fileName(response).or(hash.asHexadecimalString()));
+            try (InputStream inputStream = response.readEntity(InputStream.class);
+                    OutputStream outputStream = new DefferedFileOutputStream(path)) {
+                copy(inputStream, outputStream);
 
-        } catch (IOException e) {
-            throw new RequestFailedException(e);
+            } catch (IOException e) {
+                throw new RequestFailedException(e);
+            }
+        } finally {
+            response.close();
         }
     }
 

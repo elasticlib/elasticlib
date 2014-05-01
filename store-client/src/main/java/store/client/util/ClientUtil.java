@@ -15,6 +15,12 @@ public final class ClientUtil {
     private ClientUtil() {
     }
 
+    /**
+     * Safely parse supplied argument as a Hash.
+     *
+     * @param arg A command line argument.
+     * @return Parsed hash.
+     */
     public static Hash parseHash(String arg) {
         if (!arg.matches("[a-zA-Z0-9]{40}")) {
             throw new RequestFailedException("Invalid hash");

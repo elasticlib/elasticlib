@@ -39,6 +39,7 @@ class Tokenizer {
 
                 default:
                     builder.append(lexeme);
+                    break;
             }
         }
         flush();

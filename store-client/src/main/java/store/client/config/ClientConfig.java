@@ -22,6 +22,7 @@ public class ClientConfig {
     private static final String DISPLAY_FORMAT = "display.format";
     private static final String DISPLAY_COLOR = "display.color";
     private static final String DISPLAY_PRETTY = "display.pretty";
+    private static final String DISPLAY_PROGRESS = "display.progress";
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
     private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".store");
@@ -32,6 +33,7 @@ public class ClientConfig {
             .set(DISPLAY_FORMAT, Format.YAML.toString())
             .set(DISPLAY_COLOR, true)
             .set(DISPLAY_PRETTY, true)
+            .set(DISPLAY_PROGRESS, true)
             .set(DISPLAY_HTTP, false)
             .set(EDITOR, "");
     private Config extended;
@@ -100,6 +102,13 @@ public class ClientConfig {
     }
 
     /**
+     * @return If console output should be colored.
+     */
+    public boolean isDisplayColor() {
+        return extended.getBoolean(DISPLAY_COLOR);
+    }
+
+    /**
      * @return If displayed values should be nicely formatted.
      */
     public boolean isDisplayPretty() {
@@ -107,17 +116,17 @@ public class ClientConfig {
     }
 
     /**
+     * @return If progress status for long operations should be displayed.
+     */
+    public boolean isDisplayProgress() {
+        return extended.getBoolean(DISPLAY_PROGRESS);
+    }
+
+    /**
      * @return If HTTP dialog should be displayed.
      */
     public boolean isDisplayHttp() {
         return extended.getBoolean(DISPLAY_HTTP);
-    }
-
-    /**
-     * @return If console output should be colored.
-     */
-    public boolean isDisplayColor() {
-        return extended.getBoolean(DISPLAY_COLOR);
     }
 
     /**
@@ -145,8 +154,9 @@ public class ClientConfig {
                 config = config.set(key, checkFormat(value));
                 break;
 
-            case DISPLAY_PRETTY:
             case DISPLAY_COLOR:
+            case DISPLAY_PRETTY:
+            case DISPLAY_PROGRESS:
             case DISPLAY_HTTP:
                 config = config.set(key, asBoolean(value));
                 break;

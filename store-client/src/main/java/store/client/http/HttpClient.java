@@ -83,6 +83,7 @@ public class HttpClient implements Closeable {
     private static final String ASC = "asc";
     private static final String DESC = "desc";
     private final Display display;
+    private final ClientConfig config;
     private final Client client;
     private final WebTarget resource;
     private final PrintingFilter printingFilter;
@@ -96,6 +97,7 @@ public class HttpClient implements Closeable {
      */
     public HttpClient(String url, Display display, ClientConfig config) {
         this.display = display;
+        this.config = config;
         printingFilter = new PrintingFilter(display, config);
 
         Logger logger = Logger.getGlobal();
@@ -304,6 +306,7 @@ public class HttpClient implements Closeable {
 
     private Digest digest(Path filepath) throws IOException {
         try (InputStream inputStream = new LoggingInputStream(display,
+                                                              config,
                                                               "Computing content digest",
                                                               newInputStream(filepath),
                                                               size(filepath))) {
@@ -317,6 +320,7 @@ public class HttpClient implements Closeable {
                                      Path filepath) throws IOException {
 
         try (InputStream inputStream = new LoggingInputStream(display,
+                                                              config,
                                                               "Uploading content",
                                                               newInputStream(filepath),
                                                               info.getLength())) {

@@ -2,6 +2,7 @@ package store.client.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import store.client.config.ClientConfig;
 import store.client.display.Display;
 
 /**
@@ -11,6 +12,7 @@ class LoggingInputStream extends InputStream {
 
     private static final int EOF = -1;
     private final Display display;
+    private final ClientConfig config;
     private final String task;
     private InputStream inputStream;
     private final long length;
@@ -18,8 +20,9 @@ class LoggingInputStream extends InputStream {
     private int currentProgress;
     private boolean closed;
 
-    public LoggingInputStream(Display display, String task, InputStream inputStream, long length) {
+    public LoggingInputStream(Display display, ClientConfig config, String task, InputStream inputStream, long length) {
         this.display = display;
+        this.config = config;
         this.task = task;
         this.inputStream = inputStream;
         this.length = length;
@@ -30,7 +33,9 @@ class LoggingInputStream extends InputStream {
         int newProgress = (int) ((read * 100.0d) / length);
         if (newProgress != currentProgress) {
             currentProgress = newProgress;
-            display.print(task + " " + currentProgress + "%\r");
+            if (config.isDisplayProgress()) {
+                display.print(task + " " + currentProgress + "%\r");
+            }
         }
     }
 
@@ -86,13 +91,14 @@ class LoggingInputStream extends InputStream {
     @Override
     public void close() throws IOException {
         if (!closed) {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < task.length() + " 100%".length(); i++) {
-                builder.append(" ");
+            if (config.isDisplayProgress()) {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < task.length() + " 100%".length(); i++) {
+                    builder.append(" ");
+                }
+                builder.append('\r');
+                display.print(builder.toString());
             }
-            builder.append('\r');
-            display.print(builder.toString());
-
             inputStream.close();
         }
     }

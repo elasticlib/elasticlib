@@ -38,7 +38,7 @@ class Put extends AbstractCommand {
         String repository = session.getRepository();
         Path path = Directories.resolve(Paths.get(params.get(0)));
         if (!Files.exists(path)) {
-            throw new RequestFailedException("Does not exist");
+            throw new RequestFailedException(path + " does not exist");
         }
         if (!Files.isDirectory(path)) {
             CommandResult result = session.getClient().put(repository, path, Collections.<String, Value>emptyMap());

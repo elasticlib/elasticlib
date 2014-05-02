@@ -34,9 +34,9 @@ class Put extends AbstractCommand {
     }
 
     @Override
-    public void execute(final Display display, final Session session, ClientConfig config, List<String> params) {
-        final String repository = session.getRepository();
-        final Path path = Directories.resolve(Paths.get(params.get(0)));
+    public void execute(Display display, Session session, ClientConfig config, List<String> params) {
+        String repository = session.getRepository();
+        Path path = Directories.resolve(Paths.get(params.get(0)));
         if (!Files.exists(path)) {
             throw new RequestFailedException("Does not exist");
         }
@@ -49,27 +49,43 @@ class Put extends AbstractCommand {
             Files.walkFileTree(path,
                                EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                                Integer.MAX_VALUE,
-                               new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
-                    if (attributes.isRegularFile()) {
-                        Path relative = path.getParent().relativize(file);
-                        display.println("Processing: " + relative);
-                        try {
-                            Map<String, Value> metadata = ImmutableMap.of(Common.PATH.key(),
-                                                                          Value.of(relative.getParent().toString()));
-                            CommandResult result = session.getClient().put(repository, file, metadata);
-                            display.print(result);
+                               new PutFileVisitor(display, session, repository, path));
 
-                        } catch (RequestFailedException e) {
-                            display.print(e);
-                        }
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
         } catch (IOException e) {
             throw new RequestFailedException(e);
+        }
+    }
+
+    private static class PutFileVisitor extends SimpleFileVisitor<Path> {
+
+        private final Display display;
+        private final Session session;
+        private final String repository;
+        private final Path root;
+
+        public PutFileVisitor(Display display, Session session, String repository, Path path) {
+            this.display = display;
+            this.session = session;
+            this.repository = repository;
+            root = path.getParent();
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+            if (attributes.isRegularFile()) {
+                Path relative = root.relativize(file);
+                display.println("Processing: " + relative);
+                try {
+                    Map<String, Value> metadata = ImmutableMap.of(Common.PATH.key(),
+                                                                  Value.of(relative.getParent().toString()));
+                    CommandResult result = session.getClient().put(repository, file, metadata);
+                    display.print(result);
+
+                } catch (RequestFailedException e) {
+                    display.print(e);
+                }
+            }
+            return FileVisitResult.CONTINUE;
         }
     }
 }

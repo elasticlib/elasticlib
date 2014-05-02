@@ -23,7 +23,11 @@ public final class Properties {
         /**
          * Content type.
          */
-        CONTENT_TYPE;
+        CONTENT_TYPE,
+        /**
+         * File path (may be relative).
+         */
+        PATH;
 
         @Override
         public String key() {

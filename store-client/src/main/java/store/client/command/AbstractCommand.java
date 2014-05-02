@@ -278,9 +278,6 @@ abstract class AbstractCommand implements Command {
         if (!candidate.startsWith(workingDirectory())) {
             return candidate.toString();
         }
-        if (workingDirectory().equals(Paths.get("/"))) {
-            return candidate.toString().substring(1);
-        }
-        return candidate.toString().substring(workingDirectory().toString().length() + 1);
+        return workingDirectory().relativize(candidate).toString();
     }
 }

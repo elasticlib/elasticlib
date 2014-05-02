@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import static java.util.Collections.emptyList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.json.Json.createObjectBuilder;
@@ -57,6 +58,7 @@ import store.common.hash.Hash;
 import store.common.json.JsonReading;
 import static store.common.json.JsonWriting.write;
 import static store.common.metadata.MetadataUtil.metadata;
+import store.common.value.Value;
 
 /**
  * HTTP Client.
@@ -277,9 +279,10 @@ public class HttpClient implements Closeable {
      *
      * @param repository Repository name.
      * @param filepath Content path (from client perspective).
+     * @param metadata Optional additionnal metadata to add to content info.
      * @return Actual command result.
      */
-    public CommandResult put(String repository, Path filepath) {
+    public CommandResult put(String repository, Path filepath, Map<String, Value> metadata) {
         try {
             Digest digest = digest(filepath);
             List<ContentInfo> head = headIfAny(repository, digest.getHash());
@@ -291,6 +294,7 @@ public class HttpClient implements Closeable {
                     .withLength(digest.getLength())
                     .withParents(revisions(head))
                     .withMetadata(metadata(filepath))
+                    .withMetadata(metadata)
                     .computeRevisionAndBuild();
 
             CommandResult firstStepResult = post(repository, info);

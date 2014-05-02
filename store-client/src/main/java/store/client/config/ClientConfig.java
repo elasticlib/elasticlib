@@ -5,9 +5,9 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import store.client.exception.RequestFailedException;
+import store.client.file.Directories;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import store.common.config.ConfigReadWrite;
@@ -25,8 +25,7 @@ public class ClientConfig {
     private static final String DISPLAY_PROGRESS = "display.progress";
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
-    private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".store");
-    private static final Path CONFIG_PATH = HOME_PATH.resolve("config.yml");
+    private static final Path CONFIG_PATH = Directories.home().resolve("config.yml");
     private static final Config DEFAULT = new Config()
             .set(DEFAULT_CONNECTION, "")
             .set(DEFAULT_REPOSITORY, "")
@@ -224,7 +223,7 @@ public class ClientConfig {
             return;
         }
         try {
-            Files.createDirectories(HOME_PATH);
+            Files.createDirectories(Directories.home());
 
         } catch (IOException e) {
             throw new RequestFailedException(e);

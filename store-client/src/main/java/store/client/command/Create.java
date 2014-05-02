@@ -8,6 +8,7 @@ import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
+import store.client.file.Directories;
 import store.client.http.Session;
 
 class Create extends AbstractCommand {
@@ -27,7 +28,7 @@ class Create extends AbstractCommand {
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
-                session.getClient().createRepository(Paths.get(params.get(1)));
+                session.getClient().createRepository(Directories.resolve(Paths.get(params.get(1))));
                 break;
 
             case REPLICATION:

@@ -22,6 +22,10 @@ enum Type {
      */
     PATH,
     /**
+     * A file-system directory.
+     */
+    DIRECTORY,
+    /**
      * A repository name.
      */
     REPOSITORY,

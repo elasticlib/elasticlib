@@ -6,7 +6,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
+import store.client.file.Directories;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.parseHash;
@@ -28,8 +28,6 @@ import store.common.yaml.YamlReading;
 import store.common.yaml.YamlWriting;
 
 class Update extends AbstractCommand {
-
-    private static final Path HOME_PATH = Paths.get(System.getProperty("user.home"), ".store");
 
     Update() {
         super(Category.REPOSITORY, Type.HASH);
@@ -62,8 +60,8 @@ class Update extends AbstractCommand {
 
     private static ContentInfo update(String editor, List<ContentInfo> head) {
         try {
-            Files.createDirectories(HOME_PATH);
-            Path tmp = Files.createTempFile(HOME_PATH, "tmp", ".yml").toAbsolutePath();
+            Files.createDirectories(Directories.home());
+            Path tmp = Files.createTempFile(Directories.home(), "tmp", ".yml").toAbsolutePath();
             try {
                 write(head, tmp);
                 new ProcessBuilder(editor, tmp.toString()).start().waitFor();

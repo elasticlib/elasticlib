@@ -31,6 +31,8 @@ final class CommandProvider {
                                                                          new Tree(),
                                                                          new Find(),
                                                                          new History(),
+                                                                         new Cd(),
+                                                                         new Pwd(),
                                                                          new Quit(),
                                                                          new Help(),
                                                                          new OsCommand());

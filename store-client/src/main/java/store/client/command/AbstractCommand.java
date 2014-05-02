@@ -29,6 +29,8 @@ import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.REPOSITORY;
 import store.client.config.ClientConfig;
 import store.client.exception.RequestFailedException;
+import store.client.file.Directories;
+import static store.client.file.Directories.workingDirectory;
 import store.client.http.Session;
 import store.common.IndexEntry;
 import store.common.RepositoryDef;
@@ -172,7 +174,10 @@ abstract class AbstractCommand implements Command {
                     return completeCommand(param);
 
                 case PATH:
-                    return completePath(param);
+                    return completePath(param, false);
+
+                case DIRECTORY:
+                    return completePath(param, true);
 
                 default:
                     return emptyList();
@@ -242,27 +247,40 @@ abstract class AbstractCommand implements Command {
         return list;
     }
 
-    private static List<String> completePath(String param) {
-        Path path = Paths.get(param);
-        Path dir = Files.isDirectory(path) ? path : path.getParent();
-        if (dir == null) {
-            dir = path.isAbsolute() ? path.getRoot() : Paths.get(".");
-        }
-        String glob = Files.isDirectory(path) ? "*" : path.getFileName().toString() + "*";
+    private static List<String> completePath(String param, boolean directoriesOnly) {
         List<String> list = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
+        try (DirectoryStream<Path> stream = directoryStream(param)) {
             Iterator<Path> it = stream.iterator();
             while (it.hasNext()) {
                 Path candidate = it.next();
-                if (candidate.startsWith(Paths.get("."))) {
-                    list.add(candidate.toString().substring(2));
-                } else {
-                    list.add(candidate.toString());
+                if (directoriesOnly && !Files.isDirectory(candidate)) {
+                    continue;
                 }
+                list.add(asString(candidate));
             }
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
         return list;
+    }
+
+    private static DirectoryStream<Path> directoryStream(String param) throws IOException {
+        Path path = Directories.resolve(Paths.get(param));
+        Path dir = Files.isDirectory(path) ? path : path.getParent();
+        if (dir == null) {
+            dir = path.getRoot();
+        }
+        String glob = Files.isDirectory(path) ? "*" : path.getFileName().toString() + "*";
+        return Files.newDirectoryStream(dir, glob);
+    }
+
+    private static String asString(Path candidate) {
+        if (!candidate.startsWith(workingDirectory())) {
+            return candidate.toString();
+        }
+        if (workingDirectory().equals(Paths.get("/"))) {
+            return candidate.toString().substring(1);
+        }
+        return candidate.toString().substring(workingDirectory().toString().length() + 1);
     }
 }

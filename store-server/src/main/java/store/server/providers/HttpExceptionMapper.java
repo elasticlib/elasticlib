@@ -4,16 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.json.Json;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.*;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import store.server.exception.BadRequestException;
+import store.server.exception.ConflictException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryNotStartedException;
-import store.server.exception.ConflictException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
 import store.server.exception.TransactionNotFoundException;
@@ -57,9 +58,23 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
 
     @Override
     public Response toResponse(ServerException exception) {
-        return Response
-                .status(of(exception))
-                .entity(Json.createObjectBuilder().add("error", exception.getMessage()).build())
+        ResponseBuilder builder = Response.status(of(exception));
+        String message = message(exception);
+        if (message.isEmpty()) {
+            return builder.build();
+        }
+        return builder
+                .entity(Json.createObjectBuilder().add("error", message).build())
                 .build();
+    }
+
+    private static String message(Throwable exception) {
+        if (exception.getMessage() != null && !exception.getMessage().isEmpty()) {
+            return exception.getMessage();
+        }
+        if (exception.getCause() != null) {
+            return message(exception.getCause());
+        }
+        return "";
     }
 }

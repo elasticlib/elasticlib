@@ -13,7 +13,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
-import store.client.file.Directories;
+import store.client.util.Directories;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.parseHash;

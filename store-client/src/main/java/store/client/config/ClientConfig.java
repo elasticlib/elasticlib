@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import store.client.exception.RequestFailedException;
-import store.client.file.Directories;
+import store.client.util.Directories;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import store.common.config.ConfigReadWrite;

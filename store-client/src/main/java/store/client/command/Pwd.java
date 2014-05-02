@@ -3,7 +3,7 @@ package store.client.command;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.file.Directories;
+import store.client.util.Directories;
 import store.client.http.Session;
 
 class Pwd extends AbstractCommand {

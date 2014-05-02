@@ -8,7 +8,7 @@ import static store.client.command.AbstractCommand.REPLICATION;
 import static store.client.command.AbstractCommand.REPOSITORY;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.file.Directories;
+import store.client.util.Directories;
 import store.client.http.Session;
 
 class Create extends AbstractCommand {

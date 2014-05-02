@@ -1,4 +1,4 @@
-package store.client.file;
+package store.client.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,7 +10,8 @@ import store.client.exception.RequestFailedException;
  */
 public final class Directories {
 
-    private static final Path HOME = Paths.get(System.getProperty("user.home"), ".store");
+    private static final Path USER_HOME = Paths.get(System.getProperty("user.home"));
+    private static final Path HOME = USER_HOME.resolve(".store");
     private static Path workingDirectory = Paths.get(".").toAbsolutePath().normalize();
 
     private Directories() {
@@ -50,7 +51,7 @@ public final class Directories {
      * Change current working directory to the user home directory.
      */
     public static void changeToUserHome() {
-        workingDirectory = Paths.get(System.getProperty("user.home"));
+        workingDirectory = USER_HOME;
     }
 
     /**

@@ -13,11 +13,11 @@ import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
-import store.client.util.Directories;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.parseHash;
 import static store.client.util.ClientUtil.revisions;
+import static store.client.util.Directories.home;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -60,8 +60,8 @@ class Update extends AbstractCommand {
 
     private static ContentInfo update(String editor, List<ContentInfo> head) {
         try {
-            Files.createDirectories(Directories.home());
-            Path tmp = Files.createTempFile(Directories.home(), "tmp", ".yml").toAbsolutePath();
+            Files.createDirectories(home());
+            Path tmp = Files.createTempFile(home(), "tmp", ".yml");
             try {
                 write(head, tmp);
                 new ProcessBuilder(editor, tmp.toString()).start().waitFor();

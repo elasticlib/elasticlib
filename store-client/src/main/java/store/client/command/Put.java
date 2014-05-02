@@ -5,8 +5,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.util.Directories;
 import store.client.http.Session;
+import store.client.util.Directories;
 import store.common.CommandResult;
 
 class Put extends AbstractCommand {

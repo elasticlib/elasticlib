@@ -29,9 +29,9 @@ import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.REPOSITORY;
 import store.client.config.ClientConfig;
 import store.client.exception.RequestFailedException;
+import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
-import store.client.http.Session;
 import store.common.IndexEntry;
 import store.common.RepositoryDef;
 

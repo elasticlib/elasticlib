@@ -4,8 +4,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.util.Directories;
 import store.client.http.Session;
+import static store.client.util.Directories.changeToUserHome;
+import static store.client.util.Directories.changeWorkingDirectory;
 
 class Cd extends AbstractCommand {
 
@@ -20,10 +21,10 @@ class Cd extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        if (params.isEmpty() || params.get(0).equals("~")) {
-            Directories.changeToUserHome();
+        if (params.get(0).equals("~")) {
+            changeToUserHome();
             return;
         }
-        Directories.changeWorkingDirectory(Paths.get(params.get(0)));
+        changeWorkingDirectory(Paths.get(params.get(0)));
     }
 }

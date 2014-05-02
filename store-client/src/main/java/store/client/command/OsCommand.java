@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.util.Directories;
 import store.client.http.Session;
+import static store.client.util.Directories.workingDirectory;
 
 class OsCommand implements Command {
 
@@ -47,7 +47,7 @@ class OsCommand implements Command {
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         try {
             Process process = new ProcessBuilder(params)
-                    .directory(Directories.workingDirectory().toFile())
+                    .directory(workingDirectory().toFile())
                     .start();
 
             try (BufferedReader out = reader(process.getInputStream());

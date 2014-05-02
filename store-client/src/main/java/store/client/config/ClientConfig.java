@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import store.client.exception.RequestFailedException;
-import store.client.util.Directories;
+import static store.client.util.Directories.home;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import store.common.config.ConfigReadWrite;
@@ -25,7 +25,7 @@ public class ClientConfig {
     private static final String DISPLAY_PROGRESS = "display.progress";
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
-    private static final Path CONFIG_PATH = Directories.home().resolve("config.yml");
+    private static final Path CONFIG_PATH = home().resolve("config.yml");
     private static final Config DEFAULT = new Config()
             .set(DEFAULT_CONNECTION, "")
             .set(DEFAULT_REPOSITORY, "")
@@ -223,7 +223,7 @@ public class ClientConfig {
             return;
         }
         try {
-            Files.createDirectories(Directories.home());
+            Files.createDirectories(home());
 
         } catch (IOException e) {
             throw new RequestFailedException(e);

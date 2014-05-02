@@ -39,7 +39,7 @@ public final class Directories {
     public static void changeWorkingDirectory(Path path) {
         Path absolute = resolve(path);
         if (!Files.exists(absolute)) {
-            throw new RequestFailedException("Does not exists");
+            throw new RequestFailedException("Does not exist");
         }
         if (!Files.isDirectory(absolute)) {
             throw new RequestFailedException("Not a directory");

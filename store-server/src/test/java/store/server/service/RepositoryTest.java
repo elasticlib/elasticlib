@@ -28,7 +28,7 @@ import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.exception.ConflictException;
-import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 
 /**
@@ -78,7 +78,7 @@ public class RepositoryTest {
         repositoriesService.createRepository(betaPath);
 
         assertThat(repositoriesService.listRepositoryDefs()).containsExactly(new RepositoryDef(ALPHA, alphaPath),
-                                                                            new RepositoryDef(BETA, betaPath));
+                                                                             new RepositoryDef(BETA, betaPath));
         assertThat(repository(ALPHA).history(true, 0, 10)).isEmpty();
         assertThat(repository(BETA).history(true, 0, 10)).isEmpty();
     }
@@ -243,10 +243,10 @@ public class RepositoryTest {
     /**
      * Test.
      */
-    @Test(dependsOnGroups = DELETE, expectedExceptions = RepositoryNotStartedException.class)
-    public void stopTest() {
+    @Test(dependsOnGroups = DELETE, expectedExceptions = RepositoryClosedException.class)
+    public void closeTest() {
         Repository alpha = repository(ALPHA);
-        alpha.stop();
+        repositoriesService.closeRepository(ALPHA);
         alpha.getInfoTree(UNKNOWN_HASH);
     }
 

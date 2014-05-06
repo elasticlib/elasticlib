@@ -39,6 +39,7 @@ public class Repository {
         this.volume = volume;
         this.index = index;
         agent = new IndexingAgent(volume, index);
+        agent.start();
     }
 
     /**
@@ -100,26 +101,12 @@ public class Repository {
     }
 
     /**
-     * @return The status of this repository.
+     * Close this repository, releasing underlying resources. Does nothing if it already closed. Any latter operation
+     * will fail.
      */
-    public Status getStatus() {
-        return new Status(path, volume.isStarted());
-    }
-
-    /**
-     * Start this repository. Does nothing if it is already started.
-     */
-    public void start() {
-        volume.start();
-        replicationService.start(getName());
-    }
-
-    /**
-     * Stop this repository. Does nothing if it is already stopped.
-     */
-    public void stop() {
-        replicationService.stop(getName());
-        volume.stop();
+    void close() {
+        agent.stop();
+        volume.close();
     }
 
     /**

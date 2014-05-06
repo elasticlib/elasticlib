@@ -113,35 +113,17 @@ class Volume {
     }
 
     /**
+     * Close this volume. Idempotent.
+     */
+    public void close() {
+        transactionManager.close();
+    }
+
+    /**
      * @return This volume name.
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Starts this volume. Does nothing if it is already started.
-     */
-    public void start() {
-        LOG.info("[{}] Starting", name);
-        transactionManager.start();
-    }
-
-    /**
-     * Stops this volume. Does nothing if it is already stopped.
-     */
-    public void stop() {
-        LOG.info("[{}] Stopping", name);
-        transactionManager.stop();
-    }
-
-    /**
-     * Checks if this volume is started. Other operations will fail if this is not the case.
-     *
-     * @return true if this volume is started.
-     */
-    public boolean isStarted() {
-        return transactionManager.isStarted();
     }
 
     /**

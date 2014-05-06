@@ -24,8 +24,7 @@ abstract class Agent {
     /**
      * Start this agent.
      */
-    public final synchronized void start() {
-        stoped = false;
+    public final void start() {
         signal();
     }
 
@@ -33,6 +32,7 @@ abstract class Agent {
      * Stop this agent.
      */
     public final synchronized void stop() {
+        signaled = false;
         stoped = true;
     }
 

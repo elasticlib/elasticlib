@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.xadisk.bridge.proxies.interfaces.Session;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import org.xadisk.filesystem.exceptions.XAApplicationException;
-import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.RepositoryClosedException;
 
 /**
  * A transaction context.
@@ -145,7 +145,7 @@ public abstract class TransactionContext {
         lock.lock();
         try {
             if (closed) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryClosedException();
             }
             if (suspended) {
                 throw new IllegalStateException();
@@ -194,7 +194,7 @@ public abstract class TransactionContext {
         lock.lock();
         try {
             if (closed) {
-                throw new RepositoryNotStartedException();
+                throw new RepositoryClosedException();
             }
             return function.apply();
 

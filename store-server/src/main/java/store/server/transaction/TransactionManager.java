@@ -14,7 +14,7 @@ import org.xadisk.bridge.proxies.interfaces.XAFileSystemProxy;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
 import store.common.CommandResult;
 import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.RepositoryNotStartedException;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.WriteException;
 import static store.server.transaction.TransactionContext.newTransactionContext;
 
@@ -28,7 +28,7 @@ public final class TransactionManager {
     private final TransactionCache cache = new TransactionCache();
     private final Deque<TransactionContext> txContexts = new ConcurrentLinkedDeque<>();
     private XAFileSystem filesystem;
-    private boolean started;
+    private boolean closed;
     private long nextId;
 
     private TransactionManager(Path path) {
@@ -46,7 +46,14 @@ public final class TransactionManager {
                 }
             }
         });
-        start();
+
+        try {
+            filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
+            filesystem.waitForBootup(-1);
+
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**
@@ -79,28 +86,11 @@ public final class TransactionManager {
     }
 
     /**
-     * Starts this manager. Does nothing if it is already started.
+     * Close this manager. Does nothing if it is already stopped. Any latter operation will fail.
      */
-    public synchronized void start() {
+    public void close() {
         try {
-            if (started) {
-                return;
-            }
-            filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
-            filesystem.waitForBootup(-1);
-            started = true;
-
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    /**
-     * Stops this manager. Does nothing if it is already stopped.
-     */
-    public synchronized void stop() {
-        try {
-            if (!started) {
+            if (closed) {
                 return;
             }
             while (!txContexts.isEmpty()) {
@@ -108,25 +98,16 @@ public final class TransactionManager {
             }
             cache.clear();
             filesystem.shutdown();
-            started = false;
+            closed = true;
 
         } catch (IOException e) {
             throw new WriteException(e);
         }
     }
 
-    /**
-     * Checks if this manager is started. Other operations will fail if this is not the case.
-     *
-     * @return true if this manager is started.
-     */
-    public synchronized boolean isStarted() {
-        return started;
-    }
-
     private synchronized TransactionContext createTransactionContext(boolean readOnly) {
-        if (!started) {
-            throw new RepositoryNotStartedException();
+        if (closed) {
+            throw new RepositoryClosedException();
         }
         Session session = filesystem.createSessionForLocalTransaction();
         TransactionContext txContext = newTransactionContext(this, session, readOnly, ++nextId);

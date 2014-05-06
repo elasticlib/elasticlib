@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import javax.inject.Inject;
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonStructure;
@@ -53,7 +52,6 @@ import store.server.exception.WriteException;
 import store.server.multipart.FormDataMultipart;
 import store.server.service.RepositoriesService;
 import store.server.service.Repository;
-import store.server.service.Status;
 
 /**
  * Repositories REST resource.
@@ -168,9 +166,9 @@ public class RepositoriesResource {
             throw new BadRequestException();
         }
         if (json.getBoolean(STARTED)) {
-            repository(name).start();
+            repositoriesService.openRepository(name);
         } else {
-            repository(name).stop();
+            repositoriesService.closeRepository(name);
         }
         return Response.ok().build();
     }
@@ -198,7 +196,6 @@ public class RepositoriesResource {
      * Output:<br>
      * - name (String): Repository name.<br>
      * - path (String): Repository path on file system.<br>
-     * - started (Boolean): If repository is started.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -211,12 +208,7 @@ public class RepositoriesResource {
     @Path("{name}")
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject getRepository(@PathParam(NAME) String name) {
-        Status status = repository(name).getStatus();
-        return Json.createObjectBuilder()
-                .add(NAME, name)
-                .add(PATH, status.getPath().toString())
-                .add(STARTED, status.isStarted())
-                .build();
+        return write(repositoriesService.getRepositoryDef(name));
     }
 
     /**

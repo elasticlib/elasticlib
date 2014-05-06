@@ -1,16 +1,16 @@
 package store.server.exception;
 
 /**
- * Thrown if an operation fails because repository is not started.
+ * Thrown if an operation fails because repository is closed.
  */
-public final class RepositoryNotStartedException extends ServerException {
+public final class RepositoryClosedException extends ServerException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructor.
      */
-    public RepositoryNotStartedException() {
+    public RepositoryClosedException() {
     }
 
     /**
@@ -18,12 +18,12 @@ public final class RepositoryNotStartedException extends ServerException {
      *
      * @param cause Cause exception.
      */
-    public RepositoryNotStartedException(Throwable cause) {
+    public RepositoryClosedException(Throwable cause) {
         initCause(cause);
     }
 
     @Override
     public String getMessage() {
-        return "Repository is not started";
+        return "Repository is closed";
     }
 }

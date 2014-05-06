@@ -91,11 +91,12 @@ public class RepositoriesService {
             repositories.put(repository.getName(), repository);
 
             for (ReplicationDef def : storageService.loadAll(ReplicationDef.class)) {
-                if (def.getSource().equals(name) || def.getDestination().equals(name)) {
-                    if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
-                        replicationService.createReplication(repositories.get(def.getSource()),
-                                                             repositories.get(def.getDestination()));
-                    }
+                if ((def.getSource().equals(name) || def.getDestination().equals(name)) &&
+                        repositories.containsKey(def.getSource()) &&
+                        repositories.containsKey(def.getDestination())) {
+
+                    replicationService.createReplication(repositories.get(def.getSource()),
+                                                         repositories.get(def.getDestination()));
                 }
             }
         } finally {

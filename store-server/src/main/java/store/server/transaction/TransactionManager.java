@@ -24,17 +24,24 @@ import static store.server.transaction.TransactionContext.newTransactionContext;
 public final class TransactionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionManager.class);
-    private final StandaloneFileSystemConfiguration config;
     private final TransactionCache cache = new TransactionCache();
     private final Deque<TransactionContext> txContexts = new ConcurrentLinkedDeque<>();
-    private XAFileSystem filesystem;
+    private final XAFileSystem filesystem;
     private boolean closed;
     private long nextId;
 
     private TransactionManager(Path path) {
-        String dir = path.toAbsolutePath().toString();
-        config = new StandaloneFileSystemConfiguration(dir, dir);
-        config.setTransactionTimeout(-1);
+        try {
+            String dir = path.toAbsolutePath().toString();
+            StandaloneFileSystemConfiguration config = new StandaloneFileSystemConfiguration(dir, dir);
+            config.setTransactionTimeout(-1);
+            filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
+            filesystem.waitForBootup(-1);
+
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+
         getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -46,14 +53,6 @@ public final class TransactionManager {
                 }
             }
         });
-
-        try {
-            filesystem = XAFileSystemProxy.bootNativeXAFileSystem(config);
-            filesystem.waitForBootup(-1);
-
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
     }
 
     /**

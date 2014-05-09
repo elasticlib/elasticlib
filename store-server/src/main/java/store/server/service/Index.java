@@ -67,11 +67,11 @@ class Index {
     private Index(String name, Path path) throws IOException {
         this.name = name;
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
-        analyzer = new StandardAnalyzer(Version.LUCENE_46);
+        analyzer = new StandardAnalyzer(Version.LUCENE_47);
     }
 
     private IndexWriter newIndexWriter() throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
         return new IndexWriter(directory, config);
     }
 

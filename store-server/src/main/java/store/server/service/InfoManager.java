@@ -1,64 +1,41 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.LockMode;
+import com.sleepycat.je.OperationStatus;
 import java.util.SortedSet;
 import store.common.CommandResult;
 import store.common.ContentInfo;
-import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.ContentInfoTree;
-import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.Operation;
+import store.common.bson.BsonReader;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
 import store.server.exception.ConflictException;
-import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
-import store.server.exception.WriteException;
-import store.server.transaction.Input;
-import store.server.transaction.Output;
-import store.server.transaction.TransactionContext;
+import store.server.storage.StorageManager;
+import static store.server.storage.StorageManager.currentTransaction;
 
 class InfoManager {
 
-    private static final int KEY_LENGTH = 2;
-    private final Path root;
+    private static final String INFO = "info";
+    private final Database database;
 
-    private InfoManager(final Path root) {
-        this.root = root;
-    }
-
-    public static InfoManager create(Path path) {
-        try {
-            Files.createDirectory(path);
-            for (String key : Hash.keySet(KEY_LENGTH)) {
-                Files.createDirectory(path.resolve(key));
-            }
-            return new InfoManager(path);
-
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-    }
-
-    public static InfoManager open(Path path) {
-        if (!Files.isDirectory(path)) {
-            throw new InvalidRepositoryPathException();
-        }
-        return new InfoManager(path);
+    public InfoManager(StorageManager storageManager) {
+        this.database = storageManager.openDatabase(INFO);
     }
 
     public CommandResult put(ContentInfo info) {
-        Optional<ContentInfoTree> existing = get(info.getContent());
+        Optional<ContentInfoTree> existing = load(info.getContent(), LockMode.RMW);
         ContentInfoTree updated;
         if (!existing.isPresent()) {
             if (!info.getParents().isEmpty()) {
                 throw new ConflictException();
             }
-            updated = new ContentInfoTreeBuilder()
+            updated = new ContentInfoTree.ContentInfoTreeBuilder()
                     .add(info)
                     .build();
         } else {
@@ -74,7 +51,7 @@ class InfoManager {
     }
 
     public CommandResult put(ContentInfoTree tree) {
-        Optional<ContentInfoTree> existing = get(tree.getContent());
+        Optional<ContentInfoTree> existing = load(tree.getContent(), LockMode.RMW);
         ContentInfoTree updated;
         if (!existing.isPresent()) {
             updated = tree;
@@ -88,7 +65,7 @@ class InfoManager {
     }
 
     public CommandResult delete(Hash hash, SortedSet<Hash> head) {
-        Optional<ContentInfoTree> existing = get(hash);
+        Optional<ContentInfoTree> existing = load(hash, LockMode.RMW);
         if (!existing.isPresent()) {
             throw new UnknownContentException();
         }
@@ -99,7 +76,7 @@ class InfoManager {
         if (existing.get().isDeleted()) {
             updated = existing.get();
         } else {
-            updated = existing.get().add(new ContentInfoBuilder()
+            updated = existing.get().add(new ContentInfo.ContentInfoBuilder()
                     .withContent(hash)
                     .withLength(existing.get().getLength())
                     .withParents(existing.get().getHead())
@@ -111,41 +88,33 @@ class InfoManager {
     }
 
     public Optional<ContentInfoTree> get(Hash hash) {
-        Path path = path(hash);
-        TransactionContext txContext = TransactionContext.current();
-        Optional<ContentInfoTree> existing;
-        if (!txContext.exists(path)) {
-            existing = Optional.absent();
-        } else {
-            try (Input input = txContext.openInput(path)) {
-                existing = Optional.of(load(input));
-            }
+        return load(hash, LockMode.DEFAULT);
+    }
+
+    private Optional<ContentInfoTree> load(Hash hash, LockMode lockMode) {
+        DatabaseEntry data = new DatabaseEntry();
+        OperationStatus status = database.get(currentTransaction(),
+                                              new DatabaseEntry(hash.getBytes()),
+                                              data,
+                                              lockMode);
+
+        if (status == OperationStatus.NOTFOUND) {
+            return Optional.absent();
         }
-        return existing;
+        return Optional.of(ContentInfoTree.fromMap(new BsonReader(data.getData()).asMap()));
     }
 
     private void save(ContentInfoTree tree) {
         if (!tree.getUnknownParents().isEmpty()) {
             throw new UnknownRevisionException();
         }
-        Path path = path(tree.getContent());
-        TransactionContext txContext = TransactionContext.current();
-        if (!txContext.exists(path)) {
-            txContext.create(path);
-        }
-        try (Output output = txContext.openOutput(path)) {
-            save(tree, output);
-        }
-    }
-
-    private Path path(Hash hash) {
-        return root
-                .resolve(hash.key(KEY_LENGTH))
-                .resolve(hash.asHexadecimalString());
+        database.put(currentTransaction(),
+                     new DatabaseEntry(tree.getContent().getBytes()),
+                     new DatabaseEntry(new BsonWriter().put(tree.toMap()).build()));
     }
 
     private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
-        long id = TransactionContext.current().getId();
+        long id = currentTransaction().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
             return CommandResult.noOp(id, after.getContent(), after.getHead());
@@ -167,26 +136,5 @@ class InfoManager {
             return Optional.of(Operation.DELETE);
         }
         return Optional.of(Operation.UPDATE);
-    }
-
-    private static void save(ContentInfoTree tree, Output output) {
-        for (ContentInfo info : tree.list()) {
-            byte[] bytes = new BsonWriter()
-                    .put(info.toMap())
-                    .build();
-
-            output.write(bytes);
-        }
-    }
-
-    private static ContentInfoTree load(Input input) {
-        ContentInfoTreeBuilder treeBuilder = new ContentInfoTreeBuilder();
-        try (BsonStreamReader streamReader = new BsonStreamReader(input)) {
-            while (streamReader.hasNext()) {
-                ContentInfo contentInfo = ContentInfo.fromMap(streamReader.next().asMap());
-                treeBuilder.add(contentInfo);
-            }
-        }
-        return treeBuilder.build();
     }
 }

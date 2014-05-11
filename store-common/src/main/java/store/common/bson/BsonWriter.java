@@ -174,6 +174,6 @@ public final class BsonWriter {
      * @return Built structure as a byte array.
      */
     public byte[] build() {
-        return arrayBuilder.prependSizeAndBuild();
+        return arrayBuilder.build();
     }
 }

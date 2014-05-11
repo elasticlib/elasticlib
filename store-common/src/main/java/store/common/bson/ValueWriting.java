@@ -5,6 +5,7 @@ import com.google.common.base.Function;
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import static store.common.bson.BinaryConstants.*;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -77,7 +78,7 @@ final class ValueWriting {
             @Override
             public byte[] apply(Value value) {
                 ByteArrayBuilder builder = new ByteArrayBuilder();
-                for (Map.Entry<String, Value> entry : value.asMap().entrySet()) {
+                for (Entry<String, Value> entry : value.asMap().entrySet()) {
                     builder.append(writeType(entry.getValue().type()))
                             .append(writeKey(entry.getKey()))
                             .append(writeValue(entry.getValue()));

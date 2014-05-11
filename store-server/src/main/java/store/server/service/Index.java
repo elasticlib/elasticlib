@@ -75,6 +75,14 @@ class Index {
         return new IndexWriter(directory, config);
     }
 
+    public void close() {
+        try {
+            directory.close();
+        } catch (IOException e) {
+            LOG.error("[" + name + "] Failed to close index", e);
+        }
+    }
+
     /**
      * Create a new index.
      *

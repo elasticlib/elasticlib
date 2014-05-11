@@ -22,7 +22,7 @@ public class Server {
 
     private final Config config;
     private final HttpServer httpServer;
-    private final Path home;
+    private final RepositoriesService repositoriesService;
 
     /**
      * Constructor.
@@ -31,7 +31,7 @@ public class Server {
      */
     public Server(Path home) {
         config = ServerConfig.load(home.resolve("config.yml"));
-        this.home = home;
+        repositoriesService = new RepositoriesService(home);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -44,7 +44,8 @@ public class Server {
         getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                httpServer.shutdownNow();
+                httpServer.shutdown();
+                repositoriesService.close();
             }
         });
     }
@@ -73,7 +74,7 @@ public class Server {
         return new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(new RepositoriesService(home)).to(RepositoriesService.class);
+                bind(repositoriesService).to(RepositoriesService.class);
             }
         };
     }

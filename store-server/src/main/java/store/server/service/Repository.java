@@ -106,6 +106,7 @@ public class Repository {
      */
     void close() {
         agent.stop();
+        index.close();
         volume.close();
     }
 

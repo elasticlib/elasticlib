@@ -13,6 +13,17 @@ class ReplicationService {
     private final Map<String, Map<String, ReplicationAgent>> agents = new HashMap<>();
 
     /**
+     * Stops all replications.
+     */
+    public synchronized void close() {
+        for (Map<String, ReplicationAgent> map : agents.values()) {
+            for (ReplicationAgent agent : map.values()) {
+                agent.stop();
+            }
+        }
+    }
+
+    /**
      * Create a new replication from source to destination. Does nothing if such a replication already exist.
      *
      * @param source Source repository.

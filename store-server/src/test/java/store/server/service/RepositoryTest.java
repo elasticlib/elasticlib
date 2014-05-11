@@ -63,6 +63,7 @@ public class RepositoryTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
+        repositoriesService.close();
         recursiveDelete(path);
     }
 

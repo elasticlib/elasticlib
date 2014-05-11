@@ -76,11 +76,7 @@ abstract class Agent {
         }
         clearSignal();
         if (events.isEmpty()) {
-            List<Event> chunk = history(true, cursor, 100);
-            events.addAll(chunk);
-            if (!chunk.isEmpty()) {
-                cursor = chunk.get(chunk.size() - 1).getSeq();
-            }
+            events.addAll(history(true, cursor, 100));
         }
         return Optional.fromNullable(events.pollFirst());
     }
@@ -104,6 +100,8 @@ abstract class Agent {
                         Event event = nextEvent.get();
                         if (!process(event)) {
                             events.addFirst(event);
+                        } else {
+                            cursor = event.getSeq() + 1;
                         }
                         nextEvent = next();
                     }

@@ -22,10 +22,9 @@ import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.storage.StorageManager;
 import store.server.transaction.Command;
 import store.server.transaction.Query;
-import store.server.transaction.TransactionContext;
-import store.server.transaction.TransactionManager;
 
 /**
  * Stores contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume
@@ -33,26 +32,20 @@ import store.server.transaction.TransactionManager;
  */
 class Volume {
 
-    private static final String TRANSACTIONS = "transactions";
-    private static final String HISTORY = "history";
-    private static final String INFO = "info";
+    private static final String STORAGE = "storage";
     private static final String CONTENT = "content";
-    private static final Logger LOG = LoggerFactory.getLogger(Volume.class);
     private final String name;
-    private final TransactionManager transactionManager;
-    private final HistoryManager historyManager;
+    private static final Logger LOG = LoggerFactory.getLogger(Volume.class);
+    private final StorageManager storageManager;
     private final InfoManager infoManager;
+    private final HistoryManager historyManager;
     private final ContentManager contentManager;
 
-    private Volume(String name,
-                   TransactionManager transactionManager,
-                   HistoryManager historyManager,
-                   InfoManager infoManager,
-                   ContentManager contentManager) {
+    private Volume(String name, Path path, ContentManager contentManager) {
         this.name = name;
-        this.transactionManager = transactionManager;
-        this.historyManager = historyManager;
-        this.infoManager = infoManager;
+        this.storageManager = new StorageManager(name, path.resolve(STORAGE));
+        this.infoManager = new InfoManager(storageManager);
+        this.historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
     }
 
@@ -63,26 +56,18 @@ class Volume {
      * @param path Volume home.
      * @return Created volume.
      */
-    public static Volume create(final String name, final Path path) {
+    public static Volume create(String name, Path path) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
                 throw new InvalidRepositoryPathException();
             }
+            Files.createDirectory(path.resolve(STORAGE));
+
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        final TransactionManager txManager = TransactionManager.create(path.resolve(TRANSACTIONS));
-        return txManager.inTransaction(new Query<Volume>() {
-            @Override
-            public Volume apply() {
-                return new Volume(name,
-                                  txManager,
-                                  HistoryManager.create(path.resolve(HISTORY)),
-                                  InfoManager.create(path.resolve(INFO)),
-                                  ContentManager.create(path.resolve(CONTENT)));
-            }
-        });
+        return new Volume(name, path, ContentManager.create(path.resolve(CONTENT)));
     }
 
     private static boolean isEmptyDir(Path dir) throws IOException {
@@ -98,25 +83,19 @@ class Volume {
      * @param path Volume home.
      * @return Opened volume.
      */
-    public static Volume open(final String name, final Path path) {
-        final TransactionManager txManager = TransactionManager.open(path.resolve(TRANSACTIONS));
-        return txManager.inTransaction(new Query<Volume>() {
-            @Override
-            public Volume apply() {
-                return new Volume(name,
-                                  txManager,
-                                  HistoryManager.open(path.resolve(HISTORY)),
-                                  InfoManager.open(path.resolve(INFO)),
-                                  ContentManager.open(path.resolve(CONTENT)));
-            }
-        });
+    public static Volume open(String name, Path path) {
+        if (!Files.isDirectory(path)) {
+            throw new InvalidRepositoryPathException();
+        }
+        return new Volume(name, path, ContentManager.open(path.resolve(CONTENT)));
     }
 
     /**
      * Close this volume. Idempotent.
      */
     public void close() {
-        transactionManager.close();
+        storageManager.close();
+        contentManager.close();
     }
 
     /**
@@ -135,7 +114,7 @@ class Volume {
      */
     public CommandResult addInfo(final ContentInfo contentInfo) {
         LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getContent(), contentInfo.getParents());
-        return transactionManager.inTransaction(new Command() {
+        return storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfo);
@@ -154,7 +133,7 @@ class Volume {
      */
     public CommandResult mergeTree(final ContentInfoTree contentInfoTree) {
         LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getContent());
-        return transactionManager.inTransaction(new Command() {
+        return storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
                 CommandResult result = infoManager.put(contentInfoTree);
@@ -174,7 +153,7 @@ class Volume {
      */
     public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
         LOG.info("[{}] Adding content {}", name, hash);
-        return transactionManager.inTransaction(transactionId, new Command() {
+        return storageManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
                 Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
@@ -199,7 +178,7 @@ class Volume {
      */
     public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
         LOG.info("[{}] Deleting content {}, with head {}", name, hash, head);
-        return transactionManager.inTransaction(new Command() {
+        return storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
                 CommandResult result = infoManager.delete(hash, head);
@@ -215,7 +194,7 @@ class Volume {
         }
         Operation operation = result.getOperation();
         if (operation == Operation.CREATE) {
-            TransactionContext.current().suspend();
+            storageManager.suspendCurrentTransaction();
             return;
         }
         if (operation == Operation.DELETE) {
@@ -232,7 +211,7 @@ class Volume {
      */
     public ContentInfoTree getInfoTree(final Hash hash) {
         LOG.info("[{}] Returning info tree {}", name, hash);
-        return transactionManager.inTransaction(new Query<ContentInfoTree>() {
+        return storageManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
             public ContentInfoTree apply() {
                 Optional<ContentInfoTree> tree = infoManager.get(hash);
@@ -277,7 +256,7 @@ class Volume {
      */
     public InputStream getContent(final Hash hash) {
         LOG.info("[{}] Returning content {}", name, hash);
-        return transactionManager.inTransaction(new Query<InputStream>() {
+        return storageManager.inTransaction(new Query<InputStream>() {
             @Override
             public InputStream apply() {
                 return contentManager.get(hash);
@@ -294,7 +273,7 @@ class Volume {
      */
     public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
         LOG.info("[{}] Returning content {} with head {}", name, hash, head);
-        return transactionManager.inTransaction(new Query<Optional<InputStream>>() {
+        return storageManager.inTransaction(new Query<Optional<InputStream>>() {
             @Override
             public Optional<InputStream> apply() {
                 Optional<ContentInfoTree> tree = infoManager.get(hash);
@@ -319,7 +298,7 @@ class Volume {
      */
     public List<Event> history(final boolean chronological, final long first, final int number) {
         LOG.info("[{}] Returning history{}, first {}, count {}", name, chronological ? "" : ", reverse", first, number);
-        return transactionManager.inTransaction(new Query<List<Event>>() {
+        return storageManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {
                 return historyManager.history(chronological, first, number);

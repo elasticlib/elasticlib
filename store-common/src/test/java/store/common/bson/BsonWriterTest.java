@@ -24,8 +24,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeNull() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x06, // length
-                                NULL,
+        byte[] expected = array(NULL,
                                 0x6E, 0x75, 0x6C, 0x6C, 0x00); // key (no value)
         byte[] actual = new BsonWriter()
                 .putNull("null")
@@ -39,8 +38,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeHash() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x1A, // length
-                                HASH,
+        byte[] expected = array(HASH,
                                 0x68, 0x61, 0x73, 0x68, 0x00, // key
                                 0x8D, 0x5F, 0x3C, 0x77, 0xE9, 0x4A, 0x0C, 0xAD, 0x3A, 0x32,
                                 0x34, 0x0D, 0x34, 0x21, 0x35, 0xF4, 0x3D, 0xBB, 0x7C, 0xBB); // value
@@ -57,8 +55,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeByteArray() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x0D, // length
-                                BINARY,
+        byte[] expected = array(BINARY,
                                 0x62, 0x79, 0x74, 0x65, 0x73, 0x00, // key
                                 0x00, 0x00, 0x00, 0x02,
                                 0x12, 0x34); // value
@@ -75,8 +72,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeBoolean() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x07, // length
-                                BOOLEAN,
+        byte[] expected = array(BOOLEAN,
                                 0x62, 0x6F, 0x6F, 0x6C, 0x00, // key
                                 0x01); // value
         byte[] actual = new BsonWriter()
@@ -91,8 +87,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeLong() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x0C, // length
-                                INTEGER,
+        byte[] expected = array(INTEGER,
                                 0x6C, 0x67, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
         byte[] actual = new BsonWriter()
@@ -107,8 +102,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeBigDecimal() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x10, // length
-                                DECIMAL,
+        byte[] expected = array(DECIMAL,
                                 0x64, 0x65, 0x63, 0x69, 0x6D, 0x61, 0x6C, 0x00, // key
                                 0x00, 0x00, 0x00, 0x03, 0x31, 0x2E, 0x31); // value
         byte[] actual = new BsonWriter()
@@ -123,8 +117,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeString() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x10, // length
-                                STRING,
+        byte[] expected = array(STRING,
                                 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x00, // key
                                 0x00, 0x00, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74); // value
         byte[] actual = new BsonWriter()
@@ -139,8 +132,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeDate() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x0E, // length
-                                DATE,
+        byte[] expected = array(DATE,
                                 0x64, 0x61, 0x74, 0x65, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
         byte[] actual = new BsonWriter()
@@ -155,8 +147,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeMap() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x2A, // length
-                                OBJECT,
+        byte[] expected = array(OBJECT,
                                 0x6D, 0x61, 0x70, 0x00, // key
                                 // value
                                 0x00, 0x00, 0x00, 0x21, // length
@@ -187,8 +178,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeEmptyMap() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x09, // length
-                                OBJECT,
+        byte[] expected = array(OBJECT,
                                 0x6D, 0x61, 0x70, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00); // value (length only)
 
@@ -204,8 +194,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeList() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x1C, // length
-                                ARRAY,
+        byte[] expected = array(ARRAY,
                                 0x6C, 0x69, 0x73, 0x74, 0x00, // key
                                 // value
                                 0x00, 0x00, 0x00, 0x12, // length
@@ -230,8 +219,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeEmptyList() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x0A, // length
-                                ARRAY,
+        byte[] expected = array(ARRAY,
                                 0x6C, 0x69, 0x73, 0x74, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00); // value (length only)
 
@@ -247,8 +235,7 @@ public class BsonWriterTest {
      */
     @Test
     public void writeValue() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x21, // length
-                                INTEGER,
+        byte[] expected = array(INTEGER,
                                 0x6E, 0x75, 0x6D, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                                 STRING,
@@ -272,8 +259,7 @@ public class BsonWriterTest {
      */
     @Test
     public void write() {
-        byte[] expected = array(0x00, 0x00, 0x00, 0x21, // length
-                                INTEGER,
+        byte[] expected = array(INTEGER,
                                 0x6E, 0x75, 0x6D, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, // entry
                                 STRING,

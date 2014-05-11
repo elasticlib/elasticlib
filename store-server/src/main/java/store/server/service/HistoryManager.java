@@ -1,238 +1,99 @@
 package store.server.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.sleepycat.je.Cursor;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.LockMode;
+import com.sleepycat.je.OperationStatus;
+import com.sleepycat.je.Sequence;
+import static java.lang.Math.min;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
+import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.concurrent.atomic.AtomicLong;
 import org.joda.time.Instant;
 import store.common.Event;
-import store.common.Event.EventBuilder;
 import store.common.Operation;
 import store.common.bson.BsonReader;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.WriteException;
-import store.server.transaction.Output;
-import store.server.transaction.TransactionContext;
+import store.server.storage.StorageManager;
 
 class HistoryManager {
 
-    private static final String LATEST = "latest";
-    private static final String INDEX = "index";
-    private static final int PAGE_SIZE = 8192;
-    private final AtomicLong nextSeq;
-    private final Path root;
-    private final Path latest;
-    private final Path index;
+    private static final String HISTORY = "history";
+    private final StorageManager storageManager;
+    private final Database database;
+    private final Sequence sequence;
 
-    private HistoryManager(Path root) {
-        this.root = root;
-        latest = root.resolve(LATEST);
-        index = root.resolve(INDEX);
-        nextSeq = new AtomicLong(initNextSeq());
-    }
-
-    private long initNextSeq() {
-        Deque<Event> latestEvents = loadPage(latest);
-        if (!latestEvents.isEmpty()) {
-            return latestEvents.getLast().getSeq() + 1;
-        }
-        Deque<IndexEntry> indexEntries = loadIndex();
-        if (!indexEntries.isEmpty()) {
-            return indexEntries.getLast().last + 1;
-        }
-        return 1;
-    }
-
-    public static HistoryManager create(Path path) {
-        try {
-            Files.createDirectory(path);
-            Files.createFile(path.resolve(LATEST));
-            Files.createFile(path.resolve(INDEX));
-            return new HistoryManager(path);
-
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-    }
-
-    public static HistoryManager open(Path path) {
-        if (!Files.isDirectory(path) ||
-                !Files.exists(path.resolve(LATEST)) ||
-                !Files.exists(path.resolve(INDEX))) {
-            throw new InvalidRepositoryPathException();
-        }
-        return new HistoryManager(path);
+    public HistoryManager(StorageManager storageManager) {
+        this.storageManager = storageManager;
+        this.database = storageManager.openDatabase(HISTORY);
+        this.sequence = storageManager.openSequence(HISTORY);
     }
 
     public void add(Operation operation, Hash content, SortedSet<Hash> revisions) {
-        TransactionContext txContext = TransactionContext.current();
-        Event event = new EventBuilder()
-                .withSeq(nextSeq.getAndIncrement())
+        long seq = sequence.get(null, 1);
+
+        Event event = new Event.EventBuilder()
+                .withSeq(seq)
                 .withContent(content)
                 .withRevisions(revisions)
                 .withTimestamp(new Instant())
                 .withOperation(operation)
                 .build();
 
-        byte[] bytes = new BsonWriter()
-                .put(event.toMap())
-                .build();
-
-        if (txContext.fileLength(latest) + bytes.length > PAGE_SIZE) {
-            Deque<Event> events = loadPage(latest);
-            IndexEntry lastEntry = loadIndex().peekLast();
-            String name = String.valueOf(lastEntry == null ? 1 : Integer.valueOf(lastEntry.name) + 1);
-
-            txContext.move(latest, root.resolve(name));
-            txContext.create(latest);
-            try (Output output = txContext.openOutput(index)) {
-                output.write(bytes(new IndexEntry(name,
-                                                  events.getFirst().getSeq(),
-                                                  events.getLast().getSeq())));
-            }
-        }
-        try (Output output = txContext.openOutput(latest)) {
-            output.write(bytes);
-        }
+        database.put(StorageManager.currentTransaction(),
+                     key(seq),
+                     new DatabaseEntry(new BsonWriter().put(event.toMap()).build()));
     }
 
     public List<Event> history(boolean chronological, long first, int number) {
-        Collector collector = new Collector(chronological, first, number);
-        if (chronological) {
-            return chronologicalHistory(collector);
-        }
-        return anteChronologicalHistory(collector);
-    }
-
-    private List<Event> chronologicalHistory(Collector collector) {
-        Deque<Event> latestEvents = loadPage(latest);
-        Deque<IndexEntry> entries = loadIndex();
-        while (!entries.isEmpty() && !collector.isFull()) {
-            IndexEntry entry = entries.removeFirst();
-            if (entry.last > collector.cursor) {
-                collector.addAll(loadPage(root.resolve(entry.name)));
-            }
-        }
-        collector.addAll(latestEvents);
-        return collector.getEvents();
-    }
-
-    private List<Event> anteChronologicalHistory(Collector collector) {
-        Deque<Event> latestEvents = loadPage(latest);
-        collector.addAll(latestEvents);
-        if (collector.isFull()) {
-            return collector.getEvents();
-        }
-        Deque<IndexEntry> entries = loadIndex();
-        while (!entries.isEmpty() && !collector.isFull()) {
-            IndexEntry entry = entries.removeLast();
-            if (entry.first < collector.cursor) {
-                collector.addAll(loadPage(root.resolve(entry.name)));
-            }
-        }
-        return collector.getEvents();
-    }
-
-    private static class Collector {
-
-        private final List<Event> events;
-        private final boolean chronological;
-        private long cursor;
-        private int remainder;
-
-        public Collector(boolean chronological, long first, int number) {
-            events = new ArrayList<>();
-            this.chronological = chronological;
-            this.cursor = first;
-            this.remainder = number;
-        }
-
-        public void addAll(Deque<Event> toAdd) {
-            while (!toAdd.isEmpty() && !isFull()) {
-                if (chronological) {
-                    Event event = toAdd.removeFirst();
-                    if (event.getSeq() > cursor) {
-                        cursor = event.getSeq();
-                        remainder--;
-                        events.add(event);
-                    }
-                } else {
-                    Event event = toAdd.removeLast();
-                    if (event.getSeq() < cursor) {
-                        cursor = event.getSeq();
-                        remainder--;
-                        events.add(event);
-                    }
+        try (Cursor cursor = storageManager.openCursor(database)) {
+            List<Event> events = new ArrayList<>(min(number, 1000));
+            DatabaseEntry key = key(first);
+            DatabaseEntry data = new DatabaseEntry();
+            if (cursor.getSearchKey(key, data, LockMode.DEFAULT) != OperationStatus.SUCCESS) {
+                key.setData(null);
+                if (!searchFirst(chronological, first, cursor, key, data)) {
+                    return emptyList();
                 }
             }
-        }
-
-        public long cursor() {
-            return cursor;
-        }
-
-        public boolean isFull() {
-            return remainder == 0;
-        }
-
-        public List<Event> getEvents() {
+            events.add(event(data));
+            while (events.size() < number && searchNext(chronological, cursor, key, data)) {
+                events.add(event(data));
+            }
             return events;
         }
     }
 
-    private Deque<Event> loadPage(Path path) {
-        Deque<Event> events = new LinkedList<>();
-        try (BsonStreamReader streamDecoder = new BsonStreamReader(TransactionContext.current().openInput(path))) {
-            while (streamDecoder.hasNext()) {
-                Event event = Event.fromMap(streamDecoder.next().asMap());
-                events.add(event);
-            }
+    private static boolean searchFirst(boolean chronological, long first,
+                                       Cursor cursor, DatabaseEntry key, DatabaseEntry data) {
+        if (chronological) {
+            return cursor.getFirst(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first <= seq(key);
+        } else {
+            return cursor.getLast(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first >= seq(key);
         }
-        return events;
     }
 
-    private Deque<IndexEntry> loadIndex() {
-        Deque<IndexEntry> entries = new LinkedList<>();
-        try (BsonStreamReader streamReader = new BsonStreamReader(TransactionContext.current().openInput(index))) {
-            while (streamReader.hasNext()) {
-                entries.add(readEntry(streamReader.next()));
-            }
+    private static boolean searchNext(boolean chronological, Cursor cursor, DatabaseEntry key, DatabaseEntry data) {
+        if (chronological) {
+            return cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS;
+        } else {
+            return cursor.getPrev(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS;
         }
-        return entries;
     }
 
-    private static byte[] bytes(IndexEntry entry) {
-        return new BsonWriter()
-                .put("name", entry.name)
-                .put("first", entry.first)
-                .put("last", entry.last)
-                .build();
+    private static DatabaseEntry key(long seq) {
+        return new DatabaseEntry(ByteBuffer.allocate(8).putLong(seq).array());
     }
 
-    private IndexEntry readEntry(BsonReader reader) {
-        String name = reader.getString("name");
-        long first = reader.getLong("first");
-        long last = reader.getLong("last");
-        return new IndexEntry(name, first, last);
+    private static long seq(DatabaseEntry entry) {
+        return ByteBuffer.wrap(entry.getData()).getLong();
     }
 
-    private class IndexEntry {
-
-        public final String name;
-        public final long first;
-        public final long last;
-
-        public IndexEntry(String name, long first, long last) {
-            this.name = name;
-            this.first = first;
-            this.last = last;
-        }
+    private static Event event(DatabaseEntry entry) {
+        return Event.fromMap(new BsonReader(entry.getData()).asMap());
     }
 }

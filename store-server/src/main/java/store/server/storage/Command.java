@@ -1,4 +1,4 @@
-package store.server.transaction;
+package store.server.storage;
 
 import store.common.CommandResult;
 

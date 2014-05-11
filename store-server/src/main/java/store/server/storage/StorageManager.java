@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
 import store.server.exception.RepositoryClosedException;
-import store.server.transaction.Command;
-import store.server.transaction.Query;
 
 /**
  * Provides persistent storage services build atop a Berkeley DB environment.

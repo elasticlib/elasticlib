@@ -22,9 +22,9 @@ import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.storage.Command;
+import store.server.storage.Query;
 import store.server.storage.StorageManager;
-import store.server.transaction.Command;
-import store.server.transaction.Query;
 
 /**
  * Stores contents with their metadata. Each volume also maintains an history log. All read/write operations on a volume

@@ -1,8 +1,5 @@
 package store.server.service;
 
-import com.google.common.base.Predicate;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.newArrayList;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -18,19 +15,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
-import store.server.exception.RepositoryAlreadyExistsException;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
-import store.server.exception.UnknownRepositoryException;
 import store.server.exception.WriteException;
+import store.server.storage.Procedure;
+import store.server.storage.Query;
+import store.server.storage.StorageManager;
 
 /**
  * Manage repositories and replication between them.
  */
 public class RepositoriesService {
 
+    private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final ReplicationService replicationService = new ReplicationService();
     private final StorageService storageService;
+    private final StorageManager storageManager;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<String, Repository> repositories = new HashMap<>();
 
@@ -40,15 +41,30 @@ public class RepositoriesService {
      * @param home The repositories service home directory.
      */
     public RepositoriesService(Path home) {
-        storageService = new StorageService(home);
-        for (RepositoryDef def : storageService.loadAll(RepositoryDef.class)) {
-            Repository repository = Repository.open(def.getPath(), replicationService);
-            repositories.put(repository.getName(), repository);
+        Path storage = home.resolve(STORAGE);
+        try {
+            if (!Files.exists(storage)) {
+                Files.createDirectory(storage);
+            }
+        } catch (IOException e) {
+            throw new WriteException(e);
         }
-        for (ReplicationDef def : storageService.loadAll(ReplicationDef.class)) {
-            replicationService.createReplication(repositories.get(def.getSource()),
-                                                 repositories.get(def.getDestination()));
-        }
+        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage);
+        storageService = new StorageService(storageManager);
+
+        storageManager.inTransaction(new Procedure() {
+            @Override
+            public void apply() {
+                for (RepositoryDef def : storageService.listRepositoryDefs()) {
+                    Repository repository = Repository.open(def.getPath(), replicationService);
+                    repositories.put(repository.getName(), repository);
+                }
+                for (ReplicationDef def : storageService.listReplicationDefs()) {
+                    replicationService.createReplication(repositories.get(def.getSource()),
+                                                         repositories.get(def.getDestination()));
+                }
+            }
+        });
     }
 
     /**
@@ -56,9 +72,16 @@ public class RepositoriesService {
      * already closed. Any latter operation will fail.
      */
     public void close() {
-        replicationService.close();
-        for (Repository repository : repositories.values()) {
-            repository.close();
+        lock.writeLock().lock();
+        try {
+            replicationService.close();
+            for (Repository repository : repositories.values()) {
+                repository.close();
+            }
+            storageManager.close();
+
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -67,18 +90,18 @@ public class RepositoriesService {
      *
      * @param path Repository home.
      */
-    public void createRepository(Path path) {
+    public void createRepository(final Path path) {
         LOG.info("Creating repository at {}", path);
         lock.writeLock().lock();
         try {
-            if (repositories.containsKey(path.getFileName().toString())) {
-                throw new RepositoryAlreadyExistsException();
-            }
-            Repository repository = Repository.create(path, replicationService);
-            RepositoryDef def = new RepositoryDef(repository.getName(), path);
-            storageService.add(RepositoryDef.class, def);
-            repositories.put(repository.getName(), repository);
-
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    String name = path.getFileName().toString();
+                    storageService.createRepositoryDef(new RepositoryDef(name, path));
+                    repositories.put(name, Repository.create(path, replicationService));
+                }
+            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -89,27 +112,32 @@ public class RepositoriesService {
      *
      * @param name Repository name.
      */
-    public void openRepository(String name) {
+    public void openRepository(final String name) {
         LOG.info("Opening repository {}", name);
         lock.writeLock().lock();
         try {
-            // First load definition to ensure that repository actually exists.
-            RepositoryDef repositoryDef = loadRepositoryDef(name);
-            if (repositories.containsKey(name)) {
-                return;
-            }
-            Repository repository = Repository.open(repositoryDef.getPath(), replicationService);
-            repositories.put(repository.getName(), repository);
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    // First load definition to ensure that repository actually exists.
+                    RepositoryDef repositoryDef = storageService.getRepositoryDef(name);
+                    if (repositories.containsKey(name)) {
+                        return;
+                    }
+                    Repository repository = Repository.open(repositoryDef.getPath(), replicationService);
+                    repositories.put(repository.getName(), repository);
 
-            for (ReplicationDef def : storageService.loadAll(ReplicationDef.class)) {
-                if ((def.getSource().equals(name) || def.getDestination().equals(name)) &&
-                        repositories.containsKey(def.getSource()) &&
-                        repositories.containsKey(def.getDestination())) {
+                    for (ReplicationDef def : storageService.listReplicationDefs()) {
+                        if ((def.getSource().equals(name) || def.getDestination().equals(name)) &&
+                                repositories.containsKey(def.getSource()) &&
+                                repositories.containsKey(def.getDestination())) {
 
-                    replicationService.createReplication(repositories.get(def.getSource()),
-                                                         repositories.get(def.getDestination()));
+                            replicationService.createReplication(repositories.get(def.getSource()),
+                                                                 repositories.get(def.getDestination()));
+                        }
+                    }
                 }
-            }
+            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -120,18 +148,22 @@ public class RepositoriesService {
      *
      * @param name Repository name.
      */
-    public void closeRepository(String name) {
+    public void closeRepository(final String name) {
         LOG.info("Closing repository {}", name);
         lock.writeLock().lock();
         try {
-            // Load definition to ensure that repository actually exists.
-            loadRepositoryDef(name);
-            if (!repositories.containsKey(name)) {
-                return;
-            }
-            replicationService.dropReplications(name);
-            repositories.remove(name).close();
-
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    // Load definition to ensure that repository actually exists.
+                    storageService.getRepositoryDef(name);
+                    if (!repositories.containsKey(name)) {
+                        return;
+                    }
+                    replicationService.dropReplications(name);
+                    repositories.remove(name).close();
+                }
+            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -146,23 +178,20 @@ public class RepositoriesService {
         LOG.info("Dropping repository {}", name);
         lock.writeLock().lock();
         try {
-            // First load definition to ensure that repository actually exists.
-            RepositoryDef repositoryDef = loadRepositoryDef(name);
-            if (!repositories.containsKey(name)) {
-                throw new UnknownRepositoryException();
-            }
-            List<ReplicationDef> replicationDefs = newArrayList(filter(storageService.loadAll(ReplicationDef.class),
-                                                                       new Predicate<ReplicationDef>() {
+            final Path path = storageManager.inTransaction(new Query<Path>() {
                 @Override
-                public boolean apply(ReplicationDef def) {
-                    return !def.getSource().equals(name) && !def.getDestination().equals(name);
+                public Path apply() {
+                    RepositoryDef def = storageService.getRepositoryDef(name);
+
+                    replicationService.dropReplications(name);
+                    repositories.remove(name).close();
+
+                    storageService.deleteRepositoryDef(name);
+                    storageService.deleteAllReplicationDefs(name);
+                    return def.getPath();
                 }
-            }));
-            replicationService.dropReplications(name);
-            repositories.remove(name).close();
-            storageService.saveAll(ReplicationDef.class, replicationDefs);
-            storageService.remove(RepositoryDef.class, repositoryDef);
-            recursiveDelete(repositoryDef.getPath());
+            });
+            recursiveDelete(path);
 
         } finally {
             lock.writeLock().unlock();
@@ -200,22 +229,26 @@ public class RepositoriesService {
      * @param source Source repository name.
      * @param destination Destination repository name.
      */
-    public void createReplication(String source, String destination) {
+    public void createReplication(final String source, final String destination) {
         LOG.info("Creating replication {}>{}", source, destination);
+        if (source.equals(destination)) {
+            throw new SelfReplicationException();
+        }
         lock.writeLock().lock();
         try {
-            if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
-                throw new UnknownRepositoryException();
-            }
-            if (source.equals(destination)) {
-                throw new SelfReplicationException();
-            }
-            ReplicationDef def = new ReplicationDef(source, destination);
-            if (!storageService.add(ReplicationDef.class, def)) {
-                return;
-            }
-            replicationService.createReplication(repositories.get(source), repositories.get(destination));
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    // Load definitions to ensure that repositories actually exist.
+                    storageService.getRepositoryDef(source);
+                    storageService.getRepositoryDef(destination);
 
+                    storageService.createReplicationDef(new ReplicationDef(source, destination));
+                    if (repositories.containsKey(source) && repositories.containsKey(destination)) {
+                        replicationService.createReplication(repositories.get(source), repositories.get(destination));
+                    }
+                }
+            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -227,19 +260,20 @@ public class RepositoriesService {
      * @param source Source repository name.
      * @param destination Destination repository name.
      */
-    public void dropReplication(String source, String destination) {
+    public void dropReplication(final String source, final String destination) {
         LOG.info("Dropping replication {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
-            if (!repositories.containsKey(source) || !repositories.containsKey(destination)) {
-                throw new UnknownRepositoryException();
-            }
-            ReplicationDef def = new ReplicationDef(source, destination);
-            if (!storageService.remove(ReplicationDef.class, def)) {
-                return;
-            }
-            replicationService.dropReplication(source, destination);
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    storageService.getRepositoryDef(source);
+                    storageService.getRepositoryDef(destination);
 
+                    storageService.deleteReplicationDef(source, destination);
+                    replicationService.dropReplication(source, destination);
+                }
+            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -254,8 +288,12 @@ public class RepositoriesService {
         LOG.info("Returning repository definitions");
         lock.readLock().lock();
         try {
-            return storageService.loadAll(RepositoryDef.class);
-
+            return storageManager.inTransaction(new Query<List<RepositoryDef>>() {
+                @Override
+                public List<RepositoryDef> apply() {
+                    return storageService.listRepositoryDefs();
+                }
+            });
         } finally {
             lock.readLock().unlock();
         }
@@ -270,8 +308,12 @@ public class RepositoriesService {
         LOG.info("Returning replication definitions");
         lock.readLock().lock();
         try {
-            return storageService.loadAll(ReplicationDef.class);
-
+            return storageManager.inTransaction(new Query<List<ReplicationDef>>() {
+                @Override
+                public List<ReplicationDef> apply() {
+                    return storageService.listReplicationDefs();
+                }
+            });
         } finally {
             lock.readLock().unlock();
         }
@@ -283,25 +325,20 @@ public class RepositoriesService {
      * @param name Repository name.
      * @return Corresponding repository definition.
      */
-    public RepositoryDef getRepositoryDef(String name) {
+    public RepositoryDef getRepositoryDef(final String name) {
         LOG.info("Returning repository definition of {}", name);
         lock.readLock().lock();
         try {
-            return loadRepositoryDef(name);
-
+            return storageManager.inTransaction(new Query<RepositoryDef>() {
+                @Override
+                public RepositoryDef apply() {
+                    return storageService.getRepositoryDef(name);
+                }
+            });
         } finally {
             lock.readLock().unlock();
         }
 
-    }
-
-    private RepositoryDef loadRepositoryDef(String name) {
-        for (RepositoryDef def : storageService.loadAll(RepositoryDef.class)) {
-            if (def.getName().equals(name)) {
-                return def;
-            }
-        }
-        throw new UnknownRepositoryException();
     }
 
     /**
@@ -310,14 +347,19 @@ public class RepositoriesService {
      * @param name A repository name
      * @return Corresponding repository
      */
-    public Repository getRepository(String name) {
+    public Repository getRepository(final String name) {
         lock.readLock().lock();
         try {
-            if (!repositories.containsKey(name)) {
-                throw new UnknownRepositoryException();
-            }
-            return repositories.get(name);
-
+            return storageManager.inTransaction(new Query<Repository>() {
+                @Override
+                public Repository apply() {
+                    storageService.getRepositoryDef(name);
+                    if (!repositories.containsKey(name)) {
+                        throw new RepositoryClosedException();
+                    }
+                    return repositories.get(name);
+                }
+            });
         } finally {
             lock.readLock().unlock();
         }

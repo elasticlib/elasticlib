@@ -1,164 +1,123 @@
 package store.server.service;
 
 import com.google.common.base.Charsets;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.sleepycat.je.Cursor;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.LockMode;
+import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
-import static java.util.Collections.emptyList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import store.common.Mappable;
-import static store.common.yaml.YamlReading.readAll;
-import store.common.yaml.YamlWriting;
-import store.server.exception.WriteException;
+import store.common.MappableUtil;
+import store.common.ReplicationDef;
+import store.common.RepositoryDef;
+import store.common.bson.BsonReader;
+import store.common.bson.BsonWriter;
+import store.server.exception.RepositoryAlreadyExistsException;
+import store.server.exception.UnknownRepositoryException;
+import store.server.storage.StorageManager;
+import static store.server.storage.StorageManager.currentTransaction;
 
 /**
- * Provides a persistant storage for mappables instances. Not thread safe !
+ * Provides a persistant storage for repositories and replications definitions.
  */
 class StorageService {
 
-    private static final String EXTENSION = ".yml";
-    private final Path home;
-    private final Map<Class<?>, List<?>> cache = new HashMap<>();
+    private static final String REPOSITORIES = "repositories";
+    private static final String REPLICATIONS = "replications";
+    private static final String SOURCE = "source";
+    private static final String DESTINATION = "destination";
+    private final StorageManager storageManager;
+    private final Database repositoryDefs;
+    private final Database replicationDefs;
 
-    /**
-     * Constructor.
-     *
-     * @param home Storage home directory.
-     */
-    public StorageService(Path home) {
-        this.home = home;
+    public StorageService(StorageManager storageManager) {
+        this.storageManager = storageManager;
+        repositoryDefs = storageManager.openDatabase(REPOSITORIES);
+        replicationDefs = storageManager.openDatabase(REPLICATIONS);
     }
 
-    /**
-     * Load all instances of supplied class.
-     *
-     * @param <T> Type of instances.
-     * @param clazz Type of instances.
-     * @return The list of theses instances.
-     */
-    public <T extends Mappable> List<T> loadAll(Class<T> clazz) {
-        if (!cache.containsKey(clazz)) {
-            Path path = path(clazz);
-            List<T> list;
-            if (!Files.exists(path)) {
-                list = emptyList();
-            } else {
-                list = readAll(load(path), clazz);
+    public void createRepositoryDef(RepositoryDef def) {
+        OperationStatus status = repositoryDefs.putNoOverwrite(currentTransaction(),
+                                                               key(def.getName()),
+                                                               write(def));
+        if (status == OperationStatus.KEYEXIST) {
+            throw new RepositoryAlreadyExistsException();
+        }
+    }
+
+    public boolean deleteRepositoryDef(String name) {
+        return repositoryDefs.delete(currentTransaction(), key(name)) == OperationStatus.SUCCESS;
+    }
+
+    public RepositoryDef getRepositoryDef(String name) {
+        DatabaseEntry entry = new DatabaseEntry();
+        OperationStatus status = repositoryDefs.get(currentTransaction(), key(name), entry, LockMode.DEFAULT);
+        if (status == OperationStatus.NOTFOUND) {
+            throw new UnknownRepositoryException();
+        }
+        return read(entry, RepositoryDef.class);
+    }
+
+    public List<RepositoryDef> listRepositoryDefs() {
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry data = new DatabaseEntry();
+        List<RepositoryDef> list = new ArrayList<>();
+        try (Cursor cursor = storageManager.openCursor(repositoryDefs)) {
+            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                list.add(read(data, RepositoryDef.class));
             }
-            cache.put(clazz, list);
+            return list;
         }
-        return loadFromCache(clazz);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private <T> List<T> loadFromCache(Class<T> clazz) {
-        List cached = cache.get(clazz);
-        return new ArrayList<>(cached);
+    public boolean createReplicationDef(ReplicationDef def) {
+        return replicationDefs.putNoOverwrite(currentTransaction(),
+                                              key(def.getSource(), def.getDestination()),
+                                              write(def)) == OperationStatus.SUCCESS;
     }
 
-    /**
-     * Save all supplied instances.
-     *
-     * @param <T> Type of instances.
-     * @param clazz Type of instances.
-     * @param mappables The list of instances to save.
-     */
-    public <T extends Mappable> void saveAll(Class<T> clazz, List<T> mappables) {
-        Path path = path(clazz);
-        if (mappables.isEmpty()) {
-            delete(path);
-
-        } else {
-            save(path, YamlWriting.writeAll(mappables));
-        }
-        cache.remove(clazz);
+    public boolean deleteReplicationDef(String source, String destination) {
+        return replicationDefs.delete(currentTransaction(), key(source, destination)) == OperationStatus.SUCCESS;
     }
 
-    /**
-     * Add supplied instance in storage.
-     *
-     * @param <T> Instances type.
-     * @param clazz Instance type.
-     * @param mappable The instance to add.
-     * @return True if supplied instance was actually added.
-     */
-    public <T extends Mappable> boolean add(Class<T> clazz, T mappable) {
-        List<T> list = loadAll(clazz);
-        if (list.contains(mappable)) {
-            return false;
-        }
-        list.add(mappable);
-        saveAll(clazz, list);
-        return true;
-    }
-
-    /**
-     * Remove supplied instance from storage.
-     *
-     * @param <T> Instances type.
-     * @param clazz Instance type.
-     * @param mappable The instance to remove.
-     * @return True if supplied instance was actually removed.
-     */
-    public <T extends Mappable> boolean remove(Class<T> clazz, T mappable) {
-        List<T> list = loadAll(clazz);
-        if (!list.contains(mappable)) {
-            return false;
-        }
-        list.remove(mappable);
-        saveAll(clazz, list);
-        return true;
-    }
-
-    private Path path(Class<?> clazz) {
-        String name = clazz.getSimpleName();
-        return home.resolve(Character.toLowerCase(name.charAt(0)) + name.substring(1) + EXTENSION);
-    }
-
-    private String load(Path path) {
-        try (InputStream inputStream = Files.newInputStream(path);
-                Reader reader = new InputStreamReader(inputStream, Charsets.UTF_8)) {
-
-            StringBuilder builder = new StringBuilder();
-            char[] buffer = new char[1024];
-            int length = reader.read(buffer);
-            while (length > 0) {
-                builder.append(buffer, 0, length);
-                length = reader.read(buffer);
+    public void deleteAllReplicationDefs(String name) {
+        for (ReplicationDef def : listReplicationDefs()) {
+            if (def.getSource().equals(name) || def.getDestination().equals(name)) {
+                deleteReplicationDef(def.getSource(), def.getDestination());
             }
-            return builder.toString();
-
-        } catch (IOException e) {
-            throw new WriteException(e);
         }
     }
 
-    private void save(Path path, String string) {
-        try (OutputStream outputStream = Files.newOutputStream(path);
-                Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8)) {
-
-            writer.write(string);
-
-        } catch (IOException e) {
-            throw new WriteException(e);
+    public List<ReplicationDef> listReplicationDefs() {
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry data = new DatabaseEntry();
+        List<ReplicationDef> list = new ArrayList<>();
+        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
+            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                list.add(read(data, ReplicationDef.class));
+            }
+            return list;
         }
     }
 
-    private void delete(Path path) {
-        try {
-            Files.deleteIfExists(path);
+    private static DatabaseEntry key(String name) {
+        return new DatabaseEntry(name.getBytes(Charsets.UTF_8));
+    }
 
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
+    private static DatabaseEntry key(String source, String destination) {
+        return new DatabaseEntry(new BsonWriter()
+                .put(SOURCE, source)
+                .put(DESTINATION, destination)
+                .build());
+    }
+
+    private static DatabaseEntry write(Mappable mappable) {
+        return new DatabaseEntry(new BsonWriter().put(mappable.toMap()).build());
+    }
+
+    private static <T extends Mappable> T read(DatabaseEntry entry, Class<T> clazz) {
+        return MappableUtil.fromMap(new BsonReader(entry.getData()).asMap(), clazz);
     }
 }

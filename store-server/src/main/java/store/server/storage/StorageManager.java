@@ -186,10 +186,10 @@ public class StorageManager {
             }
         } finally {
             synchronized (this) {
+                CURRENT_TRANSACTION.remove();
                 if (!closed && !cache.isSuspended(transaction)) {
                     transaction.abort();
                 }
-                CURRENT_TRANSACTION.remove();
             }
         }
     }
@@ -207,6 +207,23 @@ public class StorageManager {
             return query.apply();
 
         } finally {
+            CURRENT_TRANSACTION.remove();
+            transaction.commit();
+        }
+    }
+
+    /**
+     * Executes supplied procedure in a transaction.
+     *
+     * @param procedure Procedure to execute.
+     */
+    public void inTransaction(Procedure procedure) {
+        Transaction transaction = beginTransaction();
+        try {
+            procedure.apply();
+
+        } finally {
+            CURRENT_TRANSACTION.remove();
             transaction.commit();
         }
     }

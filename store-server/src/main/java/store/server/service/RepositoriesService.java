@@ -119,19 +119,13 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    // First load definition to ensure that repository actually exists.
                     RepositoryDef repositoryDef = storageService.getRepositoryDef(name);
                     if (repositories.containsKey(name)) {
                         return;
                     }
-                    Repository repository = Repository.open(repositoryDef.getPath(), replicationService);
-                    repositories.put(repository.getName(), repository);
-
-                    for (ReplicationDef def : storageService.listReplicationDefs()) {
-                        if ((def.getSource().equals(name) || def.getDestination().equals(name)) &&
-                                repositories.containsKey(def.getSource()) &&
-                                repositories.containsKey(def.getDestination())) {
-
+                    repositories.put(name, Repository.open(repositoryDef.getPath(), replicationService));
+                    for (ReplicationDef def : storageService.listReplicationDefs(name)) {
+                        if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                             replicationService.createReplication(repositories.get(def.getSource()),
                                                                  repositories.get(def.getDestination()));
                         }
@@ -155,7 +149,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    // Load definition to ensure that repository actually exists.
+                    // Loads definition in order to ensure that repository actually exists.
                     storageService.getRepositoryDef(name);
                     if (!repositories.containsKey(name)) {
                         return;

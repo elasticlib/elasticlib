@@ -8,6 +8,8 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.ExceptionEvent;
+import com.sleepycat.je.ExceptionListener;
 import com.sleepycat.je.Sequence;
 import com.sleepycat.je.SequenceConfig;
 import com.sleepycat.je.Transaction;
@@ -45,16 +47,23 @@ public class StorageManager {
      * @param path Home path of the Berkeley DB environment.
      */
     public StorageManager(String name, Path path) {
-        this.environment = new Environment(path.toFile(), new EnvironmentConfig()
+        EnvironmentConfig config = new EnvironmentConfig()
                 .setNodeName(name)
                 .setSharedCache(true)
                 .setTransactional(true)
                 .setAllowCreate(true)
-                .setLockTimeout(5, TimeUnit.MINUTES));
-
+                .setLockTimeout(5, TimeUnit.MINUTES)
+                .setLoggingHandler(new LoggingHandler(name));
         // Timeout is actually unexpected.
 
-        // TODO set exception listener and log handler ?
+        config.setExceptionListener(new ExceptionListener() {
+            @Override
+            public void exceptionThrown(ExceptionEvent event) {
+                LOG.error("error", event.getException());
+            }
+        });
+
+        this.environment = new Environment(path.toFile(), config);
     }
 
     /**

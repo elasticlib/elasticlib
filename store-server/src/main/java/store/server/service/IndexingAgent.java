@@ -8,27 +8,27 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 
 /**
- * An agent that performs indexing from a volume to its associated index.
+ * An agent that performs indexing from a repository to its internal index.
  */
 class IndexingAgent extends Agent {
 
-    private final Volume volume;
+    private final Repository repository;
     private final Index index;
 
     /**
      * Constructor.
      *
-     * @param volume Source volume.
-     * @param index Destination index.
+     * @param repository Repository.
+     * @param index its index.
      */
-    public IndexingAgent(Volume volume, Index index) {
-        this.volume = volume;
+    public IndexingAgent(Repository repository, Index index) {
+        this.repository = repository;
         this.index = index;
     }
 
     @Override
     List<Event> history(boolean chronological, long first, int number) {
-        return volume.history(chronological, first, number);
+        return repository.history(chronological, first, number);
     }
 
     @Override
@@ -39,18 +39,18 @@ class IndexingAgent extends Agent {
     private class IndexingAgentThread extends AgentThread {
 
         public IndexingAgentThread() {
-            super("indexation-" + volume.getName());
+            super("indexation-" + repository.getName());
         }
 
         @Override
         protected boolean process(Event event) {
-            ContentInfoTree tree = volume.getInfoTree(event.getContent());
+            ContentInfoTree tree = repository.getInfoTree(event.getContent());
             if (tree.isDeleted()) {
                 index.delete(tree.getContent());
                 return true;
 
             } else {
-                Optional<InputStream> inputStreamOpt = volume.getContent(tree.getContent(), tree.getHead());
+                Optional<InputStream> inputStreamOpt = repository.getContent(tree.getContent(), tree.getHead());
                 if (!inputStreamOpt.isPresent()) {
                     return false;
                 }

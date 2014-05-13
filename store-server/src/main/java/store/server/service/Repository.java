@@ -1,5 +1,6 @@
 package store.server.service;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +10,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -16,29 +19,47 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.Operation;
 import store.common.hash.Hash;
+import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.storage.Command;
+import store.server.storage.Query;
+import store.server.storage.StorageManager;
 
 /**
- * Composition of a volume and an index. Stores contents with their metadata and performs their asynchronous indexation
- * transparently.
+ * Stores contents with their metadata and performs their asynchronous indexation transparently.
  */
 public class Repository {
 
-    private static final String VOLUME = "volume";
+    private static final String STORAGE = "storage";
+    private static final String CONTENT = "content";
     private static final String INDEX = "index";
+    private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
+    private final String name;
     private final Path path;
     private final ReplicationService replicationService;
-    private final Volume volume;
+    private final StorageManager storageManager;
+    private final InfoManager infoManager;
+    private final HistoryManager historyManager;
+    private final ContentManager contentManager;
     private final Index index;
     private final IndexingAgent agent;
 
-    private Repository(Path path, ReplicationService replicationService, Volume volume, Index index) {
+    private Repository(String name,
+                       Path path,
+                       ReplicationService replicationService,
+                       ContentManager contentManager,
+                       Index index) {
+        this.name = name;
         this.path = path;
         this.replicationService = replicationService;
-        this.volume = volume;
+        storageManager = new StorageManager(name, path.resolve(STORAGE));
+        infoManager = new InfoManager(storageManager);
+        historyManager = new HistoryManager(storageManager);
+        this.contentManager = contentManager;
         this.index = index;
-        agent = new IndexingAgent(volume, index);
+        agent = new IndexingAgent(this, index);
         agent.start();
     }
 
@@ -55,13 +76,16 @@ public class Repository {
             if (!isEmptyDir(path)) {
                 throw new InvalidRepositoryPathException();
             }
+            Files.createDirectory(path.resolve(STORAGE));
+
         } catch (IOException e) {
             throw new WriteException(e);
         }
         String name = path.getFileName().toString();
-        return new Repository(path,
+        return new Repository(name,
+                              path,
                               replicationService,
-                              Volume.create(name, path.resolve(VOLUME)),
+                              ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
     }
 
@@ -79,10 +103,14 @@ public class Repository {
      * @return Opened repository.
      */
     static Repository open(Path path, ReplicationService replicationService) {
+        if (!Files.isDirectory(path)) {
+            throw new InvalidRepositoryPathException();
+        }
         String name = path.getFileName().toString();
-        return new Repository(path,
+        return new Repository(name,
+                              path,
                               replicationService,
-                              Volume.open(name, path.resolve(VOLUME)),
+                              ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));
     }
 
@@ -90,7 +118,7 @@ public class Repository {
      * @return The name of this repository.
      */
     public String getName() {
-        return path.getFileName().toString();
+        return name;
     }
 
     /**
@@ -107,7 +135,8 @@ public class Repository {
     void close() {
         agent.stop();
         index.close();
-        volume.close();
+        storageManager.close();
+        contentManager.close();
     }
 
     /**
@@ -117,12 +146,17 @@ public class Repository {
      * @param contentInfo Content info revision.
      * @return Actual operation result.
      */
-    public CommandResult addInfo(ContentInfo contentInfo) {
-        CommandResult result = volume.addInfo(contentInfo);
-        if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
-            agent.signal();
-            replicationService.signal(getName());
-        }
+    public CommandResult addInfo(final ContentInfo contentInfo) {
+        LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getContent(), contentInfo.getParents());
+        CommandResult result = storageManager.inTransaction(new Command() {
+            @Override
+            public CommandResult apply() {
+                CommandResult result = infoManager.put(contentInfo);
+                handleCommandResult(result, contentInfo.getContent());
+                return result;
+            }
+        });
+        signalIf(!result.isNoOp() && result.getOperation() != Operation.CREATE);
         return result;
     }
 
@@ -133,12 +167,17 @@ public class Repository {
      * @param contentInfoTree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult mergeTree(ContentInfoTree contentInfoTree) {
-        CommandResult result = volume.mergeTree(contentInfoTree);
-        if (!result.isNoOp() && result.getOperation() != Operation.CREATE) {
-            agent.signal();
-            replicationService.signal(getName());
-        }
+    public CommandResult mergeTree(final ContentInfoTree contentInfoTree) {
+        LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getContent());
+        CommandResult result = storageManager.inTransaction(new Command() {
+            @Override
+            public CommandResult apply() {
+                CommandResult result = infoManager.put(contentInfoTree);
+                handleCommandResult(result, contentInfoTree.getContent());
+                return result;
+            }
+        });
+        signalIf(!result.isNoOp() && result.getOperation() != Operation.CREATE);
         return result;
     }
 
@@ -150,10 +189,23 @@ public class Repository {
      * @param source Content.
      * @return Operation result.
      */
-    public CommandResult addContent(long transactionId, Hash hash, InputStream source) {
-        CommandResult result = volume.addContent(transactionId, hash, source);
-        agent.signal();
-        replicationService.signal(getName());
+    public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
+        LOG.info("[{}] Adding content {}", name, hash);
+        CommandResult result = storageManager.inTransaction(transactionId, new Command() {
+            @Override
+            public CommandResult apply() {
+                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                if (!treeOpt.isPresent() || treeOpt.get().isDeleted()) {
+                    // This is unexpected as we have a resumed transaction at this point.
+                    throw new BadRequestException();
+                }
+                ContentInfoTree tree = treeOpt.get();
+                contentManager.add(hash, tree.getLength(), source);
+                historyManager.add(Operation.CREATE, hash, tree.getHead());
+                return CommandResult.of(transactionId, Operation.CREATE, hash, tree.getHead());
+            }
+        });
+        signalIf(true);
         return result;
     }
 
@@ -164,13 +216,40 @@ public class Repository {
      * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult deleteContent(Hash hash, SortedSet<Hash> head) {
-        CommandResult result = volume.deleteContent(hash, head);
-        if (!result.isNoOp()) {
-            agent.signal();
-            replicationService.signal(getName());
-        }
+    public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
+        LOG.info("[{}] Deleting content {}, with head {}", name, hash, head);
+        CommandResult result = storageManager.inTransaction(new Command() {
+            @Override
+            public CommandResult apply() {
+                CommandResult result = infoManager.delete(hash, head);
+                handleCommandResult(result, hash);
+                return result;
+            }
+        });
+        signalIf(!result.isNoOp());
         return result;
+    }
+
+    private void handleCommandResult(CommandResult result, Hash hash) {
+        if (result.isNoOp()) {
+            return;
+        }
+        Operation operation = result.getOperation();
+        if (operation == Operation.CREATE) {
+            storageManager.suspendCurrentTransaction();
+            return;
+        }
+        if (operation == Operation.DELETE) {
+            contentManager.delete(hash);
+        }
+        historyManager.add(operation, hash, result.getRevisions());
+    }
+
+    private void signalIf(boolean condition) {
+        if (condition) {
+            agent.signal();
+            replicationService.signal(name);
+        }
     }
 
     /**
@@ -179,9 +258,18 @@ public class Repository {
      * @param hash Hash of the content.
      * @return Corresponding info tree.
      */
-    public ContentInfoTree getInfoTree(Hash hash) {
-        return volume.getInfoTree(hash);
-
+    public ContentInfoTree getInfoTree(final Hash hash) {
+        LOG.info("[{}] Returning info tree {}", name, hash);
+        return storageManager.inTransaction(new Query<ContentInfoTree>() {
+            @Override
+            public ContentInfoTree apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent()) {
+                    throw new UnknownContentException();
+                }
+                return tree.get();
+            }
+        });
     }
 
     /**
@@ -190,8 +278,10 @@ public class Repository {
      * @param hash Hash of the content.
      * @return Corresponding info head revisions.
      */
-    public List<ContentInfo> getInfoHead(Hash hash) {
-        return volume.getInfoHead(hash);
+    public List<ContentInfo> getInfoHead(final Hash hash) {
+        LOG.info("[{}] Returning info head {}", name, hash);
+        ContentInfoTree tree = getInfoTree(hash);
+        return tree.get(tree.getHead());
     }
 
     /**
@@ -202,7 +292,9 @@ public class Repository {
      * @return Corresponding revisions.
      */
     public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
-        return volume.getInfoRevisions(hash, revs);
+        LOG.info("[{}] Returning info revs {} [{}]", name, hash, Joiner.on(", ").join(revs));
+        ContentInfoTree tree = getInfoTree(hash);
+        return tree.get(revs);
     }
 
     /**
@@ -211,8 +303,14 @@ public class Repository {
      * @param hash Hash of the content.
      * @return An input stream on this content.
      */
-    public InputStream getContent(Hash hash) {
-        return volume.getContent(hash);
+    public InputStream getContent(final Hash hash) {
+        LOG.info("[{}] Returning content {}", name, hash);
+        return storageManager.inTransaction(new Query<InputStream>() {
+            @Override
+            public InputStream apply() {
+                return contentManager.get(hash);
+            }
+        });
     }
 
     /**
@@ -223,7 +321,20 @@ public class Repository {
      * @return An input stream on this content, or nothing if supplied head has been superseded.
      */
     public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
-        return volume.getContent(hash, head);
+        LOG.info("[{}] Returning content {} with head {}", name, hash, head);
+        return storageManager.inTransaction(new Query<Optional<InputStream>>() {
+            @Override
+            public Optional<InputStream> apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent()) {
+                    throw new UnknownContentException();
+                }
+                if (!tree.get().getHead().equals(head)) {
+                    return Optional.absent();
+                }
+                return Optional.of(contentManager.get(hash));
+            }
+        });
     }
 
     /**
@@ -234,8 +345,14 @@ public class Repository {
      * @param number Number of events to return.
      * @return A list of events.
      */
-    public List<Event> history(boolean chronological, long first, int number) {
-        return volume.history(chronological, first, number);
+    public List<Event> history(final boolean chronological, final long first, final int number) {
+        LOG.info("[{}] Returning history{}, first {}, count {}", name, chronological ? "" : ", reverse", first, number);
+        return storageManager.inTransaction(new Query<List<Event>>() {
+            @Override
+            public List<Event> apply() {
+                return historyManager.history(chronological, first, number);
+            }
+        });
     }
 
     /**

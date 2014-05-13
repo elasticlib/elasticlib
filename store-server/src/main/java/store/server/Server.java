@@ -12,6 +12,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import store.server.service.RepositoriesService;
 
@@ -20,6 +21,7 @@ import store.server.service.RepositoriesService;
  */
 public class Server {
 
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
     private final Config config;
     private final HttpServer httpServer;
     private final RepositoriesService repositoriesService;
@@ -30,6 +32,7 @@ public class Server {
      * @param home Path to repository's home-directory.
      */
     public Server(Path home) {
+        LOG.info("Starting...");
         config = ServerConfig.load(home.resolve("config.yml"));
         repositoriesService = new RepositoriesService(home);
 
@@ -44,6 +47,7 @@ public class Server {
         getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
+                LOG.info("Stopping...");
                 httpServer.shutdown();
                 repositoriesService.close();
             }

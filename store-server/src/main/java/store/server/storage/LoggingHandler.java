@@ -12,7 +12,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 class LoggingHandler extends Handler {
 
     static {
-        Logger.getLogger("com.sleepycat.je").setLevel(Level.ALL);
+        Logger.getLogger("com.sleepycat.je").setLevel(Level.FINER);
     }
     private final Handler delegate = new SLF4JBridgeHandler();
     private final String name;

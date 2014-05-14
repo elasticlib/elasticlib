@@ -7,7 +7,6 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Sequence;
 import static java.lang.Math.min;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import static java.util.Collections.emptyList;
 import java.util.List;
@@ -15,9 +14,11 @@ import java.util.SortedSet;
 import org.joda.time.Instant;
 import store.common.Event;
 import store.common.Operation;
-import store.common.bson.BsonReader;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
+import static store.server.storage.DatabaseEntries.asLong;
+import static store.server.storage.DatabaseEntries.asMappable;
+import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 
 class HistoryManager {
@@ -45,14 +46,14 @@ class HistoryManager {
                 .build();
 
         database.put(StorageManager.currentTransaction(),
-                     key(seq),
+                     entry(seq),
                      new DatabaseEntry(new BsonWriter().put(event.toMap()).build()));
     }
 
     public List<Event> history(boolean chronological, long first, int number) {
         try (Cursor cursor = storageManager.openCursor(database)) {
             List<Event> events = new ArrayList<>(min(number, 1000));
-            DatabaseEntry key = key(first);
+            DatabaseEntry key = entry(first);
             DatabaseEntry data = new DatabaseEntry();
             if (cursor.getSearchKey(key, data, LockMode.DEFAULT) != OperationStatus.SUCCESS) {
                 key.setData(null);
@@ -60,9 +61,9 @@ class HistoryManager {
                     return emptyList();
                 }
             }
-            events.add(event(data));
+            events.add(asMappable(data, Event.class));
             while (events.size() < number && searchNext(chronological, cursor, key, data)) {
-                events.add(event(data));
+                events.add(asMappable(data, Event.class));
             }
             return events;
         }
@@ -71,9 +72,9 @@ class HistoryManager {
     private static boolean searchFirst(boolean chronological, long first,
                                        Cursor cursor, DatabaseEntry key, DatabaseEntry data) {
         if (chronological) {
-            return cursor.getFirst(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first <= seq(key);
+            return cursor.getFirst(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first <= asLong(key);
         } else {
-            return cursor.getLast(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first >= seq(key);
+            return cursor.getLast(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS && first >= asLong(key);
         }
     }
 
@@ -83,17 +84,5 @@ class HistoryManager {
         } else {
             return cursor.getPrev(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS;
         }
-    }
-
-    private static DatabaseEntry key(long seq) {
-        return new DatabaseEntry(ByteBuffer.allocate(8).putLong(seq).array());
-    }
-
-    private static long seq(DatabaseEntry entry) {
-        return ByteBuffer.wrap(entry.getData()).getLong();
-    }
-
-    private static Event event(DatabaseEntry entry) {
-        return Event.fromMap(new BsonReader(entry.getData()).asMap());
     }
 }

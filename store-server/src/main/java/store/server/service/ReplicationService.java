@@ -1,16 +1,24 @@
 package store.server.service;
 
+import com.sleepycat.je.Database;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import store.server.storage.StorageManager;
 
 /**
  * Manage replication agents between repositories.
  */
 class ReplicationService {
 
+    private static final String REPLICATION_CURSORS = "replicationCursors";
+    private final Database replicationCursors;
     private final Map<String, Map<String, ReplicationAgent>> agents = new HashMap<>();
+
+    public ReplicationService(StorageManager storageManager) {
+        replicationCursors = storageManager.openDeferredWriteDatabase(REPLICATION_CURSORS);
+    }
 
     /**
      * Stops all replications.
@@ -38,7 +46,7 @@ class ReplicationService {
         if (!agents.containsKey(srcName)) {
             agents.put(srcName, new HashMap<String, ReplicationAgent>());
         }
-        ReplicationAgent agent = new ReplicationAgent(source, destination);
+        ReplicationAgent agent = new ReplicationAgent(source, destination, replicationCursors);
         agents.get(srcName).put(destName, agent);
         agent.start();
     }

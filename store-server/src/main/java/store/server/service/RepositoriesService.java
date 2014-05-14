@@ -9,6 +9,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
@@ -29,9 +30,10 @@ public class RepositoriesService {
 
     private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
-    private final ReplicationService replicationService = new ReplicationService();
-    private final StorageService storageService;
+    private final ScheduledExecutorService executor;
     private final StorageManager storageManager;
+    private final StorageService storageService;
+    private final ReplicationService replicationService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<String, Repository> repositories = new HashMap<>();
 
@@ -39,8 +41,9 @@ public class RepositoriesService {
      * Constructor.
      *
      * @param home The repositories service home directory.
+     * @param executor Executor service.
      */
-    public RepositoriesService(Path home) {
+    public RepositoriesService(Path home, final ScheduledExecutorService executor) {
         Path storage = home.resolve(STORAGE);
         try {
             if (!Files.exists(storage)) {
@@ -49,14 +52,15 @@ public class RepositoriesService {
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage);
+        this.executor = executor;
+        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage, executor);
         storageService = new StorageService(storageManager);
-
+        replicationService = new ReplicationService(storageManager);
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
                 for (RepositoryDef def : storageService.listRepositoryDefs()) {
-                    Repository repository = Repository.open(def.getPath(), replicationService);
+                    Repository repository = Repository.open(def.getPath(), executor, replicationService);
                     repositories.put(repository.getName(), repository);
                 }
                 for (ReplicationDef def : storageService.listReplicationDefs()) {
@@ -99,7 +103,7 @@ public class RepositoriesService {
                 public void apply() {
                     String name = path.getFileName().toString();
                     storageService.createRepositoryDef(new RepositoryDef(name, path));
-                    repositories.put(name, Repository.create(path, replicationService));
+                    repositories.put(name, Repository.create(path, executor, replicationService));
                 }
             });
         } finally {
@@ -123,7 +127,7 @@ public class RepositoriesService {
                     if (repositories.containsKey(name)) {
                         return;
                     }
-                    repositories.put(name, Repository.open(repositoryDef.getPath(), replicationService));
+                    repositories.put(name, Repository.open(repositoryDef.getPath(), executor, replicationService));
                     for (ReplicationDef def : storageService.listReplicationDefs(name)) {
                         if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                             replicationService.createReplication(repositories.get(def.getSource()),

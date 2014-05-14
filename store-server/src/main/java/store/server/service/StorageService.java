@@ -1,6 +1,5 @@
 package store.server.service;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.sleepycat.je.Cursor;
@@ -10,14 +9,13 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
 import java.util.List;
-import store.common.Mappable;
-import store.common.MappableUtil;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
-import store.common.bson.BsonReader;
 import store.common.bson.BsonWriter;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.UnknownRepositoryException;
+import static store.server.storage.DatabaseEntries.asMappable;
+import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 import static store.server.storage.StorageManager.currentTransaction;
 
@@ -52,8 +50,8 @@ class StorageService {
      */
     public void createRepositoryDef(RepositoryDef def) {
         OperationStatus status = repositoryDefs.putNoOverwrite(currentTransaction(),
-                                                               key(def.getName()),
-                                                               write(def));
+                                                               entry(def.getName()),
+                                                               entry(def));
         if (status == OperationStatus.KEYEXIST) {
             throw new RepositoryAlreadyExistsException();
         }
@@ -66,7 +64,7 @@ class StorageService {
      * @return If corresponding RepositoryDef has been found and deleted.
      */
     public boolean deleteRepositoryDef(String name) {
-        return repositoryDefs.delete(currentTransaction(), key(name)) == OperationStatus.SUCCESS;
+        return repositoryDefs.delete(currentTransaction(), entry(name)) == OperationStatus.SUCCESS;
     }
 
     /**
@@ -77,11 +75,11 @@ class StorageService {
      */
     public RepositoryDef getRepositoryDef(String name) {
         DatabaseEntry entry = new DatabaseEntry();
-        OperationStatus status = repositoryDefs.get(currentTransaction(), key(name), entry, LockMode.DEFAULT);
+        OperationStatus status = repositoryDefs.get(currentTransaction(), entry(name), entry, LockMode.DEFAULT);
         if (status == OperationStatus.NOTFOUND) {
             throw new UnknownRepositoryException();
         }
-        return read(entry, RepositoryDef.class);
+        return asMappable(entry, RepositoryDef.class);
     }
 
     /**
@@ -95,7 +93,7 @@ class StorageService {
         List<RepositoryDef> list = new ArrayList<>();
         try (Cursor cursor = storageManager.openCursor(repositoryDefs)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                list.add(read(data, RepositoryDef.class));
+                list.add(asMappable(data, RepositoryDef.class));
             }
             return list;
         }
@@ -110,7 +108,7 @@ class StorageService {
     public boolean createReplicationDef(ReplicationDef def) {
         return replicationDefs.putNoOverwrite(currentTransaction(),
                                               key(def.getSource(), def.getDestination()),
-                                              write(def)) == OperationStatus.SUCCESS;
+                                              entry(def)) == OperationStatus.SUCCESS;
     }
 
     /**
@@ -122,6 +120,13 @@ class StorageService {
      */
     public boolean deleteReplicationDef(String source, String destination) {
         return replicationDefs.delete(currentTransaction(), key(source, destination)) == OperationStatus.SUCCESS;
+    }
+
+    private static DatabaseEntry key(String source, String destination) {
+        return new DatabaseEntry(new BsonWriter()
+                .put(SOURCE, source)
+                .put(DESTINATION, destination)
+                .build());
     }
 
     /**
@@ -165,31 +170,12 @@ class StorageService {
         List<ReplicationDef> list = new ArrayList<>();
         try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                ReplicationDef def = read(data, ReplicationDef.class);
+                ReplicationDef def = asMappable(data, ReplicationDef.class);
                 if (predicate.apply(def)) {
                     list.add(def);
                 }
             }
             return list;
         }
-    }
-
-    private static DatabaseEntry key(String name) {
-        return new DatabaseEntry(name.getBytes(Charsets.UTF_8));
-    }
-
-    private static DatabaseEntry key(String source, String destination) {
-        return new DatabaseEntry(new BsonWriter()
-                .put(SOURCE, source)
-                .put(DESTINATION, destination)
-                .build());
-    }
-
-    private static DatabaseEntry write(Mappable mappable) {
-        return new DatabaseEntry(new BsonWriter().put(mappable.toMap()).build());
-    }
-
-    private static <T extends Mappable> T read(DatabaseEntry entry, Class<T> clazz) {
-        return MappableUtil.fromMap(new BsonReader(entry.getData()).asMap(), clazz);
     }
 }

@@ -1,6 +1,10 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
+import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
+import com.sleepycat.je.LockMode;
+import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -8,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.Event;
 import store.server.exception.ServerException;
+import static store.server.storage.DatabaseEntries.asLong;
+import static store.server.storage.DatabaseEntries.entry;
 
 /**
  * Performs asynchronous replication or indexing.
@@ -15,11 +21,29 @@ import store.server.exception.ServerException;
 abstract class Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
+    private final Database cursorsDatabase;
+    private final String name;
     private final Deque<Event> events = new ArrayDeque<>();
     private long cursor;
     private boolean signaled;
     private boolean stoped;
     private boolean running;
+
+    /**
+     * Constructor.
+     *
+     * @param name Agent name.
+     * @param cursorsDatabase Database used to persist agent cursor value.
+     */
+    protected Agent(String name, Database cursorsDatabase) {
+        this.name = name;
+        this.cursorsDatabase = cursorsDatabase;
+
+        DatabaseEntry entry = new DatabaseEntry();
+        if (cursorsDatabase.get(null, entry(name), entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+            cursor = asLong(entry);
+        }
+    }
 
     /**
      * Start this agent.
@@ -87,7 +111,7 @@ abstract class Agent {
 
     abstract class AgentThread extends Thread {
 
-        public AgentThread(String name) {
+        public AgentThread() {
             super(name);
         }
 
@@ -102,6 +126,7 @@ abstract class Agent {
                             events.addFirst(event);
                         } else {
                             cursor = event.getSeq() + 1;
+                            cursorsDatabase.put(null, entry(name), entry(cursor));
                         }
                         nextEvent = next();
                     }

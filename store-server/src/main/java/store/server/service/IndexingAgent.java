@@ -1,6 +1,7 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
+import com.sleepycat.je.Database;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -20,8 +21,10 @@ class IndexingAgent extends Agent {
      *
      * @param repository Repository.
      * @param index its index.
+     * @param cursorsDatabase Database used to persist agent cursor value.
      */
-    public IndexingAgent(Repository repository, Index index) {
+    public IndexingAgent(Repository repository, Index index, Database cursorsDatabase) {
+        super("indexation-" + repository.getName(), cursorsDatabase);
         this.repository = repository;
         this.index = index;
     }
@@ -37,10 +40,6 @@ class IndexingAgent extends Agent {
     }
 
     private class IndexingAgentThread extends AgentThread {
-
-        public IndexingAgentThread() {
-            super("indexation-" + repository.getName());
-        }
 
         @Override
         protected boolean process(Event event) {

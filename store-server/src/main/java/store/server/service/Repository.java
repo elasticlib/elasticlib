@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
@@ -35,6 +36,7 @@ public class Repository {
     private static final String STORAGE = "storage";
     private static final String CONTENT = "content";
     private static final String INDEX = "index";
+    private static final String INDEXATION_CURSOR = "indexationCursor";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final String name;
     private final Path path;
@@ -48,18 +50,19 @@ public class Repository {
 
     private Repository(String name,
                        Path path,
+                       ScheduledExecutorService executor,
                        ReplicationService replicationService,
                        ContentManager contentManager,
                        Index index) {
         this.name = name;
         this.path = path;
         this.replicationService = replicationService;
-        storageManager = new StorageManager(name, path.resolve(STORAGE));
+        storageManager = new StorageManager(name, path.resolve(STORAGE), executor);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
         this.index = index;
-        agent = new IndexingAgent(this, index);
+        agent = new IndexingAgent(this, index, storageManager.openDatabase(INDEXATION_CURSOR));
         agent.start();
     }
 
@@ -67,10 +70,11 @@ public class Repository {
      * Create a new repository.
      *
      * @param path Repository home. Expected not to exist.
-     * @param replicationService The replication service.
+     * @param executor Executor service.
+     * @param replicationService Replication service.
      * @return Created repository.
      */
-    static Repository create(Path path, ReplicationService replicationService) {
+    static Repository create(Path path, ScheduledExecutorService executor, ReplicationService replicationService) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -84,6 +88,7 @@ public class Repository {
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
+                              executor,
                               replicationService,
                               ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
@@ -99,16 +104,18 @@ public class Repository {
      * Open an existing repository.
      *
      * @param path Repository home.
-     * @param replicationService The replication service.
+     * @param executor Executor service.
+     * @param replicationService Replication service.
      * @return Opened repository.
      */
-    static Repository open(Path path, ReplicationService replicationService) {
+    static Repository open(Path path, ScheduledExecutorService executor, ReplicationService replicationService) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
+                              executor,
                               replicationService,
                               ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));

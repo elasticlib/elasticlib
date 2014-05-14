@@ -10,12 +10,12 @@ import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Operation;
-import store.common.bson.BsonReader;
-import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
 import store.server.exception.ConflictException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
+import static store.server.storage.DatabaseEntries.asMappable;
+import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 import static store.server.storage.StorageManager.currentTransaction;
 
@@ -94,23 +94,21 @@ class InfoManager {
     private Optional<ContentInfoTree> load(Hash hash, LockMode lockMode) {
         DatabaseEntry data = new DatabaseEntry();
         OperationStatus status = database.get(currentTransaction(),
-                                              new DatabaseEntry(hash.getBytes()),
+                                              entry(hash),
                                               data,
                                               lockMode);
 
         if (status == OperationStatus.NOTFOUND) {
             return Optional.absent();
         }
-        return Optional.of(ContentInfoTree.fromMap(new BsonReader(data.getData()).asMap()));
+        return Optional.of(asMappable(data, ContentInfoTree.class));
     }
 
     private void save(ContentInfoTree tree) {
         if (!tree.getUnknownParents().isEmpty()) {
             throw new UnknownRevisionException();
         }
-        database.put(currentTransaction(),
-                     new DatabaseEntry(tree.getContent().getBytes()),
-                     new DatabaseEntry(new BsonWriter().put(tree.toMap()).build()));
+        database.put(currentTransaction(), entry(tree.getContent()), entry(tree));
     }
 
     private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {

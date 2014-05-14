@@ -7,7 +7,7 @@ import com.google.common.cache.RemovalNotification;
 import com.sleepycat.je.Transaction;
 import java.io.Closeable;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import store.server.exception.TransactionNotFoundException;
@@ -17,9 +17,9 @@ class TransactionCache implements Closeable {
     private static final int SIZE = 20;
     private static final int TTL = 60;
     private final Cache<Long, SuspendedTransaction> cache;
-    private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
+    private final Future<?> cleanUpTask;
 
-    public TransactionCache() {
+    public TransactionCache(ScheduledExecutorService executor) {
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
                 .expireAfterWrite(TTL, TimeUnit.SECONDS)
@@ -31,7 +31,7 @@ class TransactionCache implements Closeable {
             }
         }).build();
 
-        executor.scheduleAtFixedRate(new Runnable() {
+        cleanUpTask = executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 cache.cleanUp();
@@ -59,7 +59,7 @@ class TransactionCache implements Closeable {
 
     @Override
     public void close() {
+        cleanUpTask.cancel(false);
         cache.invalidateAll();
-        executor.shutdown();
     }
 }

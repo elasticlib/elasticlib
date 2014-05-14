@@ -4,6 +4,8 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.net.URI;
 import java.nio.file.Path;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.UriBuilder;
@@ -25,6 +27,7 @@ public class Server {
     private final Config config;
     private final HttpServer httpServer;
     private final RepositoriesService repositoriesService;
+    private final ScheduledExecutorService executor;
 
     /**
      * Constructor.
@@ -34,7 +37,8 @@ public class Server {
     public Server(Path home) {
         LOG.info("Starting...");
         config = ServerConfig.load(home.resolve("config.yml"));
-        repositoriesService = new RepositoriesService(home);
+        executor = newSingleThreadScheduledExecutor();
+        repositoriesService = new RepositoriesService(home, executor);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -49,6 +53,7 @@ public class Server {
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
+                executor.shutdown();
                 repositoriesService.close();
             }
         });

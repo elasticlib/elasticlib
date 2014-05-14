@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.TreeSet;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import java.util.concurrent.ScheduledExecutorService;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -41,6 +43,7 @@ public class RepositoryTest {
     private static final String DELETE = "delete";
     private static final String ALPHA = "alpha";
     private static final String BETA = "beta";
+    private ScheduledExecutorService executor;
     private RepositoriesService repositoriesService;
     private Path path;
 
@@ -53,7 +56,8 @@ public class RepositoryTest {
     public void init() throws IOException {
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         Files.createDirectory(path.resolve("home"));
-        repositoriesService = new RepositoriesService(path.resolve("home"));
+        executor = newSingleThreadScheduledExecutor();
+        repositoriesService = new RepositoriesService(path.resolve("home"), executor);
     }
 
     /**
@@ -63,6 +67,7 @@ public class RepositoryTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
+        executor.shutdown();
         repositoriesService.close();
         recursiveDelete(path);
     }

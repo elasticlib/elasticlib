@@ -9,13 +9,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.server.async.AsyncService;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.WriteException;
@@ -30,7 +30,7 @@ public class RepositoriesService {
 
     private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
-    private final ScheduledExecutorService executor;
+    private final AsyncService asyncService = new AsyncService();
     private final StorageManager storageManager;
     private final StorageService storageService;
     private final ReplicationService replicationService;
@@ -41,9 +41,8 @@ public class RepositoriesService {
      * Constructor.
      *
      * @param home The repositories service home directory.
-     * @param executor Executor service.
      */
-    public RepositoriesService(Path home, final ScheduledExecutorService executor) {
+    public RepositoriesService(Path home) {
         Path storage = home.resolve(STORAGE);
         try {
             if (!Files.exists(storage)) {
@@ -52,15 +51,14 @@ public class RepositoriesService {
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        this.executor = executor;
-        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage, executor);
+        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage, asyncService);
         storageService = new StorageService(storageManager);
         replicationService = new ReplicationService(storageManager);
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
                 for (RepositoryDef def : storageService.listRepositoryDefs()) {
-                    Repository repository = Repository.open(def.getPath(), executor, replicationService);
+                    Repository repository = Repository.open(def.getPath(), asyncService, replicationService);
                     repositories.put(repository.getName(), repository);
                 }
                 for (ReplicationDef def : storageService.listReplicationDefs()) {
@@ -78,6 +76,7 @@ public class RepositoriesService {
     public void close() {
         lock.writeLock().lock();
         try {
+            asyncService.close();
             replicationService.close();
             for (Repository repository : repositories.values()) {
                 repository.close();
@@ -103,7 +102,7 @@ public class RepositoriesService {
                 public void apply() {
                     String name = path.getFileName().toString();
                     storageService.createRepositoryDef(new RepositoryDef(name, path));
-                    repositories.put(name, Repository.create(path, executor, replicationService));
+                    repositories.put(name, Repository.create(path, asyncService, replicationService));
                 }
             });
         } finally {
@@ -127,7 +126,7 @@ public class RepositoriesService {
                     if (repositories.containsKey(name)) {
                         return;
                     }
-                    repositories.put(name, Repository.open(repositoryDef.getPath(), executor, replicationService));
+                    repositories.put(name, Repository.open(repositoryDef.getPath(), asyncService, replicationService));
                     for (ReplicationDef def : storageService.listReplicationDefs(name)) {
                         if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                             replicationService.createReplication(repositories.get(def.getSource()),

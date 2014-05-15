@@ -7,9 +7,9 @@ import com.google.common.cache.RemovalNotification;
 import com.sleepycat.je.Transaction;
 import java.io.Closeable;
 import static java.util.Objects.requireNonNull;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import store.server.async.AsyncService;
+import store.server.async.Task;
 import store.server.exception.TransactionNotFoundException;
 
 /**
@@ -21,9 +21,9 @@ class TransactionCache implements Closeable {
     private static final int SIZE = 20;
     private static final int TTL = 60;
     private final Cache<Long, SuspendedTransaction> cache;
-    private final Future<?> cleanUpTask;
+    private final Task cleanUpTask;
 
-    public TransactionCache(ScheduledExecutorService executor) {
+    public TransactionCache(final String name, AsyncService asyncService) {
         cache = CacheBuilder.newBuilder()
                 .maximumSize(SIZE)
                 .expireAfterWrite(TTL, TimeUnit.SECONDS)
@@ -35,12 +35,14 @@ class TransactionCache implements Closeable {
             }
         }).build();
 
-        cleanUpTask = executor.scheduleAtFixedRate(new Runnable() {
+        cleanUpTask = asyncService.schedule(TTL, TimeUnit.SECONDS,
+                                            "[" + name + "] Evicting expired transactions",
+                                            new Runnable() {
             @Override
             public void run() {
                 cache.cleanUp();
             }
-        }, 0, TTL, TimeUnit.SECONDS);
+        });
     }
 
     public boolean isSuspended(Transaction transaction) {
@@ -63,7 +65,7 @@ class TransactionCache implements Closeable {
 
     @Override
     public void close() {
-        cleanUpTask.cancel(false);
+        cleanUpTask.cancel();
         cache.invalidateAll();
     }
 }

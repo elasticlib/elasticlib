@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
-import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
@@ -20,6 +19,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.Operation;
 import store.common.hash.Hash;
+import store.server.async.AsyncService;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
@@ -50,14 +50,14 @@ public class Repository {
 
     private Repository(String name,
                        Path path,
-                       ScheduledExecutorService executor,
+                       AsyncService asyncService,
                        ReplicationService replicationService,
                        ContentManager contentManager,
                        Index index) {
         this.name = name;
         this.path = path;
         this.replicationService = replicationService;
-        storageManager = new StorageManager(name, path.resolve(STORAGE), executor);
+        storageManager = new StorageManager(name, path.resolve(STORAGE), asyncService);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
@@ -71,10 +71,11 @@ public class Repository {
      *
      * @param path Repository home. Expected not to exist.
      * @param executor Executor service.
+     * @param asyncService Async service.
      * @param replicationService Replication service.
      * @return Created repository.
      */
-    static Repository create(Path path, ScheduledExecutorService executor, ReplicationService replicationService) {
+    static Repository create(Path path, AsyncService asyncService, ReplicationService replicationService) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -88,7 +89,7 @@ public class Repository {
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
-                              executor,
+                              asyncService,
                               replicationService,
                               ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
@@ -105,17 +106,18 @@ public class Repository {
      *
      * @param path Repository home.
      * @param executor Executor service.
+     * @param asyncService Async service.
      * @param replicationService Replication service.
      * @return Opened repository.
      */
-    static Repository open(Path path, ScheduledExecutorService executor, ReplicationService replicationService) {
+    static Repository open(Path path, AsyncService asyncService, ReplicationService replicationService) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
-                              executor,
+                              asyncService,
                               replicationService,
                               ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));

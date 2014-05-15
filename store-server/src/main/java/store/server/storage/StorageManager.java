@@ -18,12 +18,12 @@ import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
+import store.server.async.AsyncService;
+import store.server.async.Task;
 import store.server.exception.RepositoryClosedException;
 
 /**
@@ -45,14 +45,15 @@ public class StorageManager {
     private static final int SYNC_INTERVAL = 10;
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
     private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
-    private final ScheduledExecutorService executor;
+    private final String envName;
+    private final AsyncService asyncService;
     private final Environment environment;
     private final Deque<Database> databases = new ArrayDeque<>();
     private final Deque<Sequence> sequences = new ArrayDeque<>();
     private final TransactionCache cache;
     private final Deque<Transaction> transactions = new ArrayDeque<>();
     private final Deque<Cursor> cursors = new ArrayDeque<>();
-    private final Deque<Future<?>> tasks = new ArrayDeque<>();
+    private final Deque<Task> tasks = new ArrayDeque<>();
     private boolean closed;
 
     /**
@@ -60,9 +61,9 @@ public class StorageManager {
      *
      * @param name Name of this storage.
      * @param path Home path of the Berkeley DB environment.
-     * @param executor Executor service.
+     * @param asyncService Async service.
      */
-    public StorageManager(String name, Path path, ScheduledExecutorService executor) {
+    public StorageManager(String name, Path path, AsyncService asyncService) {
         EnvironmentConfig config = new EnvironmentConfig()
                 .setNodeName(name)
                 .setSharedCache(true)
@@ -79,9 +80,10 @@ public class StorageManager {
             }
         });
 
-        this.executor = executor;
+        envName = name;
+        this.asyncService = asyncService;
         this.environment = new Environment(path.toFile(), config);
-        this.cache = new TransactionCache(executor);
+        this.cache = new TransactionCache(envName, asyncService);
     }
 
     /**
@@ -93,7 +95,7 @@ public class StorageManager {
         }
         closed = true;
         while (!tasks.isEmpty()) {
-            tasks.remove().cancel(false);
+            tasks.remove().cancel();
         }
         while (!cursors.isEmpty()) {
             safeClose(cursors.remove());
@@ -155,12 +157,14 @@ public class StorageManager {
                 .setTransactional(false)
                 .setDeferredWrite(true));
 
-        tasks.add(executor.scheduleAtFixedRate(new Runnable() {
+        tasks.add(asyncService.schedule(SYNC_INTERVAL, TimeUnit.SECONDS,
+                                        "[" + envName + "] Syncing database '" + name + "'",
+                                        new Runnable() {
             @Override
             public void run() {
                 database.sync();
             }
-        }, 0, SYNC_INTERVAL, TimeUnit.SECONDS));
+        }));
 
         return database;
     }

@@ -136,24 +136,7 @@ class Index {
             return;
         }
         try (IndexWriter writer = newIndexWriter()) {
-            // First delete any existing document.
-            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
-
-            // Then (re)create the document.
-            Document document = new Document();
-            document.add(new TextField(CONTENT, contentInfoTree.getContent().asHexadecimalString(), Store.YES));
-            for (Hash rev : contentInfoTree.getHead()) {
-                document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
-            }
-            document.add(new LongField(LENGTH, contentInfoTree.getLength(), Store.NO));
-            for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
-                String key = entry.getKey();
-                for (Value value : entry.getValue()) {
-                    add(document, key, value);
-                }
-            }
-            document.add(new TextField(BODY, new Tika().parse(inputStream)));
-            writer.addDocument(document, analyzer);
+            index(writer, contentInfoTree, inputStream);
 
         } catch (AlreadyClosedException e) {
             throw new RepositoryClosedException(e);
@@ -161,6 +144,27 @@ class Index {
         } catch (IOException e) {
             throw new WriteException(e);
         }
+    }
+
+    private void index(IndexWriter writer, ContentInfoTree contentInfoTree, InputStream inputStream) throws IOException {
+        // First delete any existing document.
+        writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
+
+        // Then (re)create the document.
+        Document document = new Document();
+        document.add(new TextField(CONTENT, contentInfoTree.getContent().asHexadecimalString(), Store.YES));
+        for (Hash rev : contentInfoTree.getHead()) {
+            document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
+        }
+        document.add(new LongField(LENGTH, contentInfoTree.getLength(), Store.NO));
+        for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
+            String key = entry.getKey();
+            for (Value value : entry.getValue()) {
+                add(document, key, value);
+            }
+        }
+        document.add(new TextField(BODY, new Tika().parse(inputStream)));
+        writer.addDocument(document, analyzer);
     }
 
     private Multimap<String, Value> headMetadata(ContentInfoTree contentInfoTree) {

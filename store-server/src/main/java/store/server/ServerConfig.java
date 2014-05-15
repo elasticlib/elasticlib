@@ -25,27 +25,11 @@ public final class ServerConfig {
      * Server context path. Defaults to '/'.
      */
     public static final String WEB_CONTEXT = "web.context";
-    /**
-     * Whether HTTP requests and responses must be logged (true/false). Defaults to 'true'.
-     */
-    public static final String LOG_LOGGING_FILTER = "log.loggingFilter";
-    /**
-     * Whether HTTP entities must be logged (true/false). Non applicable if HTTP requests and responses are not logged.
-     * Defaults to 'true'.
-     */
-    public static final String LOG_PRINT_ENTITY = "log.printEntity";
-    /**
-     * Max entity size to print to log (in bytes). Non applicable if HTTP entities are not logged. Defaults to '8192'.
-     */
-    public static final String LOG_MAX_ENTITY_SIZE = "log.maxEntitySize";
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
     private static final Config DEFAULT = new Config()
             .set(WEB_HOST, "localhost")
             .set(WEB_PORT, 8080)
-            .set(WEB_CONTEXT, "/")
-            .set(LOG_LOGGING_FILTER, true)
-            .set(LOG_PRINT_ENTITY, true)
-            .set(LOG_MAX_ENTITY_SIZE, 8192);
+            .set(WEB_CONTEXT, "/");
 
     private ServerConfig() {
     }

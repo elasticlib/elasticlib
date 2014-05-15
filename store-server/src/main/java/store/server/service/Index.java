@@ -269,7 +269,7 @@ class Index {
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
-                QueryParser parser = new QueryParser(Version.LUCENE_46, BODY, analyzer);
+                QueryParser parser = new QueryParser(Version.LUCENE_47, BODY, analyzer);
                 ScoreDoc[] hits = searcher.search(parser.parse(query), first + number).scoreDocs;
                 List<IndexEntry> entries = new ArrayList<>(number);
                 int last = min(first + number, hits.length);

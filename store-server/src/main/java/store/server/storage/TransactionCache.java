@@ -12,6 +12,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import store.server.exception.TransactionNotFoundException;
 
+/**
+ * Retains suspended transactions, Allowing to resume them latter. Suspended transactions may be aborted and deleted
+ * automatically, after an expiration delay.
+ */
 class TransactionCache implements Closeable {
 
     private static final int SIZE = 20;

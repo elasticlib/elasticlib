@@ -28,6 +28,16 @@ import store.server.exception.RepositoryClosedException;
 
 /**
  * Provides persistent storage services build atop a Berkeley DB environment.
+ * <p>
+ * Tracks all opened handles (Databases, Sequences, Transactions...). When this manager is closed, it aborts all
+ * transactions and closes all tracked handles in proper order before closing Berkeley DB environment. Therefore, it can
+ * safely be closed at any moment.
+ * <p>
+ * Adds the ability to suspend a transaction before leaving the transaction scope and to resume it latter in another
+ * transaction scope. Note that suspended transactions are automatically evicted if they are not resumed after a given
+ * expiration delay.
+ * <p>
+ * This class is thread-safe and can be safely accessed by multiple concurrent threads.
  */
 public class StorageManager {
 
@@ -197,8 +207,13 @@ public class StorageManager {
      * @param command Command to execute.
      * @return Supplied command invocation result.
      */
-    public CommandResult inTransaction(Command command) {
-        return inTransaction(beginTransaction(), command);
+    public CommandResult inTransaction(final Command command) {
+        return inTransaction(beginTransaction(), new Query<CommandResult>() {
+            @Override
+            public CommandResult apply() {
+                return command.apply();
+            }
+        });
     }
 
     /**
@@ -210,13 +225,44 @@ public class StorageManager {
      * @param command Command to execute.
      * @return Supplied command invocation result.
      */
-    public CommandResult inTransaction(long id, Command command) {
-        return inTransaction(resumeTransaction(id), command);
+    public CommandResult inTransaction(long id, final Command command) {
+        return inTransaction(resumeTransaction(id), new Query<CommandResult>() {
+            @Override
+            public CommandResult apply() {
+                return command.apply();
+            }
+        });
     }
 
-    private CommandResult inTransaction(Transaction transaction, Command command) {
+    /**
+     * Executes supplied query in a transaction. Transaction is guaranteed to have been committed when query returns.
+     *
+     * @param <T> Query return type.
+     * @param query Query to execute.
+     * @return Query result.
+     */
+    public <T> T inTransaction(Query<T> query) {
+        return inTransaction(beginTransaction(), query);
+    }
+
+    /**
+     * Executes supplied procedure in a transaction.
+     *
+     * @param procedure Procedure to execute.
+     */
+    public void inTransaction(final Procedure procedure) {
+        inTransaction(beginTransaction(), new Query<Void>() {
+            @Override
+            public Void apply() {
+                procedure.apply();
+                return null;
+            }
+        });
+    }
+
+    private <T> T inTransaction(Transaction transaction, Query<T> query) {
         try {
-            CommandResult result = command.apply();
+            T result = query.apply();
             synchronized (this) {
                 if (!closed && !cache.isSuspended(transaction)) {
                     transaction.commit();
@@ -237,40 +283,6 @@ public class StorageManager {
                     transaction.abort();
                 }
             }
-        }
-    }
-
-    /**
-     * Executes supplied query in a transaction. Transaction is guaranteed to have been committed when query returns.
-     *
-     * @param <T> Query return type.
-     * @param query Query to execute.
-     * @return Query result.
-     */
-    public <T> T inTransaction(Query<T> query) {
-        Transaction transaction = beginTransaction();
-        try {
-            return query.apply();
-
-        } finally {
-            CURRENT_TRANSACTION.remove();
-            transaction.commit();
-        }
-    }
-
-    /**
-     * Executes supplied procedure in a transaction.
-     *
-     * @param procedure Procedure to execute.
-     */
-    public void inTransaction(Procedure procedure) {
-        Transaction transaction = beginTransaction();
-        try {
-            procedure.apply();
-
-        } finally {
-            CURRENT_TRANSACTION.remove();
-            transaction.commit();
         }
     }
 

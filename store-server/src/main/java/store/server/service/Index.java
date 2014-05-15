@@ -34,6 +34,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.SingleInstanceLockFactory;
@@ -48,6 +49,7 @@ import store.common.hash.Hash;
 import store.common.value.Value;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.WriteException;
 
 /**
@@ -78,6 +80,7 @@ class Index {
     public void close() {
         try {
             directory.close();
+
         } catch (IOException e) {
             LOG.error("[" + name + "] Failed to close index", e);
         }
@@ -151,6 +154,9 @@ class Index {
             }
             document.add(new TextField(BODY, new Tika().parse(inputStream)));
             writer.addDocument(document, analyzer);
+
+        } catch (AlreadyClosedException e) {
+            throw new RepositoryClosedException(e);
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -229,6 +235,10 @@ class Index {
                 }
                 return Optional.of(newIndexEntry(searcher.doc(hits[0].doc)));
             }
+
+        } catch (AlreadyClosedException e) {
+            throw new RepositoryClosedException(e);
+
         } catch (IOException e) {
             throw new WriteException(e);
         }
@@ -243,6 +253,9 @@ class Index {
         LOG.info("[{}] Deleting {}", name, hash);
         try (IndexWriter writer = newIndexWriter()) {
             writer.deleteDocuments(new Term(CONTENT, hash.asHexadecimalString()));
+
+        } catch (AlreadyClosedException e) {
+            throw new RepositoryClosedException(e);
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -284,6 +297,9 @@ class Index {
                 }
                 return entries;
             }
+        } catch (AlreadyClosedException e) {
+            throw new RepositoryClosedException(e);
+
         } catch (ParseException e) {
             throw new BadRequestException(e);
 

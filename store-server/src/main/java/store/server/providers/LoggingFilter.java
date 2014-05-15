@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -177,9 +176,9 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     }
 
     @Override
-    public void aroundWriteTo(WriterInterceptorContext writerCtx) throws IOException, WebApplicationException {
-        LoggingStream stream = (LoggingStream) writerCtx.getProperty(ENTITY_LOGGER_PROPERTY);
-        writerCtx.proceed();
+    public void aroundWriteTo(WriterInterceptorContext WriterInterceptorCtx) throws IOException {
+        LoggingStream stream = (LoggingStream) WriterInterceptorCtx.getProperty(ENTITY_LOGGER_PROPERTY);
+        WriterInterceptorCtx.proceed();
         if (stream != null) {
             LOG.debug(stream.getStringBuilder().toString());
         }

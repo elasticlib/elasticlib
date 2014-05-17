@@ -136,6 +136,43 @@ public class Config {
     }
 
     /**
+     * Checks if this config contains a value associated with supplied key.
+     *
+     * @param key A key.
+     * @return true if corresponding value exists.
+     */
+    public boolean containsKey(String key) {
+        return get(root, path(key)).isPresent();
+    }
+
+    /**
+     * Provides a flat map of value associated with supplied key. Fails if this value is not a map. Here, flat map means
+     * that value is traversed and all its sub-maps are unnested.
+     *
+     * @param key A key.
+     * @return Corresponding value as a a flat map.
+     */
+    public Map<String, Value> getFlatMap(String key) {
+        return flatMap(key, getWithType(key, ValueType.OBJECT).asMap());
+    }
+
+    private static Map<String, Value> flatMap(String key, Map<String, Value> map) {
+        Map<String, Value> flatMap = new LinkedHashMap<>();
+        for (Entry<String, Value> entry : map.entrySet()) {
+            String flatKey = key(key, entry.getKey());
+            Value value = entry.getValue();
+            if (value.type() != ValueType.OBJECT) {
+                flatMap.put(flatKey, value);
+            } else {
+                for (Entry<String, Value> subEntry : flatMap(flatKey, value.asMap()).entrySet()) {
+                    flatMap.put(subEntry.getKey(), subEntry.getValue());
+                }
+            }
+        }
+        return flatMap;
+    }
+
+    /**
      * Convenience overload for getting a string value.
      *
      * @param key A key.

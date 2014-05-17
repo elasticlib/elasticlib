@@ -1,11 +1,13 @@
 package store.server.async;
 
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.config.Config;
+import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
 
 /**
  * Provides periodic tasks execution service.
@@ -13,7 +15,16 @@ import org.slf4j.LoggerFactory;
 public class AsyncService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AsyncService.class);
-    private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor;
+
+    /**
+     * Constructor.
+     *
+     * @param config Configuration holder.
+     */
+    public AsyncService(Config config) {
+        executor = newScheduledThreadPool(config.getInt(ASYNC_POOL_SIZE));
+    }
 
     /**
      * Schedules execution of supplied task at periodic interval. If any execution of the task encounters an exception,

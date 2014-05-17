@@ -22,11 +22,18 @@ import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.config.Config;
 import store.common.hash.Hash;
 import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
+import store.server.config.ServerConfig;
+import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
+import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
 import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
@@ -51,9 +58,17 @@ public class RepositoryTest {
      */
     @BeforeClass
     public void init() throws IOException {
+        Config config = new Config()
+                .set(ASYNC_POOL_SIZE, 1)
+                .set(STORAGE_SYNC_PERIOD, "10 s")
+                .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
+                .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "10 s")
+                .set(STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD, "10 s")
+                .set(ServerConfig.JE_LOCK_TIMEOUT, "1 min");
+
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         Files.createDirectory(path.resolve("home"));
-        repositoriesService = new RepositoriesService(path.resolve("home"));
+        repositoriesService = new RepositoriesService(path.resolve("home"), config);
     }
 
     /**

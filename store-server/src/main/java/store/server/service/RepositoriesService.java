@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.config.Config;
 import store.server.async.AsyncService;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
@@ -30,7 +31,8 @@ public class RepositoriesService {
 
     private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
-    private final AsyncService asyncService = new AsyncService();
+    private final Config config;
+    private final AsyncService asyncService;
     private final StorageManager storageManager;
     private final StorageService storageService;
     private final ReplicationService replicationService;
@@ -41,24 +43,19 @@ public class RepositoriesService {
      * Constructor.
      *
      * @param home The repositories service home directory.
+     * @param config Configuration holder.
      */
-    public RepositoriesService(Path home) {
-        Path storage = home.resolve(STORAGE);
-        try {
-            if (!Files.exists(storage)) {
-                Files.createDirectory(storage);
-            }
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-        storageManager = new StorageManager(RepositoriesService.class.getSimpleName(), storage, asyncService);
+    public RepositoriesService(Path home, final Config config) {
+        this.config = config;
+        asyncService = new AsyncService(config);
+        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncService);
         storageService = new StorageService(storageManager);
         replicationService = new ReplicationService(storageManager);
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
                 for (RepositoryDef def : storageService.listRepositoryDefs()) {
-                    Repository repository = Repository.open(def.getPath(), asyncService, replicationService);
+                    Repository repository = Repository.open(def.getPath(), config, asyncService, replicationService);
                     repositories.put(repository.getName(), repository);
                 }
                 for (ReplicationDef def : storageService.listReplicationDefs()) {
@@ -67,6 +64,17 @@ public class RepositoriesService {
                 }
             }
         });
+    }
+
+    private static StorageManager newStorageManager(Path path, Config config, AsyncService asyncService) {
+        try {
+            if (!Files.exists(path)) {
+                Files.createDirectory(path);
+            }
+        } catch (IOException e) {
+            throw new WriteException(e);
+        }
+        return new StorageManager(RepositoriesService.class.getSimpleName(), path, config, asyncService);
     }
 
     /**
@@ -102,7 +110,7 @@ public class RepositoriesService {
                 public void apply() {
                     String name = path.getFileName().toString();
                     storageService.createRepositoryDef(new RepositoryDef(name, path));
-                    repositories.put(name, Repository.create(path, asyncService, replicationService));
+                    repositories.put(name, Repository.create(path, config, asyncService, replicationService));
                 }
             });
         } finally {
@@ -126,7 +134,8 @@ public class RepositoriesService {
                     if (repositories.containsKey(name)) {
                         return;
                     }
-                    repositories.put(name, Repository.open(repositoryDef.getPath(), asyncService, replicationService));
+                    Path path = repositoryDef.getPath();
+                    repositories.put(name, Repository.open(path, config, asyncService, replicationService));
                     for (ReplicationDef def : storageService.listReplicationDefs(name)) {
                         if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                             replicationService.createReplication(repositories.get(def.getSource()),

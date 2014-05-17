@@ -18,6 +18,7 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
 import store.common.Operation;
+import store.common.config.Config;
 import store.common.hash.Hash;
 import store.server.async.AsyncService;
 import store.server.exception.BadRequestException;
@@ -50,6 +51,7 @@ public class Repository {
 
     private Repository(String name,
                        Path path,
+                       Config config,
                        AsyncService asyncService,
                        ReplicationService replicationService,
                        ContentManager contentManager,
@@ -57,7 +59,7 @@ public class Repository {
         this.name = name;
         this.path = path;
         this.replicationService = replicationService;
-        storageManager = new StorageManager(name, path.resolve(STORAGE), asyncService);
+        storageManager = new StorageManager(name, path.resolve(STORAGE), config, asyncService);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
@@ -70,12 +72,12 @@ public class Repository {
      * Create a new repository.
      *
      * @param path Repository home. Expected not to exist.
-     * @param executor Executor service.
+     * @param config Configuration holder.
      * @param asyncService Async service.
      * @param replicationService Replication service.
      * @return Created repository.
      */
-    static Repository create(Path path, AsyncService asyncService, ReplicationService replicationService) {
+    static Repository create(Path path, Config config, AsyncService asyncService, ReplicationService replicationService) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -89,6 +91,7 @@ public class Repository {
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
+                              config,
                               asyncService,
                               replicationService,
                               ContentManager.create(path.resolve(CONTENT)),
@@ -105,18 +108,19 @@ public class Repository {
      * Open an existing repository.
      *
      * @param path Repository home.
-     * @param executor Executor service.
+     * @param config Configuration holder.
      * @param asyncService Async service.
      * @param replicationService Replication service.
      * @return Opened repository.
      */
-    static Repository open(Path path, AsyncService asyncService, ReplicationService replicationService) {
+    static Repository open(Path path, Config config, AsyncService asyncService, ReplicationService replicationService) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
         String name = path.getFileName().toString();
         return new Repository(name,
                               path,
+                              config,
                               asyncService,
                               replicationService,
                               ContentManager.open(path.resolve(CONTENT)),

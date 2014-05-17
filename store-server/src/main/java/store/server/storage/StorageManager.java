@@ -1,11 +1,9 @@
 package store.server.storage;
 
-import com.google.common.base.Charsets;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.ExceptionEvent;
@@ -18,13 +16,19 @@ import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.TimeUnit;
+import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
+import store.common.config.Config;
+import static store.common.config.ConfigUtil.duration;
+import static store.common.config.ConfigUtil.unit;
+import store.common.value.Value;
 import store.server.async.AsyncService;
 import store.server.async.Task;
+import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
 import store.server.exception.RepositoryClosedException;
+import static store.server.storage.DatabaseEntries.entry;
 
 /**
  * Provides persistent storage services build atop a Berkeley DB environment.
@@ -41,11 +45,12 @@ import store.server.exception.RepositoryClosedException;
  */
 public class StorageManager {
 
+    private static final String JE = "je";
     private static final String SEQUENCE = "sequence";
-    private static final int SYNC_INTERVAL = 10;
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
     private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
     private final String envName;
+    private final Config config;
     private final AsyncService asyncService;
     private final Environment environment;
     private final Deque<Database> databases = new ArrayDeque<>();
@@ -61,19 +66,23 @@ public class StorageManager {
      *
      * @param name Name of this storage.
      * @param path Home path of the Berkeley DB environment.
+     * @param config Configuration holder.
      * @param asyncService Async service.
      */
-    public StorageManager(String name, Path path, AsyncService asyncService) {
-        EnvironmentConfig config = new EnvironmentConfig()
+    public StorageManager(String name, Path path, Config config, AsyncService asyncService) {
+        EnvironmentConfig envConfig = new EnvironmentConfig()
                 .setNodeName(name)
                 .setSharedCache(true)
                 .setTransactional(true)
                 .setAllowCreate(true)
-                .setLockTimeout(5, TimeUnit.MINUTES)
                 .setLoggingHandler(new LoggingHandler(name));
-        // Timeout is actually unexpected.
 
-        config.setExceptionListener(new ExceptionListener() {
+        if (config.containsKey(JE)) {
+            for (Entry<String, Value> entry : config.getFlatMap(JE).entrySet()) {
+                envConfig.setConfigParam(entry.getKey(), entry.getValue().toString());
+            }
+        }
+        envConfig.setExceptionListener(new ExceptionListener() {
             @Override
             public void exceptionThrown(ExceptionEvent event) {
                 LOG.error("error", event.getException());
@@ -81,9 +90,10 @@ public class StorageManager {
         });
 
         envName = name;
+        this.config = config;
         this.asyncService = asyncService;
-        this.environment = new Environment(path.toFile(), config);
-        this.cache = new TransactionCache(envName, asyncService);
+        this.environment = new Environment(path.toFile(), envConfig);
+        this.cache = new TransactionCache(envName, config, asyncService);
     }
 
     /**
@@ -157,7 +167,7 @@ public class StorageManager {
                 .setTransactional(false)
                 .setDeferredWrite(true));
 
-        tasks.add(asyncService.schedule(SYNC_INTERVAL, TimeUnit.SECONDS,
+        tasks.add(asyncService.schedule(duration(config, STORAGE_SYNC_PERIOD), unit(config, STORAGE_SYNC_PERIOD),
                                         "[" + envName + "] Syncing database '" + name + "'",
                                         new Runnable() {
             @Override
@@ -184,11 +194,11 @@ public class StorageManager {
      */
     public synchronized Sequence openSequence(String name) {
         checkOpen();
-        SequenceConfig config = new SequenceConfig()
+        SequenceConfig seqConfig = new SequenceConfig()
                 .setAllowCreate(true)
                 .setInitialValue(1);
 
-        Sequence seq = sequenceDatabase().openSequence(null, new DatabaseEntry(name.getBytes(Charsets.UTF_8)), config);
+        Sequence seq = sequenceDatabase().openSequence(null, entry(name), seqConfig);
         sequences.add(seq);
         return seq;
     }

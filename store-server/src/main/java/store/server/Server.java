@@ -1,5 +1,6 @@
 package store.server;
 
+import store.server.config.ServerConfig;
 import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.net.URI;
@@ -32,7 +33,7 @@ public class Server {
     public Server(Path home) {
         LOG.info("Starting...");
         config = ServerConfig.load(home.resolve("config.yml"));
-        repositoriesService = new RepositoriesService(home);
+        repositoriesService = new RepositoriesService(home, config);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",

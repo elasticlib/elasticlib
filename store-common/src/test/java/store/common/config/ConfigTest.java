@@ -115,6 +115,34 @@ public class ConfigTest {
      * Test.
      */
     @Test
+    public void containsKeyTest() {
+        assertThat(config.containsKey(WEB)).isTrue();
+        assertThat(config.containsKey(key(WEB, HOST))).isTrue();
+        assertThat(config.containsKey("unknown")).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getFlatMapTest() {
+        Map<String, Value> expected = new MapBuilder()
+                .put("je.maxMemory", 524288000)
+                .put("je.lock.timeout", "5 m")
+                .build();
+
+        Config conf = new Config()
+                .set("test", 42)
+                .set("je.maxMemory", 524288000)
+                .set("je.lock.timeout", "5 m");
+
+        assertThat(conf.getFlatMap("je")).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void getTest() {
         assertThat(config.getString(key(WEB, SCHEME))).isEqualTo("http");
         assertThat(config.getString(key(WEB, HOST))).isEqualTo("localhost");

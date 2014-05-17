@@ -1,8 +1,11 @@
 package store.server.async;
 
+import static java.util.concurrent.Executors.defaultThreadFactory;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +26,17 @@ public class AsyncService {
      * @param config Configuration holder.
      */
     public AsyncService(Config config) {
-        executor = newScheduledThreadPool(config.getInt(ASYNC_POOL_SIZE));
+        executor = newScheduledThreadPool(config.getInt(ASYNC_POOL_SIZE), new ThreadFactory() {
+            private final ThreadFactory defaultFactory = defaultThreadFactory();
+            private final AtomicInteger counter = new AtomicInteger();
+
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = defaultFactory.newThread(runnable);
+                thread.setName("async-service-thread-" + counter.incrementAndGet());
+                return thread;
+            }
+        });
     }
 
     /**

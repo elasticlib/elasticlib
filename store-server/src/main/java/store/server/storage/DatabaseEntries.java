@@ -38,6 +38,20 @@ public final class DatabaseEntries {
     }
 
     /**
+     * Builds a new database entry wrapping a pair of strings.
+     *
+     * @param val1 First value of the pair to wrap.
+     * @param val2 second value of the pair to wrap.
+     * @return A new database entry.
+     */
+    public static DatabaseEntry entry(String val1, String val2) {
+        return new DatabaseEntry(new BsonWriter()
+                .put("1", val1)
+                .put("2", val2)
+                .build());
+    }
+
+    /**
      * Builds a new database entry wrapping a long.
      *
      * @param val Value to wrap.

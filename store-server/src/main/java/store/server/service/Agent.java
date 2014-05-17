@@ -22,6 +22,7 @@ abstract class Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
     private final Database cursorsDatabase;
+    private final DatabaseEntry cursorKey;
     private final String name;
     private final Deque<Event> events = new ArrayDeque<>();
     private long cursor;
@@ -34,13 +35,15 @@ abstract class Agent {
      *
      * @param name Agent name.
      * @param cursorsDatabase Database used to persist agent cursor value.
+     * @param cursorKey The key persisted agent cursor value is associated to in cursors Database.
      */
-    protected Agent(String name, Database cursorsDatabase) {
+    protected Agent(String name, Database cursorsDatabase, DatabaseEntry cursorKey) {
         this.name = name;
         this.cursorsDatabase = cursorsDatabase;
+        this.cursorKey = cursorKey;
 
         DatabaseEntry entry = new DatabaseEntry();
-        if (cursorsDatabase.get(null, entry(name), entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+        if (cursorsDatabase.get(null, cursorKey, entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
             cursor = asLong(entry);
         }
     }
@@ -126,7 +129,7 @@ abstract class Agent {
                             events.addFirst(event);
                         } else {
                             cursor = event.getSeq() + 1;
-                            cursorsDatabase.put(null, entry(name), entry(cursor));
+                            cursorsDatabase.put(null, cursorKey, entry(cursor));
                         }
                         nextEvent = next();
                     }

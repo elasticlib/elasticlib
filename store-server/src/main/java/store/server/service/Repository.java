@@ -26,6 +26,7 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.storage.Command;
+import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;
 
@@ -64,7 +65,7 @@ public class Repository {
         historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
         this.index = index;
-        agent = new IndexingAgent(this, index, storageManager.openDatabase(INDEXATION_CURSOR));
+        agent = new IndexingAgent(this, index, storageManager.openDatabase(INDEXATION_CURSOR), entry(name));
         agent.start();
     }
 

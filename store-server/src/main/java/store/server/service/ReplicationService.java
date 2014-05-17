@@ -5,10 +5,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 
 /**
- * Manage replication agents between repositories.
+ * Manages replication agents between repositories.
  */
 class ReplicationService {
 
@@ -32,7 +33,7 @@ class ReplicationService {
     }
 
     /**
-     * Create a new replication from source to destination. Does nothing if such a replication already exist.
+     * Creates a new replication from source to destination. Does nothing if such a replication already exist.
      *
      * @param source Source repository.
      * @param destination Destination repository.
@@ -46,13 +47,13 @@ class ReplicationService {
         if (!agents.containsKey(srcName)) {
             agents.put(srcName, new HashMap<String, ReplicationAgent>());
         }
-        ReplicationAgent agent = new ReplicationAgent(source, destination, replicationCursors);
+        ReplicationAgent agent = new ReplicationAgent(source, destination, replicationCursors, entry(srcName, destName));
         agents.get(srcName).put(destName, agent);
         agent.start();
     }
 
     /**
-     * Drop an existing replication from source to destination. Does nothing if such a replication do not exist.
+     * Drops an existing replication from source to destination. Does nothing if such a replication do not exist.
      *
      * @param source Source repository name.
      * @param destination Destination repository name.
@@ -71,7 +72,7 @@ class ReplicationService {
     }
 
     /**
-     * Drop all replications from/to repository which name is supplied.
+     * Drops all replications from/to repository which name is supplied.
      *
      * @param name A repository name.
      */
@@ -95,7 +96,7 @@ class ReplicationService {
     }
 
     /**
-     * Signal all agents from repository which name is supplied.
+     * Signals all agents from repository which name is supplied.
      *
      * @param name A repository name.
      */

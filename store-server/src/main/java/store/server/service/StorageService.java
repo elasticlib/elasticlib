@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
-import store.common.bson.BsonWriter;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.UnknownRepositoryException;
 import static store.server.storage.DatabaseEntries.asMappable;
@@ -26,8 +25,6 @@ class StorageService {
 
     private static final String REPOSITORIES = "repositories";
     private static final String REPLICATIONS = "replications";
-    private static final String SOURCE = "source";
-    private static final String DESTINATION = "destination";
     private final StorageManager storageManager;
     private final Database repositoryDefs;
     private final Database replicationDefs;
@@ -107,7 +104,7 @@ class StorageService {
      */
     public boolean createReplicationDef(ReplicationDef def) {
         return replicationDefs.putNoOverwrite(currentTransaction(),
-                                              key(def.getSource(), def.getDestination()),
+                                              entry(def.getSource(), def.getDestination()),
                                               entry(def)) == OperationStatus.SUCCESS;
     }
 
@@ -119,14 +116,7 @@ class StorageService {
      * @return If corresponding ReplicationDef has been found and deleted.
      */
     public boolean deleteReplicationDef(String source, String destination) {
-        return replicationDefs.delete(currentTransaction(), key(source, destination)) == OperationStatus.SUCCESS;
-    }
-
-    private static DatabaseEntry key(String source, String destination) {
-        return new DatabaseEntry(new BsonWriter()
-                .put(SOURCE, source)
-                .put(DESTINATION, destination)
-                .build());
+        return replicationDefs.delete(currentTransaction(), entry(source, destination)) == OperationStatus.SUCCESS;
     }
 
     /**

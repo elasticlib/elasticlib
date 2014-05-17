@@ -2,6 +2,7 @@ package store.server.service;
 
 import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -18,15 +19,8 @@ class ReplicationAgent extends Agent {
     private final Repository source;
     private final Repository destination;
 
-    /**
-     * Constructor.
-     *
-     * @param source Source repository.
-     * @param destination Destination repository.
-     * @param cursorsDatabase Database used to persist agent cursor value.
-     */
-    public ReplicationAgent(Repository source, Repository destination, Database cursorsDatabase) {
-        super("replication-" + source.getName() + ">" + destination.getName(), cursorsDatabase);
+    public ReplicationAgent(Repository source, Repository destination, Database cursorsDatabase, DatabaseEntry cursorKey) {
+        super("replication-" + source.getName() + ">" + destination.getName(), cursorsDatabase, cursorKey);
         this.source = source;
         this.destination = destination;
     }

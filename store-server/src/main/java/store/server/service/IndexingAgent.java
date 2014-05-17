@@ -2,6 +2,7 @@ package store.server.service;
 
 import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -16,15 +17,8 @@ class IndexingAgent extends Agent {
     private final Repository repository;
     private final Index index;
 
-    /**
-     * Constructor.
-     *
-     * @param repository Repository.
-     * @param index its index.
-     * @param cursorsDatabase Database used to persist agent cursor value.
-     */
-    public IndexingAgent(Repository repository, Index index, Database cursorsDatabase) {
-        super("indexation-" + repository.getName(), cursorsDatabase);
+    public IndexingAgent(Repository repository, Index index, Database cursorsDatabase, DatabaseEntry cursorKey) {
+        super("indexation-" + repository.getName(), cursorsDatabase, cursorKey);
         this.repository = repository;
         this.index = index;
     }

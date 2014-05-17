@@ -1,6 +1,5 @@
 package store.server;
 
-import store.server.config.ServerConfig;
 import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import java.net.URI;
@@ -12,6 +11,7 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
+import store.server.config.ServerConfig;
 import store.server.providers.LoggingFilter;
 import store.server.service.RepositoriesService;
 

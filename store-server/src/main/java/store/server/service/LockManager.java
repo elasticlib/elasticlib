@@ -19,7 +19,7 @@ class LockManager {
     private final Map<Hash, Counter> read = new HashMap<>();
     private boolean closed;
 
-    public synchronized void close() {
+    public void close() {
         lock.lock();
         try {
             closed = true;

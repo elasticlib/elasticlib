@@ -26,39 +26,31 @@ class ReplicationAgent extends Agent {
     }
 
     @Override
-    List<Event> history(boolean chronological, long first, int number) {
+    protected List<Event> history(boolean chronological, long first, int number) {
         return source.history(chronological, first, number);
     }
 
     @Override
-    AgentThread newAgentThread() {
-        return this.new ReplicationAgentThread();
-    }
+    protected boolean process(Event event) {
+        ContentInfoTree tree = source.getInfoTree(event.getContent());
+        if (tree.isDeleted()) {
+            destination.mergeTree(tree);
+            return true;
 
-    private class ReplicationAgentThread extends AgentThread {
-
-        @Override
-        protected boolean process(Event event) {
-            ContentInfoTree tree = source.getInfoTree(event.getContent());
-            if (tree.isDeleted()) {
-                destination.mergeTree(tree);
+        } else {
+            Optional<InputStream> inputStreamOpt = source.getContent(tree.getContent(), tree.getHead());
+            if (!inputStreamOpt.isPresent()) {
+                return false;
+            }
+            try (InputStream inputStream = inputStreamOpt.get()) {
+                CommandResult result = destination.mergeTree(tree);
+                if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
+                    destination.addContent(result.getTransactionId(), tree.getContent(), inputStream);
+                }
                 return true;
 
-            } else {
-                Optional<InputStream> inputStreamOpt = source.getContent(tree.getContent(), tree.getHead());
-                if (!inputStreamOpt.isPresent()) {
-                    return false;
-                }
-                try (InputStream inputStream = inputStreamOpt.get()) {
-                    CommandResult result = destination.mergeTree(tree);
-                    if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
-                        destination.addContent(result.getTransactionId(), tree.getContent(), inputStream);
-                    }
-                    return true;
-
-                } catch (IOException e) {
-                    throw new AssertionError(e);
-                }
+            } catch (IOException e) {
+                throw new AssertionError(e);
             }
         }
     }

@@ -24,36 +24,28 @@ class IndexingAgent extends Agent {
     }
 
     @Override
-    List<Event> history(boolean chronological, long first, int number) {
+    protected List<Event> history(boolean chronological, long first, int number) {
         return repository.history(chronological, first, number);
     }
 
     @Override
-    AgentThread newAgentThread() {
-        return this.new IndexingAgentThread();
-    }
+    protected boolean process(Event event) {
+        ContentInfoTree tree = repository.getInfoTree(event.getContent());
+        if (tree.isDeleted()) {
+            index.delete(tree.getContent());
+            return true;
 
-    private class IndexingAgentThread extends AgentThread {
-
-        @Override
-        protected boolean process(Event event) {
-            ContentInfoTree tree = repository.getInfoTree(event.getContent());
-            if (tree.isDeleted()) {
-                index.delete(tree.getContent());
+        } else {
+            Optional<InputStream> inputStreamOpt = repository.getContent(tree.getContent(), tree.getHead());
+            if (!inputStreamOpt.isPresent()) {
+                return false;
+            }
+            try (InputStream inputStream = inputStreamOpt.get()) {
+                index.index(tree, inputStream);
                 return true;
 
-            } else {
-                Optional<InputStream> inputStreamOpt = repository.getContent(tree.getContent(), tree.getHead());
-                if (!inputStreamOpt.isPresent()) {
-                    return false;
-                }
-                try (InputStream inputStream = inputStreamOpt.get()) {
-                    index.index(tree, inputStream);
-                    return true;
-
-                } catch (IOException e) {
-                    throw new AssertionError(e);
-                }
+            } catch (IOException e) {
+                throw new AssertionError(e);
             }
         }
     }

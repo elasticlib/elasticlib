@@ -8,6 +8,9 @@ import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.Event;
@@ -21,6 +24,9 @@ import static store.server.storage.DatabaseEntries.entry;
 abstract class Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+    private final Thread agentThread;
     private final Database cursorsDatabase;
     private final DatabaseEntry cursorKey;
     private final String name;
@@ -28,7 +34,6 @@ abstract class Agent {
     private long cursor;
     private boolean signaled;
     private boolean stoped;
-    private boolean running;
 
     /**
      * Constructor.
@@ -46,73 +51,55 @@ abstract class Agent {
         if (cursorsDatabase.get(null, cursorKey, entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
             cursor = asLong(entry);
         }
+        agentThread = new AgentThread();
     }
 
     /**
      * Start this agent.
      */
     public final void start() {
-        signal();
+        agentThread.start();
     }
 
     /**
-     * Stop this agent.
+     * Stop this agent. Waits for underlying processing thread to terminates before returning.
      */
-    public final synchronized void stop() {
-        signaled = false;
-        stoped = true;
+    public final void stop() {
+        lock.lock();
+        try {
+            stoped = true;
+            condition.signal();
+
+        } finally {
+            lock.unlock();
+        }
+        try {
+            agentThread.join();
+
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**
      * Signal this agent that a change may have happen on its source.
      */
-    public final synchronized void signal() {
-        if (stoped) {
-            return;
+    public final void signal() {
+        lock.lock();
+        try {
+            signaled = true;
+            condition.signal();
+
+        } finally {
+            lock.unlock();
         }
-        signaled = true;
-        if (!running) {
-            running = true;
-            newAgentThread().start();
-        }
     }
 
-    private synchronized boolean isStoped() {
-        return stoped;
-    }
+    protected abstract List<Event> history(boolean chronological, long first, int number);
 
-    private synchronized void clearSignal() {
-        signaled = false;
-    }
+    protected abstract boolean process(Event event);
 
-    private synchronized boolean clearRunning() {
-        if (!signaled) {
-            running = false;
-            return true;
-        }
-        return false;
-    }
-
-    private synchronized void abort() {
-        running = false;
-    }
-
-    private Optional<Event> next() {
-        if (isStoped()) {
-            return Optional.absent();
-        }
-        clearSignal();
-        if (events.isEmpty()) {
-            events.addAll(history(true, cursor, 100));
-        }
-        return Optional.fromNullable(events.pollFirst());
-    }
-
-    abstract List<Event> history(boolean chronological, long first, int number);
-
-    abstract AgentThread newAgentThread();
-
-    abstract class AgentThread extends Thread {
+    private class AgentThread extends Thread {
 
         public AgentThread() {
             super(name);
@@ -121,26 +108,42 @@ abstract class Agent {
         @Override
         public final void run() {
             try {
-                do {
-                    Optional<Event> nextEvent = next();
-                    while (nextEvent.isPresent()) {
-                        Event event = nextEvent.get();
-                        if (!process(event)) {
-                            events.addFirst(event);
-                        } else {
-                            cursor = event.getSeq() + 1;
-                            cursorsDatabase.put(null, cursorKey, entry(cursor));
-                        }
-                        nextEvent = next();
+                Optional<Event> nextEvent = next();
+                while (nextEvent.isPresent()) {
+                    Event event = nextEvent.get();
+                    if (!process(event)) {
+                        events.addFirst(event);
+                    } else {
+                        cursor = event.getSeq() + 1;
+                        cursorsDatabase.put(null, cursorKey, entry(cursor));
                     }
-                } while (!clearRunning());
-
+                    nextEvent = next();
+                }
             } catch (ServerException e) {
                 LOG.error("Unexpected error, stopping", e);
-                abort();
             }
         }
 
-        protected abstract boolean process(Event event);
+        private Optional<Event> next() {
+            lock.lock();
+            try {
+                while (!stoped && events.isEmpty()) {
+                    events.addAll(history(true, cursor, 100));
+                    if (events.isEmpty()) {
+                        signaled = false;
+                        while (!stoped && !signaled) {
+                            condition.awaitUninterruptibly();
+                        }
+                    }
+                }
+                if (stoped) {
+                    return Optional.absent();
+                }
+                return Optional.of(events.removeFirst());
+
+            } finally {
+                lock.unlock();
+            }
+        }
     }
 }

@@ -59,8 +59,8 @@ public class RepositoriesService {
                     repositories.put(repository.getName(), repository);
                 }
                 for (ReplicationDef def : storageService.listReplicationDefs()) {
-                    replicationService.createReplication(repositories.get(def.getSource()),
-                                                         repositories.get(def.getDestination()));
+                    replicationService.startReplication(repositories.get(def.getSource()),
+                                                        repositories.get(def.getDestination()));
                 }
             }
         });
@@ -138,8 +138,8 @@ public class RepositoriesService {
                     repositories.put(name, Repository.open(path, config, asyncService, replicationService));
                     for (ReplicationDef def : storageService.listReplicationDefs(name)) {
                         if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
-                            replicationService.createReplication(repositories.get(def.getSource()),
-                                                                 repositories.get(def.getDestination()));
+                            replicationService.startReplication(repositories.get(def.getSource()),
+                                                                repositories.get(def.getDestination()));
                         }
                     }
                 }
@@ -166,7 +166,7 @@ public class RepositoriesService {
                     if (!repositories.containsKey(name)) {
                         return;
                     }
-                    replicationService.dropReplications(name);
+                    replicationService.stopReplications(name);
                     repositories.remove(name).close();
                 }
             });

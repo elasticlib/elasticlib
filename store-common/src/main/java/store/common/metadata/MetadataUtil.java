@@ -140,11 +140,18 @@ public final class MetadataUtil {
         }
 
         private Value getDate(org.apache.tika.metadata.Property tikaKey) {
+            String raw = metadata.get(tikaKey);
+
+            // Bug in Tika 1.5 : Metadata.getDate() is likely to crash if string length is lower than 6 :
+            // it calls Metadata.parseDate(String) which does not check supplied input length.
+            if (raw.length() < 6) {
+                return Value.of(raw);
+            }
             Date date = metadata.getDate(tikaKey);
             if (date != null) {
                 return Value.of(new Instant(date));
             }
-            return Value.of(metadata.get(tikaKey));
+            return Value.of(raw);
         }
 
         private void convert(String tikaKey, Property property) {

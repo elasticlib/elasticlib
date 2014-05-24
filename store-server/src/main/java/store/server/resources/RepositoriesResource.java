@@ -98,7 +98,7 @@ public class RepositoriesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createRepository(JsonObject json) {
         if (!hasStringValue(json, PATH)) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         java.nio.file.Path path = Paths.get(json.getString(PATH));
         repositoriesService.createRepository(path);
@@ -120,7 +120,7 @@ public class RepositoriesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createRepository(@PathParam(NAME) String name, JsonObject json) {
         if (!hasStringValue(json, PATH)) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         repositoriesService.createRepository(Paths.get(json.getString(PATH)).resolve(name));
         return Response.created(uriInfo.getRequestUri()).build();
@@ -163,7 +163,7 @@ public class RepositoriesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateRepository(@PathParam(NAME) String name, JsonObject json) {
         if (!hasBooleanValue(json, STARTED)) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         if (json.getBoolean(STARTED)) {
             repositoriesService.openRepository(name);
@@ -237,7 +237,7 @@ public class RepositoriesResource {
         if (isValid(json, ContentInfoTree.class)) {
             return response(repository(name).mergeTree(read(json, ContentInfoTree.class)));
         }
-        throw new BadRequestException();
+        throw newInvalidJsonException();
     }
 
     /**
@@ -438,7 +438,7 @@ public class RepositoriesResource {
                              @QueryParam(FROM) Long from,
                              @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         if (!sort.equals(ASC) && !sort.equals(DESC)) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         if (from == null) {
             from = sort.equals(ASC) ? 0 : Long.MAX_VALUE;
@@ -505,5 +505,9 @@ public class RepositoriesResource {
 
     private Repository repository(String name) {
         return repositoriesService.getRepository(name);
+    }
+
+    private static BadRequestException newInvalidJsonException() {
+        return new BadRequestException("Invalid json data");
     }
 }

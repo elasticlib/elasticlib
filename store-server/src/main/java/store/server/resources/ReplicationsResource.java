@@ -52,7 +52,7 @@ public class ReplicationsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createReplication(JsonObject json) {
         if (!hasStringValue(json, SOURCE) || !hasStringValue(json, TARGET)) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         String source = json.getString(SOURCE);
         String target = json.getString(TARGET);
@@ -84,7 +84,7 @@ public class ReplicationsResource {
     @DELETE
     public Response deleteReplication(@QueryParam(SOURCE) String source, @QueryParam(TARGET) String target) {
         if (source == null || target == null) {
-            throw new BadRequestException();
+            throw newInvalidJsonException();
         }
         repositoriesService.dropReplication(source, target);
         return Response.ok().build();
@@ -105,5 +105,9 @@ public class ReplicationsResource {
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
         return writeAll(repositoriesService.listReplicationDefs());
+    }
+
+    private static BadRequestException newInvalidJsonException() {
+        return new BadRequestException("Invalid json data");
     }
 }

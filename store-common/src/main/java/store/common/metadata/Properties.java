@@ -31,7 +31,7 @@ public final class Properties {
 
         @Override
         public String key() {
-            return key(name());
+            return toLowerCamel(name());
         }
     }
 
@@ -47,7 +47,7 @@ public final class Properties {
 
         @Override
         public String key() {
-            return key(name());
+            return toLowerCamel(name());
         }
     }
 
@@ -87,7 +87,7 @@ public final class Properties {
 
         @Override
         public String key() {
-            return key(name());
+            return toLowerCamel(name());
         }
     }
 
@@ -111,11 +111,11 @@ public final class Properties {
 
         @Override
         public String key() {
-            return key(name());
+            return toLowerCamel(name());
         }
     }
 
-    private static String key(String name) {
+    private static String toLowerCamel(String name) {
         return UPPER_UNDERSCORE.to(LOWER_CAMEL, name);
     }
 }

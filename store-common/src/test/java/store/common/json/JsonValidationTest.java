@@ -1,18 +1,27 @@
 package store.common.json;
 
+import com.google.common.collect.ImmutableMap;
+import java.math.BigDecimal;
+import javax.json.Json;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
+import org.joda.time.Instant;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import static store.common.TestUtil.array;
+import store.common.hash.Hash;
 import static store.common.json.JsonTestData.*;
 import static store.common.json.JsonValidation.hasBooleanValue;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
+import store.common.json.schema.Schema;
+import store.common.value.Value;
 
 /**
  * Unit tests.
@@ -49,6 +58,42 @@ public class JsonValidationTest {
         assertThat(hasBooleanValue(json, "no")).isTrue();
         assertThat(hasBooleanValue(json, "num")).isFalse();
         assertThat(hasBooleanValue(json, "unknown")).isFalse();
+    }
+
+    /**
+     * Data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "isValidValueTest")
+    public Object[][] isValidValueDataProvider() {
+        return new Object[][]{
+            {Value.ofNull()},
+            {Value.of(true)},
+            {Value.of(false)},
+            {Value.of(10)},
+            {Value.of(new BigDecimal("3.14"))},
+            {Value.of("lorem ipsum")},
+            {Value.of(new Instant(123000))},
+            {Value.of(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))},
+            {Value.of(array(0xCA, 0xFE, 0xBA, 0xBE))}
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param value test data.
+     */
+    @Test(dataProvider = "isValidValueTest")
+    public void isValidValueTest(Value value) {
+        Schema schema = Schema.of("test", ImmutableMap.of("key", value));
+
+        JsonObject json = Json.createObjectBuilder()
+                .add("key", ValueWriting.writeValue(value, schema))
+                .build();
+
+        assertThat(isValid(json, schema)).as(value.type().name().toLowerCase()).isTrue();
     }
 
     /**

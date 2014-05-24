@@ -1,6 +1,5 @@
 package store.common.json;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map.Entry;
 import javax.json.JsonArray;
@@ -69,7 +68,8 @@ public final class JsonValidation {
         return isValid(json, SchemaProvider.getSchema(clazz));
     }
 
-    private static boolean isValid(JsonObject json, Schema schema) {
+    // Package-private for testing.
+    static boolean isValid(JsonObject json, Schema schema) {
         if (schema.type() != ValueType.OBJECT) {
             return false;
         }
@@ -161,9 +161,6 @@ public final class JsonValidation {
             case BINARY:
                 return value.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
-            case DECIMAL:
-                return isBigDecimal(value);
-
             case STRING:
                 return true;
 
@@ -174,20 +171,17 @@ public final class JsonValidation {
     }
 
     private static boolean isValid(JsonNumber value, ValueType type) {
-        if (type != ValueType.INTEGER && type != ValueType.DATE) {
-            return false;
-        }
-        return isLong(value);
-    }
+        switch (type) {
+            case INTEGER:
+            case DATE:
+                return isLong(value);
 
-    @SuppressWarnings("ResultOfObjectAllocationIgnored")
-    private static boolean isBigDecimal(String value) {
-        try {
-            new BigDecimal(value);
-            return true;
+            case DECIMAL:
+                // JsonNumber.bigDecimalValue() is not expected to fail.
+                return true;
 
-        } catch (NumberFormatException e) {
-            return false;
+            default:
+                return false;
         }
     }
 

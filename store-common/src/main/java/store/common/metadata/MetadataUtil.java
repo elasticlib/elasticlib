@@ -17,6 +17,8 @@ import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.joda.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import store.common.metadata.Properties.Audio;
@@ -30,6 +32,8 @@ import store.common.value.Value;
  */
 public final class MetadataUtil {
 
+    private static final Logger LOG = LoggerFactory.getLogger(MetadataUtil.class);
+
     private MetadataUtil() {
     }
 
@@ -41,15 +45,16 @@ public final class MetadataUtil {
      * @throws IOException If an I/O error occurs.
      */
     public static Map<String, Value> metadata(Path filepath) throws IOException {
+        Metadata metadata = new Metadata();
+        metadata.set(Metadata.RESOURCE_NAME_KEY, filepath.getFileName().toString());
+
         try (InputStream inputStream = Files.newInputStream(filepath)) {
-            Metadata metadata = new Metadata();
-            metadata.set(Metadata.RESOURCE_NAME_KEY, filepath.getFileName().toString());
             new AutoDetectParser().parse(inputStream, new DefaultHandler(), metadata, new ParseContext());
-            return Extractor.extract(metadata);
 
         } catch (SAXException | TikaException e) {
-            throw new RuntimeException(e);
+            LOG.error("Failed to fully extract metadata from " + filepath.toAbsolutePath(), e);
         }
+        return Extractor.extract(metadata);
     }
 
     private static class Extractor {

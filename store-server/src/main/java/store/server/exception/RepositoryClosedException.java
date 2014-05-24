@@ -19,7 +19,7 @@ public final class RepositoryClosedException extends ServerException {
      * @param cause Cause exception.
      */
     public RepositoryClosedException(Throwable cause) {
-        initCause(cause);
+        super(cause);
     }
 
     @Override

@@ -15,7 +15,7 @@ public final class WriteException extends ServerException {
      * @param cause Cause I/O exception to wrap.
      */
     public WriteException(IOException cause) {
-        initCause(cause);
+        super(cause);
     }
 
     @Override

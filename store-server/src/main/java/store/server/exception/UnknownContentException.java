@@ -19,7 +19,7 @@ public final class UnknownContentException extends ServerException {
      * @param cause Cause exception.
      */
     public UnknownContentException(Throwable cause) {
-        initCause(cause);
+        super(cause);
     }
 
     @Override

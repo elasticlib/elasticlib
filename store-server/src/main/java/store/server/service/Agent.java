@@ -62,7 +62,10 @@ abstract class Agent {
     }
 
     /**
-     * Stop this agent. Waits for underlying processing thread to terminates before returning.
+     * Stop this agent. Waits for underlying processing thread to terminates before returning. This allows any indexing
+     * agent to properly close its underlying writer on target index (and to complete any related merge task). In the
+     * case of a replication deletion, it also avoids to have agent trying to override the cursor database after this
+     * latter has been reset.
      */
     public final void stop() {
         lock.lock();

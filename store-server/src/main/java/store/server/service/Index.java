@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import static com.google.common.io.BaseEncoding.base16;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import static java.lang.Math.min;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.SingleInstanceLockFactory;
 import org.apache.lucene.util.Version;
 import org.apache.tika.Tika;
+import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.ContentInfo;
@@ -136,9 +138,11 @@ class Index {
             // already indexed !
             return;
         }
-        try (IndexWriter writer = newIndexWriter()) {
-            index(writer, contentInfoTree, inputStream);
-
+        try {
+            if (!indexInfoAndContent(contentInfoTree, inputStream)) {
+                // Fallback if Tika fails to extract content.
+                indexInfo(contentInfoTree);
+            }
         } catch (AlreadyClosedException e) {
             throw new RepositoryClosedException(e);
 
@@ -147,11 +151,41 @@ class Index {
         }
     }
 
-    private void index(IndexWriter writer, ContentInfoTree contentInfoTree, InputStream inputStream) throws IOException {
-        // First delete any existing document.
-        writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
+    private boolean indexInfoAndContent(ContentInfoTree contentInfoTree, InputStream inputStream) throws IOException {
+        try (IndexWriter writer = newIndexWriter()) {
+            // First delete any existing document.
+            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
 
-        // Then (re)create the document.
+            // Then (re)create the document.
+            try (Reader reader = new Tika().parse(inputStream)) {
+                Document document = newDocument(contentInfoTree);
+                document.add(new TextField(BODY, reader));
+                writer.addDocument(document, analyzer);
+                return true;
+
+            } catch (IOException e) {
+                if (!(e.getCause() instanceof TikaException)) {
+                    throw e;
+                }
+                LOG.error("Failed to index content from " + contentInfoTree.getContent(), e);
+                writer.rollback();
+                return false;
+            }
+        }
+    }
+
+    private void indexInfo(ContentInfoTree contentInfoTree) throws IOException {
+        try (IndexWriter writer = newIndexWriter()) {
+            // First delete any existing document.
+            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
+
+            // Here we do not extract and index content.
+            Document document = newDocument(contentInfoTree);
+            writer.addDocument(document, analyzer);
+        }
+    }
+
+    private static Document newDocument(ContentInfoTree contentInfoTree) {
         Document document = new Document();
         document.add(new TextField(CONTENT, contentInfoTree.getContent().asHexadecimalString(), Store.YES));
         for (Hash rev : contentInfoTree.getHead()) {
@@ -164,11 +198,10 @@ class Index {
                 add(document, key, value);
             }
         }
-        document.add(new TextField(BODY, new Tika().parse(inputStream)));
-        writer.addDocument(document, analyzer);
+        return document;
     }
 
-    private Multimap<String, Value> headMetadata(ContentInfoTree contentInfoTree) {
+    private static Multimap<String, Value> headMetadata(ContentInfoTree contentInfoTree) {
         Multimap<String, Value> metadata = HashMultimap.create();
         for (Hash rev : contentInfoTree.getHead()) {
             ContentInfo contentInfo = contentInfoTree.get(rev);
@@ -179,7 +212,7 @@ class Index {
         return metadata;
     }
 
-    private void add(Document document, String key, Value value) {
+    private static void add(Document document, String key, Value value) {
         switch (value.type()) {
             case BOOLEAN:
                 document.add(new TextField(key, value.asBoolean() ? "true" : "false", Store.NO));

@@ -19,6 +19,9 @@ import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 import static store.server.storage.StorageManager.currentTransaction;
 
+/**
+ * Stores and retrieves content info inside a repository.
+ */
 class InfoManager {
 
     private static final String INFO = "info";

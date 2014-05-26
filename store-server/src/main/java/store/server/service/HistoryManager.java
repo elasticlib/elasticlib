@@ -21,6 +21,9 @@ import static store.server.storage.DatabaseEntries.asMappable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 
+/**
+ * Creates and provides access to events of a repository.
+ */
 class HistoryManager {
 
     private static final String HISTORY = "history";

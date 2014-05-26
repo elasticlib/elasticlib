@@ -10,6 +10,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import store.common.hash.Hash;
 import store.server.exception.RepositoryClosedException;
 
+/**
+ * Provides shared and exclusive locks on hashes.
+ */
 class LockManager {
 
     private final Lock lock = new ReentrantLock();

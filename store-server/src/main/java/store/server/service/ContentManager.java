@@ -20,6 +20,9 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 
+/**
+ * Stores and retrieves contents inside a repository.
+ */
 class ContentManager {
 
     private static final int KEY_LENGTH = 2;

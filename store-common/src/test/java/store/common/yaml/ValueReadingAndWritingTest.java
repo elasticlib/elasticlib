@@ -1,6 +1,5 @@
 package store.common.yaml;
 
-import static com.google.common.io.BaseEncoding.base16;
 import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import java.util.EnumMap;
@@ -12,6 +11,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.Tag;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -23,19 +23,22 @@ import static store.common.yaml.ValueWriting.writeValue;
  */
 public class ValueReadingAndWritingTest {
 
+    private static final String HASH = "8d5f3c77e94a0cad3a32340d342135f43dbb7cbb";
+    private static final String GUID = "8d5f3c77e94a0cad3a32340d342135f4";
     private static final Map<ValueType, Value> VALUES = new EnumMap<>(ValueType.class);
     private static final Map<ValueType, ScalarNode> NODES = new EnumMap<>(ValueType.class);
-    private static final Tag HASH_TAG = new Tag("!hash");
 
     static {
         put(Value.ofNull(),
             newScalarNode(Tag.NULL, "null"));
 
-        byte[] bytes = base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb");
+        put(Value.of(new Hash(HASH)),
+            newScalarNode(Tags.HASH, HASH));
 
-        put(Value.of(new Hash(bytes)),
-            newScalarNode(HASH_TAG, base16().lowerCase().encode(bytes)));
+        put(Value.of(new Guid(GUID)),
+            newScalarNode(Tags.GUID, GUID));
 
+        byte[] bytes = new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb").getBytes();
         put(Value.of(bytes),
             newScalarNode(Tag.BINARY, base64().encode(bytes)));
 

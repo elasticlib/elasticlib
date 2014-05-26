@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.Instant;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -23,6 +24,17 @@ public class MapBuilder {
      * @return This builder.
      */
     public MapBuilder put(String key, Hash value) {
+        return put(key, Value.of(value));
+    }
+
+    /**
+     * Put a Guid entry in map to build.
+     *
+     * @param key Entry key.
+     * @param value Corresponding value.
+     * @return This builder.
+     */
+    public MapBuilder put(String key, Guid value) {
         return put(key, Value.of(value));
     }
 

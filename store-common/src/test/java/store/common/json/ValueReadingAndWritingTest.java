@@ -1,7 +1,6 @@
 package store.common.json;
 
 import com.google.common.collect.ImmutableMap;
-import static com.google.common.io.BaseEncoding.base16;
 import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import static java.util.Arrays.asList;
@@ -18,6 +17,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.ValueReading.readValue;
 import static store.common.json.ValueWriting.writeValue;
@@ -33,6 +33,8 @@ import static store.common.value.ValueType.STRING;
  */
 public class ValueReadingAndWritingTest {
 
+    private static final String HASH = "8d5f3c77e94a0cad3a32340d342135f43dbb7cbb";
+    private static final String GUID = "8d5f3c77e94a0cad3a32340d342135f4";
     private static final Map<ValueType, Value> VALUES = new EnumMap<>(ValueType.class);
     private static final Map<ValueType, JsonValue> JSON = new EnumMap<>(ValueType.class);
 
@@ -40,11 +42,13 @@ public class ValueReadingAndWritingTest {
         put(Value.ofNull(),
             JsonValue.NULL);
 
-        byte[] bytes = base16().lowerCase().decode("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb");
+        put(Value.of(new Hash(HASH)),
+            jsonString(HASH));
 
-        put(Value.of(new Hash(bytes)),
-            jsonString(base16().lowerCase().encode(bytes)));
+        put(Value.of(new Guid(GUID)),
+            jsonString(GUID));
 
+        byte[] bytes = new Hash(HASH).getBytes();
         put(Value.of(bytes),
             jsonString(base64().encode(bytes)));
 

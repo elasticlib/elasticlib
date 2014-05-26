@@ -19,19 +19,25 @@ import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
 import org.yaml.snakeyaml.nodes.Tag;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
 final class ValueReading {
 
     private static final Map<Tag, Function<Node, Value>> READERS = new HashMap<>();
-    private static final Tag HASH_TAG = new Tag("!hash");
 
     static {
-        READERS.put(HASH_TAG, new Function<Node, Value>() {
+        READERS.put(Tags.HASH, new Function<Node, Value>() {
             @Override
             public Value apply(Node node) {
                 return Value.of(new Hash(value(node)));
+            }
+        });
+        READERS.put(Tags.GUID, new Function<Node, Value>() {
+            @Override
+            public Value apply(Node node) {
+                return Value.of(new Guid(value(node)));
             }
         });
         READERS.put(Tag.NULL, new Function<Node, Value>() {

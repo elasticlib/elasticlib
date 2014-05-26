@@ -8,6 +8,7 @@ import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.*;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -41,6 +42,18 @@ public final class BsonWriter {
      * @return This encoder instance.
      */
     public BsonWriter put(String key, Hash value) {
+        put(key, Value.of(value));
+        return this;
+    }
+
+    /**
+     * Add a GUID to binary structure to build.
+     *
+     * @param key Key with which the supplied value is to be associated.
+     * @param value Value to be associated with the supplied key.
+     * @return This encoder instance.
+     */
+    public BsonWriter put(String key, Guid value) {
         put(key, Value.of(value));
         return this;
     }

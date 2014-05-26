@@ -11,6 +11,7 @@ import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.TRUE;
 import static store.common.bson.BinaryConstants.readType;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -19,6 +20,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.GUID;
 import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
@@ -29,6 +31,7 @@ final class ValueReading {
 
     private static final Map<ValueType, Function<ByteArrayReader, Value>> READERS = new EnumMap<>(ValueType.class);
     private static final int HASH_LENGTH = 20;
+    private static final int GUID_LENGTH = 16;
 
     static {
         READERS.put(NULL, new Function<ByteArrayReader, Value>() {
@@ -41,6 +44,12 @@ final class ValueReading {
             @Override
             public Value apply(ByteArrayReader reader) {
                 return Value.of(new Hash(reader.readByteArray(HASH_LENGTH)));
+            }
+        });
+        READERS.put(GUID, new Function<ByteArrayReader, Value>() {
+            @Override
+            public Value apply(ByteArrayReader reader) {
+                return Value.of(new Guid(reader.readByteArray(GUID_LENGTH)));
             }
         });
         READERS.put(BINARY, new Function<ByteArrayReader, Value>() {

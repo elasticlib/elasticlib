@@ -21,6 +21,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.GUID;
 import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
@@ -42,6 +43,12 @@ final class ValueWriting {
             @Override
             public JsonValue apply(Value value, Schema schema) {
                 return jsonString(value.asHash().asHexadecimalString());
+            }
+        });
+        WRITERS.put(GUID, new Writer() {
+            @Override
+            public JsonValue apply(Value value, Schema schema) {
+                return jsonString(value.asGuid().asHexadecimalString());
             }
         });
         WRITERS.put(BINARY, new Writer() {

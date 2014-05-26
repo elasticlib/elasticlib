@@ -14,6 +14,10 @@ public enum ValueType {
      */
     HASH,
     /**
+     * A GUID.
+     */
+    GUID,
+    /**
      * Some binary data.
      */
     BINARY,

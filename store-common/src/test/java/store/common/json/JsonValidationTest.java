@@ -15,6 +15,7 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
 import static store.common.TestUtil.array;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonTestData.*;
 import static store.common.json.JsonValidation.hasBooleanValue;
@@ -76,6 +77,7 @@ public class JsonValidationTest {
             {Value.of("lorem ipsum")},
             {Value.of(new Instant(123000))},
             {Value.of(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))},
+            {Value.of(new Guid("8d5f3c77e94a0cad3a32340d342135f4"))},
             {Value.of(array(0xCA, 0xFE, 0xBA, 0xBE))}
         };
     }

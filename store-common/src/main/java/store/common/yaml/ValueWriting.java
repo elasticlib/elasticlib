@@ -22,6 +22,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.GUID;
 import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
@@ -31,7 +32,6 @@ import static store.common.value.ValueType.STRING;
 final class ValueWriting {
 
     private static final Map<ValueType, Function<Value, Node>> WRITERS = new EnumMap<>(ValueType.class);
-    private static final Tag HASH_TAG = new Tag("!hash");
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     static {
@@ -44,7 +44,13 @@ final class ValueWriting {
         WRITERS.put(HASH, new Function<Value, Node>() {
             @Override
             public Node apply(Value value) {
-                return newScalarNode(HASH_TAG, value.asHash().asHexadecimalString());
+                return newScalarNode(Tags.HASH, value.asHash().asHexadecimalString());
+            }
+        });
+        WRITERS.put(GUID, new Function<Value, Node>() {
+            @Override
+            public Node apply(Value value) {
+                return newScalarNode(Tags.GUID, value.asGuid().asHexadecimalString());
             }
         });
         WRITERS.put(BINARY, new Function<Value, Node>() {

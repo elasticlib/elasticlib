@@ -11,6 +11,7 @@ import org.joda.time.Instant;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.*;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -45,6 +46,23 @@ public class BsonWriterTest {
 
         byte[] actual = new BsonWriter()
                 .put("hash", new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))
+                .build();
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeGuid() {
+        byte[] expected = array(GUID,
+                                0x67, 0x75, 0x69, 0x64, 0x00, // key
+                                0x8D, 0x5F, 0x3C, 0x77, 0xE9, 0x4A, 0x0C, 0xAD,
+                                0x3A, 0x32, 0x34, 0x0D, 0x34, 0x21, 0x35, 0xF4); // value
+
+        byte[] actual = new BsonWriter()
+                .put("guid", new Guid("8d5f3c77e94a0cad3a32340d342135f4"))
                 .build();
 
         assertThat(actual).isEqualTo(expected);

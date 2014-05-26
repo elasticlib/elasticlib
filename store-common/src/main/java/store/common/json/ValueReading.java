@@ -12,6 +12,7 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import org.joda.time.Instant;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.json.schema.Schema;
 import store.common.value.Value;
@@ -21,6 +22,7 @@ import static store.common.value.ValueType.BINARY;
 import static store.common.value.ValueType.BOOLEAN;
 import static store.common.value.ValueType.DATE;
 import static store.common.value.ValueType.DECIMAL;
+import static store.common.value.ValueType.GUID;
 import static store.common.value.ValueType.HASH;
 import static store.common.value.ValueType.INTEGER;
 import static store.common.value.ValueType.NULL;
@@ -42,6 +44,12 @@ final class ValueReading {
             @Override
             public Value apply(JsonValue json, Schema schema) {
                 return Value.of(new Hash(asString(json)));
+            }
+        });
+        READERS.put(GUID, new Reader() {
+            @Override
+            public Value apply(JsonValue json, Schema schema) {
+                return Value.of(new Guid(asString(json)));
             }
         });
         READERS.put(BINARY, new Reader() {

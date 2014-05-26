@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import org.joda.time.Instant;
 import static store.common.bson.ValueReading.readMap;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -64,6 +65,17 @@ public class BsonReader {
      */
     public Hash getHash(String key) {
         return get(key).asHash();
+    }
+
+    /**
+     * Returns the value to which the specified key is mapped in decoded structure. Fails if decoded structure does not
+     * contain a mapping for the specified key or if the value is actually not a GUID.
+     *
+     * @param key The key whose associated value is to be returned.
+     * @return A GUID.
+     */
+    public Guid getGuid(String key) {
+        return get(key).asGuid();
     }
 
     /**

@@ -40,6 +40,12 @@ final class MappableFormatting {
                 return Value.of(value.asHash().asHexadecimalString());
             }
         });
+        FORMATTERS.put(ValueType.GUID, new Formatter() {
+            @Override
+            public Value apply(Value value) {
+                return Value.of(value.asGuid().asHexadecimalString());
+            }
+        });
         FORMATTERS.put(ValueType.OBJECT, new Formatter() {
             @Override
             public Value apply(Value value) {

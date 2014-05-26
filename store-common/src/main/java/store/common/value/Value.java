@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.joda.time.Instant;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 
 /**
@@ -25,6 +26,14 @@ public abstract class Value {
      */
     public static Value of(Hash value) {
         return new HashValue(value);
+    }
+
+    /**
+     * @param value A GUID.
+     * @return A value of the supplied GUID.
+     */
+    public static Value of(Guid value) {
+        return new GuidValue(value);
     }
 
     /**
@@ -101,6 +110,14 @@ public abstract class Value {
      * @throws UnsupportedOperationException If this value is actually not a hash.
      */
     public Hash asHash() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @return This value as a GUID.
+     * @throws UnsupportedOperationException If this value is actually not a GUID.
+     */
+    public Guid asGuid() {
         throw new UnsupportedOperationException();
     }
 

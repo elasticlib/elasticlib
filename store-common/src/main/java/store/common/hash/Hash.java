@@ -1,7 +1,5 @@
 package store.common.hash;
 
-import static com.google.common.io.BaseEncoding.base16;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,9 +9,7 @@ import java.util.TreeSet;
  * Wraps bare bytes and provides additionnal operations.<br>
  * Is comparable in order to sort hashes in ascending lexicographical order over their encoded form.
  */
-public final class Hash implements Comparable<Hash> {
-
-    private final byte[] bytes;
+public final class Hash extends AbstractKey implements Comparable<Hash> {
 
     /**
      * Byte array based constructor.
@@ -21,7 +17,7 @@ public final class Hash implements Comparable<Hash> {
      * @param bytes A byte array.
      */
     public Hash(byte[] bytes) {
-        this.bytes = Arrays.copyOf(bytes, bytes.length);
+        super(bytes);
     }
 
     /**
@@ -30,25 +26,7 @@ public final class Hash implements Comparable<Hash> {
      * @param hexadecimal Hexadecimal encoded bytes. Case unsensitive.
      */
     public Hash(String hexadecimal) {
-        this(base16()
-                .lowerCase()
-                .decode(hexadecimal.toLowerCase()));
-    }
-
-    /**
-     * @return This hash as a byte array.
-     */
-    public byte[] getBytes() {
-        return Arrays.copyOf(bytes, bytes.length);
-    }
-
-    /**
-     * @return This hash encoded as an hexadecimal lower-case string.
-     */
-    public String asHexadecimalString() {
-        return base16()
-                .lowerCase()
-                .encode(bytes);
+        super(hexadecimal);
     }
 
     /**
@@ -96,26 +74,7 @@ public final class Hash implements Comparable<Hash> {
     }
 
     @Override
-    public String toString() {
-        return asHexadecimalString();
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(bytes);
-    }
-
-    @Override
-    public final boolean equals(Object obj) {
-        if (!(obj instanceof Hash)) {
-            return false;
-        }
-        Hash other = (Hash) obj;
-        return Arrays.equals(bytes, other.bytes);
-    }
-
-    @Override
     public int compareTo(Hash that) {
-        return asHexadecimalString().compareTo(that.asHexadecimalString());
+        return super.compareTo(that);
     }
 }

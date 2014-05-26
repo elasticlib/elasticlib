@@ -156,10 +156,13 @@ public final class JsonValidation {
     private static boolean isValid(String value, ValueType type) {
         switch (type) {
             case HASH:
-                return value.length() == 40 && value.matches("[0-9a-fA-F]*");
+                return value.length() == 40 && isBase16(value);
+
+            case GUID:
+                return value.length() == 32 && isBase16(value);
 
             case BINARY:
-                return value.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
+                return isBase64(value);
 
             case STRING:
                 return true;
@@ -168,6 +171,14 @@ public final class JsonValidation {
                 return false;
 
         }
+    }
+
+    private static boolean isBase16(String value) {
+        return value.matches("[0-9a-fA-F]*");
+    }
+
+    private static boolean isBase64(String value) {
+        return value.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
     }
 
     private static boolean isValid(JsonNumber value, ValueType type) {

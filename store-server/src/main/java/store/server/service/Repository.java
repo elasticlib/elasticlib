@@ -65,7 +65,7 @@ public class Repository {
         historyManager = new HistoryManager(storageManager);
         this.contentManager = contentManager;
         this.index = index;
-        agent = new IndexingAgent(this, index, storageManager.openDatabase(INDEXATION_CURSOR), entry(name));
+        agent = new IndexingAgent(this, index, storageManager.openDeferredWriteDatabase(INDEXATION_CURSOR), entry(name));
         agent.start();
     }
 

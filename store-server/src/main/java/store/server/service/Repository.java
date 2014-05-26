@@ -19,6 +19,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.Operation;
 import store.common.config.Config;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.server.async.AsyncService;
 import store.server.exception.BadRequestException;
@@ -41,6 +42,7 @@ public class Repository {
     private static final String INDEXATION_CURSOR = "indexationCursor";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final String name;
+    private final Guid guid;
     private final Path path;
     private final ReplicationService replicationService;
     private final StorageManager storageManager;
@@ -51,6 +53,7 @@ public class Repository {
     private final IndexingAgent agent;
 
     private Repository(String name,
+                       Guid guid,
                        Path path,
                        Config config,
                        AsyncService asyncService,
@@ -58,6 +61,7 @@ public class Repository {
                        ContentManager contentManager,
                        Index index) {
         this.name = name;
+        this.guid = guid;
         this.path = path;
         this.replicationService = replicationService;
         storageManager = new StorageManager(name, path.resolve(STORAGE), config, asyncService);
@@ -89,8 +93,11 @@ public class Repository {
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        String name = path.getFileName().toString();
+        AttributesManager attributesManager = AttributesManager.create(path);
+        String name = attributesManager.getName();
+        Guid guid = attributesManager.getGuid();
         return new Repository(name,
+                              guid,
                               path,
                               config,
                               asyncService,
@@ -118,8 +125,11 @@ public class Repository {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
-        String name = path.getFileName().toString();
+        AttributesManager attributesManager = AttributesManager.open(path);
+        String name = attributesManager.getName();
+        Guid guid = attributesManager.getGuid();
         return new Repository(name,
+                              guid,
                               path,
                               config,
                               asyncService,
@@ -133,6 +143,13 @@ public class Repository {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return The GUID of this repository.
+     */
+    public Guid getGuid() {
+        return guid;
     }
 
     /**

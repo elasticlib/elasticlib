@@ -1,8 +1,10 @@
 ---
 name: primary
+guid: !guid '8d5f3c77e94a0cad3a32340d342135f4'
 path: /repo/primary
 ...
 ---
 name: secondary
+guid: !guid '0d99dd9895a2a1c485e0c75f79f92cc1'
 path: /repo/secondary
 ...

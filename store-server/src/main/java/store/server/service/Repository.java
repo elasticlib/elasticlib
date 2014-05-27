@@ -279,7 +279,7 @@ public class Repository {
     private void signalIf(boolean condition) {
         if (condition) {
             agent.signal();
-            replicationService.signal(name);
+            replicationService.signal(guid);
         }
     }
 

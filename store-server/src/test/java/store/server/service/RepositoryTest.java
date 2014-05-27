@@ -1,11 +1,13 @@
 package store.server.service;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
@@ -50,6 +52,7 @@ public class RepositoryTest {
     private static final String BETA = "beta";
     private RepositoriesService repositoriesService;
     private Path path;
+    private Map<String, RepositoryDef> defs;
 
     /**
      * Initialization.
@@ -93,10 +96,24 @@ public class RepositoryTest {
         repositoriesService.createRepository(alphaPath);
         repositoriesService.createRepository(betaPath);
 
-        assertThat(repositoriesService.listRepositoryDefs()).containsExactly(new RepositoryDef(ALPHA, alphaPath),
-                                                                             new RepositoryDef(BETA, betaPath));
+        List<RepositoryDef> defList = repositoriesService.listRepositoryDefs();
+        assertThat(defList).hasSize(2);
+        RepositoryDef alphaDef = defList.get(0);
+        RepositoryDef betaDef = defList.get(1);
+
+        check(alphaDef, ALPHA, alphaPath);
+        check(betaDef, BETA, betaPath);
+
+        defs = ImmutableMap.of(ALPHA, alphaDef,
+                               BETA, betaDef);
+
         assertThat(repository(ALPHA).history(true, 0, 10)).isEmpty();
         assertThat(repository(BETA).history(true, 0, 10)).isEmpty();
+    }
+
+    private static void check(RepositoryDef def, String name, Path path) {
+        assertThat(def.getName()).isEqualTo(name);
+        assertThat(def.getPath()).isEqualTo(path);
     }
 
     /**
@@ -174,7 +191,11 @@ public class RepositoryTest {
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
     public void createReplicationTest() {
         repositoriesService.createReplication(ALPHA, BETA);
-        assertThat(repositoriesService.listReplicationDefs()).containsExactly(new ReplicationDef(ALPHA, BETA));
+
+        ReplicationDef expected = new ReplicationDef(defs.get(ALPHA).getGuid(),
+                                                     defs.get(BETA).getGuid());
+        assertThat(repositoriesService.listReplicationDefs()).containsExactly(expected);
+
         async(new Runnable() {
             @Override
             public void run() {

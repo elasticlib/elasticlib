@@ -61,7 +61,7 @@ public class RepositoriesResource {
 
     private static final String PATH = "path";
     private static final String STARTED = "started";
-    private static final String NAME = "name";
+    private static final String REPOSITORY = "repository";
     private static final String HASH = "hash";
     private static final String REV = "rev";
     private static final String TX_ID = "txId";
@@ -111,18 +111,18 @@ public class RepositoriesResource {
      * Create a new repository.
      *
      * @see createRepository(JsonObject)
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param json input JSON data
      * @return HTTP response
      */
     @PUT
-    @Path("{name}")
+    @Path("{repository}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createRepository(@PathParam(NAME) String name, JsonObject json) {
+    public Response createRepository(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (!hasStringValue(json, PATH)) {
             throw newInvalidJsonException();
         }
-        repositoriesService.createRepository(Paths.get(json.getString(PATH)).resolve(name));
+        repositoriesService.createRepository(Paths.get(json.getString(PATH)).resolve(repositoryKey));
         return Response.created(uriInfo.getRequestUri()).build();
     }
 
@@ -133,13 +133,13 @@ public class RepositoriesResource {
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @return HTTP response
      */
     @DELETE
-    @Path("{name}")
-    public Response dropRepository(@PathParam(NAME) String name) {
-        repositoriesService.dropRepository(name);
+    @Path("{repository}")
+    public Response dropRepository(@PathParam(REPOSITORY) String repositoryKey) {
+        repositoriesService.dropRepository(repositoryKey);
         return Response.ok().build();
     }
 
@@ -154,21 +154,21 @@ public class RepositoriesResource {
      * - 400 BAD REQUEST: Invalid JSON data.<br>
      * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param json input JSON data
      * @return HTTP response
      */
     @POST
-    @Path("{name}")
+    @Path("{repository}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateRepository(@PathParam(NAME) String name, JsonObject json) {
+    public Response updateRepository(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (!hasBooleanValue(json, STARTED)) {
             throw newInvalidJsonException();
         }
         if (json.getBoolean(STARTED)) {
-            repositoriesService.openRepository(name);
+            repositoriesService.openRepository(repositoryKey);
         } else {
-            repositoriesService.closeRepository(name);
+            repositoriesService.closeRepository(repositoryKey);
         }
         return Response.ok().build();
     }
@@ -201,14 +201,14 @@ public class RepositoriesResource {
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @return output JSON data
      */
     @GET
-    @Path("{name}")
+    @Path("{repository}")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getRepository(@PathParam(NAME) String name) {
-        return write(repositoriesService.getRepositoryDef(name));
+    public JsonObject getRepository(@PathParam(REPOSITORY) String repositoryKey) {
+        return write(repositoriesService.getRepositoryDef(repositoryKey));
     }
 
     /**
@@ -223,19 +223,19 @@ public class RepositoriesResource {
      * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param json input JSON data
      * @return HTTP response
      */
     @POST
-    @Path("{name}/info")
+    @Path("{repository}/info")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response postInfo(@PathParam(NAME) String name, JsonObject json) {
+    public Response postInfo(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (isValid(json, ContentInfo.class)) {
-            return response(repository(name).addInfo(read(json, ContentInfo.class)));
+            return response(repository(repositoryKey).addInfo(read(json, ContentInfo.class)));
         }
         if (isValid(json, ContentInfoTree.class)) {
-            return response(repository(name).mergeTree(read(json, ContentInfoTree.class)));
+            return response(repository(repositoryKey).mergeTree(read(json, ContentInfoTree.class)));
         }
         throw newInvalidJsonException();
     }
@@ -256,22 +256,23 @@ public class RepositoriesResource {
      * - 412 PRECONDITION FAILED: Integrity checking failed.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
      * @param transactionId transaction identifier
      * @param formData entity form data
      * @return HTTP response
      */
     @PUT
-    @Path("{name}/content/{hash}")
+    @Path("{repository}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response addContent(@PathParam(NAME) String name,
+    public Response addContent(@PathParam(REPOSITORY) String repositoryKey,
                                @PathParam(HASH) Hash hash,
                                @QueryParam(TX_ID) long transactionId,
                                FormDataMultipart formData) {
 
         try (InputStream inputStream = formData.next(CONTENT).getAsInputStream()) {
-            return response(uriInfo.getAbsolutePath(), repository(name).addContent(transactionId, hash, inputStream));
+            return response(uriInfo.getAbsolutePath(),
+                            repository(repositoryKey).addContent(transactionId, hash, inputStream));
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -291,19 +292,19 @@ public class RepositoriesResource {
      * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param rev expected head to apply request on
      * @param hash content hash
      * @return HTTP response
      */
     @DELETE
-    @Path("{name}/content/{hash}")
+    @Path("{repository}/content/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response deleteContent(@PathParam(NAME) String name,
+    public Response deleteContent(@PathParam(REPOSITORY) String repositoryKey,
                                   @QueryParam(REV) @DefaultValue("") String rev,
                                   @PathParam(HASH) Hash hash) {
 
-        return response(repository(name).deleteContent(hash, new TreeSet<>(parseRevisions(rev))));
+        return response(repository(repositoryKey).deleteContent(hash, new TreeSet<>(parseRevisions(rev))));
     }
 
     private static Response response(CommandResult result) {
@@ -328,15 +329,15 @@ public class RepositoriesResource {
      * - 404 NOT FOUND: Repository or content was not found.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
      * @return HTTP response
      */
     @GET
-    @Path("{name}/content/{hash}")
-    public Response getContent(@PathParam(NAME) final String name, @PathParam(HASH) final Hash hash) {
+    @Path("{repository}/content/{hash}")
+    public Response getContent(@PathParam(REPOSITORY) final String repositoryKey, @PathParam(HASH) final Hash hash) {
         while (true) {
-            final Repository repository = repository(name);
+            final Repository repository = repository(repositoryKey);
             ResponseBuilder response = Response.ok(new StreamingOutput() {
                 @Override
                 public void write(OutputStream outputStream) throws IOException {
@@ -388,24 +389,24 @@ public class RepositoriesResource {
      * - 404 NOT FOUND: Repository or content was not found.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
      * @param rev requested revisions
      * @return output JSON data
      */
     @GET
-    @Path("{name}/info/{hash}")
-    public JsonStructure getInfo(@PathParam(NAME) String name,
+    @Path("{repository}/info/{hash}")
+    public JsonStructure getInfo(@PathParam(REPOSITORY) String repositoryKey,
                                  @PathParam(HASH) Hash hash,
                                  @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
-            return write(repository(name).getInfoTree(hash));
+            return write(repository(repositoryKey).getInfoTree(hash));
         }
         if (rev.equals(HEAD)) {
-            return writeAll(repository(name).getInfoHead(hash));
+            return writeAll(repository(repositoryKey).getInfoHead(hash));
         }
-        return writeAll(repository(name).getInfoRevisions(hash, parseRevisions(rev)));
+        return writeAll(repository(repositoryKey).getInfoRevisions(hash, parseRevisions(rev)));
     }
 
     private static List<Hash> parseRevisions(String arg) {
@@ -425,15 +426,15 @@ public class RepositoriesResource {
      * - 404 NOT FOUND: Repository was not found.<br>
      * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param sort chronological sorting. Allowed values are "asc" and "desc".
      * @param from sequence value to start with.
      * @param size number of results to return.
      * @return output JSON data
      */
     @GET
-    @Path("{name}/history")
-    public JsonArray history(@PathParam(NAME) String name,
+    @Path("{repository}/history")
+    public JsonArray history(@PathParam(REPOSITORY) String repositoryKey,
                              @QueryParam(SORT) @DefaultValue(DESC) String sort,
                              @QueryParam(FROM) Long from,
                              @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
@@ -443,7 +444,7 @@ public class RepositoriesResource {
         if (from == null) {
             from = sort.equals(ASC) ? 0 : Long.MAX_VALUE;
         }
-        return writeAll(repository(name).history(sort.equals(ASC), from, size));
+        return writeAll(repository(repositoryKey).history(sort.equals(ASC), from, size));
     }
 
     /**
@@ -456,20 +457,20 @@ public class RepositoriesResource {
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param query Query
      * @param from sequence value to start with.
      * @param size number of results to return.
      * @return output JSON data
      */
     @GET
-    @Path("{name}/index")
+    @Path("{repository}/index")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray find(@PathParam(NAME) String name,
+    public JsonArray find(@PathParam(REPOSITORY) String repositoryKey,
                           @QueryParam(QUERY) String query,
                           @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
                           @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
-        return writeAll(repository(name).find(query, from, size));
+        return writeAll(repository(repositoryKey).find(query, from, size));
     }
 
     /**
@@ -482,21 +483,21 @@ public class RepositoriesResource {
      * - 200 OK: Operation succeeded.<br>
      * - 404 NOT FOUND: Repository was not found.
      *
-     * @param name repository name
+     * @param repositoryKey repository name or encoded GUID
      * @param query Query
      * @param from sequence value to start with.
      * @param size number of results to return.
      * @return output JSON data
      */
     @GET
-    @Path("{name}/info")
+    @Path("{repository}/info")
     @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray findInfo(@PathParam(NAME) String name,
+    public JsonArray findInfo(@PathParam(REPOSITORY) String repositoryKey,
                               @QueryParam(QUERY) String query,
                               @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
                               @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
-        Repository repository = repository(name);
+        Repository repository = repository(repositoryKey);
         for (IndexEntry entry : repository.find(query, from, size)) {
             infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getRevisions()));
         }

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
 import store.common.config.Config;
+import store.common.hash.Guid;
 import store.server.async.AsyncService;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
@@ -37,7 +38,7 @@ public class RepositoriesService {
     private final StorageService storageService;
     private final ReplicationService replicationService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Map<String, Repository> repositories = new HashMap<>();
+    private final Map<Guid, Repository> repositories = new HashMap<>();
 
     /**
      * Constructor.
@@ -56,7 +57,7 @@ public class RepositoriesService {
             public void apply() {
                 for (RepositoryDef def : storageService.listRepositoryDefs()) {
                     Repository repository = Repository.open(def.getPath(), config, asyncService, replicationService);
-                    repositories.put(repository.getName(), repository);
+                    repositories.put(repository.getGuid(), repository);
                 }
                 for (ReplicationDef def : storageService.listReplicationDefs()) {
                     replicationService.startReplication(repositories.get(def.getSource()),
@@ -108,9 +109,10 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    String name = path.getFileName().toString();
-                    storageService.createRepositoryDef(new RepositoryDef(name, path));
-                    repositories.put(name, Repository.create(path, config, asyncService, replicationService));
+                    Repository repository = Repository.create(path, config, asyncService, replicationService);
+                    RepositoryDef def = new RepositoryDef(repository.getName(), repository.getGuid(), path);
+                    storageService.createRepositoryDef(def);
+                    repositories.put(repository.getGuid(), repository);
                 }
             });
         } finally {
@@ -121,22 +123,24 @@ public class RepositoriesService {
     /**
      * Open an existing repository.
      *
-     * @param name Repository name.
+     * @param key Repository name or encoded GUID.
      */
-    public void openRepository(final String name) {
-        LOG.info("Opening repository {}", name);
+    public void openRepository(final String key) {
+        LOG.info("Opening repository {}", key);
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    RepositoryDef repositoryDef = storageService.getRepositoryDef(name);
-                    if (repositories.containsKey(name)) {
+                    RepositoryDef repositoryDef = storageService.getRepositoryDef(key);
+                    if (repositories.containsKey(repositoryDef.getGuid())) {
                         return;
                     }
                     Path path = repositoryDef.getPath();
-                    repositories.put(name, Repository.open(path, config, asyncService, replicationService));
-                    for (ReplicationDef def : storageService.listReplicationDefs(name)) {
+                    Repository repository = Repository.open(path, config, asyncService, replicationService);
+
+                    repositories.put(repository.getGuid(), repository);
+                    for (ReplicationDef def : storageService.listReplicationDefs(repository.getGuid())) {
                         if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                             replicationService.startReplication(repositories.get(def.getSource()),
                                                                 repositories.get(def.getDestination()));
@@ -152,22 +156,21 @@ public class RepositoriesService {
     /**
      * Close an existing repository.
      *
-     * @param name Repository name.
+     * @param key Repository name or encoded GUID.
      */
-    public void closeRepository(final String name) {
-        LOG.info("Closing repository {}", name);
+    public void closeRepository(final String key) {
+        LOG.info("Closing repository {}", key);
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    // Loads definition in order to ensure that repository actually exists.
-                    storageService.getRepositoryDef(name);
-                    if (!repositories.containsKey(name)) {
+                    RepositoryDef def = storageService.getRepositoryDef(key);
+                    if (!repositories.containsKey(def.getGuid())) {
                         return;
                     }
-                    replicationService.stopReplications(name);
-                    repositories.remove(name).close();
+                    replicationService.stopReplications(def.getGuid());
+                    repositories.remove(def.getGuid()).close();
                 }
             });
         } finally {
@@ -178,22 +181,22 @@ public class RepositoriesService {
     /**
      * Drop an existing repository.
      *
-     * @param name Repository name.
+     * @param key Repository name or encoded GUID.
      */
-    public void dropRepository(final String name) {
-        LOG.info("Dropping repository {}", name);
+    public void dropRepository(final String key) {
+        LOG.info("Dropping repository {}", key);
         lock.writeLock().lock();
         try {
             final Path path = storageManager.inTransaction(new Query<Path>() {
                 @Override
                 public Path apply() {
-                    RepositoryDef def = storageService.getRepositoryDef(name);
+                    RepositoryDef def = storageService.getRepositoryDef(key);
 
-                    replicationService.dropReplications(name);
-                    repositories.remove(name).close();
+                    replicationService.dropReplications(def.getGuid());
+                    repositories.remove(def.getGuid()).close();
 
-                    storageService.deleteRepositoryDef(name);
-                    storageService.deleteAllReplicationDefs(name);
+                    storageService.deleteRepositoryDef(def.getGuid());
+                    storageService.deleteAllReplicationDefs(def.getGuid());
                     return def.getPath();
                 }
             });
@@ -232,8 +235,8 @@ public class RepositoriesService {
     /**
      * Create a new replication from source to destination. Does nothing if such a replication already exist.
      *
-     * @param source Source repository name.
-     * @param destination Destination repository name.
+     * @param source Source repository name or encoded GUID.
+     * @param destination Destination repository name or encoded GUID.
      */
     public void createReplication(final String source, final String destination) {
         LOG.info("Creating replication {}>{}", source, destination);
@@ -245,13 +248,12 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    // Load definitions to ensure that repositories actually exist.
-                    storageService.getRepositoryDef(source);
-                    storageService.getRepositoryDef(destination);
+                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
+                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
 
-                    storageService.createReplicationDef(new ReplicationDef(source, destination));
-                    if (repositories.containsKey(source) && repositories.containsKey(destination)) {
-                        replicationService.createReplication(repositories.get(source), repositories.get(destination));
+                    storageService.createReplicationDef(new ReplicationDef(srcId, destId));
+                    if (repositories.containsKey(srcId) && repositories.containsKey(destId)) {
+                        replicationService.createReplication(repositories.get(srcId), repositories.get(destId));
                     }
                 }
             });
@@ -263,8 +265,8 @@ public class RepositoriesService {
     /**
      * Drop an existing replication from source to destination. Does nothing if such a replication do not exist.
      *
-     * @param source Source repository name.
-     * @param destination Destination repository name.
+     * @param source Source repository name or encoded GUID.
+     * @param destination Destination repository name or encoded GUID.
      */
     public void dropReplication(final String source, final String destination) {
         LOG.info("Dropping replication {} >> {}", source, destination);
@@ -273,11 +275,11 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    storageService.getRepositoryDef(source);
-                    storageService.getRepositoryDef(destination);
+                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
+                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
 
-                    storageService.deleteReplicationDef(source, destination);
-                    replicationService.dropReplication(source, destination);
+                    storageService.deleteReplicationDef(srcId, destId);
+                    replicationService.dropReplication(srcId, destId);
                 }
             });
         } finally {
@@ -328,17 +330,17 @@ public class RepositoriesService {
     /**
      * Provides the definition of an existing repository.
      *
-     * @param name Repository name.
+     * @param key Repository name or encoded GUID.
      * @return Corresponding repository definition.
      */
-    public RepositoryDef getRepositoryDef(final String name) {
-        LOG.info("Returning repository definition of {}", name);
+    public RepositoryDef getRepositoryDef(final String key) {
+        LOG.info("Returning repository definition of {}", key);
         lock.readLock().lock();
         try {
             return storageManager.inTransaction(new Query<RepositoryDef>() {
                 @Override
                 public RepositoryDef apply() {
-                    return storageService.getRepositoryDef(name);
+                    return storageService.getRepositoryDef(key);
                 }
             });
         } finally {
@@ -348,22 +350,22 @@ public class RepositoriesService {
     }
 
     /**
-     * Provides repository associated with supplied name.
+     * Provides a repository.
      *
-     * @param name A repository name
+     * @param key Repository name or encoded GUID.
      * @return Corresponding repository
      */
-    public Repository getRepository(final String name) {
+    public Repository getRepository(final String key) {
         lock.readLock().lock();
         try {
             return storageManager.inTransaction(new Query<Repository>() {
                 @Override
                 public Repository apply() {
-                    storageService.getRepositoryDef(name);
-                    if (!repositories.containsKey(name)) {
+                    RepositoryDef def = storageService.getRepositoryDef(key);
+                    if (!repositories.containsKey(def.getGuid())) {
                         throw new RepositoryClosedException();
                     }
-                    return repositories.get(name);
+                    return repositories.get(def.getGuid());
                 }
             });
         } finally {

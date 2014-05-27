@@ -37,8 +37,8 @@ public class ReplicationsResource {
      * Create a new replication.
      * <p>
      * Input:<br>
-     * - source (String): Source name.<br>
-     * - target (String): Target name.
+     * - source (String): Source name or encoded GUID.<br>
+     * - target (String): Target name or encoded GUID.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>
@@ -69,8 +69,8 @@ public class ReplicationsResource {
      * Delete a replication.
      * <p>
      * Input:<br>
-     * - source (String): Source name.<br>
-     * - target (String): Target name.
+     * - source (String): Source name or encoded GUID.<br>
+     * - target (String): Target name or encoded GUID.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>

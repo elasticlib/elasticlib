@@ -13,6 +13,7 @@ import store.client.display.Display;
 import store.client.http.HttpClient;
 import store.client.http.Session;
 import store.common.RepositoryDef;
+import store.common.hash.Guid;
 
 /**
  * Unit tests.
@@ -23,8 +24,13 @@ public class CommandParserTest {
 
     {
         HttpClient client = mock(HttpClient.class);
-        when(client.listRepositoryDefs()).thenReturn(asList(new RepositoryDef("primary", Paths.get("/repo/primary")),
-                                                            new RepositoryDef("secondary", Paths.get("/repo/secondary"))));
+        when(client.listRepositoryDefs())
+                .thenReturn(asList(new RepositoryDef("primary",
+                                                     new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
+                                                     Paths.get("/repo/primary")),
+                                   new RepositoryDef("secondary",
+                                                     new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
+                                                     Paths.get("/repo/secondary"))));
         Display display = mock(Display.class);
         Session session = mock(Session.class);
         ClientConfig config = mock(ClientConfig.class);

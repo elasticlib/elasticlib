@@ -5,6 +5,9 @@
         "name": {
             "type": "string"
         },
+        "guid": {
+            "type": "guid"
+        },
         "path": {
             "type": "string"
         }

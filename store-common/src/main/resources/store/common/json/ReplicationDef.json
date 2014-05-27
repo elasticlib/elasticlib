@@ -3,10 +3,10 @@
     "type": "object",
     "properties": {
         "source": {
-            "type": "string"
+            "type": "guid"
         },
         "destination": {
-            "type": "string"
+            "type": "guid"
         }
     }
 }

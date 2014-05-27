@@ -58,6 +58,10 @@ abstract class AbstractKey {
         return Arrays.equals(bytes, other.bytes);
     }
 
+    protected static boolean isBase16(String value) {
+        return value.matches("[0-9a-fA-F]*");
+    }
+
     // Helps to implements Comparable in derived classes.
     protected int compareTo(AbstractKey that) {
         return asHexadecimalString().compareTo(that.asHexadecimalString());

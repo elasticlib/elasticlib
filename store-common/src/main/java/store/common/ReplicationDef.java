@@ -4,6 +4,7 @@ import static com.google.common.base.Objects.toStringHelper;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
+import store.common.hash.Guid;
 import store.common.value.Value;
 
 /**
@@ -13,8 +14,8 @@ public final class ReplicationDef implements Mappable {
 
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
-    private final String source;
-    private final String destination;
+    private final Guid source;
+    private final Guid destination;
 
     /**
      * Constructor.
@@ -22,7 +23,7 @@ public final class ReplicationDef implements Mappable {
      * @param source Source repository.
      * @param destination Destination repository.
      */
-    public ReplicationDef(String source, String destination) {
+    public ReplicationDef(Guid source, Guid destination) {
         this.source = requireNonNull(source);
         this.destination = requireNonNull(destination);
     }
@@ -30,14 +31,14 @@ public final class ReplicationDef implements Mappable {
     /**
      * @return The source repository.
      */
-    public String getSource() {
+    public Guid getSource() {
         return source;
     }
 
     /**
      * @return The destination repository.
      */
-    public String getDestination() {
+    public Guid getDestination() {
         return destination;
     }
 
@@ -56,8 +57,8 @@ public final class ReplicationDef implements Mappable {
      * @return A new instance.
      */
     public static ReplicationDef fromMap(Map<String, Value> map) {
-        return new ReplicationDef(map.get(SOURCE).asString(),
-                                  map.get(DESTINATION).asString());
+        return new ReplicationDef(map.get(SOURCE).asGuid(),
+                                  map.get(DESTINATION).asGuid());
     }
 
     @Override

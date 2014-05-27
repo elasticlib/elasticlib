@@ -2,6 +2,7 @@ package store.common.hash;
 
 import java.util.Set;
 import java.util.TreeSet;
+import static store.common.hash.AbstractKey.isBase16;
 
 /**
  * Represents a Hash.
@@ -10,6 +11,8 @@ import java.util.TreeSet;
  * Is comparable in order to sort hashes in ascending lexicographical order over their encoded form.
  */
 public final class Hash extends AbstractKey implements Comparable<Hash> {
+
+    private static final int SHA1_LENGTH = 20; // In bytes
 
     /**
      * Byte array based constructor.
@@ -27,6 +30,16 @@ public final class Hash extends AbstractKey implements Comparable<Hash> {
      */
     public Hash(String hexadecimal) {
         super(hexadecimal);
+    }
+
+    /**
+     * Checks if supplied value is a valid encoded SHA-1 hash.
+     *
+     * @param value Some text.
+     * @return If supplied text represents a valid SHA-1 hash.
+     */
+    public static boolean isValid(String value) {
+        return value.length() == SHA1_LENGTH * 2 && isBase16(value);
     }
 
     /**

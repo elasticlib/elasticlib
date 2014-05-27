@@ -65,7 +65,7 @@ import store.common.value.Value;
  */
 public class HttpClient implements Closeable {
 
-    private static final String NAME = "name";
+    private static final String REPOSITORY = "repository";
     private static final String PATH = "path";
     private static final String REPOSITORIES = "repositories";
     private static final String REPLICATIONS = "replications";
@@ -181,11 +181,11 @@ public class HttpClient implements Closeable {
     /**
      * Tests that supplied repository really exists. Fails if it does not.
      *
-     * @param name Repository name.
+     * @param repository Repository name or encoded GUID.
      */
-    void testRepository(String name) {
-        ensureSuccess(resource.path("repositories/{name}")
-                .resolveTemplate(NAME, name)
+    void testRepository(String repository) {
+        ensureSuccess(resource.path("repositories/{repository}")
+                .resolveTemplate(REPOSITORY, repository)
                 .request()
                 .get());
     }
@@ -208,11 +208,11 @@ public class HttpClient implements Closeable {
     /**
      * Deletes an existing repository.
      *
-     * @param name Repository name.
+     * @param repository Repository name or encoded GUID.
      */
-    public void dropRepository(String name) {
-        ensureSuccess(resource.path("repositories/{name}")
-                .resolveTemplate(NAME, name)
+    public void dropRepository(String repository) {
+        ensureSuccess(resource.path("repositories/{repository}")
+                .resolveTemplate(REPOSITORY, repository)
                 .request()
                 .delete());
     }
@@ -277,7 +277,7 @@ public class HttpClient implements Closeable {
     /**
      * Add a new Content to a repository. Info is extracted from content an added along.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param filepath Content path (from client perspective).
      * @param metadata Optional additionnal metadata to add to content info.
      * @return Actual command result.
@@ -334,8 +334,8 @@ public class HttpClient implements Closeable {
                                                      filepath.getFileName().toString(),
                                                      MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
-            return result(resource.path("repositories/{name}/content/{hash}")
-                    .resolveTemplate(NAME, repository)
+            return result(resource.path("repositories/{repository}/content/{hash}")
+                    .resolveTemplate(REPOSITORY, repository)
                     .resolveTemplate(HASH, info.getContent())
                     .queryParam(TX_ID, transactionId)
                     .request()
@@ -359,7 +359,7 @@ public class HttpClient implements Closeable {
     /**
      * Update an exising content in a repository.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param info New head revision.
      * @return Actual command result.
      */
@@ -369,8 +369,8 @@ public class HttpClient implements Closeable {
 
     private CommandResult post(String repository, ContentInfo info) {
         return result(resource
-                .path("repositories/{name}/info")
-                .resolveTemplate(NAME, repository)
+                .path("repositories/{repository}/info")
+                .resolveTemplate(REPOSITORY, repository)
                 .request()
                 .post(entity(write(info), MediaType.APPLICATION_JSON_TYPE)));
     }
@@ -378,7 +378,7 @@ public class HttpClient implements Closeable {
     /**
      * Delete an exising content from a repository.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param hash Content hash.
      * @return Actual command result.
      */
@@ -388,8 +388,8 @@ public class HttpClient implements Closeable {
             throw new RequestFailedException("This content is already deleted");
         }
         return result(resource
-                .path("repositories/{name}/content/{hash}")
-                .resolveTemplate(NAME, repository)
+                .path("repositories/{repository}/content/{hash}")
+                .resolveTemplate(REPOSITORY, repository)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, Joiner.on('-').join(revisions(head)))
                 .request()
@@ -399,13 +399,13 @@ public class HttpClient implements Closeable {
     /**
      * Provides content info tree for a given content.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param hash Content hash.
      * @return Corresponding info tree.
      */
     public ContentInfoTree getInfoTree(String repository, Hash hash) {
-        Response response = resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate(NAME, repository)
+        Response response = resource.path("repositories/{repository}/info/{hash}")
+                .resolveTemplate(REPOSITORY, repository)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -416,7 +416,7 @@ public class HttpClient implements Closeable {
     /**
      * Provides info head revisions for a given content.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param hash Content hash.
      * @return Corresponding info head.
      */
@@ -425,8 +425,8 @@ public class HttpClient implements Closeable {
     }
 
     private Response head(String repository, Hash hash) {
-        return resource.path("repositories/{name}/info/{hash}")
-                .resolveTemplate(NAME, repository)
+        return resource.path("repositories/{repository}/info/{hash}")
+                .resolveTemplate(REPOSITORY, repository)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, HEAD)
                 .request()
@@ -436,12 +436,12 @@ public class HttpClient implements Closeable {
     /**
      * Download a content from a repository. Downloaded content is saved in client working directory.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param hash Content hash.
      */
     public void get(String repository, Hash hash) {
-        Response response = resource.path("repositories/{name}/content/{hash}")
-                .resolveTemplate(NAME, repository)
+        Response response = resource.path("repositories/{repository}/content/{hash}")
+                .resolveTemplate(REPOSITORY, repository)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -478,15 +478,15 @@ public class HttpClient implements Closeable {
     /**
      * Find index entries matching a given query in a paginated way.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param query Query.
      * @param from First item to return.
      * @param size Number of items to return.
      * @return A list of index entries.
      */
     public List<IndexEntry> find(String repository, String query, int from, int size) {
-        Response response = resource.path("repositories/{name}/index")
-                .resolveTemplate(NAME, repository)
+        Response response = resource.path("repositories/{repository}/index")
+                .resolveTemplate(REPOSITORY, repository)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)
@@ -499,15 +499,15 @@ public class HttpClient implements Closeable {
     /**
      * Find content infos matching a given query in a paginated way.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param query Query.
      * @param from First item to return.
      * @param size Number of items to return.
      * @return A list of content infos.
      */
     public List<ContentInfo> findInfo(String repository, String query, int from, int size) {
-        Response response = resource.path("repositories/{name}/info")
-                .resolveTemplate(NAME, repository)
+        Response response = resource.path("repositories/{repository}/info")
+                .resolveTemplate(REPOSITORY, repository)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)
@@ -520,15 +520,15 @@ public class HttpClient implements Closeable {
     /**
      * Provides history in a paginated way.
      *
-     * @param repository Repository name.
+     * @param repository Repository name or encoded GUID.
      * @param asc If true, returned list is sorted chronologically.
      * @param from First item to return.
      * @param size Number of items to return.
      * @return A list of history events.
      */
     public List<Event> history(String repository, boolean asc, long from, int size) {
-        Response response = resource.path("repositories/{name}/history")
-                .resolveTemplate(NAME, repository)
+        Response response = resource.path("repositories/{repository}/history")
+                .resolveTemplate(REPOSITORY, repository)
                 .queryParam(SORT, asc ? ASC : DESC)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)

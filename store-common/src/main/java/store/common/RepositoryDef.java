@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
+import store.common.hash.Guid;
 import store.common.value.Value;
 
 /**
@@ -14,23 +15,26 @@ import store.common.value.Value;
 public final class RepositoryDef implements Mappable {
 
     private static final String NAME = "name";
+    private static final String GUID = "guid";
     private static final String PATH = "path";
     private final String name;
+    private final Guid guid;
     private final Path path;
 
     /**
      * Constructor.
      *
      * @param name Repository name.
+     * @param guid Repository GUID.
      * @param path Repository path.
      */
-    public RepositoryDef(String name, Path path) {
+    public RepositoryDef(String name, Guid guid, Path path) {
         this.name = requireNonNull(name);
+        this.guid = requireNonNull(guid);
         this.path = requireNonNull(path);
     }
 
     /**
-     *
      * @return The repository name.
      */
     public String getName() {
@@ -38,7 +42,13 @@ public final class RepositoryDef implements Mappable {
     }
 
     /**
-     *
+     * @return The repository GUID.
+     */
+    public Guid getGuid() {
+        return guid;
+    }
+
+    /**
      * @return The repository path.
      */
     public Path getPath() {
@@ -49,6 +59,7 @@ public final class RepositoryDef implements Mappable {
     public Map<String, Value> toMap() {
         return new MapBuilder()
                 .put(NAME, name)
+                .put(GUID, guid)
                 .put(PATH, path.toString())
                 .build();
     }
@@ -61,6 +72,7 @@ public final class RepositoryDef implements Mappable {
      */
     public static RepositoryDef fromMap(Map<String, Value> map) {
         return new RepositoryDef(map.get(NAME).asString(),
+                                 map.get(GUID).asGuid(),
                                  Paths.get(map.get(PATH).asString()));
     }
 
@@ -68,13 +80,14 @@ public final class RepositoryDef implements Mappable {
     public String toString() {
         return toStringHelper(this)
                 .add(NAME, name)
+                .add(GUID, guid)
                 .add(PATH, path)
                 .toString();
     }
 
     @Override
     public int hashCode() {
-        return hash(name, path);
+        return hash(name, guid, path);
     }
 
     @Override
@@ -85,6 +98,7 @@ public final class RepositoryDef implements Mappable {
         RepositoryDef other = (RepositoryDef) obj;
         return new EqualsBuilder()
                 .append(name, other.name)
+                .append(guid, other.guid)
                 .append(path, other.path)
                 .build();
     }

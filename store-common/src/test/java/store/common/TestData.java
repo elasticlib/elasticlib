@@ -7,6 +7,7 @@ import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.TreeSet;
 import org.joda.time.Instant;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -104,14 +105,19 @@ public final class TestData {
         INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[1]),
                                          new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
 
+        Guid primaryId = new Guid("8d5f3c77e94a0cad3a32340d342135f4");
+        Guid secondaryId = new Guid("0d99dd9895a2a1c485e0c75f79f92cc1");
+
         REPOSITORY_DEFS.add(new RepositoryDef("primary",
+                                              primaryId,
                                               Paths.get("/repo/primary")));
 
         REPOSITORY_DEFS.add(new RepositoryDef("secondary",
+                                              secondaryId,
                                               Paths.get("/repo/secondary")));
 
-        REPLICATION_DEFS.add(new ReplicationDef("primary", "secondary"));
-        REPLICATION_DEFS.add(new ReplicationDef("secondary", "primary"));
+        REPLICATION_DEFS.add(new ReplicationDef(primaryId, secondaryId));
+        REPLICATION_DEFS.add(new ReplicationDef(secondaryId, primaryId));
     }
 
     private TestData() {

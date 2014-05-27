@@ -10,6 +10,8 @@ import javax.json.JsonValue;
 import static javax.json.JsonValue.ValueType.FALSE;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
+import store.common.hash.Guid;
+import store.common.hash.Hash;
 import store.common.json.schema.Schema;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.DECIMAL;
@@ -156,10 +158,10 @@ public final class JsonValidation {
     private static boolean isValid(String value, ValueType type) {
         switch (type) {
             case HASH:
-                return value.length() == 40 && isBase16(value);
+                return Hash.isValid(value);
 
             case GUID:
-                return value.length() == 32 && isBase16(value);
+                return Guid.isValid(value);
 
             case BINARY:
                 return isBase64(value);
@@ -171,10 +173,6 @@ public final class JsonValidation {
                 return false;
 
         }
-    }
-
-    private static boolean isBase16(String value) {
-        return value.matches("[0-9a-fA-F]*");
     }
 
     private static boolean isBase64(String value) {

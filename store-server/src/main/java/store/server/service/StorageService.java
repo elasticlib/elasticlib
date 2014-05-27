@@ -8,9 +8,12 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.hash.Guid;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.UnknownRepositoryException;
 import static store.server.storage.DatabaseEntries.asMappable;
@@ -47,7 +50,7 @@ class StorageService {
      */
     public void createRepositoryDef(RepositoryDef def) {
         OperationStatus status = repositoryDefs.putNoOverwrite(currentTransaction(),
-                                                               entry(def.getName()),
+                                                               entry(def.getGuid()),
                                                                entry(def));
         if (status == OperationStatus.KEYEXIST) {
             throw new RepositoryAlreadyExistsException();
@@ -57,26 +60,37 @@ class StorageService {
     /**
      * Optionally deletes a RepositoryDef.
      *
-     * @param name Repository name.
+     * @param guid Repository GUID.
      * @return If corresponding RepositoryDef has been found and deleted.
      */
-    public boolean deleteRepositoryDef(String name) {
-        return repositoryDefs.delete(currentTransaction(), entry(name)) == OperationStatus.SUCCESS;
+    public boolean deleteRepositoryDef(Guid guid) {
+        return repositoryDefs.delete(currentTransaction(), entry(guid)) == OperationStatus.SUCCESS;
     }
 
     /**
-     * Loads a RepositoryDef.
+     * Loads a RepositoryDef. If key represents a valid encoded GUID, first try to resolve def by GUID. Otherwise
+     * returns the first def matching by name with key. Fails if no matching def is found after this second step.
      *
-     * @param name Repository name.
+     * @param key Repository name or encoded GUID.
      * @return Corresponding RepositoryDef.
      */
-    public RepositoryDef getRepositoryDef(String name) {
-        DatabaseEntry entry = new DatabaseEntry();
-        OperationStatus status = repositoryDefs.get(currentTransaction(), entry(name), entry, LockMode.DEFAULT);
-        if (status == OperationStatus.NOTFOUND) {
-            throw new UnknownRepositoryException();
+    public RepositoryDef getRepositoryDef(String key) {
+        if (Guid.isValid(key)) {
+            DatabaseEntry entry = new DatabaseEntry();
+            OperationStatus status = repositoryDefs.get(currentTransaction(),
+                                                        entry(new Guid(key)),
+                                                        entry,
+                                                        LockMode.DEFAULT);
+            if (status == OperationStatus.SUCCESS) {
+                return asMappable(entry, RepositoryDef.class);
+            }
         }
-        return asMappable(entry, RepositoryDef.class);
+        for (RepositoryDef def : listRepositoryDefs()) {
+            if (def.getName().equals(key)) {
+                return def;
+            }
+        }
+        throw new UnknownRepositoryException();
     }
 
     /**
@@ -92,6 +106,12 @@ class StorageService {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
                 list.add(asMappable(data, RepositoryDef.class));
             }
+            Collections.sort(list, new Comparator<RepositoryDef>() {
+                @Override
+                public int compare(RepositoryDef def1, RepositoryDef def2) {
+                    return def1.getName().compareTo(def2.getName());
+                }
+            });
             return list;
         }
     }
@@ -111,21 +131,21 @@ class StorageService {
     /**
      * Optionally deletes a ReplicationDef.
      *
-     * @param source Source repository name.
-     * @param destination Destination repository name.
+     * @param source Source repository GUID.
+     * @param destination Destination repository GUID.
      * @return If corresponding ReplicationDef has been found and deleted.
      */
-    public boolean deleteReplicationDef(String source, String destination) {
+    public boolean deleteReplicationDef(Guid source, Guid destination) {
         return replicationDefs.delete(currentTransaction(), entry(source, destination)) == OperationStatus.SUCCESS;
     }
 
     /**
-     * Deletes all replication definitions from/to repository whose name is supplied.
+     * Deletes all replication definitions from/to repository whose GUID is supplied.
      *
-     * @param name Repository name.
+     * @param guid Repository GUID.
      */
-    public void deleteAllReplicationDefs(String name) {
-        for (ReplicationDef def : listReplicationDefs(name)) {
+    public void deleteAllReplicationDefs(Guid guid) {
+        for (ReplicationDef def : listReplicationDefs(guid)) {
             deleteReplicationDef(def.getSource(), def.getDestination());
         }
     }
@@ -140,16 +160,16 @@ class StorageService {
     }
 
     /**
-     * Loads all ReplicationDef from/to repository whose name is supplied.
+     * Loads all ReplicationDef from/to repository whose GUID is supplied.
      *
-     * @param name Repository name.
+     * @param guid Repository GUID.
      * @return All matching stored replication definitions.
      */
-    public List<ReplicationDef> listReplicationDefs(final String name) {
+    public List<ReplicationDef> listReplicationDefs(final Guid guid) {
         return listReplicationDefs(new Predicate<ReplicationDef>() {
             @Override
             public boolean apply(ReplicationDef def) {
-                return def.getSource().equals(name) || def.getDestination().equals(name);
+                return def.getSource().equals(guid) || def.getDestination().equals(guid);
             }
         });
     }

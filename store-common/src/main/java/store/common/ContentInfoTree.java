@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSortedSet;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -189,20 +188,41 @@ public class ContentInfoTree implements Mappable {
      * @return A collection of revisions.
      */
     public List<ContentInfo> list() {
-        List<ContentInfo> list = new ArrayList<>(nodes.values());
-        Collections.sort(list, new Comparator<ContentInfo>() {
-            @Override
-            public int compare(ContentInfo lhs, ContentInfo rhs) {
-                if (ancestors(lhs).contains(rhs)) {
-                    return -1;
-                }
-                if (ancestors(rhs).contains(lhs)) {
-                    return 1;
-                }
-                return 0;
+        return new TopologicalSort(nodes, head).sort();
+    }
+
+    /**
+     * A simple topological sorting algorithm based on a depth-first search.
+     */
+    private static class TopologicalSort {
+
+        private final Map<Hash, ContentInfo> unsorted;
+        private final Collection<Hash> head;
+        private final List<ContentInfo> sorted = new ArrayList<>();
+
+        public TopologicalSort(Map<Hash, ContentInfo> nodes, Collection<Hash> head) {
+            unsorted = new HashMap<>(nodes);
+            this.head = head;
+        }
+
+        public List<ContentInfo> sort() {
+            for (Hash seed : head) {
+                visit(unsorted.get(seed));
             }
-        });
-        return list;
+            // Nodes are actually sorted in reverse order at this point.
+            Collections.reverse(sorted);
+            return sorted;
+        }
+
+        private void visit(ContentInfo info) {
+            for (Hash parent : info.getParents()) {
+                if (unsorted.containsKey(parent)) {
+                    visit(unsorted.get(parent));
+                }
+            }
+            sorted.add(info);
+            unsorted.remove(info.getRevision());
+        }
     }
 
     /**

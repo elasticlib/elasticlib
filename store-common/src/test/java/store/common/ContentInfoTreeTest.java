@@ -1,6 +1,8 @@
 package store.common;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
@@ -86,6 +88,11 @@ public class ContentInfoTreeTest {
 
     }
 
+    private static ContentInfo revision(String rev, String... parents) {
+        return builder(parents)
+                .build(new Hash(rev));
+    }
+
     private static ContentInfo revision(String rev, Map<String, Value> metadata, String... parents) {
         return builder(parents)
                 .withMetadata(metadata)
@@ -109,14 +116,14 @@ public class ContentInfoTreeTest {
         return builder;
     }
 
+    private static Object[] treeData(ContentInfo... revisions) {
+        return new Object[]{tree(revisions)};
+    }
+
     private static ContentInfoTree tree(ContentInfo... infos) {
         return new ContentInfoTreeBuilder()
                 .addAll(asList(infos))
                 .build();
-    }
-
-    private static ContentInfo[] array(ContentInfo... infos) {
-        return infos;
     }
 
     private static Hash[] revisions(ContentInfo... infos) {
@@ -201,52 +208,43 @@ public class ContentInfoTreeTest {
     @DataProvider(name = "listTestDataProvider")
     public Object[][] listTestDataProvider() {
         return new Object[][]{
-            new Object[]{tree(a0), array(a0)},
-            new Object[]{tree(a3, b2), array(a3, b2)},
-            new Object[]{tree(a1, a2, a3), array(a3, a2, a1)},
-            new Object[]{tree(a0, a1, a2, a3), array(a3, a2, a1, a0)},};
+            treeData(a0),
+            treeData(a0, a1),
+            treeData(a0, a1, a2, a3),
+            treeData(a0, a1, a2, a3, a4, b2),
+            treeData(a0, a1, a2, a3, a4, b2, c3, d4, d5),
+            treeData(a0, a1, a2, a3, a4, b2, c3, d4, d5, revision("f0"), revision("f1", "f0"))
+        };
     }
 
     /**
      * Test.
      *
      * @param tree Input tree
-     * @param expected Expected output
      */
     @Test(dataProvider = "listTestDataProvider")
-    public void listTest(ContentInfoTree tree, ContentInfo[] expected) {
-        assertThat(tree.list()).containsExactly(expected);
+    public void listTest(ContentInfoTree tree) {
+        List<ContentInfo> list = tree.list();
+        for (ContentInfo info : list) {
+            for (Hash parent : info.getParents()) {
+                assertOrder(list, info, tree.get(parent));
+            }
+        }
     }
 
-    /**
-     * Test.
-     */
-    @Test
-    public void listWithBranchesTest() {
-        List<ContentInfo> list = tree(a0, a1, a2, a3, b2, a4).list();
-
-        //     A4
-        //     | \
-        //     |  \
-        //     A3 |
-        //     |  B2
-        //     A2 |
-        //     |  /
-        //     A1
-        //     |
-        //     A0
-        //
-
-        assertOrder(list, a4, a3);
-        assertOrder(list, a3, a2);
-        assertOrder(list, a2, a1);
-        assertOrder(list, a1, a0);
-        assertOrder(list, a4, b2);
-        assertOrder(list, b2, a1);
+    private static void assertOrder(List<ContentInfo> list, ContentInfo first, ContentInfo second) {
+        assertThat(list.indexOf(first))
+                .as(format(list) + ": " + first.getRevision() + " < " + second.getRevision())
+                .isLessThan(list.indexOf(second));
     }
 
-    private static <T> void assertOrder(List<T> list, T first, T second) {
-        assertThat(list.indexOf(first)).isLessThan(list.indexOf(second));
+    private static String format(List<ContentInfo> list) {
+        return Lists.transform(list, new Function<ContentInfo, Hash>() {
+            @Override
+            public Hash apply(ContentInfo info) {
+                return info.getRevision();
+            }
+        }).toString();
     }
 
     /**
@@ -364,15 +362,15 @@ public class ContentInfoTreeTest {
     @DataProvider(name = "noMergeTestDataProvider")
     public Object[][] noMergeTestDataProvider() {
         return new Object[][]{
-            new Object[]{tree(a0)},
-            new Object[]{tree(a3, b2)},
-            new Object[]{tree(a1, a2, a3)},
-            new Object[]{tree(a0, a1, a2, a3)},
-            new Object[]{tree(a0, a1, a2, a3, a4, b2)},
-            new Object[]{tree(a0, a1, a2, a3, b2, c3)},
-            new Object[]{tree(a0, a1, a2, a3, a4, b2, c3)},
-            new Object[]{tree(a0, a1, a2, a3, a4, b2, c3, d4)},
-            new Object[]{tree(a0, a1, a2, a3, a4, b2, c3, d5)}
+            treeData(a0),
+            treeData(a3, b2),
+            treeData(a1, a2, a3),
+            treeData(a0, a1, a2, a3),
+            treeData(a0, a1, a2, a3, a4, b2),
+            treeData(a0, a1, a2, a3, b2, c3),
+            treeData(a0, a1, a2, a3, a4, b2, c3),
+            treeData(a0, a1, a2, a3, a4, b2, c3, d4),
+            treeData(a0, a1, a2, a3, a4, b2, c3, d5)
         };
     }
 

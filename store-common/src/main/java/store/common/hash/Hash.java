@@ -12,7 +12,8 @@ import static store.common.hash.AbstractKey.isBase16;
  */
 public final class Hash extends AbstractKey implements Comparable<Hash> {
 
-    private static final int SHA1_LENGTH = 20; // In bytes
+    // SHA-1 hashes length in bytes.
+    private static final int SHA1_LENGTH = 20;
 
     /**
      * Byte array based constructor.
@@ -88,6 +89,6 @@ public final class Hash extends AbstractKey implements Comparable<Hash> {
 
     @Override
     public int compareTo(Hash that) {
-        return super.compareTo(that);
+        return compareToImpl(that);
     }
 }

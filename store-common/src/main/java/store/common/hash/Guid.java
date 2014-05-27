@@ -7,7 +7,8 @@ import java.security.SecureRandom;
  */
 public class Guid extends AbstractKey implements Comparable<Guid> {
 
-    private static final int GUID_LENGTH = 16; // Why not !
+    // Generated GUID length in bytes. Same as a standard UUID length.
+    private static final int GUID_LENGTH = 16;
     private static final SecureRandom GENERATOR = new SecureRandom();
 
     /**
@@ -57,6 +58,6 @@ public class Guid extends AbstractKey implements Comparable<Guid> {
 
     @Override
     public int compareTo(Guid that) {
-        return super.compareTo(that);
+        return compareToImpl(that);
     }
 }

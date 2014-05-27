@@ -63,7 +63,7 @@ abstract class AbstractKey {
     }
 
     // Helps to implements Comparable in derived classes.
-    protected int compareTo(AbstractKey that) {
+    protected int compareToImpl(AbstractKey that) {
         return asHexadecimalString().compareTo(that.asHexadecimalString());
     }
 }

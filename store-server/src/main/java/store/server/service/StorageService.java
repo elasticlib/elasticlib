@@ -58,6 +58,15 @@ class StorageService {
     }
 
     /**
+     * Updates a RepositoryDef. Actually creates it if it does not exist.
+     *
+     * @param def RepositoryDef to update.
+     */
+    public void updateRepositoryDef(RepositoryDef def) {
+        repositoryDefs.put(currentTransaction(), entry(def.getGuid()), entry(def));
+    }
+
+    /**
      * Optionally deletes a RepositoryDef.
      *
      * @param guid Repository GUID.

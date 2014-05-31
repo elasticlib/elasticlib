@@ -20,6 +20,7 @@ import store.common.hash.Guid;
 import store.server.async.AsyncService;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
+import store.server.exception.ServerException;
 import store.server.exception.WriteException;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
@@ -52,16 +53,17 @@ public class RepositoriesService {
         storageManager = newStorageManager(home.resolve(STORAGE), config, asyncService);
         storageService = new StorageService(storageManager);
         replicationService = new ReplicationService(storageManager);
+
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
                 for (RepositoryDef def : storageService.listRepositoryDefs()) {
-                    Repository repository = Repository.open(def.getPath(), config, asyncService, replicationService);
-                    repositories.put(repository.getGuid(), repository);
-                }
-                for (ReplicationDef def : storageService.listReplicationDefs()) {
-                    replicationService.startReplication(repositories.get(def.getSource()),
-                                                        repositories.get(def.getDestination()));
+                    try {
+                        openRepository(def);
+
+                    } catch (ServerException e) {
+                        LOG.error("Failed to open repository at '" + def.getPath() + "'", e);
+                    }
                 }
             }
         });
@@ -76,6 +78,26 @@ public class RepositoriesService {
             throw new WriteException(e);
         }
         return new StorageManager(RepositoriesService.class.getSimpleName(), path, config, asyncService);
+    }
+
+    private void openRepository(RepositoryDef repositoryDef) {
+        Path path = repositoryDef.getPath();
+        Repository repository = Repository.open(path, config, asyncService, replicationService);
+        repositories.put(repository.getGuid(), repository);
+        storageService.updateRepositoryDef(def(repository));
+
+        for (ReplicationDef def : storageService.listReplicationDefs(repository.getGuid())) {
+            if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
+                replicationService.startReplication(repositories.get(def.getSource()),
+                                                    repositories.get(def.getDestination()));
+            }
+        }
+    }
+
+    private static RepositoryDef def(Repository repository) {
+        return new RepositoryDef(repository.getName(),
+                                 repository.getGuid(),
+                                 repository.getPath());
     }
 
     /**
@@ -110,8 +132,7 @@ public class RepositoriesService {
                 @Override
                 public void apply() {
                     Repository repository = Repository.create(path, config, asyncService, replicationService);
-                    RepositoryDef def = new RepositoryDef(repository.getName(), repository.getGuid(), path);
-                    storageService.createRepositoryDef(def);
+                    storageService.createRepositoryDef(def(repository));
                     repositories.put(repository.getGuid(), repository);
                 }
             });
@@ -136,16 +157,7 @@ public class RepositoriesService {
                     if (repositories.containsKey(repositoryDef.getGuid())) {
                         return;
                     }
-                    Path path = repositoryDef.getPath();
-                    Repository repository = Repository.open(path, config, asyncService, replicationService);
-
-                    repositories.put(repository.getGuid(), repository);
-                    for (ReplicationDef def : storageService.listReplicationDefs(repository.getGuid())) {
-                        if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
-                            replicationService.startReplication(repositories.get(def.getSource()),
-                                                                repositories.get(def.getDestination()));
-                        }
-                    }
+                    openRepository(repositoryDef);
                 }
             });
         } finally {
@@ -187,27 +199,46 @@ public class RepositoriesService {
         LOG.info("Dropping repository {}", key);
         lock.writeLock().lock();
         try {
-            final Path path = storageManager.inTransaction(new Query<Path>() {
+            storageManager.inTransaction(new Procedure() {
                 @Override
-                public Path apply() {
+                public void apply() {
                     RepositoryDef def = storageService.getRepositoryDef(key);
+                    Guid guid = def.getGuid();
+                    Path path = def.getPath();
+                    // Makes the query here to avoid any deadlock.
+                    boolean shouldDelete = !otherRepositoryExistsAt(guid, path);
 
-                    replicationService.dropReplications(def.getGuid());
-                    repositories.remove(def.getGuid()).close();
+                    replicationService.dropReplications(guid);
+                    if (repositories.containsKey(guid)) {
+                        repositories.remove(guid).close();
+                    }
+                    storageService.deleteRepositoryDef(guid);
+                    storageService.deleteAllReplicationDefs(guid);
 
-                    storageService.deleteRepositoryDef(def.getGuid());
-                    storageService.deleteAllReplicationDefs(def.getGuid());
-                    return def.getPath();
+                    if (shouldDelete) {
+                        recursiveDelete(path);
+                    }
                 }
             });
-            recursiveDelete(path);
-
         } finally {
             lock.writeLock().unlock();
         }
     }
 
+    private boolean otherRepositoryExistsAt(Guid guid, Path path) {
+        for (RepositoryDef def : storageService.listRepositoryDefs()) {
+            if (!def.getGuid().equals(guid) && def.getPath().equals(path)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void recursiveDelete(Path path) {
+        // This also checks if path exists at all.
+        if (!Files.isDirectory(path)) {
+            return;
+        }
         try {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
                 @Override
@@ -228,7 +259,7 @@ public class RepositoriesService {
                 }
             });
         } catch (IOException e) {
-            throw new WriteException(e);
+            LOG.error("Failed to delete " + path, e);
         }
     }
 

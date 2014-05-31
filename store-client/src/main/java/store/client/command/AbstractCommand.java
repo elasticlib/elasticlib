@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 import javax.ws.rs.ProcessingException;
 import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.REPOSITORY;
@@ -203,13 +204,11 @@ abstract class AbstractCommand implements Command {
     }
 
     private static List<String> completeRepository(Session session, String param) {
-        List<String> repositories = transform(session.getClient().listRepositoryDefs(),
-                                              new Function<RepositoryDef, String>() {
-            @Override
-            public String apply(RepositoryDef repository) {
-                return repository.getName();
-            }
-        });
+        Collection<String> repositories = new TreeSet<>();
+        for (RepositoryDef def : session.getClient().listRepositoryDefs()) {
+            repositories.add(def.getName());
+            repositories.add(def.getGuid().asHexadecimalString());
+        }
         return filterStartWith(repositories, param);
     }
 

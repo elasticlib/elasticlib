@@ -2,6 +2,7 @@ package store.server;
 
 import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
+import static java.lang.System.lineSeparator;
 import java.net.URI;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
@@ -31,8 +32,8 @@ public class Server {
      * @param home Path to repository's home-directory.
      */
     public Server(Path home) {
-        LOG.info("Starting...");
         config = ServerConfig.load(home.resolve("config.yml"));
+        LOG.info(startingMessage(home, config));
         repositoriesService = new RepositoriesService(home, config);
 
         ResourceConfig resourceConfig = new ResourceConfig()
@@ -51,6 +52,15 @@ public class Server {
                 repositoriesService.close();
             }
         });
+    }
+
+    private static String startingMessage(Path home, Config config) {
+        return new StringBuilder()
+                .append("Starting...").append(lineSeparator())
+                .append("Using home: ").append(home).append(lineSeparator())
+                .append("Using config:").append(lineSeparator())
+                .append(config)
+                .toString();
     }
 
     private URI host() {

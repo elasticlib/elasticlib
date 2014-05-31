@@ -1,6 +1,7 @@
 package store.server.config;
 
 import com.google.common.base.Optional;
+import static java.lang.System.lineSeparator;
 import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +79,8 @@ public final class ServerConfig {
                 config = DEFAULT.extend(loaded.get());
             }
         } catch (ConfigException e) {
-            LOG.warn("Failed to load config at " + path + System.lineSeparator() + e.getMessage());
+            LOG.warn("Failed to load config at {}{}{}", path, lineSeparator(), e.getMessage());
         }
-        LOG.info("Using server config:" + System.lineSeparator() + config);
         return config;
     }
 }

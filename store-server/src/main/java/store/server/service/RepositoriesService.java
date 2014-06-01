@@ -250,14 +250,9 @@ public class RepositoriesService {
                 @Override
                 public void apply() {
                     RepositoryDef def = storageService.getRepositoryDef(key);
-                    Guid guid = def.getGuid();
-                    Path path = def.getPath();
-                    // Makes the query here to avoid any deadlock.
-                    boolean shouldDelete = !otherRepositoryExistsAt(guid, path);
-
-                    removeRepository(guid);
-                    if (shouldDelete) {
-                        recursiveDelete(path);
+                    removeRepository(def.getGuid());
+                    if (!anyRepositoryExistsAt(def.getPath())) {
+                        recursiveDelete(def.getPath());
                     }
                 }
             });
@@ -278,15 +273,6 @@ public class RepositoriesService {
     private boolean anyRepositoryExistsAt(Path path) {
         for (RepositoryDef def : storageService.listRepositoryDefs()) {
             if (def.getPath().equals(path)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean otherRepositoryExistsAt(Guid guid, Path path) {
-        for (RepositoryDef def : storageService.listRepositoryDefs()) {
-            if (!def.getGuid().equals(guid) && def.getPath().equals(path)) {
                 return true;
             }
         }

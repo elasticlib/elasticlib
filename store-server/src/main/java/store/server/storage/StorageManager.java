@@ -341,7 +341,7 @@ public class StorageManager {
      */
     public synchronized Cursor openCursor(Database database) {
         checkOpen();
-        Cursor cursor = database.openCursor(null, CursorConfig.DEFAULT);
+        Cursor cursor = database.openCursor(currentTransaction(), CursorConfig.DEFAULT);
         cursors.add(cursor);
         return cursor;
     }

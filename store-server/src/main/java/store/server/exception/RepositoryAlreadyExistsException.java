@@ -1,7 +1,7 @@
 package store.server.exception;
 
 /**
- * Thrown when creating a new repository if supplied name is already used.
+ * Thrown when creating or adding an already existing repository.
  */
 public final class RepositoryAlreadyExistsException extends ServerException {
 
@@ -9,6 +9,6 @@ public final class RepositoryAlreadyExistsException extends ServerException {
 
     @Override
     public String getMessage() {
-        return "A Repository with this name already exists";
+        return "This Repository already exists";
     }
 }

@@ -20,6 +20,7 @@ public final class WriteException extends ServerException {
 
     @Override
     public String getMessage() {
-        return "Write error occured : " + getCause().getMessage();
+        // Returns the actual runtime class of the IO exception and its detail message.
+        return getCause().toString();
     }
 }

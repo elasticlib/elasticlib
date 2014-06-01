@@ -19,19 +19,19 @@ class Drop extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Drop an existing repository or replication";
+        return "Physically delete an existing repository or replication";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         switch (params.get(0).toLowerCase()) {
             case REPOSITORY:
-                session.getClient().dropRepository(params.get(1));
+                session.getClient().deleteRepository(params.get(1));
                 session.leave(params.get(1));
                 break;
 
             case REPLICATION:
-                session.getClient().dropReplication(params.get(1), params.get(2));
+                session.getClient().deleteReplication(params.get(1), params.get(2));
                 break;
 
             default:

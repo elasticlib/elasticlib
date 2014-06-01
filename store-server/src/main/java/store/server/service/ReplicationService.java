@@ -102,7 +102,7 @@ class ReplicationService {
      * @param source Source repository GUID.
      * @param destination Destination repository GUID.
      */
-    public synchronized void dropReplication(Guid source, Guid destination) {
+    public synchronized void deleteReplication(Guid source, Guid destination) {
         stopReplication(source, destination);
 
         // Can't use a transaction on a deffered write database :(
@@ -130,10 +130,10 @@ class ReplicationService {
      */
     public synchronized void dropReplications(Guid guid) {
         for (Guid destination : destinations(guid)) {
-            dropReplication(guid, destination);
+            deleteReplication(guid, destination);
         }
         for (Guid source : sources(guid)) {
-            dropReplication(source, guid);
+            deleteReplication(source, guid);
         }
     }
 

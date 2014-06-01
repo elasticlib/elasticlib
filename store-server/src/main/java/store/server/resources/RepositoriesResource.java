@@ -39,7 +39,6 @@ import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.common.hash.Hash;
 import static store.common.json.JsonReading.read;
-import static store.common.json.JsonValidation.hasBooleanValue;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import static store.common.json.JsonWriting.write;
@@ -60,6 +59,7 @@ import store.server.service.Repository;
 public class RepositoriesResource {
 
     private static final String PATH = "path";
+    private static final String ACTION = "action";
     private static final String STARTED = "started";
     private static final String REPOSITORY = "repository";
     private static final String HASH = "hash";
@@ -96,7 +96,45 @@ public class RepositoriesResource {
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createRepository(JsonObject json) {
+    public Response postRepository(JsonObject json) {
+        Action action = Action.of(json);
+        switch (action) {
+            case CREATE:
+                return createRepository(json);
+            case ADD:
+                return addRepository(json);
+            case OPEN:
+                return openRepository(json);
+            case CLOSE:
+                return closeRepository(json);
+            case REMOVE:
+                return removeRepository(json);
+            case DELETE:
+                return deleteRepository(json);
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    private static enum Action {
+
+        CREATE, ADD, OPEN, CLOSE, REMOVE, DELETE;
+
+        public static Action of(JsonObject json) {
+            if (!hasStringValue(json, ACTION)) {
+                return CREATE;
+            }
+            String raw = json.getString(ACTION).toUpperCase();
+            for (Action action : values()) {
+                if (action.name().equals(raw)) {
+                    return action;
+                }
+            }
+            throw newInvalidJsonException();
+        }
+    }
+
+    private Response createRepository(JsonObject json) {
         if (!hasStringValue(json, PATH)) {
             throw newInvalidJsonException();
         }
@@ -107,23 +145,46 @@ public class RepositoriesResource {
                 .build();
     }
 
-    /**
-     * Create a new repository.
-     *
-     * @see createRepository(JsonObject)
-     * @param repositoryKey repository name or encoded GUID
-     * @param json input JSON data
-     * @return HTTP response
-     */
-    @PUT
-    @Path("{repository}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response createRepository(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
+    private Response addRepository(JsonObject json) {
         if (!hasStringValue(json, PATH)) {
             throw newInvalidJsonException();
         }
-        repositoriesService.createRepository(Paths.get(json.getString(PATH)).resolve(repositoryKey));
-        return Response.created(uriInfo.getRequestUri()).build();
+        java.nio.file.Path path = Paths.get(json.getString(PATH));
+        repositoriesService.addRepository(path);
+        return Response
+                .created(uriInfo.getAbsolutePathBuilder().path(path.getFileName().toString()).build())
+                .build();
+    }
+
+    private Response openRepository(JsonObject json) {
+        if (!hasStringValue(json, REPOSITORY)) {
+            throw newInvalidJsonException();
+        }
+        repositoriesService.openRepository(json.getString(REPOSITORY));
+        return Response.ok().build();
+    }
+
+    private Response closeRepository(JsonObject json) {
+        if (!hasStringValue(json, REPOSITORY)) {
+            throw newInvalidJsonException();
+        }
+        repositoriesService.closeRepository(json.getString(REPOSITORY));
+        return Response.ok().build();
+    }
+
+    private Response removeRepository(JsonObject json) {
+        if (!hasStringValue(json, REPOSITORY)) {
+            throw newInvalidJsonException();
+        }
+        repositoriesService.removeRepository(json.getString(REPOSITORY));
+        return Response.ok().build();
+    }
+
+    private Response deleteRepository(JsonObject json) {
+        if (!hasStringValue(json, REPOSITORY)) {
+            throw newInvalidJsonException();
+        }
+        return deleteRepository(json.getString(REPOSITORY));
     }
 
     /**
@@ -138,38 +199,8 @@ public class RepositoriesResource {
      */
     @DELETE
     @Path("{repository}")
-    public Response dropRepository(@PathParam(REPOSITORY) String repositoryKey) {
-        repositoriesService.dropRepository(repositoryKey);
-        return Response.ok().build();
-    }
-
-    /**
-     * Update a repository.
-     * <p>
-     * Input:<br>
-     * - started (Boolean): Starts/stops the repository.
-     * <p>
-     * Response:<br>
-     * - 200 OK: Operation succeeded.<br>
-     * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Repository was not found.
-     *
-     * @param repositoryKey repository name or encoded GUID
-     * @param json input JSON data
-     * @return HTTP response
-     */
-    @POST
-    @Path("{repository}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateRepository(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
-        if (!hasBooleanValue(json, STARTED)) {
-            throw newInvalidJsonException();
-        }
-        if (json.getBoolean(STARTED)) {
-            repositoriesService.openRepository(repositoryKey);
-        } else {
-            repositoriesService.closeRepository(repositoryKey);
-        }
+    public Response deleteRepository(@PathParam(REPOSITORY) String repositoryKey) {
+        repositoriesService.deleteRepository(repositoryKey);
         return Response.ok().build();
     }
 

@@ -86,7 +86,7 @@ public class ReplicationsResource {
         if (source == null || target == null) {
             throw newInvalidJsonException();
         }
-        repositoriesService.dropReplication(source, target);
+        repositoriesService.deleteReplication(source, target);
         return Response.ok().build();
     }
 

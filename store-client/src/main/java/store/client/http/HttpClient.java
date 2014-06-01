@@ -67,6 +67,7 @@ public class HttpClient implements Closeable {
 
     private static final String REPOSITORY = "repository";
     private static final String PATH = "path";
+    private static final String ACTION = "action";
     private static final String REPOSITORIES = "repositories";
     private static final String REPLICATIONS = "replications";
     private static final String SOURCE = "source";
@@ -196,10 +197,61 @@ public class HttpClient implements Closeable {
      * @param path Repository path (from server perspective).
      */
     public void createRepository(Path path) {
-        JsonObject json = createObjectBuilder()
+        postRepository(createObjectBuilder()
+                .add(ACTION, "create")
                 .add(PATH, path.toAbsolutePath().toString())
-                .build();
+                .build());
+    }
 
+    /**
+     * Add repository located supplied path.
+     *
+     * @param path Repository path (from server perspective).
+     */
+    public void addRepository(Path path) {
+        postRepository(createObjectBuilder()
+                .add(ACTION, "add")
+                .add(PATH, path.toAbsolutePath().toString())
+                .build());
+    }
+
+    /**
+     * Open an existing repository
+     *
+     * @param repository Repository name or encoded GUID.
+     */
+    public void openRepository(String repository) {
+        postRepository(createObjectBuilder()
+                .add(ACTION, "open")
+                .add(REPOSITORY, repository)
+                .build());
+    }
+
+    /**
+     * Close an existing repository
+     *
+     * @param repository Repository name or encoded GUID.
+     */
+    public void closeRepository(String repository) {
+        postRepository(createObjectBuilder()
+                .add(ACTION, "close")
+                .add(REPOSITORY, repository)
+                .build());
+    }
+
+    /**
+     * Remove an existing repository
+     *
+     * @param repository Repository name or encoded GUID.
+     */
+    public void removeRepository(String repository) {
+        postRepository(createObjectBuilder()
+                .add(ACTION, "remove")
+                .add(REPOSITORY, repository)
+                .build());
+    }
+
+    private void postRepository(JsonObject json) {
         ensureSuccess(resource.path(REPOSITORIES)
                 .request()
                 .post(Entity.json(json)));
@@ -210,7 +262,7 @@ public class HttpClient implements Closeable {
      *
      * @param repository Repository name or encoded GUID.
      */
-    public void dropRepository(String repository) {
+    public void deleteRepository(String repository) {
         ensureSuccess(resource.path("repositories/{repository}")
                 .resolveTemplate(REPOSITORY, repository)
                 .request()
@@ -266,7 +318,7 @@ public class HttpClient implements Closeable {
      * @param source Source repository.
      * @param target Target repository.
      */
-    public void dropReplication(String source, String target) {
+    public void deleteReplication(String source, String target) {
         ensureSuccess(resource.path(REPLICATIONS)
                 .queryParam(SOURCE, source)
                 .queryParam(TARGET, target)

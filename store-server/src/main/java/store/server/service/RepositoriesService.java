@@ -18,6 +18,7 @@ import store.common.RepositoryDef;
 import store.common.config.Config;
 import store.common.hash.Guid;
 import store.server.async.AsyncService;
+import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
@@ -142,6 +143,31 @@ public class RepositoriesService {
     }
 
     /**
+     * Add an unknown repository.
+     *
+     * @param path Repository home.
+     */
+    public void addRepository(final Path path) {
+        LOG.info("Adding repository at {}", path);
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    if (anyRepositoryExistsAt(path)) {
+                        throw new RepositoryAlreadyExistsException();
+                    }
+                    Repository repository = Repository.open(path, config, asyncService, replicationService);
+                    storageService.createRepositoryDef(def(repository));
+                    repositories.put(repository.getGuid(), repository);
+                }
+            });
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
      * Open an existing repository.
      *
      * @param key Repository name or encoded GUID.
@@ -191,11 +217,32 @@ public class RepositoriesService {
     }
 
     /**
-     * Drop an existing repository.
+     * Remove an existing repository.
      *
      * @param key Repository name or encoded GUID.
      */
-    public void dropRepository(final String key) {
+    public void removeRepository(final String key) {
+        LOG.info("Removing repository {}", key);
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    Guid guid = storageService.getRepositoryDef(key).getGuid();
+                    removeRepository(guid);
+                }
+            });
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Delete an existing repository.
+     *
+     * @param key Repository name or encoded GUID.
+     */
+    public void deleteRepository(final String key) {
         LOG.info("Dropping repository {}", key);
         lock.writeLock().lock();
         try {
@@ -208,13 +255,7 @@ public class RepositoriesService {
                     // Makes the query here to avoid any deadlock.
                     boolean shouldDelete = !otherRepositoryExistsAt(guid, path);
 
-                    replicationService.dropReplications(guid);
-                    if (repositories.containsKey(guid)) {
-                        repositories.remove(guid).close();
-                    }
-                    storageService.deleteRepositoryDef(guid);
-                    storageService.deleteAllReplicationDefs(guid);
-
+                    removeRepository(guid);
                     if (shouldDelete) {
                         recursiveDelete(path);
                     }
@@ -223,6 +264,24 @@ public class RepositoriesService {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    private void removeRepository(Guid guid) {
+        replicationService.dropReplications(guid);
+        if (repositories.containsKey(guid)) {
+            repositories.remove(guid).close();
+        }
+        storageService.deleteRepositoryDef(guid);
+        storageService.deleteAllReplicationDefs(guid);
+    }
+
+    private boolean anyRepositoryExistsAt(Path path) {
+        for (RepositoryDef def : storageService.listRepositoryDefs()) {
+            if (def.getPath().equals(path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean otherRepositoryExistsAt(Guid guid, Path path) {
@@ -294,12 +353,12 @@ public class RepositoriesService {
     }
 
     /**
-     * Drop an existing replication from source to destination. Does nothing if such a replication do not exist.
+     * Delete an existing replication from source to destination. Does nothing if such a replication does not exist.
      *
      * @param source Source repository name or encoded GUID.
      * @param destination Destination repository name or encoded GUID.
      */
-    public void dropReplication(final String source, final String destination) {
+    public void deleteReplication(final String source, final String destination) {
         LOG.info("Dropping replication {} >> {}", source, destination);
         lock.writeLock().lock();
         try {
@@ -310,7 +369,7 @@ public class RepositoriesService {
                     Guid destId = storageService.getRepositoryDef(destination).getGuid();
 
                     storageService.deleteReplicationDef(srcId, destId);
-                    replicationService.dropReplication(srcId, destId);
+                    replicationService.deleteReplication(srcId, destId);
                 }
             });
         } finally {

@@ -2,6 +2,7 @@ package store.server.service;
 
 import com.google.common.base.Charsets;
 import java.io.IOException;
+import java.nio.file.Files;
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.write;
 import java.nio.file.Path;
@@ -13,6 +14,7 @@ import store.common.value.Value;
 import static store.common.value.Value.of;
 import store.common.yaml.YamlReading;
 import store.common.yaml.YamlWriting;
+import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 
 /**
@@ -47,6 +49,9 @@ class AttributesManager {
     }
 
     public static AttributesManager open(Path path) {
+        if (!Files.exists(path.resolve(ATTRIBUTES))) {
+            throw new InvalidRepositoryPathException();
+        }
         try {
             String yaml = new String(readAllBytes(path.resolve(ATTRIBUTES)), Charsets.UTF_8);
             return new AttributesManager(YamlReading.readValue(yaml).asMap());

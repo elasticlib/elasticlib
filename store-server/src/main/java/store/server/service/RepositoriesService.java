@@ -364,6 +364,61 @@ public class RepositoriesService {
     }
 
     /**
+     * Start an existing replication from source to destination. If source or destination are not started, first starts
+     * them. Does nothing if replication is already started.
+     *
+     * @param source Source repository name or encoded GUID.
+     * @param destination Destination repository name or encoded GUID.
+     */
+    public void startReplication(final String source, final String destination) {
+        LOG.info("Starting replication {} >> {}", source, destination);
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    RepositoryDef srcDef = storageService.getRepositoryDef(source);
+                    RepositoryDef destDef = storageService.getRepositoryDef(destination);
+                    if (!repositories.containsKey(srcDef.getGuid())) {
+                        openRepository(srcDef);
+                    }
+                    if (!repositories.containsKey(destDef.getGuid())) {
+                        openRepository(destDef);
+                    }
+                    replicationService.startReplication(repositories.get(srcDef.getGuid()),
+                                                        repositories.get(destDef.getGuid()));
+                }
+            });
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Stop an existing replication from source to destination. Does nothing if such a replication is already stopped.
+     *
+     * @param source Source repository name or encoded GUID.
+     * @param destination Destination repository name or encoded GUID.
+     */
+    public void stopReplication(final String source, final String destination) {
+        LOG.info("Stopping replication {} >> {}", source, destination);
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
+                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
+
+                    replicationService.stopReplication(srcId, destId);
+                }
+            });
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
      * Provides a snapshot of all currently defined repositories.
      *
      * @return A list of repository definitions.

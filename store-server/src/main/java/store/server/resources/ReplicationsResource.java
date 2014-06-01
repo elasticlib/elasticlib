@@ -26,6 +26,7 @@ import store.server.service.RepositoriesService;
 @Path("replications")
 public class ReplicationsResource {
 
+    private static final String ACTION = "action";
     private static final String SOURCE = "source";
     private static final String TARGET = "target";
     @Inject
@@ -50,12 +51,46 @@ public class ReplicationsResource {
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createReplication(JsonObject json) {
+    public Response postReplication(JsonObject json) {
         if (!hasStringValue(json, SOURCE) || !hasStringValue(json, TARGET)) {
             throw newInvalidJsonException();
         }
+        Action action = Action.of(json);
         String source = json.getString(SOURCE);
         String target = json.getString(TARGET);
+        switch (action) {
+            case CREATE:
+                return createReplication(source, target);
+            case START:
+                return startReplication(source, target);
+            case STOP:
+                return stopReplication(source, target);
+            case DELETE:
+                return deleteReplication(source, target);
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    private static enum Action {
+
+        CREATE, START, STOP, DELETE;
+
+        public static Action of(JsonObject json) {
+            if (!hasStringValue(json, ACTION)) {
+                return CREATE;
+            }
+            String raw = json.getString(ACTION).toUpperCase();
+            for (Action action : values()) {
+                if (action.name().equals(raw)) {
+                    return action;
+                }
+            }
+            throw newInvalidJsonException();
+        }
+    }
+
+    private Response createReplication(String source, String target) {
         repositoriesService.createReplication(source, target);
         URI location = uriInfo.getAbsolutePathBuilder()
                 .queryParam(SOURCE, source)
@@ -63,6 +98,17 @@ public class ReplicationsResource {
                 .build();
 
         return Response.created(location).build();
+
+    }
+
+    private Response startReplication(String source, String target) {
+        repositoriesService.startReplication(source, target);
+        return Response.ok().build();
+    }
+
+    private Response stopReplication(String source, String target) {
+        repositoriesService.stopReplication(source, target);
+        return Response.ok().build();
     }
 
     /**
@@ -84,7 +130,7 @@ public class ReplicationsResource {
     @DELETE
     public Response deleteReplication(@QueryParam(SOURCE) String source, @QueryParam(TARGET) String target) {
         if (source == null || target == null) {
-            throw newInvalidJsonException();
+            throw new BadRequestException();
         }
         repositoriesService.deleteReplication(source, target);
         return Response.ok().build();

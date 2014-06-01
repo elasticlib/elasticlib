@@ -24,6 +24,8 @@ final class CommandProvider {
                                                                          new Open(),
                                                                          new Close(),
                                                                          new Remove(),
+                                                                         new Start(),
+                                                                         new Stop(),
                                                                          new Repositories(),
                                                                          new Replications(),
                                                                          new Put(),

@@ -68,6 +68,13 @@ public class HttpClient implements Closeable {
     private static final String REPOSITORY = "repository";
     private static final String PATH = "path";
     private static final String ACTION = "action";
+    private static final String CREATE = "create";
+    private static final String ADD = "add";
+    private static final String OPEN = "open";
+    private static final String CLOSE = "close";
+    private static final String REMOVE = "remove";
+    private static final String START = "start";
+    private static final String STOP = "stop";
     private static final String REPOSITORIES = "repositories";
     private static final String REPLICATIONS = "replications";
     private static final String SOURCE = "source";
@@ -198,7 +205,7 @@ public class HttpClient implements Closeable {
      */
     public void createRepository(Path path) {
         postRepository(createObjectBuilder()
-                .add(ACTION, "create")
+                .add(ACTION, CREATE)
                 .add(PATH, path.toAbsolutePath().toString())
                 .build());
     }
@@ -210,7 +217,7 @@ public class HttpClient implements Closeable {
      */
     public void addRepository(Path path) {
         postRepository(createObjectBuilder()
-                .add(ACTION, "add")
+                .add(ACTION, ADD)
                 .add(PATH, path.toAbsolutePath().toString())
                 .build());
     }
@@ -222,7 +229,7 @@ public class HttpClient implements Closeable {
      */
     public void openRepository(String repository) {
         postRepository(createObjectBuilder()
-                .add(ACTION, "open")
+                .add(ACTION, OPEN)
                 .add(REPOSITORY, repository)
                 .build());
     }
@@ -234,7 +241,7 @@ public class HttpClient implements Closeable {
      */
     public void closeRepository(String repository) {
         postRepository(createObjectBuilder()
-                .add(ACTION, "close")
+                .add(ACTION, CLOSE)
                 .add(REPOSITORY, repository)
                 .build());
     }
@@ -246,7 +253,7 @@ public class HttpClient implements Closeable {
      */
     public void removeRepository(String repository) {
         postRepository(createObjectBuilder()
-                .add(ACTION, "remove")
+                .add(ACTION, REMOVE)
                 .add(REPOSITORY, repository)
                 .build());
     }
@@ -302,7 +309,32 @@ public class HttpClient implements Closeable {
      * @param target Target repository.
      */
     public void createReplication(String source, String target) {
+        postReplication(CREATE, source, target);
+    }
+
+    /**
+     * Starts an existing replication.
+     *
+     * @param source Source repository.
+     * @param target Target repository.
+     */
+    public void startReplication(String source, String target) {
+        postReplication(START, source, target);
+    }
+
+    /**
+     * Stops an existing replication.
+     *
+     * @param source Source repository.
+     * @param target Target repository.
+     */
+    public void stopReplication(String source, String target) {
+        postReplication(STOP, source, target);
+    }
+
+    private void postReplication(String action, String source, String target) {
         JsonObject json = createObjectBuilder()
+                .add(ACTION, action)
                 .add(SOURCE, source)
                 .add(TARGET, target)
                 .build();

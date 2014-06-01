@@ -60,7 +60,6 @@ public class RepositoriesResource {
 
     private static final String PATH = "path";
     private static final String ACTION = "action";
-    private static final String STARTED = "started";
     private static final String REPOSITORY = "repository";
     private static final String HASH = "hash";
     private static final String REV = "rev";

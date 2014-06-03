@@ -33,7 +33,7 @@ abstract class Agent {
     private final Deque<Event> events = new ArrayDeque<>();
     private long cursor;
     private boolean signaled;
-    private boolean stoped;
+    private boolean stopped;
 
     /**
      * Constructor.
@@ -70,7 +70,7 @@ abstract class Agent {
     public final void stop() {
         lock.lock();
         try {
-            stoped = true;
+            stopped = true;
             condition.signal();
 
         } finally {
@@ -130,16 +130,16 @@ abstract class Agent {
         private Optional<Event> next() {
             lock.lock();
             try {
-                while (!stoped && events.isEmpty()) {
+                while (!stopped && events.isEmpty()) {
                     events.addAll(history(true, cursor, 100));
                     if (events.isEmpty()) {
                         signaled = false;
-                        while (!stoped && !signaled) {
+                        while (!stopped && !signaled) {
                             condition.awaitUninterruptibly();
                         }
                     }
                 }
-                if (stoped) {
+                if (stopped) {
                     return Optional.absent();
                 }
                 return Optional.of(events.removeFirst());

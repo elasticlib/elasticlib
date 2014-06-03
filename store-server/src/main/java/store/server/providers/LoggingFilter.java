@@ -176,9 +176,9 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     }
 
     @Override
-    public void aroundWriteTo(WriterInterceptorContext WriterInterceptorCtx) throws IOException {
-        LoggingStream stream = (LoggingStream) WriterInterceptorCtx.getProperty(ENTITY_LOGGER_PROPERTY);
-        WriterInterceptorCtx.proceed();
+    public void aroundWriteTo(WriterInterceptorContext writerInterceptorCtx) throws IOException {
+        LoggingStream stream = (LoggingStream) writerInterceptorCtx.getProperty(ENTITY_LOGGER_PROPERTY);
+        writerInterceptorCtx.proceed();
         if (stream != null) {
             LOG.debug(stream.getStringBuilder().toString());
         }

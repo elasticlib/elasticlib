@@ -1,21 +1,13 @@
 package store.server.service;
 
-import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
-import store.common.Operation;
-import static store.common.Operation.CREATE;
-import static store.common.Operation.DELETE;
-import static store.common.Operation.UPDATE;
 import store.common.RepositoryStats;
-import static store.server.storage.DatabaseEntries.asLong;
-import static store.server.storage.DatabaseEntries.asString;
+import static store.server.storage.DatabaseEntries.asMappable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.Procedure;
 import store.server.storage.StorageManager;
@@ -26,12 +18,10 @@ import static store.server.storage.StorageManager.currentTransaction;
  */
 class StatsManager {
 
-    private static final String OPERATIONS_STATS = "operationsStats";
-    private static final String METADATA_STATS = "metadataStats";
+    private static final String STATS = "stats";
     private final StorageManager storageManager;
-    private final Database eventStatsDb;
-    private final Database metadataStatsDb;
-    private AtomicReference<RepositoryStats> latestSnapshot;
+    private final Database statsDb;
+    private final AtomicReference<RepositoryStats> latestSnapshot;
 
     /**
      * Constructor.
@@ -40,39 +30,23 @@ class StatsManager {
      */
     public StatsManager(StorageManager storageManager) {
         this.storageManager = storageManager;
-        eventStatsDb = storageManager.openDatabase(OPERATIONS_STATS);
-        metadataStatsDb = storageManager.openDatabase(METADATA_STATS);
-
+        statsDb = storageManager.openDatabase(STATS);
+        latestSnapshot = new AtomicReference<>();
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                latestSnapshot = new AtomicReference<>(new RepositoryStats(load(CREATE),
-                                                                           load(UPDATE),
-                                                                           load(DELETE),
-                                                                           loadMetadataCounts()));
+                latestSnapshot.set(loadPersistedStats());
             }
         });
     }
 
-    private long load(Operation operation) {
-        DatabaseEntry key = entry(operation.toString());
+    private RepositoryStats loadPersistedStats() {
+        DatabaseEntry key = entry(STATS);
         DatabaseEntry data = new DatabaseEntry();
-        if (eventStatsDb.get(currentTransaction(), key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-            return asLong(data);
+        if (statsDb.get(currentTransaction(), key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+            return asMappable(data, RepositoryStats.class);
         }
-        return 0;
-    }
-
-    private Map<String, Long> loadMetadataCounts() {
-        try (Cursor cursor = storageManager.openCursor(metadataStatsDb)) {
-            Map<String, Long> counts = new TreeMap<>();
-            DatabaseEntry key = new DatabaseEntry();
-            DatabaseEntry data = new DatabaseEntry();
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                counts.put(asString(key), asLong(data));
-            }
-            return counts;
-        }
+        return new RepositoryStats(0, 0, 0, Collections.<String, Long>emptyMap());
     }
 
     /**
@@ -86,7 +60,7 @@ class StatsManager {
     }
 
     /**
-     * Replace current statistics snapshot of by supplied one.
+     * Replace current statistics snapshot by supplied one.
      *
      * @param stats A RepositoryStats instance.
      */
@@ -94,31 +68,9 @@ class StatsManager {
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                update(CREATE, stats.getCreations());
-                update(UPDATE, stats.getUpdates());
-                update(DELETE, stats.getDeletions());
-                update(stats.getMetadataCounts());
+                statsDb.put(currentTransaction(), entry(stats), entry(stats));
             }
         });
         latestSnapshot.set(stats);
-    }
-
-    private void update(Operation operation, long count) {
-        eventStatsDb.put(currentTransaction(), entry(operation.toString()), entry(count));
-    }
-
-    private void update(Map<String, Long> metadataCounts) {
-        for (Entry<String, Long> entry : metadataCounts.entrySet()) {
-            metadataStatsDb.put(currentTransaction(), entry(entry.getKey()), entry(entry.getValue()));
-        }
-        try (Cursor cursor = storageManager.openCursor(metadataStatsDb)) {
-            DatabaseEntry key = new DatabaseEntry();
-            DatabaseEntry data = new DatabaseEntry();
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                if (!metadataCounts.containsKey(asString(key))) {
-                    cursor.delete();
-                }
-            }
-        }
     }
 }

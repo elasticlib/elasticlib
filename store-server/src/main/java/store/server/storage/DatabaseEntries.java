@@ -83,16 +83,6 @@ public final class DatabaseEntries {
     }
 
     /**
-     * Unwraps a string from supplied database entry.
-     *
-     * @param entry A database entry.
-     * @return Wrapped string.
-     */
-    public static String asString(DatabaseEntry entry) {
-        return new String(entry.getData(), Charsets.UTF_8);
-    }
-
-    /**
      * Unwraps a long from supplied database entry.
      *
      * @param entry A database entry.

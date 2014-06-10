@@ -10,6 +10,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import javax.json.Json;
 import javax.json.JsonObject;
+import store.common.AgentInfo;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfoTree;
@@ -17,6 +18,8 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
+import store.common.RepositoryStats;
 import store.common.json.schema.Schema;
 
 final class SchemaProvider {
@@ -30,7 +33,10 @@ final class SchemaProvider {
                  Event.class,
                  IndexEntry.class,
                  RepositoryDef.class,
-                 ReplicationDef.class);
+                 ReplicationDef.class,
+                 AgentInfo.class,
+                 RepositoryStats.class,
+                 RepositoryInfo.class);
     }
 
     private SchemaProvider() {

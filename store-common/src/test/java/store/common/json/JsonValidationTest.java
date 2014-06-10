@@ -14,6 +14,7 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.RepositoryInfo;
 import static store.common.TestUtil.array;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
@@ -150,5 +151,16 @@ public class JsonValidationTest {
             assertThat(isValid(json, IndexEntry.class)).isTrue();
         }
         assertThat(isValid(CONTENT_INFO_TREE_JSON, IndexEntry.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidRepositoryInfoTest() {
+        for (JsonObject json : REPOSITORY_INFOS_JSON) {
+            assertThat(isValid(json, RepositoryInfo.class)).isTrue();
+        }
+        assertThat(isValid(CONTENT_INFO_TREE_JSON, RepositoryInfo.class)).isFalse();
     }
 }

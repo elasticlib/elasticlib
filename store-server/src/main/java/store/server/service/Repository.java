@@ -2,6 +2,7 @@ package store.server.service;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.sleepycat.je.Database;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -18,6 +19,8 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
 import store.common.Operation;
+import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
@@ -39,7 +42,8 @@ public class Repository {
     private static final String STORAGE = "storage";
     private static final String CONTENT = "content";
     private static final String INDEX = "index";
-    private static final String INDEXATION_CURSOR = "indexationCursor";
+    private static final String STATS = "stats";
+    private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final String name;
     private final Guid guid;
@@ -48,9 +52,11 @@ public class Repository {
     private final StorageManager storageManager;
     private final InfoManager infoManager;
     private final HistoryManager historyManager;
+    private final StatsManager statsManager;
     private final ContentManager contentManager;
     private final Index index;
-    private final IndexingAgent agent;
+    private final IndexingAgent indexingAgent;
+    private final StatsAgent statsAgent;
 
     private Repository(String name,
                        Guid guid,
@@ -67,10 +73,16 @@ public class Repository {
         storageManager = new StorageManager(name, path.resolve(STORAGE), config, asyncService);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
+        statsManager = new StatsManager(storageManager);
         this.contentManager = contentManager;
         this.index = index;
-        agent = new IndexingAgent(this, index, storageManager.openDeferredWriteDatabase(INDEXATION_CURSOR), entry(name));
-        agent.start();
+
+        Database curSeqsDb = storageManager.openDatabase(CUR_SEQS);
+        indexingAgent = new IndexingAgent(this, index, curSeqsDb, entry(INDEX + "-" + name));
+        statsAgent = new StatsAgent(this, statsManager, curSeqsDb, entry(STATS + "-" + name));
+
+        indexingAgent.start();
+        statsAgent.start();
     }
 
     /**
@@ -164,7 +176,8 @@ public class Repository {
      * will fail.
      */
     void close() {
-        agent.stop();
+        indexingAgent.stop();
+        statsAgent.stop();
         index.close();
         storageManager.close();
         contentManager.close();
@@ -278,7 +291,8 @@ public class Repository {
 
     private void signalIf(boolean condition) {
         if (condition) {
-            agent.signal();
+            indexingAgent.signal();
+            statsAgent.signal();
             replicationService.signal(guid);
         }
     }
@@ -396,5 +410,17 @@ public class Repository {
      */
     public List<IndexEntry> find(String query, int first, int number) {
         return index.find(query, first, number);
+    }
+
+    /**
+     * Provides various info about this repository.
+     *
+     * @return A RepositoryInfo instance.
+     */
+    public RepositoryInfo info() {
+        return new RepositoryInfo(new RepositoryDef(name, guid, path),
+                                  statsManager.stats(),
+                                  indexingAgent.info(),
+                                  statsAgent.info());
     }
 }

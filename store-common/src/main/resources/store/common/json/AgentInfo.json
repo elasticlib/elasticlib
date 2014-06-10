@@ -1,0 +1,9 @@
+{
+    "title": "agentInfo",
+    "type": "object",
+    "properties": {
+        "curSeq": {"type": "integer"},
+        "maxSeq": {"type": "integer"},
+        "state": {"type": "string"}
+    }
+}

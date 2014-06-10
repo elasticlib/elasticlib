@@ -1,0 +1,47 @@
+{
+    "title": "repositoryInfo",
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "guid": {"type": "guid"},
+        "path": {"type": "string"},
+        "open": {"type": "boolean"},
+        "stats": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+                "operations": {
+                    "type": "object",
+                    "properties": {
+                        "create": {"type": "integer"},
+                        "update": {"type": "integer"},
+                        "delete": {"type": "integer"}
+                    }
+                },
+                "metadata": {"definition": "schema"}
+            }
+        },
+        "agents": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+                "indexing": {
+                    "type": "object",
+                    "properties": {
+                        "curSeq": {"type": "integer"},
+                        "maxSeq": {"type": "integer"},
+                        "state": {"type": "string"}
+                    }
+                },
+                "stats": {
+                    "type": "object",
+                    "properties": {
+                        "curSeq": {"type": "integer"},
+                        "maxSeq": {"type": "integer"},
+                        "state": {"type": "string"}
+                    }
+                }
+            }
+        }
+    }
+}

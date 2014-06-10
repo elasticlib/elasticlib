@@ -13,6 +13,7 @@ final class YamlTestData {
     public static final String INDEX_ENTRIES_YAML;
     public static final String REPOSITORY_DEFS_YAML;
     public static final String REPLICATION_DEFS_YAML;
+    public static final List<String> REPOSITORY_INFOS_YAML = new ArrayList<>();
 
     static {
         Class<?> clazz = YamlTestData.class;
@@ -31,6 +32,10 @@ final class YamlTestData {
 
         REPOSITORY_DEFS_YAML = readString(clazz, "repositoryDefs.yml");
         REPLICATION_DEFS_YAML = readString(clazz, "replicationDefs.yml");
+
+        REPOSITORY_INFOS_YAML.add(readString(clazz, "repositoryInfo0.yml"));
+        REPOSITORY_INFOS_YAML.add(readString(clazz, "repositoryInfo1.yml"));
+
     }
 
     private YamlTestData() {

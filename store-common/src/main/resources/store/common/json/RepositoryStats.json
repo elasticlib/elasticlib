@@ -1,0 +1,10 @@
+{
+    "title": "repositoryStats",
+    "type": "object",
+    "properties": {
+        "creations": {"type": "integer"},
+        "updates": {"type": "integer"},
+        "deletions": {"type": "integer"},
+        "metadata": {"definition": "schema"}
+    }
+}

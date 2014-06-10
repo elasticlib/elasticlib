@@ -12,9 +12,11 @@ import store.common.ContentInfoTree;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
+import static store.common.metadata.Properties.Common.FILE_NAME;
+import store.common.value.Value;
 
 /**
- * Represents a test content.
+ * Represents a test content. Its only metadata is its filename.
  */
 public final class Content {
 
@@ -37,6 +39,7 @@ public final class Content {
             info = new ContentInfoBuilder()
                     .withLength(digest.getLength())
                     .withContent(digest.getHash())
+                    .with(FILE_NAME.key(), Value.of(filename))
                     .computeRevisionAndBuild();
 
             tree = new ContentInfoTree.ContentInfoTreeBuilder().add(info).build();

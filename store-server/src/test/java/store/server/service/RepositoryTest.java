@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -13,6 +14,8 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import store.common.AgentInfo;
+import store.common.AgentState;
 import store.common.CommandResult;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
@@ -24,8 +27,11 @@ import static store.common.IoUtil.copy;
 import store.common.Operation;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
+import store.common.RepositoryStats;
 import store.common.config.Config;
 import store.common.hash.Hash;
+import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
@@ -221,6 +227,24 @@ public class RepositoryTest {
     /**
      * Test.
      */
+    @Test(groups = OPERATIONS, dependsOnGroups = INIT)
+    public void infoTest() {
+        async(new Runnable() {
+            @Override
+            public void run() {
+                RepositoryInfo info = repository(ALPHA).info();
+
+                assertDone(info.getIndexingInfo());
+                assertDone(info.getStatsInfo());
+                assertThat(info.getStats()).isEqualTo(new RepositoryStats(1, 0, 0,
+                                                                          ImmutableMap.of(FILE_NAME.key(), 1L)));
+            }
+        });
+    }
+
+    /**
+     * Test.
+     */
     @Test(groups = DELETE, dependsOnGroups = OPERATIONS)
     public void deleteTest() {
         Repository alpha = repository(ALPHA);
@@ -243,6 +267,17 @@ public class RepositoryTest {
             @Override
             public void run() {
                 assertThat(repository(BETA).find("Lorem ipsum", 0, 10)).isEmpty();
+            }
+        });
+        async(new Runnable() {
+            @Override
+            public void run() {
+                RepositoryInfo info = repository(ALPHA).info();
+
+                assertDone(info.getIndexingInfo());
+                assertDone(info.getStatsInfo());
+                assertThat(info.getStats()).isEqualTo(new RepositoryStats(1, 0, 1,
+                                                                          Collections.<String, Long>emptyMap()));
             }
         });
     }
@@ -305,6 +340,11 @@ public class RepositoryTest {
         assertThat(events).hasSize(2);
         assertThat(events.get(1).getOperation()).isEqualTo(Operation.DELETE);
         assertThat(events.get(1).getContent()).isEqualTo(Content.getHash());
+    }
+
+    private static void assertDone(AgentInfo info) {
+        assertThat(info.getState()).isEqualTo(AgentState.WAITING);
+        assertThat(info.getCurSeq()).isEqualTo(info.getMaxSeq());
     }
 
     private void async(Runnable runnable) {

@@ -9,6 +9,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 import static store.common.TestData.*;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonReading.readAll;
@@ -77,5 +78,15 @@ public class JsonReadingTest {
     @Test
     public void readAllReplicationDefsTest() {
         assertThat(readAll(REPLICATION_DEFS_ARRAY, ReplicationDef.class)).isEqualTo(REPLICATION_DEFS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readRepositoryInfoTest() {
+        for (int i = 0; i < REPOSITORY_INFOS_JSON.size(); i++) {
+            assertThat(read(REPOSITORY_INFOS_JSON.get(i), RepositoryInfo.class)).isEqualTo(REPOSITORY_INFOS.get(i));
+        }
     }
 }

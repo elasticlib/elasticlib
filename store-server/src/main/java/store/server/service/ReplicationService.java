@@ -17,12 +17,12 @@ import store.server.storage.StorageManager;
  */
 class ReplicationService {
 
-    private static final String REPLICATION_CURSORS = "replicationCursors";
-    private final Database replicationCursors;
+    private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
+    private final Database curSeqsDb;
     private final Map<Guid, Map<Guid, ReplicationAgent>> agents = new HashMap<>();
 
     public ReplicationService(StorageManager storageManager) {
-        replicationCursors = storageManager.openDeferredWriteDatabase(REPLICATION_CURSORS);
+        curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
     }
 
     /**
@@ -66,12 +66,12 @@ class ReplicationService {
         if (!agents.containsKey(srcId)) {
             agents.put(srcId, new HashMap<Guid, ReplicationAgent>());
         }
-        DatabaseEntry cursorKey = entry(srcId, destId);
+        DatabaseEntry curSeqKey = entry(srcId, destId);
         if (resetCursor) {
             // Ensures agent won't see a stale value.
-            replicationCursors.delete(null, cursorKey);
+            curSeqsDb.delete(null, curSeqKey);
         }
-        ReplicationAgent agent = new ReplicationAgent(source, destination, replicationCursors, cursorKey);
+        ReplicationAgent agent = new ReplicationAgent(source, destination, curSeqsDb, curSeqKey);
         agents.get(srcId).put(destId, agent);
         agent.start();
     }
@@ -106,7 +106,7 @@ class ReplicationService {
         stopReplication(source, destination);
 
         // Can't use a transaction on a deffered write database :(
-        replicationCursors.delete(null, entry(source, destination));
+        curSeqsDb.delete(null, entry(source, destination));
     }
 
     /**

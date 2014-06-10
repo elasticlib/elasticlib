@@ -71,4 +71,14 @@ public class YamlWritingTest {
     public void writeAllReplicationDefsTest() {
         assertThat(writeAll(REPLICATION_DEFS)).isEqualTo(REPLICATION_DEFS_YAML);
     }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeRepositoryInfoTest() {
+        for (int i = 0; i < REPOSITORY_INFOS.size(); i++) {
+            assertThat(write(REPOSITORY_INFOS.get(i))).isEqualTo(REPOSITORY_INFOS_YAML.get(i));
+        }
+    }
 }

@@ -19,8 +19,8 @@ class ReplicationAgent extends Agent {
     private final Repository source;
     private final Repository destination;
 
-    public ReplicationAgent(Repository source, Repository destination, Database cursorsDatabase, DatabaseEntry cursorKey) {
-        super("replication-" + source.getName() + ">" + destination.getName(), cursorsDatabase, cursorKey);
+    public ReplicationAgent(Repository source, Repository destination, Database curSeqsDb, DatabaseEntry curSeqKey) {
+        super("replication-" + source.getName() + ">" + destination.getName(), curSeqsDb, curSeqKey);
         this.source = source;
         this.destination = destination;
     }

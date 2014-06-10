@@ -16,6 +16,7 @@ final class JsonTestData {
     public static final JsonArray INDEX_ENTRIES_ARRAY;
     public static final JsonArray REPOSITORY_DEFS_ARRAY;
     public static final JsonArray REPLICATION_DEFS_ARRAY;
+    public static final List<JsonObject> REPOSITORY_INFOS_JSON = new ArrayList<>();
 
     static {
         Class<?> clazz = JsonTestData.class;
@@ -34,6 +35,9 @@ final class JsonTestData {
 
         REPOSITORY_DEFS_ARRAY = readJsonArray(clazz, "repositoryDefs.json");
         REPLICATION_DEFS_ARRAY = readJsonArray(clazz, "replicationDefs.json");
+
+        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfo0.json"));
+        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfo1.json"));
     }
 
     private JsonTestData() {

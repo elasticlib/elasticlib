@@ -1,5 +1,6 @@
 package store.common;
 
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
@@ -44,6 +45,10 @@ public final class TestData {
      * Some ReplicationDef instances.
      */
     public static final List<ReplicationDef> REPLICATION_DEFS = new ArrayList<>();
+    /**
+     * Some RepositoryInfo instances.
+     */
+    public static final List<RepositoryInfo> REPOSITORY_INFOS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -118,6 +123,14 @@ public final class TestData {
 
         REPLICATION_DEFS.add(new ReplicationDef(primaryId, secondaryId));
         REPLICATION_DEFS.add(new ReplicationDef(secondaryId, primaryId));
+
+        REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(0),
+                                                new RepositoryStats(12, 3, 2, ImmutableMap.of("contentType", 9L,
+                                                                                              "description", 5L)),
+                                                new AgentInfo(15, 17, AgentState.RUNNING),
+                                                new AgentInfo(17, 17, AgentState.WAITING)));
+
+        REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(1)));
     }
 
     private TestData() {

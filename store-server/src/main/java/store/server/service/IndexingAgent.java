@@ -17,8 +17,8 @@ class IndexingAgent extends Agent {
     private final Repository repository;
     private final Index index;
 
-    public IndexingAgent(Repository repository, Index index, Database cursorsDatabase, DatabaseEntry cursorKey) {
-        super("indexation-" + repository.getName(), cursorsDatabase, cursorKey);
+    public IndexingAgent(Repository repository, Index index, Database curSeqsDb, DatabaseEntry curSeqKey) {
+        super("indexation-" + repository.getName(), curSeqsDb, curSeqKey);
         this.repository = repository;
         this.index = index;
     }

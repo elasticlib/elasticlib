@@ -1,6 +1,7 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
+import static com.google.common.collect.Iterables.getLast;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
@@ -8,11 +9,14 @@ import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.AgentInfo;
+import store.common.AgentState;
 import store.common.Event;
 import store.server.exception.ServerException;
 import static store.server.storage.DatabaseEntries.asLong;
@@ -23,15 +27,11 @@ import static store.server.storage.DatabaseEntries.entry;
  */
 abstract class Agent {
 
+    private static final int FETCH_SIZE = 20;
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private final Thread agentThread;
-    private final Database cursorsDatabase;
-    private final DatabaseEntry cursorKey;
-    private final String name;
-    private final Deque<Event> events = new ArrayDeque<>();
-    private long cursor;
+    private final AgentThread agentThread;
     private boolean signaled;
     private boolean stopped;
 
@@ -39,19 +39,11 @@ abstract class Agent {
      * Constructor.
      *
      * @param name Agent name.
-     * @param cursorsDatabase Database used to persist agent cursor value.
-     * @param cursorKey The key persisted agent cursor value is associated to in cursors Database.
+     * @param curSeqsDb Database used to persist agent curSeq value.
+     * @param curSeqKey The key persisted agent curSeq value is associated to in curSeqs Database.
      */
-    protected Agent(String name, Database cursorsDatabase, DatabaseEntry cursorKey) {
-        this.name = name;
-        this.cursorsDatabase = cursorsDatabase;
-        this.cursorKey = cursorKey;
-
-        DatabaseEntry entry = new DatabaseEntry();
-        if (cursorsDatabase.get(null, cursorKey, entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-            cursor = asLong(entry);
-        }
-        agentThread = new AgentThread();
+    protected Agent(String name, Database curSeqsDb, DatabaseEntry curSeqKey) {
+        agentThread = new AgentThread(name, curSeqsDb, curSeqKey);
     }
 
     /**
@@ -98,14 +90,44 @@ abstract class Agent {
         }
     }
 
+    /**
+     * @return A snapshot of current info about this agent.
+     */
+    public final AgentInfo info() {
+        return agentThread.info();
+    }
+
     protected abstract List<Event> history(boolean chronological, long first, int number);
 
     protected abstract boolean process(Event event);
 
     private class AgentThread extends Thread {
 
-        public AgentThread() {
+        private final Database curSeqsDb;
+        private final DatabaseEntry curSeqKey;
+        private final Deque<Event> events = new ArrayDeque<>(FETCH_SIZE);
+        private long curSeq;
+        private long maxSeq;
+        private AtomicReference<AgentInfo> info;
+
+        public AgentThread(String name, Database curSeqsDb, DatabaseEntry curSeqKey) {
             super(name);
+            this.curSeqsDb = curSeqsDb;
+            this.curSeqKey = curSeqKey;
+            curSeq = loadCurSeq();
+            info = new AtomicReference<>(new AgentInfo(curSeq, maxSeq, AgentState.NEW));
+        }
+
+        private long loadCurSeq() {
+            DatabaseEntry entry = new DatabaseEntry();
+            if (curSeqsDb.get(null, curSeqKey, entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                return asLong(entry);
+            }
+            return 0;
+        }
+
+        public AgentInfo info() {
+            return info.get();
         }
 
         @Override
@@ -117,13 +139,13 @@ abstract class Agent {
                     if (!process(event)) {
                         events.addFirst(event);
                     } else {
-                        cursor = event.getSeq() + 1;
-                        cursorsDatabase.put(null, cursorKey, entry(cursor));
+                        updateCurSeq(event.getSeq());
                     }
                     nextEvent = next();
                 }
             } catch (ServerException e) {
                 LOG.error("Unexpected error, stopping", e);
+                updateInfo(AgentState.ERROR);
             }
         }
 
@@ -131,11 +153,13 @@ abstract class Agent {
             lock.lock();
             try {
                 while (!stopped && events.isEmpty()) {
-                    events.addAll(history(true, cursor, 100));
+                    fetchEvents();
                     if (events.isEmpty()) {
                         signaled = false;
                         while (!stopped && !signaled) {
+                            updateInfo(AgentState.WAITING);
                             condition.awaitUninterruptibly();
+                            updateInfo(AgentState.RUNNING);
                         }
                     }
                 }
@@ -147,6 +171,29 @@ abstract class Agent {
             } finally {
                 lock.unlock();
             }
+        }
+
+        private void fetchEvents() {
+            List<Event> chunk = history(true, curSeq + 1, FETCH_SIZE);
+            events.addAll(chunk);
+
+            if (chunk.size() == FETCH_SIZE) {
+                maxSeq = history(false, Long.MAX_VALUE, 1).get(0).getSeq();
+
+            } else if (!chunk.isEmpty()) {
+                maxSeq = getLast(chunk).getSeq();
+            }
+            updateInfo(AgentState.RUNNING);
+        }
+
+        private void updateCurSeq(long c) {
+            curSeq = c;
+            curSeqsDb.put(null, curSeqKey, entry(curSeq));
+            updateInfo(AgentState.RUNNING);
+        }
+
+        private void updateInfo(AgentState state) {
+            info.set(new AgentInfo(curSeq, maxSeq, state));
         }
     }
 }

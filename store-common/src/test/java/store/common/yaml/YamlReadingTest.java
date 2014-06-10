@@ -9,6 +9,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import store.common.ReplicationDef;
 import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 import static store.common.TestData.*;
 import static store.common.yaml.YamlReading.read;
 import static store.common.yaml.YamlReading.readAll;
@@ -77,5 +78,15 @@ public class YamlReadingTest {
     @Test
     public void readAllReplicationDefsTest() {
         assertThat(readAll(REPLICATION_DEFS_YAML, ReplicationDef.class)).isEqualTo(REPLICATION_DEFS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readRepositoryInfoTest() {
+        for (int i = 0; i < REPOSITORY_INFOS_YAML.size(); i++) {
+            assertThat(read(REPOSITORY_INFOS_YAML.get(i), RepositoryInfo.class)).isEqualTo(REPOSITORY_INFOS.get(i));
+        }
     }
 }

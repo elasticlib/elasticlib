@@ -6,6 +6,7 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import store.common.Operation;
@@ -107,14 +108,14 @@ class StatsManager {
     }
 
     private void update(Map<String, Long> metadataCounts) {
+        for (Entry<String, Long> entry : metadataCounts.entrySet()) {
+            metadataStatsDb.put(currentTransaction(), entry(entry.getKey()), entry(entry.getValue()));
+        }
         try (Cursor cursor = storageManager.openCursor(metadataStatsDb)) {
             DatabaseEntry key = new DatabaseEntry();
             DatabaseEntry data = new DatabaseEntry();
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                Long count = metadataCounts.get(asString(key));
-                if (count != null) {
-                    cursor.putCurrent(entry(count));
-                } else {
+                if (!metadataCounts.containsKey(asString(key))) {
                     cursor.delete();
                 }
             }

@@ -58,8 +58,8 @@ class ReplicationService {
     }
 
     private void beginReplication(Repository source, Repository destination, boolean resetCursor) {
-        Guid srcId = source.getGuid();
-        Guid destId = destination.getGuid();
+        Guid srcId = source.getDef().getGuid();
+        Guid destId = destination.getDef().getGuid();
         if (agents.containsKey(srcId) && agents.get(srcId).containsKey(destId)) {
             return;
         }

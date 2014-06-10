@@ -84,21 +84,16 @@ public class RepositoriesService {
     private void openRepository(RepositoryDef repositoryDef) {
         Path path = repositoryDef.getPath();
         Repository repository = Repository.open(path, config, asyncService, replicationService);
-        repositories.put(repository.getGuid(), repository);
-        storageService.updateRepositoryDef(def(repository));
+        RepositoryDef updatedDef = repository.getDef();
+        repositories.put(updatedDef.getGuid(), repository);
+        storageService.updateRepositoryDef(updatedDef);
 
-        for (ReplicationDef def : storageService.listReplicationDefs(repository.getGuid())) {
+        for (ReplicationDef def : storageService.listReplicationDefs(updatedDef.getGuid())) {
             if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                 replicationService.startReplication(repositories.get(def.getSource()),
                                                     repositories.get(def.getDestination()));
             }
         }
-    }
-
-    private static RepositoryDef def(Repository repository) {
-        return new RepositoryDef(repository.getName(),
-                                 repository.getGuid(),
-                                 repository.getPath());
     }
 
     /**
@@ -133,8 +128,9 @@ public class RepositoriesService {
                 @Override
                 public void apply() {
                     Repository repository = Repository.create(path, config, asyncService, replicationService);
-                    storageService.createRepositoryDef(def(repository));
-                    repositories.put(repository.getGuid(), repository);
+                    RepositoryDef def = repository.getDef();
+                    storageService.createRepositoryDef(def);
+                    repositories.put(def.getGuid(), repository);
                 }
             });
         } finally {
@@ -158,8 +154,9 @@ public class RepositoriesService {
                         throw new RepositoryAlreadyExistsException();
                     }
                     Repository repository = Repository.open(path, config, asyncService, replicationService);
-                    storageService.createRepositoryDef(def(repository));
-                    repositories.put(repository.getGuid(), repository);
+                    RepositoryDef def = repository.getDef();
+                    storageService.createRepositoryDef(def);
+                    repositories.put(def.getGuid(), repository);
                 }
             });
         } finally {

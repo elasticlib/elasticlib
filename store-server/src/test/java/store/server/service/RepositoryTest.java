@@ -131,7 +131,7 @@ public class RepositoryTest {
     public void addTest() throws IOException {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
             Repository alpha = repository(ALPHA);
-            CommandResult firstStepResult = alpha.addInfo(LOREM_IPSUM.getInfo());
+            CommandResult firstStepResult = alpha.addContentInfo(LOREM_IPSUM.getInfo());
             CommandResult secondStepResult = alpha.addContent(firstStepResult.getTransactionId(),
                                                               LOREM_IPSUM.getInfo().getContent(),
                                                               inputStream);
@@ -149,7 +149,7 @@ public class RepositoryTest {
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT, expectedExceptions = ConflictException.class)
     public void putAlreadyStoredTest() throws IOException {
-        repository(ALPHA).addInfo(LOREM_IPSUM.getInfo());
+        repository(ALPHA).addContentInfo(LOREM_IPSUM.getInfo());
     }
 
     /**
@@ -171,7 +171,7 @@ public class RepositoryTest {
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
     public void getInfoHeadTest() {
-        List<ContentInfo> head = repository(ALPHA).getInfoHead(LOREM_IPSUM.getHash());
+        List<ContentInfo> head = repository(ALPHA).getContentInfoHead(LOREM_IPSUM.getHash());
         assertThat(head).containsExactly(LOREM_IPSUM.getInfo());
     }
 
@@ -188,7 +188,7 @@ public class RepositoryTest {
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT, expectedExceptions = UnknownContentException.class)
     public void getInfoTreeWithUnknownHashTest() {
-        repository(ALPHA).getInfoTree(UNKNOWN_HASH);
+        repository(ALPHA).getContentInfoTree(UNKNOWN_HASH);
     }
 
     /**
@@ -228,11 +228,11 @@ public class RepositoryTest {
      * Test.
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
-    public void infoTest() {
+    public void getInfoTest() {
         async(new Runnable() {
             @Override
             public void run() {
-                RepositoryInfo info = repository(ALPHA).info();
+                RepositoryInfo info = repository(ALPHA).getInfo();
 
                 assertDone(info.getIndexingInfo());
                 assertDone(info.getStatsInfo());
@@ -253,7 +253,7 @@ public class RepositoryTest {
 
         assertDeleted(alpha, LOREM_IPSUM);
 
-        ContentInfoTree tree = alpha.getInfoTree(LOREM_IPSUM.getHash());
+        ContentInfoTree tree = alpha.getContentInfoTree(LOREM_IPSUM.getHash());
         assertThat(tree.list()).hasSize(2);
         assertThat(tree.isDeleted()).isTrue();
 
@@ -272,7 +272,7 @@ public class RepositoryTest {
         async(new Runnable() {
             @Override
             public void run() {
-                RepositoryInfo info = repository(ALPHA).info();
+                RepositoryInfo info = repository(ALPHA).getInfo();
 
                 assertDone(info.getIndexingInfo());
                 assertDone(info.getStatsInfo());
@@ -319,7 +319,7 @@ public class RepositoryTest {
     public void closeTest() {
         Repository alpha = repository(ALPHA);
         repositoriesService.closeRepository(ALPHA);
-        alpha.getInfoTree(UNKNOWN_HASH);
+        alpha.getContentInfoTree(UNKNOWN_HASH);
     }
 
     private Repository repository(String name) {

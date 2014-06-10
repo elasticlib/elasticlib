@@ -20,7 +20,7 @@ class ReplicationAgent extends Agent {
     private final Repository destination;
 
     public ReplicationAgent(Repository source, Repository destination, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("replication-" + source.getName() + ">" + destination.getName(), curSeqsDb, curSeqKey);
+        super("replication-" + source.getDef().getName() + ">" + destination.getDef().getName(), curSeqsDb, curSeqKey);
         this.source = source;
         this.destination = destination;
     }
@@ -32,9 +32,9 @@ class ReplicationAgent extends Agent {
 
     @Override
     protected boolean process(Event event) {
-        ContentInfoTree tree = source.getInfoTree(event.getContent());
+        ContentInfoTree tree = source.getContentInfoTree(event.getContent());
         if (tree.isDeleted()) {
-            destination.mergeTree(tree);
+            destination.mergeContentInfoTree(tree);
             return true;
 
         } else {
@@ -43,7 +43,7 @@ class ReplicationAgent extends Agent {
                 return false;
             }
             try (InputStream inputStream = inputStreamOpt.get()) {
-                CommandResult result = destination.mergeTree(tree);
+                CommandResult result = destination.mergeContentInfoTree(tree);
                 if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
                     destination.addContent(result.getTransactionId(), tree.getContent(), inputStream);
                 }

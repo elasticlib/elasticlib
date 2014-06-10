@@ -25,7 +25,7 @@ class StatsAgent extends Agent {
                       StatsManager statsManager,
                       Database curSeqsDb,
                       DatabaseEntry curSeqKey) {
-        super("stats-" + repository.getName(), curSeqsDb, curSeqKey);
+        super("stats-" + repository.getDef().getName(), curSeqsDb, curSeqKey);
         this.repository = repository;
         this.statsManager = statsManager;
     }
@@ -49,7 +49,7 @@ class StatsAgent extends Agent {
                                            current.getUpdates(),
                                            current.getDeletions(),
                                            add(current.getMetadataCounts(),
-                                               counts(repository.getInfoHead(event.getContent()))));
+                                               counts(repository.getContentInfoHead(event.getContent()))));
             case UPDATE:
                 return new RepositoryStats(current.getCreations(),
                                            current.getUpdates() + 1,
@@ -103,7 +103,7 @@ class StatsAgent extends Agent {
     }
 
     private Map<String, Long> diff(Event event) {
-        ContentInfoTree tree = repository.getInfoTree(event.getContent());
+        ContentInfoTree tree = repository.getContentInfoTree(event.getContent());
         return substract(counts(tree.get(tree.getHead())),
                          counts(tree.get(previousHead(event))));
     }

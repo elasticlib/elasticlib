@@ -18,7 +18,7 @@ class IndexingAgent extends Agent {
     private final Index index;
 
     public IndexingAgent(Repository repository, Index index, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("indexation-" + repository.getName(), curSeqsDb, curSeqKey);
+        super("indexation-" + repository.getDef().getName(), curSeqsDb, curSeqKey);
         this.repository = repository;
         this.index = index;
     }
@@ -30,7 +30,7 @@ class IndexingAgent extends Agent {
 
     @Override
     protected boolean process(Event event) {
-        ContentInfoTree tree = repository.getInfoTree(event.getContent());
+        ContentInfoTree tree = repository.getContentInfoTree(event.getContent());
         if (tree.isDeleted()) {
             index.delete(tree.getContent());
             return true;

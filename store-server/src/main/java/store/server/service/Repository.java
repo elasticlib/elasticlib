@@ -1,6 +1,6 @@
 package store.server.service;
 
-import com.google.common.base.Joiner;
+import static com.google.common.base.Joiner.on;
 import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import java.io.IOException;
@@ -45,9 +45,7 @@ public class Repository {
     private static final String STATS = "stats";
     private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
-    private final String name;
-    private final Guid guid;
-    private final Path path;
+    private final RepositoryDef def;
     private final ReplicationService replicationService;
     private final StorageManager storageManager;
     private final InfoManager infoManager;
@@ -58,19 +56,15 @@ public class Repository {
     private final IndexingAgent indexingAgent;
     private final StatsAgent statsAgent;
 
-    private Repository(String name,
-                       Guid guid,
-                       Path path,
+    private Repository(RepositoryDef def,
                        Config config,
                        AsyncService asyncService,
                        ReplicationService replicationService,
                        ContentManager contentManager,
                        Index index) {
-        this.name = name;
-        this.guid = guid;
-        this.path = path;
+        this.def = def;
         this.replicationService = replicationService;
-        storageManager = new StorageManager(name, path.resolve(STORAGE), config, asyncService);
+        storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, asyncService);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         statsManager = new StatsManager(storageManager);
@@ -78,8 +72,8 @@ public class Repository {
         this.index = index;
 
         Database curSeqsDb = storageManager.openDatabase(CUR_SEQS);
-        indexingAgent = new IndexingAgent(this, index, curSeqsDb, entry(INDEX + "-" + name));
-        statsAgent = new StatsAgent(this, statsManager, curSeqsDb, entry(STATS + "-" + name));
+        indexingAgent = new IndexingAgent(this, index, curSeqsDb, entry(INDEX));
+        statsAgent = new StatsAgent(this, statsManager, curSeqsDb, entry(STATS));
 
         indexingAgent.start();
         statsAgent.start();
@@ -108,9 +102,7 @@ public class Repository {
         AttributesManager attributesManager = AttributesManager.create(path);
         String name = attributesManager.getName();
         Guid guid = attributesManager.getGuid();
-        return new Repository(name,
-                              guid,
-                              path,
+        return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               asyncService,
                               replicationService,
@@ -140,9 +132,7 @@ public class Repository {
         AttributesManager attributesManager = AttributesManager.open(path);
         String name = attributesManager.getName();
         Guid guid = attributesManager.getGuid();
-        return new Repository(name,
-                              guid,
-                              path,
+        return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               asyncService,
                               replicationService,
@@ -151,24 +141,23 @@ public class Repository {
     }
 
     /**
-     * @return The name of this repository.
+     * Provides the definition of this repository.
+     *
+     * @return A RepositoryDef instance.
      */
-    public String getName() {
-        return name;
+    public RepositoryDef getDef() {
+        log("Returning repository def");
+        return def;
     }
 
     /**
-     * @return The GUID of this repository.
+     * Provides various info about this repository.
+     *
+     * @return A RepositoryInfo instance.
      */
-    public Guid getGuid() {
-        return guid;
-    }
-
-    /**
-     * @return The path of this repository.
-     */
-    public Path getPath() {
-        return path;
+    public RepositoryInfo getInfo() {
+        log("Returning repository info");
+        return new RepositoryInfo(def, statsManager.stats(), indexingAgent.info(), statsAgent.info());
     }
 
     /**
@@ -184,14 +173,14 @@ public class Repository {
     }
 
     /**
-     * Add an info revision. If associated content is not present, started transaction is suspended so that caller may
-     * latter complete this operation by adding this content.
+     * Add an content info revision. If associated content is not present, started transaction is suspended so that
+     * caller may latter complete this operation by adding this content.
      *
      * @param contentInfo Content info revision.
      * @return Actual operation result.
      */
-    public CommandResult addInfo(final ContentInfo contentInfo) {
-        LOG.info("[{}] Adding info for {}, with head {}", name, contentInfo.getContent(), contentInfo.getParents());
+    public CommandResult addContentInfo(final ContentInfo contentInfo) {
+        log("Adding content info to {}, with head {}", contentInfo.getContent(), contentInfo.getParents());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -205,14 +194,14 @@ public class Repository {
     }
 
     /**
-     * Merge a revision tree with existing one, if any. If associated content is not present, started transaction is
-     * suspended so that caller may latter complete this operation by creating this content.
+     * Merge supplied content info revision tree with existing one, if any. If associated content is not present,
+     * started transaction is suspended so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult mergeTree(final ContentInfoTree contentInfoTree) {
-        LOG.info("[{}] Merging tree for {}", name, contentInfoTree.getContent());
+    public CommandResult mergeContentInfoTree(final ContentInfoTree contentInfoTree) {
+        log("Merging content info tree of {}", contentInfoTree.getContent());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -234,7 +223,7 @@ public class Repository {
      * @return Operation result.
      */
     public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
-        LOG.info("[{}] Adding content {}", name, hash);
+        log("Adding content {}", hash);
         CommandResult result = storageManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
@@ -261,7 +250,7 @@ public class Repository {
      * @return Actual operation result.
      */
     public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
-        LOG.info("[{}] Deleting content {}, with head {}", name, hash, head);
+        log("Deleting content {}, with head {}", hash, head);
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
@@ -293,18 +282,18 @@ public class Repository {
         if (condition) {
             indexingAgent.signal();
             statsAgent.signal();
-            replicationService.signal(guid);
+            replicationService.signal(def.getGuid());
         }
     }
 
     /**
-     * Provides info tree associated with supplied hash.
+     * Provides content info tree associated with supplied hash.
      *
      * @param hash Hash of the content.
      * @return Corresponding info tree.
      */
-    public ContentInfoTree getInfoTree(final Hash hash) {
-        LOG.info("[{}] Returning info tree {}", name, hash);
+    public ContentInfoTree getContentInfoTree(final Hash hash) {
+        log("Returning content info tree of {}", hash);
         return storageManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
             public ContentInfoTree apply() {
@@ -318,27 +307,27 @@ public class Repository {
     }
 
     /**
-     * Provides info head revisions associated with supplied hash.
+     * Provides content info head revisions associated with supplied hash.
      *
      * @param hash Hash of the content.
      * @return Corresponding info head revisions.
      */
-    public List<ContentInfo> getInfoHead(final Hash hash) {
-        LOG.info("[{}] Returning info head {}", name, hash);
-        ContentInfoTree tree = getInfoTree(hash);
+    public List<ContentInfo> getContentInfoHead(final Hash hash) {
+        log("Returning content info head of {}", hash);
+        ContentInfoTree tree = getContentInfoTree(hash);
         return tree.get(tree.getHead());
     }
 
     /**
-     * Provides requested info revisions associated with supplied hash.
+     * Provides requested content info revisions associated with supplied hash.
      *
      * @param hash Hash of the content.
      * @param revs Hash of revisions to return.
      * @return Corresponding revisions.
      */
-    public List<ContentInfo> getInfoRevisions(Hash hash, Collection<Hash> revs) {
-        LOG.info("[{}] Returning info revs {} [{}]", name, hash, Joiner.on(", ").join(revs));
-        ContentInfoTree tree = getInfoTree(hash);
+    public List<ContentInfo> getContentInfoRevisions(Hash hash, Collection<Hash> revs) {
+        log("Returning content info revs of {} [{}]", hash, on(", ").join(revs));
+        ContentInfoTree tree = getContentInfoTree(hash);
         return tree.get(revs);
     }
 
@@ -349,7 +338,7 @@ public class Repository {
      * @return An input stream on this content.
      */
     public InputStream getContent(final Hash hash) {
-        LOG.info("[{}] Returning content {}", name, hash);
+        log("Returning content {}", hash);
         return storageManager.inTransaction(new Query<InputStream>() {
             @Override
             public InputStream apply() {
@@ -366,7 +355,7 @@ public class Repository {
      * @return An input stream on this content, or nothing if supplied head has been superseded.
      */
     public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
-        LOG.info("[{}] Returning content {} with head {}", name, hash, head);
+        log("Returning content {} with head {}", hash, head);
         return storageManager.inTransaction(new Query<Optional<InputStream>>() {
             @Override
             public Optional<InputStream> apply() {
@@ -391,7 +380,7 @@ public class Repository {
      * @return A list of events.
      */
     public List<Event> history(final boolean chronological, final long first, final int number) {
-        LOG.info("[{}] Returning history{}, first {}, count {}", name, chronological ? "" : ", reverse", first, number);
+        log("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
         return storageManager.inTransaction(new Query<List<Event>>() {
             @Override
             public List<Event> apply() {
@@ -412,15 +401,10 @@ public class Repository {
         return index.find(query, first, number);
     }
 
-    /**
-     * Provides various info about this repository.
-     *
-     * @return A RepositoryInfo instance.
-     */
-    public RepositoryInfo info() {
-        return new RepositoryInfo(new RepositoryDef(name, guid, path),
-                                  statsManager.stats(),
-                                  indexingAgent.info(),
-                                  statsAgent.info());
+    private void log(String format, Object... args) {
+        if (!LOG.isInfoEnabled()) {
+            return;
+        }
+        LOG.info(on("").join("[", def.getName(), "] ", format), args);
     }
 }

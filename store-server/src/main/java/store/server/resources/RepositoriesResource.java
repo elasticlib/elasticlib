@@ -262,10 +262,10 @@ public class RepositoriesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postInfo(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (isValid(json, ContentInfo.class)) {
-            return response(repository(repositoryKey).addInfo(read(json, ContentInfo.class)));
+            return response(repository(repositoryKey).addContentInfo(read(json, ContentInfo.class)));
         }
         if (isValid(json, ContentInfoTree.class)) {
-            return response(repository(repositoryKey).mergeTree(read(json, ContentInfoTree.class)));
+            return response(repository(repositoryKey).mergeContentInfoTree(read(json, ContentInfoTree.class)));
         }
         throw newInvalidJsonException();
     }
@@ -390,7 +390,7 @@ public class RepositoriesResource {
     }
 
     private static Map<String, Value> metadata(Repository repository, Hash hash) {
-        for (ContentInfo info : repository.getInfoHead(hash)) {
+        for (ContentInfo info : repository.getContentInfoHead(hash)) {
             if (!info.isDeleted()) {
                 return info.getMetadata();
             }
@@ -431,12 +431,12 @@ public class RepositoriesResource {
                                  @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
-            return write(repository(repositoryKey).getInfoTree(hash));
+            return write(repository(repositoryKey).getContentInfoTree(hash));
         }
         if (rev.equals(HEAD)) {
-            return writeAll(repository(repositoryKey).getInfoHead(hash));
+            return writeAll(repository(repositoryKey).getContentInfoHead(hash));
         }
-        return writeAll(repository(repositoryKey).getInfoRevisions(hash, parseRevisions(rev)));
+        return writeAll(repository(repositoryKey).getContentInfoRevisions(hash, parseRevisions(rev)));
     }
 
     private static List<Hash> parseRevisions(String arg) {
@@ -529,7 +529,7 @@ public class RepositoriesResource {
         List<ContentInfo> infos = new ArrayList<>(size);
         Repository repository = repository(repositoryKey);
         for (IndexEntry entry : repository.find(query, from, size)) {
-            infos.addAll(repository.getInfoRevisions(entry.getHash(), entry.getRevisions()));
+            infos.addAll(repository.getContentInfoRevisions(entry.getHash(), entry.getRevisions()));
         }
         return writeAll(infos);
     }

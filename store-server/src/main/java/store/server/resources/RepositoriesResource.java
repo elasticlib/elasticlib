@@ -204,10 +204,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * List existing repositoryies.
-     * <p>
-     * Output:<br>
-     * - Array of repository names.
+     * List info about existing repositoryies.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -217,15 +214,11 @@ public class RepositoriesResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listRepositories() {
-        return writeAll(repositoriesService.listRepositoryDefs());
+        return writeAll(repositoriesService.listRepositoryInfos());
     }
 
     /**
      * Get info about a repository.
-     * <p>
-     * Output:<br>
-     * - name (String): Repository name.<br>
-     * - path (String): Repository path on file system.<br>
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -238,7 +231,7 @@ public class RepositoriesResource {
     @Path("{repository}")
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject getRepository(@PathParam(REPOSITORY) String repositoryKey) {
-        return write(repositoriesService.getRepositoryDef(repositoryKey));
+        return write(repositoriesService.getRepositoryInfo(repositoryKey));
     }
 
     /**

@@ -34,7 +34,7 @@ import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
 import store.common.IndexEntry;
-import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 
 abstract class AbstractCommand implements Command {
 
@@ -205,9 +205,9 @@ abstract class AbstractCommand implements Command {
 
     private static List<String> completeRepository(Session session, String param) {
         Collection<String> repositories = new TreeSet<>();
-        for (RepositoryDef def : session.getClient().listRepositoryDefs()) {
-            repositories.add(def.getName());
-            repositories.add(def.getGuid().asHexadecimalString());
+        for (RepositoryInfo info : session.getClient().listRepositoryInfos()) {
+            repositories.add(info.getDef().getName());
+            repositories.add(info.getDef().getGuid().asHexadecimalString());
         }
         return filterStartWith(repositories, param);
     }

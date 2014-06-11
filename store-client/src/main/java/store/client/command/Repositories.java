@@ -4,7 +4,7 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 
 class Repositories extends AbstractCommand {
 
@@ -19,8 +19,8 @@ class Repositories extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (RepositoryDef def : session.getClient().listRepositoryDefs()) {
-            display.print(def);
+        for (RepositoryInfo info : session.getClient().listRepositoryInfos()) {
+            display.print(info);
         }
     }
 }

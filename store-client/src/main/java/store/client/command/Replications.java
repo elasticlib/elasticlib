@@ -4,7 +4,7 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.ReplicationDef;
+import store.common.ReplicationInfo;
 
 class Replications extends AbstractCommand {
 
@@ -19,8 +19,8 @@ class Replications extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (ReplicationDef def : session.getClient().listReplicationDefs()) {
-            display.print(def);
+        for (ReplicationInfo info : session.getClient().listReplicationInfos()) {
+            display.print(info);
         }
     }
 }

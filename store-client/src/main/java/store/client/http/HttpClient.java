@@ -50,8 +50,8 @@ import static store.common.IoUtil.copy;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
 import store.common.Operation;
-import store.common.ReplicationDef;
-import store.common.RepositoryDef;
+import store.common.ReplicationInfo;
+import store.common.RepositoryInfo;
 import static store.common.SinkOutputStream.sink;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
@@ -281,12 +281,12 @@ public class HttpClient implements Closeable {
      *
      * @return A list of repository definitions.
      */
-    public List<RepositoryDef> listRepositoryDefs() {
+    public List<RepositoryInfo> listRepositoryInfos() {
         Response response = resource.path(REPOSITORIES)
                 .request()
                 .get();
 
-        return readAll(response, RepositoryDef.class);
+        return readAll(response, RepositoryInfo.class);
     }
 
     /**
@@ -294,12 +294,12 @@ public class HttpClient implements Closeable {
      *
      * @return A list of replication definitions.
      */
-    public List<ReplicationDef> listReplicationDefs() {
+    public List<ReplicationInfo> listReplicationInfos() {
         Response response = resource.path(REPLICATIONS)
                 .request()
                 .get();
 
-        return readAll(response, ReplicationDef.class);
+        return readAll(response, ReplicationInfo.class);
     }
 
     /**

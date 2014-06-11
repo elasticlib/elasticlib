@@ -137,10 +137,7 @@ public class ReplicationsResource {
     }
 
     /**
-     * List existing replications.
-     * <p>
-     * Output:<br>
-     * - Array of replications.
+     * List info about existing replications.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -150,7 +147,7 @@ public class ReplicationsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
-        return writeAll(repositoriesService.listReplicationDefs());
+        return writeAll(repositoriesService.listReplicationInfos());
     }
 
     private static BadRequestException newInvalidJsonException() {

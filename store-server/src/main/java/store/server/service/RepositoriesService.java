@@ -1,11 +1,16 @@
 package store.server.service;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +18,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.AgentInfo;
 import store.common.ReplicationDef;
+import store.common.ReplicationInfo;
 import store.common.RepositoryDef;
+import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
 import store.server.async.AsyncService;
@@ -416,18 +424,65 @@ public class RepositoriesService {
     }
 
     /**
-     * Provides a snapshot of all currently defined repositories.
+     * Provides info about of all currently defined replications.
      *
-     * @return A list of repository definitions.
+     * @return A list of replication info.
      */
-    public List<RepositoryDef> listRepositoryDefs() {
-        LOG.info("Returning repository definitions");
+    public List<ReplicationInfo> listReplicationInfos() {
+        LOG.info("Returning replication infos");
         lock.readLock().lock();
         try {
-            return storageManager.inTransaction(new Query<List<RepositoryDef>>() {
+            return storageManager.inTransaction(new Query<List<ReplicationInfo>>() {
                 @Override
-                public List<RepositoryDef> apply() {
-                    return storageService.listRepositoryDefs();
+                public List<ReplicationInfo> apply() {
+                    List<ReplicationInfo> list = new ArrayList<>();
+                    Map<Guid, RepositoryDef> defs = repositoryDefs();
+                    for (ReplicationDef replicationDef : storageService.listReplicationDefs()) {
+                        Guid srcId = replicationDef.getSource();
+                        Guid destId = replicationDef.getDestination();
+                        Optional<AgentInfo> agentInfo = replicationService.getInfo(srcId, destId);
+                        if (!agentInfo.isPresent()) {
+                            list.add(new ReplicationInfo(defs.get(srcId), defs.get(destId)));
+                        } else {
+                            list.add(new ReplicationInfo(defs.get(srcId), defs.get(destId), agentInfo.get()));
+                        }
+                    }
+                    return list;
+                }
+            });
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private Map<Guid, RepositoryDef> repositoryDefs() {
+        return Maps.uniqueIndex(storageService.listRepositoryDefs(), new Function<RepositoryDef, Guid>() {
+            @Override
+            public Guid apply(RepositoryDef def) {
+                return def.getGuid();
+            }
+        });
+    }
+
+    /**
+     * Provides info about all currently defined repositories.
+     *
+     * @return A list of repository info.
+     */
+    public List<RepositoryInfo> listRepositoryInfos() {
+        LOG.info("Returning repository infos");
+        lock.readLock().lock();
+        try {
+            return storageManager.inTransaction(new Query<List<RepositoryInfo>>() {
+                @Override
+                public List<RepositoryInfo> apply() {
+                    return Lists.transform(storageService.listRepositoryDefs(),
+                                           new Function<RepositoryDef, RepositoryInfo>() {
+                        @Override
+                        public RepositoryInfo apply(RepositoryDef def) {
+                            return repositoryInfoOf(def);
+                        }
+                    });
                 }
             });
         } finally {
@@ -436,45 +491,31 @@ public class RepositoriesService {
     }
 
     /**
-     * Provides a snapshot of all currently defined replications.
-     *
-     * @return A list of replication definitions.
-     */
-    public List<ReplicationDef> listReplicationDefs() {
-        LOG.info("Returning replication definitions");
-        lock.readLock().lock();
-        try {
-            return storageManager.inTransaction(new Query<List<ReplicationDef>>() {
-                @Override
-                public List<ReplicationDef> apply() {
-                    return storageService.listReplicationDefs();
-                }
-            });
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    /**
-     * Provides the definition of an existing repository.
+     * Provides info about an existing repository.
      *
      * @param key Repository name or encoded GUID.
-     * @return Corresponding repository definition.
+     * @return Corresponding repository info.
      */
-    public RepositoryDef getRepositoryDef(final String key) {
-        LOG.info("Returning repository definition of {}", key);
+    public RepositoryInfo getRepositoryInfo(final String key) {
+        LOG.info("Returning repository info of {}", key);
         lock.readLock().lock();
         try {
-            return storageManager.inTransaction(new Query<RepositoryDef>() {
+            return storageManager.inTransaction(new Query<RepositoryInfo>() {
                 @Override
-                public RepositoryDef apply() {
-                    return storageService.getRepositoryDef(key);
+                public RepositoryInfo apply() {
+                    return repositoryInfoOf(storageService.getRepositoryDef(key));
                 }
             });
         } finally {
             lock.readLock().unlock();
         }
+    }
 
+    private RepositoryInfo repositoryInfoOf(RepositoryDef def) {
+        if (!repositories.containsKey(def.getGuid())) {
+            return new RepositoryInfo(def);
+        }
+        return repositories.get(def.getGuid()).getInfo();
     }
 
     /**

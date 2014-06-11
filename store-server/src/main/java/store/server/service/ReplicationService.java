@@ -1,5 +1,6 @@
 package store.server.service;
 
+import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import store.common.AgentInfo;
 import store.common.hash.Guid;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
@@ -167,5 +169,19 @@ class ReplicationService {
         for (ReplicationAgent agent : agents.get(guid).values()) {
             agent.signal();
         }
+    }
+
+    /**
+     * Provides agent info of the replication from source to destination, if such a replication exists and is started.
+     *
+     * @param source Source repository GUID.
+     * @param destination Destination repository GUID.
+     * @return Corresponding agent info, if this replication is started.
+     */
+    public synchronized Optional<AgentInfo> getInfo(Guid source, Guid destination) {
+        if (!agents.containsKey(source) || !agents.get(source).containsKey(destination)) {
+            return Optional.absent();
+        }
+        return Optional.of(agents.get(source).get(destination).info());
     }
 }

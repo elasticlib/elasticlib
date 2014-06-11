@@ -1,6 +1,7 @@
 package store.server.service;
 
 import com.google.common.collect.ImmutableMap;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,7 @@ import store.common.Event;
 import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import store.common.Operation;
-import store.common.ReplicationDef;
+import store.common.ReplicationInfo;
 import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
 import store.common.RepositoryStats;
@@ -102,10 +103,10 @@ public class RepositoryTest {
         repositoriesService.createRepository(alphaPath);
         repositoriesService.createRepository(betaPath);
 
-        List<RepositoryDef> defList = repositoriesService.listRepositoryDefs();
-        assertThat(defList).hasSize(2);
-        RepositoryDef alphaDef = defList.get(0);
-        RepositoryDef betaDef = defList.get(1);
+        List<RepositoryInfo> infos = repositoriesService.listRepositoryInfos();
+        assertThat(infos).hasSize(2);
+        RepositoryDef alphaDef = infos.get(0).getDef();
+        RepositoryDef betaDef = infos.get(1).getDef();
 
         check(alphaDef, ALPHA, alphaPath);
         check(betaDef, BETA, betaPath);
@@ -198,14 +199,16 @@ public class RepositoryTest {
     public void createReplicationTest() {
         repositoriesService.createReplication(ALPHA, BETA);
 
-        ReplicationDef expected = new ReplicationDef(defs.get(ALPHA).getGuid(),
-                                                     defs.get(BETA).getGuid());
-        assertThat(repositoriesService.listReplicationDefs()).containsExactly(expected);
+        ReplicationInfo info = getOnlyElement(repositoriesService.listReplicationInfos());
+        assertThat(info.getSourceDef()).isEqualTo(defs.get(ALPHA));
+        assertThat(info.getDestinationdef()).isEqualTo(defs.get(BETA));
+        assertThat(info.isStarted()).isTrue();
 
         async(new Runnable() {
             @Override
             public void run() {
                 assertHas(repository(BETA), LOREM_IPSUM);
+                assertDone(getOnlyElement(repositoriesService.listReplicationInfos()).getAgentInfo());
             }
         });
     }

@@ -6,7 +6,7 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
-public class Unset extends AbstractCommand {
+class Unset extends AbstractCommand {
 
     Unset() {
         super(Category.CONFIG, Type.KEY);

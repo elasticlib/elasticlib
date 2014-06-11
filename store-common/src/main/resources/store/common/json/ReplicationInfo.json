@@ -1,0 +1,32 @@
+{
+    "title": "replicationInfo",
+    "type": "object",
+    "properties": {
+        "source": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "guid": {"type": "guid"},
+                "path": {"type": "string"}
+            }
+        },
+        "destination": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "guid": {"type": "guid"},
+                "path": {"type": "string"}
+            }
+        },
+        "started": {"type": "boolean"},
+        "agent": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+                "curSeq": {"type": "integer"},
+                "maxSeq": {"type": "integer"},
+                "state": {"type": "string"}
+            }
+        }
+    }
+}

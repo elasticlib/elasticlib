@@ -49,6 +49,10 @@ public final class TestData {
      * Some RepositoryInfo instances.
      */
     public static final List<RepositoryInfo> REPOSITORY_INFOS = new ArrayList<>();
+    /**
+     * Some ReplicationInfo instances.
+     */
+    public static final List<ReplicationInfo> REPLICATION_INFOS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -131,6 +135,13 @@ public final class TestData {
                                                 new AgentInfo(17, 17, AgentState.WAITING)));
 
         REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(1)));
+
+        REPLICATION_INFOS.add(new ReplicationInfo(REPOSITORY_DEFS.get(0),
+                                                  REPOSITORY_DEFS.get(1),
+                                                  new AgentInfo(15, 17, AgentState.RUNNING)));
+
+        REPLICATION_INFOS.add(new ReplicationInfo(REPOSITORY_DEFS.get(0),
+                                                  REPOSITORY_DEFS.get(1)));
     }
 
     private TestData() {

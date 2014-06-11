@@ -8,6 +8,7 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
 import store.common.ReplicationDef;
+import store.common.ReplicationInfo;
 import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
 import static store.common.TestData.*;
@@ -87,6 +88,16 @@ public class JsonReadingTest {
     public void readRepositoryInfoTest() {
         for (int i = 0; i < REPOSITORY_INFOS_JSON.size(); i++) {
             assertThat(read(REPOSITORY_INFOS_JSON.get(i), RepositoryInfo.class)).isEqualTo(REPOSITORY_INFOS.get(i));
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readReplicationInfoTest() {
+        for (int i = 0; i < REPLICATION_INFOS_JSON.size(); i++) {
+            assertThat(read(REPLICATION_INFOS_JSON.get(i), ReplicationInfo.class)).isEqualTo(REPLICATION_INFOS.get(i));
         }
     }
 }

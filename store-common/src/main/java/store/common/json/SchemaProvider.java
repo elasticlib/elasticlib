@@ -17,6 +17,7 @@ import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
 import store.common.ReplicationDef;
+import store.common.ReplicationInfo;
 import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
 import store.common.RepositoryStats;
@@ -36,7 +37,8 @@ final class SchemaProvider {
                  ReplicationDef.class,
                  AgentInfo.class,
                  RepositoryStats.class,
-                 RepositoryInfo.class);
+                 RepositoryInfo.class,
+                 ReplicationInfo.class);
     }
 
     private SchemaProvider() {

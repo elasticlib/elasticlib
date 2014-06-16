@@ -335,13 +335,22 @@ public class StorageManager {
 
     /**
      * Opens a cursor on supplied database.
+     * <p>
+     * Returned cursor is protected by the current transaction and uses committed read isolation. This means that locks
+     * held by this cursor on a given record are released as soon as the cursor moves or is closed. By default, JE
+     * cursors use repeatable read isolation and hold locks until their encompassing transaction is closed, even if they
+     * are themselve closed !
+     * <p>
+     * Using committed read isolation is perfectly fine as long as the cursor moves in a single direction. Furthermore,
+     * as soon as the cursor is done with a given record, encompassing transaction can modify this record without
+     * dead-locking.
      *
      * @param database a database.
      * @return A new cursor.
      */
     public synchronized Cursor openCursor(Database database) {
         checkOpen();
-        Cursor cursor = database.openCursor(currentTransaction(), CursorConfig.DEFAULT);
+        Cursor cursor = database.openCursor(currentTransaction(), CursorConfig.READ_COMMITTED);
         cursors.add(cursor);
         return cursor;
     }

@@ -318,11 +318,39 @@ public class RepositoryTest {
     /**
      * Test.
      */
-    @Test(dependsOnGroups = DELETE, expectedExceptions = RepositoryClosedException.class)
+    @Test(dependsOnGroups = DELETE)
     public void closeTest() {
-        Repository alpha = repository(ALPHA);
+        final Repository alpha = repository(ALPHA);
         repositoriesService.closeRepository(ALPHA);
-        alpha.getContentInfoTree(UNKNOWN_HASH);
+        assertOpen(alpha, false);
+        assertReplicationStarted(false);
+
+        assertThrows(RepositoryClosedException.class, new Runnable() {
+            @Override
+            public void run() {
+                alpha.getContentInfoTree(UNKNOWN_HASH);
+            }
+        });
+    }
+
+    /**
+     * Test.
+     */
+    @Test(dependsOnMethods = "closeTest")
+    public void reopenTest() {
+        repositoriesService.openRepository(ALPHA);
+        Repository alpha = repository(ALPHA);
+        assertOpen(alpha, true);
+        assertReplicationStarted(true);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(dependsOnMethods = "reopenTest")
+    public void closeDestinationRepositoryTest() {
+        repositoriesService.closeRepository(BETA);
+        assertReplicationStarted(false);
     }
 
     private Repository repository(String name) {
@@ -335,6 +363,17 @@ public class RepositoryTest {
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getOperation()).isEqualTo(Operation.CREATE);
         assertThat(events.get(0).getContent()).isEqualTo(Content.getHash());
+    }
+
+    private void assertOpen(Repository repository, boolean expected) {
+        String key = repository.getDef().getGuid().asHexadecimalString();
+        assertThat(repositoriesService.getRepositoryInfo(key).isOpen()).isEqualTo(expected);
+        assertThat(repository.getInfo().isOpen()).isEqualTo(expected);
+    }
+
+    private void assertReplicationStarted(boolean expected) {
+        boolean actual = getOnlyElement(repositoriesService.listReplicationInfos()).isStarted();
+        assertThat(actual).isEqualTo(expected);
     }
 
     private void assertDeleted(Repository repository, Content Content) {
@@ -350,7 +389,21 @@ public class RepositoryTest {
         assertThat(info.getCurSeq()).isEqualTo(info.getMaxSeq());
     }
 
-    private void async(Runnable runnable) {
+    private static void assertThrows(Class<? extends Throwable> clazz, Runnable runnable) {
+        try {
+            runnable.run();
+
+        } catch (Throwable e) {
+            if (clazz.isAssignableFrom(e.getClass())) {
+                // Expected case.
+                return;
+            }
+            throw e;
+        }
+        throw new AssertionError("Expected an instance of " + clazz.getSimpleName() + " to be thrown");
+    }
+
+    private static void async(Runnable runnable) {
         int timeout = 60;
         int delay = 1;
         int time = 0;
@@ -379,7 +432,7 @@ public class RepositoryTest {
         }
     }
 
-    private void wait(int seconds) {
+    private static void wait(int seconds) {
         try {
             Thread.sleep(1000 * seconds);
 

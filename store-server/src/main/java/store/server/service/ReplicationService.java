@@ -151,7 +151,7 @@ class ReplicationService {
         Set<Guid> sources = new HashSet<>();
         for (Entry<Guid, Map<Guid, ReplicationAgent>> entry : agents.entrySet()) {
             if (entry.getValue().keySet().contains(destination)) {
-                sources.add(destination);
+                sources.add(entry.getKey());
             }
         }
         return sources;

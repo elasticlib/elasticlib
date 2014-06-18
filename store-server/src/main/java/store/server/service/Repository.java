@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.CommandResult;
@@ -27,6 +28,7 @@ import store.common.hash.Hash;
 import store.server.async.AsyncService;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.storage.Command;
@@ -55,6 +57,7 @@ public class Repository {
     private final Index index;
     private final IndexingAgent indexingAgent;
     private final StatsAgent statsAgent;
+    private AtomicBoolean closed = new AtomicBoolean(false);
 
     private Repository(RepositoryDef def,
                        Config config,
@@ -157,6 +160,9 @@ public class Repository {
      */
     public RepositoryInfo getInfo() {
         log("Returning repository info");
+        if (closed.get()) {
+            return new RepositoryInfo(def);
+        }
         return new RepositoryInfo(def, statsManager.stats(), indexingAgent.info(), statsAgent.info());
     }
 
@@ -165,6 +171,9 @@ public class Repository {
      * will fail.
      */
     void close() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
         indexingAgent.stop();
         statsAgent.stop();
         index.close();
@@ -180,6 +189,7 @@ public class Repository {
      * @return Actual operation result.
      */
     public CommandResult addContentInfo(final ContentInfo contentInfo) {
+        ensureOpen();
         log("Adding content info to {}, with head {}", contentInfo.getContent(), contentInfo.getParents());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
@@ -201,6 +211,7 @@ public class Repository {
      * @return Actual operation result.
      */
     public CommandResult mergeContentInfoTree(final ContentInfoTree contentInfoTree) {
+        ensureOpen();
         log("Merging content info tree of {}", contentInfoTree.getContent());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
@@ -223,6 +234,7 @@ public class Repository {
      * @return Operation result.
      */
     public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
+        ensureOpen();
         log("Adding content {}", hash);
         CommandResult result = storageManager.inTransaction(transactionId, new Command() {
             @Override
@@ -250,6 +262,7 @@ public class Repository {
      * @return Actual operation result.
      */
     public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
+        ensureOpen();
         log("Deleting content {}, with head {}", hash, head);
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
@@ -293,6 +306,7 @@ public class Repository {
      * @return Corresponding info tree.
      */
     public ContentInfoTree getContentInfoTree(final Hash hash) {
+        ensureOpen();
         log("Returning content info tree of {}", hash);
         return storageManager.inTransaction(new Query<ContentInfoTree>() {
             @Override
@@ -313,6 +327,7 @@ public class Repository {
      * @return Corresponding info head revisions.
      */
     public List<ContentInfo> getContentInfoHead(final Hash hash) {
+        ensureOpen();
         log("Returning content info head of {}", hash);
         ContentInfoTree tree = getContentInfoTree(hash);
         return tree.get(tree.getHead());
@@ -326,6 +341,7 @@ public class Repository {
      * @return Corresponding revisions.
      */
     public List<ContentInfo> getContentInfoRevisions(Hash hash, Collection<Hash> revs) {
+        ensureOpen();
         log("Returning content info revs of {} [{}]", hash, on(", ").join(revs));
         ContentInfoTree tree = getContentInfoTree(hash);
         return tree.get(revs);
@@ -338,6 +354,7 @@ public class Repository {
      * @return An input stream on this content.
      */
     public InputStream getContent(final Hash hash) {
+        ensureOpen();
         log("Returning content {}", hash);
         return storageManager.inTransaction(new Query<InputStream>() {
             @Override
@@ -355,6 +372,7 @@ public class Repository {
      * @return An input stream on this content, or nothing if supplied head has been superseded.
      */
     public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
+        ensureOpen();
         log("Returning content {} with head {}", hash, head);
         return storageManager.inTransaction(new Query<Optional<InputStream>>() {
             @Override
@@ -380,6 +398,7 @@ public class Repository {
      * @return A list of events.
      */
     public List<Event> history(final boolean chronological, final long first, final int number) {
+        ensureOpen();
         log("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
         return storageManager.inTransaction(new Query<List<Event>>() {
             @Override
@@ -398,7 +417,14 @@ public class Repository {
      * @return A list of content hashes.
      */
     public List<IndexEntry> find(String query, int first, int number) {
+        ensureOpen();
         return index.find(query, first, number);
+    }
+
+    private void ensureOpen() {
+        if (closed.get()) {
+            throw new RepositoryClosedException();
+        }
     }
 
     private void log(String format, Object... args) {

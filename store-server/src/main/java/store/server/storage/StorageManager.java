@@ -48,7 +48,17 @@ public class StorageManager {
     private static final String JE = "je";
     private static final String SEQUENCE = "sequence";
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
-    private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
+    /**
+     * We maintains a stack of contextes per threads. This allows to nest transactions, even against differents storage
+     * managers, without conflicting.
+     */
+    private static final ThreadLocal<Deque<TransactionContext>> CURRENT_TX_CONTEXT =
+            new ThreadLocal<Deque<TransactionContext>>() {
+        @Override
+        protected Deque<TransactionContext> initialValue() {
+            return new ArrayDeque<>();
+        }
+    };
     private final String envName;
     private final Config config;
     private final AsyncService asyncService;
@@ -56,8 +66,7 @@ public class StorageManager {
     private final Deque<Database> databases = new ArrayDeque<>();
     private final Deque<Sequence> sequences = new ArrayDeque<>();
     private final TransactionCache cache;
-    private final Deque<Transaction> transactions = new ArrayDeque<>();
-    private final Deque<Cursor> cursors = new ArrayDeque<>();
+    private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
     private final Deque<Task> tasks = new ArrayDeque<>();
     private boolean closed;
 
@@ -107,13 +116,10 @@ public class StorageManager {
         while (!tasks.isEmpty()) {
             tasks.remove().cancel();
         }
-        while (!cursors.isEmpty()) {
-            safeClose(cursors.remove());
-        }
-        while (!transactions.isEmpty()) {
-            safeAbort(transactions.remove());
-        }
         safeClose(cache);
+        while (!txContexts.isEmpty()) {
+            safeAbort(txContexts.remove());
+        }
         while (!sequences.isEmpty()) {
             safeClose(sequences.remove());
         }
@@ -123,7 +129,7 @@ public class StorageManager {
         safeClose(environment);
     }
 
-    private static void safeAbort(Transaction transaction) {
+    private static void safeAbort(TransactionContext transaction) {
         try {
             transaction.abort();
 
@@ -274,12 +280,12 @@ public class StorageManager {
         });
     }
 
-    private <T> T inTransaction(Transaction transaction, Query<T> query) {
+    private <T> T inTransaction(TransactionContext ctx, Query<T> query) {
         try {
             T result = query.apply();
             synchronized (this) {
-                if (!closed && !cache.isSuspended(transaction)) {
-                    transaction.commit();
+                if (!closed) {
+                    ctx.commitIfRunning();
                 }
             }
             return result;
@@ -292,27 +298,29 @@ public class StorageManager {
             }
         } finally {
             synchronized (this) {
-                CURRENT_TRANSACTION.remove();
-                if (!closed && !cache.isSuspended(transaction)) {
-                    transaction.abort();
+                if (!closed) {
+                    ctx.abortIfRunning();
+                    txContexts.remove(ctx);
+                    CURRENT_TX_CONTEXT.get().pop();
                 }
             }
         }
     }
 
-    private synchronized Transaction beginTransaction() {
+    private synchronized TransactionContext beginTransaction() {
         checkOpen();
-        Transaction transaction = environment.beginTransaction(null, TransactionConfig.DEFAULT);
-        transactions.add(transaction);
-        CURRENT_TRANSACTION.set(transaction);
-        return transaction;
+        TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
+        txContexts.add(ctx);
+        CURRENT_TX_CONTEXT.get().push(ctx);
+        return ctx;
     }
 
-    private synchronized Transaction resumeTransaction(long id) {
+    private synchronized TransactionContext resumeTransaction(long id) {
         checkOpen();
-        Transaction transaction = cache.resume(id);
-        CURRENT_TRANSACTION.set(transaction);
-        return transaction;
+        TransactionContext ctx = cache.resume(id);
+        txContexts.add(ctx);
+        CURRENT_TX_CONTEXT.get().push(ctx);
+        return ctx;
     }
 
     /**
@@ -320,7 +328,8 @@ public class StorageManager {
      */
     public synchronized void suspendCurrentTransaction() {
         checkOpen();
-        cache.suspend(CURRENT_TRANSACTION.get());
+        // Does not pop the context here, it will be removed when leaving the current transaction block.
+        cache.suspend(CURRENT_TX_CONTEXT.get().peek());
     }
 
     /**
@@ -330,7 +339,7 @@ public class StorageManager {
      * @return A transaction.
      */
     public static Transaction currentTransaction() {
-        return CURRENT_TRANSACTION.get();
+        return CURRENT_TX_CONTEXT.get().peek().getTransaction();
     }
 
     /**
@@ -350,8 +359,9 @@ public class StorageManager {
      */
     public synchronized Cursor openCursor(Database database) {
         checkOpen();
-        Cursor cursor = database.openCursor(currentTransaction(), CursorConfig.READ_COMMITTED);
-        cursors.add(cursor);
+        TransactionContext ctx = CURRENT_TX_CONTEXT.get().peek();
+        Cursor cursor = database.openCursor(ctx.getTransaction(), CursorConfig.READ_COMMITTED);
+        ctx.add(cursor);
         return cursor;
     }
 

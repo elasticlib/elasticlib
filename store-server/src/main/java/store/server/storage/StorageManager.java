@@ -178,7 +178,7 @@ public class StorageManager {
     }
 
     private Database openDatabase(String name, DatabaseConfig config) {
-        checkOpen();
+        ensureOpen();
         Database database = environment.openDatabase(null, name, config);
         databases.add(database);
         return database;
@@ -191,7 +191,7 @@ public class StorageManager {
      * @return Corresponding sequence handle.
      */
     public synchronized Sequence openSequence(String name) {
-        checkOpen();
+        ensureOpen();
         SequenceConfig seqConfig = new SequenceConfig()
                 .setAllowCreate(true)
                 .setInitialValue(1);
@@ -285,7 +285,7 @@ public class StorageManager {
         } catch (IllegalStateException e) {
             synchronized (this) {
                 // Hide JE exception that may be thrown if transaction is aborted because this manager is closed.
-                checkOpen();
+                ensureOpen();
                 throw e;
             }
         } finally {
@@ -300,7 +300,7 @@ public class StorageManager {
     }
 
     private synchronized TransactionContext beginTransaction() {
-        checkOpen();
+        ensureOpen();
         TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
         txContexts.add(ctx);
         currentTxContext.set(ctx);
@@ -308,7 +308,7 @@ public class StorageManager {
     }
 
     private synchronized TransactionContext resumeTransaction(long id) {
-        checkOpen();
+        ensureOpen();
         TransactionContext ctx = cache.resume(id);
         txContexts.add(ctx);
         currentTxContext.set(ctx);
@@ -323,7 +323,7 @@ public class StorageManager {
      * in a new transactional block if he wants to performs other operations and to commit all pending changes.
      */
     public synchronized void suspendCurrentTransaction() {
-        checkOpen();
+        ensureOpen();
         cache.suspend(currentTxContext.get());
 
         // This is redundant, because current context is removed when leaving the current transaction block.
@@ -357,14 +357,14 @@ public class StorageManager {
      * @return A new cursor.
      */
     public synchronized Cursor openCursor(Database database) {
-        checkOpen();
+        ensureOpen();
         TransactionContext ctx = currentTxContext.get();
         Cursor cursor = database.openCursor(ctx.getTransaction(), CursorConfig.READ_COMMITTED);
         ctx.add(cursor);
         return cursor;
     }
 
-    private void checkOpen() {
+    private void ensureOpen() {
         if (closed) {
             throw new RepositoryClosedException();
         }

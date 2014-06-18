@@ -19,7 +19,6 @@ import store.server.exception.UnknownRepositoryException;
 import static store.server.storage.DatabaseEntries.asMappable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
-import static store.server.storage.StorageManager.currentTransaction;
 
 /**
  * Provides a persistant storage for repositories and replications definitions.
@@ -49,7 +48,7 @@ class StorageService {
      * @param def RepositoryDef to create.
      */
     public void createRepositoryDef(RepositoryDef def) {
-        OperationStatus status = repositoryDefs.putNoOverwrite(currentTransaction(),
+        OperationStatus status = repositoryDefs.putNoOverwrite(storageManager.currentTransaction(),
                                                                entry(def.getGuid()),
                                                                entry(def));
         if (status == OperationStatus.KEYEXIST) {
@@ -63,7 +62,7 @@ class StorageService {
      * @param def RepositoryDef to update.
      */
     public void updateRepositoryDef(RepositoryDef def) {
-        repositoryDefs.put(currentTransaction(), entry(def.getGuid()), entry(def));
+        repositoryDefs.put(storageManager.currentTransaction(), entry(def.getGuid()), entry(def));
     }
 
     /**
@@ -73,7 +72,7 @@ class StorageService {
      * @return If corresponding RepositoryDef has been found and deleted.
      */
     public boolean deleteRepositoryDef(Guid guid) {
-        return repositoryDefs.delete(currentTransaction(), entry(guid)) == OperationStatus.SUCCESS;
+        return repositoryDefs.delete(storageManager.currentTransaction(), entry(guid)) == OperationStatus.SUCCESS;
     }
 
     /**
@@ -86,7 +85,7 @@ class StorageService {
     public RepositoryDef getRepositoryDef(String key) {
         if (Guid.isValid(key)) {
             DatabaseEntry entry = new DatabaseEntry();
-            OperationStatus status = repositoryDefs.get(currentTransaction(),
+            OperationStatus status = repositoryDefs.get(storageManager.currentTransaction(),
                                                         entry(new Guid(key)),
                                                         entry,
                                                         LockMode.DEFAULT);
@@ -132,7 +131,7 @@ class StorageService {
      * @return If it has actually been created.
      */
     public boolean createReplicationDef(ReplicationDef def) {
-        return replicationDefs.putNoOverwrite(currentTransaction(),
+        return replicationDefs.putNoOverwrite(storageManager.currentTransaction(),
                                               entry(def.getSource(), def.getDestination()),
                                               entry(def)) == OperationStatus.SUCCESS;
     }
@@ -145,7 +144,8 @@ class StorageService {
      * @return If corresponding ReplicationDef has been found and deleted.
      */
     public boolean deleteReplicationDef(Guid source, Guid destination) {
-        return replicationDefs.delete(currentTransaction(), entry(source, destination)) == OperationStatus.SUCCESS;
+        OperationStatus status = replicationDefs.delete(storageManager.currentTransaction(), entry(source, destination));
+        return status == OperationStatus.SUCCESS;
     }
 
     /**

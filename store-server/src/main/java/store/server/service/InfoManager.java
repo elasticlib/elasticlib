@@ -17,7 +17,6 @@ import store.server.exception.UnknownRevisionException;
 import static store.server.storage.DatabaseEntries.asMappable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
-import static store.server.storage.StorageManager.currentTransaction;
 
 /**
  * Stores and retrieves content info inside a repository.
@@ -25,9 +24,11 @@ import static store.server.storage.StorageManager.currentTransaction;
 class InfoManager {
 
     private static final String INFO = "info";
+    private final StorageManager storageManager;
     private final Database database;
 
     public InfoManager(StorageManager storageManager) {
+        this.storageManager = storageManager;
         this.database = storageManager.openDatabase(INFO);
     }
 
@@ -96,7 +97,7 @@ class InfoManager {
 
     private Optional<ContentInfoTree> load(Hash hash, LockMode lockMode) {
         DatabaseEntry data = new DatabaseEntry();
-        OperationStatus status = database.get(currentTransaction(),
+        OperationStatus status = database.get(storageManager.currentTransaction(),
                                               entry(hash),
                                               data,
                                               lockMode);
@@ -111,11 +112,11 @@ class InfoManager {
         if (!tree.getUnknownParents().isEmpty()) {
             throw new UnknownRevisionException();
         }
-        database.put(currentTransaction(), entry(tree.getContent()), entry(tree));
+        database.put(storageManager.currentTransaction(), entry(tree.getContent()), entry(tree));
     }
 
-    private static CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
-        long id = currentTransaction().getId();
+    private CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
+        long id = storageManager.currentTransaction().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
             return CommandResult.noOp(id, after.getContent(), after.getHead());

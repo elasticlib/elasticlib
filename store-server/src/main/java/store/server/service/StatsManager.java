@@ -11,7 +11,6 @@ import static store.server.storage.DatabaseEntries.asMappable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.Procedure;
 import store.server.storage.StorageManager;
-import static store.server.storage.StorageManager.currentTransaction;
 
 /**
  * Manages repository stats
@@ -43,7 +42,7 @@ class StatsManager {
     private RepositoryStats loadPersistedStats() {
         DatabaseEntry key = entry(STATS);
         DatabaseEntry data = new DatabaseEntry();
-        if (statsDb.get(currentTransaction(), key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+        if (statsDb.get(storageManager.currentTransaction(), key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
             return asMappable(data, RepositoryStats.class);
         }
         return new RepositoryStats(0, 0, 0, Collections.<String, Long>emptyMap());
@@ -68,7 +67,7 @@ class StatsManager {
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                statsDb.put(currentTransaction(), entry(stats), entry(stats));
+                statsDb.put(storageManager.currentTransaction(), entry(stats), entry(stats));
             }
         });
         latestSnapshot.set(stats);

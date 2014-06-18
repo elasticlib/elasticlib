@@ -48,26 +48,16 @@ public class StorageManager {
     private static final String JE = "je";
     private static final String SEQUENCE = "sequence";
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
-    /**
-     * We maintains a stack of contextes per threads. This allows to nest transactions, even against differents storage
-     * managers, without conflicting.
-     */
-    private static final ThreadLocal<Deque<TransactionContext>> CURRENT_TX_CONTEXT =
-            new ThreadLocal<Deque<TransactionContext>>() {
-        @Override
-        protected Deque<TransactionContext> initialValue() {
-            return new ArrayDeque<>();
-        }
-    };
     private final String envName;
     private final Config config;
     private final AsyncService asyncService;
     private final Environment environment;
+    private final TransactionCache cache;
+    private final Deque<Task> tasks = new ArrayDeque<>();
     private final Deque<Database> databases = new ArrayDeque<>();
     private final Deque<Sequence> sequences = new ArrayDeque<>();
-    private final TransactionCache cache;
     private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
-    private final Deque<Task> tasks = new ArrayDeque<>();
+    private final ThreadLocal<TransactionContext> currentTxContext = new ThreadLocal<>();
     private boolean closed;
 
     /**
@@ -161,7 +151,9 @@ public class StorageManager {
     }
 
     /**
-     * Opens a database with supplied name. If this database does not exist, it is created.
+     * Opens a database with supplied name. If this database does not exist, it is created. Returned database operates
+     * in deffered-write mode. It does not support transactions. All changes performed to this database are periodically
+     * written behind the scenes.
      *
      * @param name Database name.
      * @return Corresponding database handle.
@@ -255,7 +247,7 @@ public class StorageManager {
     }
 
     /**
-     * Executes supplied query in a transaction. Transaction is guaranteed to have been committed when query returns.
+     * Executes supplied query in a transaction.
      *
      * @param <T> Query return type.
      * @param query Query to execute.
@@ -301,7 +293,7 @@ public class StorageManager {
                 if (!closed) {
                     ctx.abortIfRunning();
                     txContexts.remove(ctx);
-                    CURRENT_TX_CONTEXT.get().pop();
+                    currentTxContext.remove();
                 }
             }
         }
@@ -311,7 +303,7 @@ public class StorageManager {
         checkOpen();
         TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
         txContexts.add(ctx);
-        CURRENT_TX_CONTEXT.get().push(ctx);
+        currentTxContext.set(ctx);
         return ctx;
     }
 
@@ -319,17 +311,24 @@ public class StorageManager {
         checkOpen();
         TransactionContext ctx = cache.resume(id);
         txContexts.add(ctx);
-        CURRENT_TX_CONTEXT.get().push(ctx);
+        currentTxContext.set(ctx);
         return ctx;
     }
 
     /**
-     * Suspend transaction attached to current thread. Fails if no pending transaction is attached to current thread.
+     * Suspends the transaction attached to current thread. Fails if no pending transaction is attached to current
+     * thread.
+     * <p>
+     * Note that any further attempt to get current transaction will fail. Caller is expected to resume this transaction
+     * in a new transactional block if he wants to performs other operations and to commit all pending changes.
      */
     public synchronized void suspendCurrentTransaction() {
         checkOpen();
-        // Does not pop the context here, it will be removed when leaving the current transaction block.
-        cache.suspend(CURRENT_TX_CONTEXT.get().peek());
+        cache.suspend(currentTxContext.get());
+
+        // This is redundant, because current context is removed when leaving the current transaction block.
+        // However, it ensures that current transaction is no longer available. And ThreadLocal.remove() is indempotent.
+        currentTxContext.remove();
     }
 
     /**
@@ -338,19 +337,19 @@ public class StorageManager {
      *
      * @return A transaction.
      */
-    public static Transaction currentTransaction() {
-        return CURRENT_TX_CONTEXT.get().peek().getTransaction();
+    public Transaction currentTransaction() {
+        return currentTxContext.get().getTransaction();
     }
 
     /**
      * Opens a cursor on supplied database.
      * <p>
-     * Returned cursor is protected by the current transaction and uses committed read isolation. This means that locks
+     * Returned cursor is protected by the current transaction and uses committed-read isolation. This means that locks
      * held by this cursor on a given record are released as soon as the cursor moves or is closed. By default, JE
-     * cursors use repeatable read isolation and hold locks until their encompassing transaction is closed, even if they
+     * cursors use repeatable-read isolation and hold locks until their encompassing transaction is closed, even if they
      * are themselve closed !
      * <p>
-     * Using committed read isolation is perfectly fine as long as the cursor moves in a single direction. Furthermore,
+     * Using committed-read isolation is perfectly fine as long as the cursor moves in a single direction. Furthermore,
      * as soon as the cursor is done with a given record, encompassing transaction can modify this record without
      * dead-locking.
      *
@@ -359,7 +358,7 @@ public class StorageManager {
      */
     public synchronized Cursor openCursor(Database database) {
         checkOpen();
-        TransactionContext ctx = CURRENT_TX_CONTEXT.get().peek();
+        TransactionContext ctx = currentTxContext.get();
         Cursor cursor = database.openCursor(ctx.getTransaction(), CursorConfig.READ_COMMITTED);
         ctx.add(cursor);
         return cursor;

@@ -48,7 +48,7 @@ class HistoryManager {
                 .withOperation(operation)
                 .build();
 
-        database.put(StorageManager.currentTransaction(),
+        database.put(storageManager.currentTransaction(),
                      entry(seq),
                      new DatabaseEntry(new BsonWriter().put(event.toMap()).build()));
     }

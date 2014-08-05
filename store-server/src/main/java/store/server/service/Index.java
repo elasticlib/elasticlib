@@ -63,7 +63,7 @@ class Index {
     private static final String LENGTH = "length";
     private static final String REVISION = "revision";
     private static final String BODY = "body";
-    private static final Version LUCENE_VERSION = Version.LUCENE_48;
+    private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
     private final String name;
     private final Directory directory;

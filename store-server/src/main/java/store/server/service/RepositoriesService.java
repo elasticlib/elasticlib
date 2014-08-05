@@ -56,7 +56,7 @@ public class RepositoriesService {
      * @param home The repositories service home directory.
      * @param config Configuration holder.
      */
-    public RepositoriesService(Path home, final Config config) {
+    public RepositoriesService(Path home, Config config) {
         this.config = config;
         asyncService = new AsyncService(config);
         storageManager = newStorageManager(home.resolve(STORAGE), config, asyncService);

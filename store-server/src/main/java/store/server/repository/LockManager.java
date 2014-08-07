@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import java.util.HashMap;
 import java.util.HashSet;

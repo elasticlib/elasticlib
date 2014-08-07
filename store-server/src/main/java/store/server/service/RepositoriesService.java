@@ -31,6 +31,7 @@ import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
 import store.server.exception.WriteException;
+import store.server.repository.Repository;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;

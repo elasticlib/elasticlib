@@ -11,17 +11,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 import store.common.AgentInfo;
 import store.common.hash.Guid;
+import store.server.repository.Agent;
+import store.server.repository.Repository;
+import store.server.repository.Signalable;
 import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 
 /**
  * Manages replication agents between repositories.
  */
-class ReplicationService {
+class ReplicationService implements Signalable {
 
     private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
     private final Database curSeqsDb;
-    private final Map<Guid, Map<Guid, ReplicationAgent>> agents = new HashMap<>();
+    private final Map<Guid, Map<Guid, Agent>> agents = new HashMap<>();
 
     public ReplicationService(StorageManager storageManager) {
         curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
@@ -31,8 +34,8 @@ class ReplicationService {
      * Stops all replications.
      */
     public synchronized void close() {
-        for (Map<Guid, ReplicationAgent> map : agents.values()) {
-            for (ReplicationAgent agent : map.values()) {
+        for (Map<Guid, Agent> map : agents.values()) {
+            for (Agent agent : map.values()) {
                 agent.stop();
             }
         }
@@ -66,7 +69,7 @@ class ReplicationService {
             return;
         }
         if (!agents.containsKey(srcId)) {
-            agents.put(srcId, new HashMap<Guid, ReplicationAgent>());
+            agents.put(srcId, new HashMap<Guid, Agent>());
         }
         DatabaseEntry curSeqKey = entry(srcId, destId);
         if (resetCursor) {
@@ -88,7 +91,7 @@ class ReplicationService {
         if (!agents.containsKey(source)) {
             return;
         }
-        ReplicationAgent agent = agents.get(source).remove(destination);
+        Agent agent = agents.get(source).remove(destination);
         if (agent != null) {
             agent.stop();
         }
@@ -149,7 +152,7 @@ class ReplicationService {
 
     private Set<Guid> sources(Guid destination) {
         Set<Guid> sources = new HashSet<>();
-        for (Entry<Guid, Map<Guid, ReplicationAgent>> entry : agents.entrySet()) {
+        for (Entry<Guid, Map<Guid, Agent>> entry : agents.entrySet()) {
             if (entry.getValue().keySet().contains(destination)) {
                 sources.add(entry.getKey());
             }
@@ -162,11 +165,12 @@ class ReplicationService {
      *
      * @param guid A repository GUID.
      */
+    @Override
     public synchronized void signal(Guid guid) {
         if (!agents.containsKey(guid)) {
             return;
         }
-        for (ReplicationAgent agent : agents.get(guid).values()) {
+        for (Agent agent : agents.get(guid).values()) {
             agent.signal();
         }
     }

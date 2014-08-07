@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import com.google.common.base.Optional;
 import com.sleepycat.je.Database;

@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import com.google.common.base.Optional;
 import static com.google.common.collect.Iterables.getLast;
@@ -23,14 +23,15 @@ import static store.server.storage.DatabaseEntries.asLong;
 import static store.server.storage.DatabaseEntries.entry;
 
 /**
- * Performs asynchronous replication or indexing.
+ * Tracks a repository and performs a task for each event of his history.
  */
-abstract class Agent {
+public abstract class Agent {
 
     private static final int FETCH_SIZE = 20;
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
+    private final Repository repository;
     private final AgentThread agentThread;
     private boolean signaled;
     private boolean stopped;
@@ -39,12 +40,22 @@ abstract class Agent {
      * Constructor.
      *
      * @param name Agent name.
+     * @param repository Tracked repository.
      * @param curSeqsDb Database used to persist agent curSeq value.
-     * @param curSeqKey The key persisted agent curSeq value is associated to in curSeqs Database.
+     * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqs Database.
      */
-    protected Agent(String name, Database curSeqsDb, DatabaseEntry curSeqKey) {
+    protected Agent(String name, Repository repository, Database curSeqsDb, DatabaseEntry curSeqKey) {
+        this.repository = repository;
         agentThread = new AgentThread(name, curSeqsDb, curSeqKey);
     }
+
+    /**
+     * Callback called to process a given event in the tracked repository.
+     *
+     * @param event An event from tracked repository history.
+     * @return True if supplied event was succesfully processed, false otherwise.
+     */
+    protected abstract boolean process(Event event);
 
     /**
      * Start this agent.
@@ -54,10 +65,10 @@ abstract class Agent {
     }
 
     /**
-     * Stop this agent. Waits for underlying processing thread to terminates before returning. This allows any indexing
-     * agent to properly close its underlying writer on target index (and to complete any related merge task). In the
-     * case of a replication deletion, it also avoids to have agent trying to override the cursor database after this
-     * latter has been reset.
+     * Stop this agent. Waits for the underlying processing thread to terminates before returning. This allows any
+     * indexing agent to properly close its underlying writer on target index (and to complete any related merge task).
+     * In the case of a replication deletion, it also avoids to have agent trying to override the cursor database after
+     * this latter has been reset.
      */
     public final void stop() {
         lock.lock();
@@ -96,10 +107,6 @@ abstract class Agent {
     public final AgentInfo info() {
         return agentThread.info();
     }
-
-    protected abstract List<Event> history(boolean chronological, long first, int number);
-
-    protected abstract boolean process(Event event);
 
     private class AgentThread extends Thread {
 
@@ -174,11 +181,11 @@ abstract class Agent {
         }
 
         private void fetchEvents() {
-            List<Event> chunk = history(true, curSeq + 1, FETCH_SIZE);
+            List<Event> chunk = repository.history(true, curSeq + 1, FETCH_SIZE);
             events.addAll(chunk);
 
             if (chunk.size() == FETCH_SIZE) {
-                maxSeq = history(false, Long.MAX_VALUE, 1).get(0).getSeq();
+                maxSeq = repository.history(false, Long.MAX_VALUE, 1).get(0).getSeq();
 
             } else if (!chunk.isEmpty()) {
                 maxSeq = getLast(chunk).getSeq();

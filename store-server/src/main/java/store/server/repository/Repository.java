@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import static com.google.common.base.Joiner.on;
 import com.google.common.base.Optional;
@@ -48,7 +48,7 @@ public class Repository {
     private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final RepositoryDef def;
-    private final ReplicationService replicationService;
+    private final Signalable changesTracker;
     private final StorageManager storageManager;
     private final InfoManager infoManager;
     private final HistoryManager historyManager;
@@ -62,11 +62,11 @@ public class Repository {
     private Repository(RepositoryDef def,
                        Config config,
                        AsyncService asyncService,
-                       ReplicationService replicationService,
+                       Signalable changesTracker,
                        ContentManager contentManager,
                        Index index) {
         this.def = def;
-        this.replicationService = replicationService;
+        this.changesTracker = changesTracker;
         storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, asyncService);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
@@ -88,10 +88,10 @@ public class Repository {
      * @param path Repository home. Expected not to exist.
      * @param config Configuration holder.
      * @param asyncService Async service.
-     * @param replicationService Replication service.
+     * @param changesTracker An instance which tracks repository changes.
      * @return Created repository.
      */
-    static Repository create(Path path, Config config, AsyncService asyncService, ReplicationService replicationService) {
+    public static Repository create(Path path, Config config, AsyncService asyncService, Signalable changesTracker) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -108,7 +108,7 @@ public class Repository {
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               asyncService,
-                              replicationService,
+                              changesTracker,
                               ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
     }
@@ -125,10 +125,10 @@ public class Repository {
      * @param path Repository home.
      * @param config Configuration holder.
      * @param asyncService Async service.
-     * @param replicationService Replication service.
+     * @param changesTracker An instance which tracks repository changes.
      * @return Opened repository.
      */
-    static Repository open(Path path, Config config, AsyncService asyncService, ReplicationService replicationService) {
+    public static Repository open(Path path, Config config, AsyncService asyncService, Signalable changesTracker) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
@@ -138,7 +138,7 @@ public class Repository {
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               asyncService,
-                              replicationService,
+                              changesTracker,
                               ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));
     }
@@ -170,7 +170,7 @@ public class Repository {
      * Close this repository, releasing underlying resources. Does nothing if it already closed. Any latter operation
      * will fail.
      */
-    void close() {
+    public void close() {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
@@ -295,7 +295,7 @@ public class Repository {
         if (condition) {
             indexingAgent.signal();
             statsAgent.signal();
-            replicationService.signal(def.getGuid());
+            changesTracker.signal(def.getGuid());
         }
     }
 

@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import java.io.IOException;
 import java.io.InputStream;

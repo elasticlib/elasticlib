@@ -1,11 +1,10 @@
-package store.server.service;
+package store.server.repository;
 
 import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import store.common.ContentInfoTree;
 import store.common.Event;
 
@@ -18,14 +17,10 @@ class IndexingAgent extends Agent {
     private final Index index;
 
     public IndexingAgent(Repository repository, Index index, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("indexation-" + repository.getDef().getName(), curSeqsDb, curSeqKey);
+        super("indexation-" + repository.getDef().getName(), repository, curSeqsDb, curSeqKey);
+
         this.repository = repository;
         this.index = index;
-    }
-
-    @Override
-    protected List<Event> history(boolean chronological, long first, int number) {
-        return repository.history(chronological, first, number);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
@@ -25,14 +25,10 @@ class StatsAgent extends Agent {
                       StatsManager statsManager,
                       Database curSeqsDb,
                       DatabaseEntry curSeqKey) {
-        super("stats-" + repository.getDef().getName(), curSeqsDb, curSeqKey);
+        super("stats-" + repository.getDef().getName(), repository, curSeqsDb, curSeqKey);
+
         this.repository = repository;
         this.statsManager = statsManager;
-    }
-
-    @Override
-    protected List<Event> history(boolean chronological, long first, int number) {
-        return repository.history(chronological, first, number);
     }
 
     @Override

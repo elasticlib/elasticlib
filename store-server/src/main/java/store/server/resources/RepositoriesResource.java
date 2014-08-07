@@ -50,7 +50,7 @@ import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.FormDataMultipart;
 import store.server.service.RepositoriesService;
-import store.server.service.Repository;
+import store.server.repository.Repository;
 
 /**
  * Repositories REST resource.

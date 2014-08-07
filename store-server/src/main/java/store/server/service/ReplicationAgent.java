@@ -5,11 +5,12 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import store.common.CommandResult;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.Operation;
+import store.server.repository.Agent;
+import store.server.repository.Repository;
 
 /**
  * An agent that performs replication from a repository to another one.
@@ -20,14 +21,11 @@ class ReplicationAgent extends Agent {
     private final Repository destination;
 
     public ReplicationAgent(Repository source, Repository destination, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("replication-" + source.getDef().getName() + ">" + destination.getDef().getName(), curSeqsDb, curSeqKey);
+        super("replication-" + source.getDef().getName() + ">" + destination.getDef().getName(),
+              source, curSeqsDb, curSeqKey);
+
         this.source = source;
         this.destination = destination;
-    }
-
-    @Override
-    protected List<Event> history(boolean chronological, long first, int number) {
-        return source.history(chronological, first, number);
     }
 
     @Override

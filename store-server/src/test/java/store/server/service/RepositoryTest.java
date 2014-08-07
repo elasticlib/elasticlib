@@ -46,6 +46,7 @@ import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
 import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
+import store.server.repository.Repository;
 
 /**
  * Unit tests.

@@ -1,4 +1,4 @@
-package store.server.service;
+package store.server.repository;
 
 import com.google.common.base.Charsets;
 import java.io.IOException;

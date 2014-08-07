@@ -15,9 +15,9 @@ import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
 /**
  * Provides periodic tasks execution service.
  */
-public class AsyncService {
+public class AsyncManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AsyncService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AsyncManager.class);
     private final ScheduledExecutorService executor;
 
     /**
@@ -25,7 +25,7 @@ public class AsyncService {
      *
      * @param config Configuration holder.
      */
-    public AsyncService(Config config) {
+    public AsyncManager(Config config) {
         executor = newScheduledThreadPool(config.getInt(ASYNC_POOL_SIZE), new ThreadFactory() {
             private final ThreadFactory defaultFactory = defaultThreadFactory();
             private final AtomicInteger counter = new AtomicInteger();

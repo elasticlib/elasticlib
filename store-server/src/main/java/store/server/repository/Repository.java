@@ -25,7 +25,7 @@ import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
-import store.server.async.AsyncService;
+import store.server.async.AsyncManager;
 import store.server.exception.BadRequestException;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryClosedException;
@@ -61,13 +61,13 @@ public class Repository {
 
     private Repository(RepositoryDef def,
                        Config config,
-                       AsyncService asyncService,
+                       AsyncManager asyncManager,
                        Signalable changesTracker,
                        ContentManager contentManager,
                        Index index) {
         this.def = def;
         this.changesTracker = changesTracker;
-        storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, asyncService);
+        storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, asyncManager);
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         statsManager = new StatsManager(storageManager);
@@ -87,11 +87,11 @@ public class Repository {
      *
      * @param path Repository home. Expected not to exist.
      * @param config Configuration holder.
-     * @param asyncService Async service.
+     * @param asyncManager Asynchronous tasks manager.
      * @param changesTracker An instance which tracks repository changes.
      * @return Created repository.
      */
-    public static Repository create(Path path, Config config, AsyncService asyncService, Signalable changesTracker) {
+    public static Repository create(Path path, Config config, AsyncManager asyncManager, Signalable changesTracker) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -107,7 +107,7 @@ public class Repository {
         Guid guid = attributesManager.getGuid();
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
-                              asyncService,
+                              asyncManager,
                               changesTracker,
                               ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
@@ -124,11 +124,11 @@ public class Repository {
      *
      * @param path Repository home.
      * @param config Configuration holder.
-     * @param asyncService Async service.
+     * @param asyncManager Asynchronous tasks manager.
      * @param changesTracker An instance which tracks repository changes.
      * @return Opened repository.
      */
-    public static Repository open(Path path, Config config, AsyncService asyncService, Signalable changesTracker) {
+    public static Repository open(Path path, Config config, AsyncManager asyncManager, Signalable changesTracker) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
@@ -137,7 +137,7 @@ public class Repository {
         Guid guid = attributesManager.getGuid();
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
-                              asyncService,
+                              asyncManager,
                               changesTracker,
                               ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));

@@ -24,7 +24,7 @@ import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.value.Value;
-import store.server.async.AsyncService;
+import store.server.async.AsyncManager;
 import store.server.async.Task;
 import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
 import store.server.exception.RepositoryClosedException;
@@ -50,7 +50,7 @@ public class StorageManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
     private final String envName;
     private final Config config;
-    private final AsyncService asyncService;
+    private final AsyncManager asyncManager;
     private final Environment environment;
     private final TransactionCache cache;
     private final Deque<Task> tasks = new ArrayDeque<>();
@@ -66,9 +66,9 @@ public class StorageManager {
      * @param name Name of this storage.
      * @param path Home path of the Berkeley DB environment.
      * @param config Configuration holder.
-     * @param asyncService Async service.
+     * @param asyncManager Asynchronous tasks manager.
      */
-    public StorageManager(String name, Path path, Config config, AsyncService asyncService) {
+    public StorageManager(String name, Path path, Config config, AsyncManager asyncManager) {
         EnvironmentConfig envConfig = new EnvironmentConfig()
                 .setNodeName(name)
                 .setSharedCache(true)
@@ -90,9 +90,9 @@ public class StorageManager {
 
         envName = name;
         this.config = config;
-        this.asyncService = asyncService;
+        this.asyncManager = asyncManager;
         this.environment = new Environment(path.toFile(), envConfig);
-        this.cache = new TransactionCache(envName, config, asyncService);
+        this.cache = new TransactionCache(envName, config, asyncManager);
     }
 
     /**
@@ -165,7 +165,7 @@ public class StorageManager {
                 .setTransactional(false)
                 .setDeferredWrite(true));
 
-        tasks.add(asyncService.schedule(duration(config, STORAGE_SYNC_PERIOD), unit(config, STORAGE_SYNC_PERIOD),
+        tasks.add(asyncManager.schedule(duration(config, STORAGE_SYNC_PERIOD), unit(config, STORAGE_SYNC_PERIOD),
                                         "[" + envName + "] Syncing database '" + name + "'",
                                         new Runnable() {
             @Override

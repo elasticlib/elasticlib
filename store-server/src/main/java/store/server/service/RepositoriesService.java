@@ -25,7 +25,7 @@ import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
-import store.server.async.AsyncService;
+import store.server.async.AsyncManager;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
@@ -44,7 +44,7 @@ public class RepositoriesService {
     private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final Config config;
-    private final AsyncService asyncService;
+    private final AsyncManager asyncManager;
     private final StorageManager storageManager;
     private final StorageService storageService;
     private final ReplicationService replicationService;
@@ -59,8 +59,8 @@ public class RepositoriesService {
      */
     public RepositoriesService(Path home, Config config) {
         this.config = config;
-        asyncService = new AsyncService(config);
-        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncService);
+        asyncManager = new AsyncManager(config);
+        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
         storageService = new StorageService(storageManager);
         replicationService = new ReplicationService(storageManager);
 
@@ -79,7 +79,7 @@ public class RepositoriesService {
         });
     }
 
-    private static StorageManager newStorageManager(Path path, Config config, AsyncService asyncService) {
+    private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {
         try {
             if (!Files.exists(path)) {
                 Files.createDirectory(path);
@@ -87,12 +87,12 @@ public class RepositoriesService {
         } catch (IOException e) {
             throw new WriteException(e);
         }
-        return new StorageManager(RepositoriesService.class.getSimpleName(), path, config, asyncService);
+        return new StorageManager(RepositoriesService.class.getSimpleName(), path, config, asyncManager);
     }
 
     private void openRepository(RepositoryDef repositoryDef) {
         Path path = repositoryDef.getPath();
-        Repository repository = Repository.open(path, config, asyncService, replicationService);
+        Repository repository = Repository.open(path, config, asyncManager, replicationService);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
         storageService.updateRepositoryDef(updatedDef);
@@ -112,7 +112,7 @@ public class RepositoriesService {
     public void close() {
         lock.writeLock().lock();
         try {
-            asyncService.close();
+            asyncManager.close();
             replicationService.close();
             for (Repository repository : repositories.values()) {
                 repository.close();
@@ -136,7 +136,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Repository repository = Repository.create(path, config, asyncService, replicationService);
+                    Repository repository = Repository.create(path, config, asyncManager, replicationService);
                     RepositoryDef def = repository.getDef();
                     storageService.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);
@@ -162,7 +162,7 @@ public class RepositoriesService {
                     if (anyRepositoryExistsAt(path)) {
                         throw new RepositoryAlreadyExistsException();
                     }
-                    Repository repository = Repository.open(path, config, asyncService, replicationService);
+                    Repository repository = Repository.open(path, config, asyncManager, replicationService);
                     RepositoryDef def = repository.getDef();
                     storageService.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);

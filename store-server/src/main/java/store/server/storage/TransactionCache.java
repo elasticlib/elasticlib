@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
-import store.server.async.AsyncService;
+import store.server.async.AsyncManager;
 import store.server.async.Task;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
@@ -25,7 +25,7 @@ class TransactionCache implements Closeable {
     private final Cache<Long, TransactionContext> cache;
     private final Task cleanUpTask;
 
-    public TransactionCache(final String name, Config config, AsyncService asyncService) {
+    public TransactionCache(final String name, Config config, AsyncManager asyncManager) {
         cache = CacheBuilder.newBuilder()
                 .maximumSize(config.getInt(STORAGE_SUSPENDED_TXN_MAX_SIZE))
                 .expireAfterWrite(duration(config, STORAGE_SUSPENDED_TXN_TIMEOUT),
@@ -38,7 +38,7 @@ class TransactionCache implements Closeable {
             }
         }).build();
 
-        cleanUpTask = asyncService.schedule(duration(config, STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD),
+        cleanUpTask = asyncManager.schedule(duration(config, STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD),
                                             unit(config, STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD),
                                             "[" + name + "] Evicting expired transactions",
                                             new Runnable() {

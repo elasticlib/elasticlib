@@ -28,10 +28,8 @@ public class Server {
     private static final String STORAGE = "storage";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
     private final Config config;
-    private final HttpServer httpServer;
-    private final AsyncManager asyncManager;
-    private final StorageManager storageManager;
     private final RepositoriesService repositoriesService;
+    private final HttpServer httpServer;
 
     /**
      * Constructor.
@@ -41,8 +39,9 @@ public class Server {
     public Server(Path home) {
         config = ServerConfig.load(home.resolve("config.yml"));
         LOG.info(startingMessage(home, config));
-        asyncManager = new AsyncManager(config);
-        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
+
+        AsyncManager asyncManager = new AsyncManager(config);
+        StorageManager storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
         repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
 
         ResourceConfig resourceConfig = new ResourceConfig()

@@ -30,7 +30,6 @@ import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
-import store.server.exception.WriteException;
 import store.server.repository.Repository;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
@@ -41,7 +40,6 @@ import store.server.storage.StorageManager;
  */
 public class RepositoriesService {
 
-    private static final String STORAGE = "storage";
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final Config config;
     private final AsyncManager asyncManager;
@@ -54,13 +52,14 @@ public class RepositoriesService {
     /**
      * Constructor.
      *
-     * @param home The repositories service home directory.
      * @param config Configuration holder.
+     * @param asyncManager Asynchronous tasks manager.
+     * @param storageManager Persistent storage provider.
      */
-    public RepositoriesService(Path home, Config config) {
+    public RepositoriesService(Config config, AsyncManager asyncManager, StorageManager storageManager) {
         this.config = config;
-        asyncManager = new AsyncManager(config);
-        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
+        this.asyncManager = asyncManager;
+        this.storageManager = storageManager;
         storageService = new StorageService(storageManager);
         replicationService = new ReplicationService(storageManager);
 
@@ -77,17 +76,6 @@ public class RepositoriesService {
                 }
             }
         });
-    }
-
-    private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {
-        try {
-            if (!Files.exists(path)) {
-                Files.createDirectory(path);
-            }
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-        return new StorageManager(RepositoriesService.class.getSimpleName(), path, config, asyncManager);
     }
 
     private void openRepository(RepositoryDef repositoryDef) {

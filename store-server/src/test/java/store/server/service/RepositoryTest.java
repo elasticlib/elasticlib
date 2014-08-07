@@ -37,6 +37,7 @@ import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
+import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD;
@@ -47,6 +48,7 @@ import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.repository.Repository;
+import store.server.storage.StorageManager;
 
 /**
  * Unit tests.
@@ -78,8 +80,14 @@ public class RepositoryTest {
                 .set(ServerConfig.JE_LOCK_TIMEOUT, "1 min");
 
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
-        Files.createDirectory(path.resolve("home"));
-        repositoriesService = new RepositoriesService(path.resolve("home"), config);
+        Path storageDir = path.resolve("home").resolve("storage");
+        Files.createDirectories(storageDir);
+
+        AsyncManager asyncManager = new AsyncManager(config);
+        StorageManager storageManager = new StorageManager(RepositoryTest.class.getSimpleName(),
+                                                           storageDir, config, asyncManager);
+
+        repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
     }
 
     /**

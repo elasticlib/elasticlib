@@ -4,6 +4,7 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -12,18 +13,24 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
+import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
+import store.server.exception.WriteException;
 import store.server.providers.LoggingFilter;
 import store.server.service.RepositoriesService;
+import store.server.storage.StorageManager;
 
 /**
  * A Standalone HTTP server.
  */
 public class Server {
 
+    private static final String STORAGE = "storage";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
     private final Config config;
     private final HttpServer httpServer;
+    private final AsyncManager asyncManager;
+    private final StorageManager storageManager;
     private final RepositoriesService repositoriesService;
 
     /**
@@ -34,7 +41,9 @@ public class Server {
     public Server(Path home) {
         config = ServerConfig.load(home.resolve("config.yml"));
         LOG.info(startingMessage(home, config));
-        repositoriesService = new RepositoriesService(home, config);
+        asyncManager = new AsyncManager(config);
+        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
+        repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -63,12 +72,15 @@ public class Server {
                 .toString();
     }
 
-    private URI host() {
-        return UriBuilder.fromUri("http:/")
-                .host(config.getString(ServerConfig.WEB_HOST))
-                .port(config.getInt(ServerConfig.WEB_PORT))
-                .path(config.getString(ServerConfig.WEB_CONTEXT))
-                .build();
+    private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {
+        try {
+            if (!Files.exists(path)) {
+                Files.createDirectory(path);
+            }
+        } catch (IOException e) {
+            throw new WriteException(e);
+        }
+        return new StorageManager(Server.class.getSimpleName(), path, config, asyncManager);
     }
 
     private AbstractBinder bindings() {
@@ -78,6 +90,14 @@ public class Server {
                 bind(repositoriesService).to(RepositoriesService.class);
             }
         };
+    }
+
+    private URI host() {
+        return UriBuilder.fromUri("http:/")
+                .host(config.getString(ServerConfig.WEB_HOST))
+                .port(config.getInt(ServerConfig.WEB_PORT))
+                .path(config.getString(ServerConfig.WEB_CONTEXT))
+                .build();
     }
 
     /**

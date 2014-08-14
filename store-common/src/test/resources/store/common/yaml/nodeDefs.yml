@@ -1,0 +1,12 @@
+---
+name: alpha
+guid: !guid '8d5f3c77e94a0cad3a32340d342135f4'
+host: 192.168.0.1:8080
+...
+---
+name: beta
+guid: !guid '0d99dd9895a2a1c485e0c75f79f92cc1'
+hosts:
+- 192.168.0.2:8080
+- 31.34.134.14:8080
+...

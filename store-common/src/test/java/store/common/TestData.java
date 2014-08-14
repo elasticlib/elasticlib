@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.TreeSet;
 import org.joda.time.Instant;
@@ -53,6 +54,10 @@ public final class TestData {
      * Some ReplicationInfo instances.
      */
     public static final List<ReplicationInfo> REPLICATION_INFOS = new ArrayList<>();
+    /**
+     * Some NodeDef instances.
+     */
+    public static final List<NodeDef> NODE_DEFS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -77,10 +82,10 @@ public final class TestData {
         CONTENT_INFO_TREE = new ContentInfoTree.ContentInfoTreeBuilder()
                 .add(CONTENT_INFOS.get(0))
                 .add(new ContentInfo.ContentInfoBuilder()
-                .withContent(new Hash(HASHES[0]))
-                .withLength(10)
-                .withParent(new Hash(REVS[0]))
-                .build(new Hash(REVS[1])))
+                        .withContent(new Hash(HASHES[0]))
+                        .withLength(10)
+                        .withParent(new Hash(REVS[0]))
+                        .build(new Hash(REVS[1])))
                 .build();
 
         EVENTS.add(new Event.EventBuilder()
@@ -142,6 +147,14 @@ public final class TestData {
 
         REPLICATION_INFOS.add(new ReplicationInfo(REPOSITORY_DEFS.get(0),
                                                   REPOSITORY_DEFS.get(1)));
+
+        NODE_DEFS.add(new NodeDef("alpha",
+                                  primaryId,
+                                  singletonList("192.168.0.1:8080")));
+
+        NODE_DEFS.add(new NodeDef("beta",
+                                  secondaryId,
+                                  asList("192.168.0.2:8080", "31.34.134.14:8080")));
     }
 
     private TestData() {

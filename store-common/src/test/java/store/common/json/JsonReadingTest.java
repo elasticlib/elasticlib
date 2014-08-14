@@ -7,14 +7,33 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.NodeDef;
 import store.common.ReplicationDef;
 import store.common.ReplicationInfo;
 import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
-import static store.common.TestData.*;
+import static store.common.TestData.COMMAND_RESULTS;
+import static store.common.TestData.CONTENT_INFOS;
+import static store.common.TestData.CONTENT_INFO_TREE;
+import static store.common.TestData.EVENTS;
+import static store.common.TestData.INDEX_ENTRIES;
+import static store.common.TestData.NODE_DEFS;
+import static store.common.TestData.REPLICATION_DEFS;
+import static store.common.TestData.REPLICATION_INFOS;
+import static store.common.TestData.REPOSITORY_DEFS;
+import static store.common.TestData.REPOSITORY_INFOS;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonReading.readAll;
-import static store.common.json.JsonTestData.*;
+import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
+import static store.common.json.JsonTestData.EVENTS_ARRAY;
+import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
+import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
+import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
+import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
+import static store.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
+import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
 
 /**
  * Unit tests.
@@ -99,5 +118,13 @@ public class JsonReadingTest {
         for (int i = 0; i < REPLICATION_INFOS_JSON.size(); i++) {
             assertThat(read(REPLICATION_INFOS_JSON.get(i), ReplicationInfo.class)).isEqualTo(REPLICATION_INFOS.get(i));
         }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllNodeDefsTest() {
+        assertThat(readAll(NODE_DEFS_ARRAY, NodeDef.class)).isEqualTo(NODE_DEFS);
     }
 }

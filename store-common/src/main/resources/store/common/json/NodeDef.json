@@ -1,0 +1,23 @@
+{
+    "title": "nodeDef",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "guid": {
+            "type": "guid"
+        },
+        "host": {
+            "type": "string",
+            "optional": true
+        },
+        "hosts": {
+            "type": "array",
+            "optional": true,
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

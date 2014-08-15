@@ -63,9 +63,9 @@ public class NodeService {
                 if (status == OperationStatus.SUCCESS) {
                     return asGuid(value);
                 }
-                Guid guid = Guid.random();
-                nodeDb.put(storageManager.currentTransaction(), key, entry(guid));
-                return guid;
+                Guid newGuid = Guid.random();
+                nodeDb.put(storageManager.currentTransaction(), key, entry(newGuid));
+                return newGuid;
             }
         });
     }

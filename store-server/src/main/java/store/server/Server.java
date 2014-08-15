@@ -17,6 +17,7 @@ import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
 import store.server.exception.WriteException;
 import store.server.providers.LoggingFilter;
+import store.server.service.NodeService;
 import store.server.service.RepositoriesService;
 import store.server.storage.StorageManager;
 
@@ -29,6 +30,7 @@ public class Server {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
     private final Config config;
     private final RepositoriesService repositoriesService;
+    private final NodeService nodeService;
     private final HttpServer httpServer;
 
     /**
@@ -43,6 +45,7 @@ public class Server {
         AsyncManager asyncManager = new AsyncManager(config);
         StorageManager storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
         repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
+        nodeService = new NodeService(config, storageManager);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -87,15 +90,16 @@ public class Server {
             @Override
             protected void configure() {
                 bind(repositoriesService).to(RepositoriesService.class);
+                bind(nodeService).to(NodeService.class);
             }
         };
     }
 
     private URI host() {
         return UriBuilder.fromUri("http:/")
-                .host(config.getString(ServerConfig.WEB_HOST))
-                .port(config.getInt(ServerConfig.WEB_PORT))
-                .path(config.getString(ServerConfig.WEB_CONTEXT))
+                .host(config.getString(ServerConfig.NODE_BIND_HOST))
+                .port(config.getInt(ServerConfig.NODE_PORT))
+                .path(config.getString(ServerConfig.NODE_CONTEXT))
                 .build();
     }
 

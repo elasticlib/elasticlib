@@ -93,6 +93,16 @@ public final class DatabaseEntries {
     }
 
     /**
+     * Unwraps a GUID from supplied database entry.
+     *
+     * @param entry A database entry.
+     * @return Wrapped GUID.
+     */
+    public static Guid asGuid(DatabaseEntry entry) {
+        return new Guid(entry.getData());
+    }
+
+    /**
      * Unwraps a mappable instance from supplied database entry.
      *
      * @param <T> Actual class to convert to.

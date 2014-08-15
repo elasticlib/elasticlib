@@ -15,17 +15,26 @@ import store.common.config.ConfigReadWrite;
 public final class ServerConfig {
 
     /**
-     * Server host. Defaults to 'localhost'.
+     * Node name. Generated at runtime if missing.
      */
-    public static final String WEB_HOST = "web.host";
+    public static final String NODE_NAME = "node.name";
     /**
-     * Server port. Defaults to '8080'.
+     * Node bind host. Defaults to '0.0.0.0'.
      */
-    public static final String WEB_PORT = "web.port";
+    public static final String NODE_BIND_HOST = "node.bindHost";
     /**
-     * Server context path. Defaults to '/'.
+     * Node publish host(s), ie the host(s) this node will publish itself in the cluster so that remote nodes may
+     * connect to it. Generated at runtime if missing.
      */
-    public static final String WEB_CONTEXT = "web.context";
+    public static final String NODE_PUBLISH_HOSTS = "node.publishHosts";
+    /**
+     * Node TCP port. Default to 8080.
+     */
+    public static final String NODE_PORT = "node.port";
+    /**
+     * Node deployment context. Default to '/'.
+     */
+    public static final String NODE_CONTEXT = "node.context";
     /**
      * Periodic tasks executor pool size. Default to 1.
      */
@@ -52,9 +61,9 @@ public final class ServerConfig {
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
     private static final Config DEFAULT = new Config()
-            .set(WEB_HOST, "localhost")
-            .set(WEB_PORT, 8080)
-            .set(WEB_CONTEXT, "/")
+            .set(NODE_BIND_HOST, "0.0.0.0")
+            .set(NODE_PORT, 80)
+            .set(NODE_CONTEXT, "/")
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_PERIOD, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)

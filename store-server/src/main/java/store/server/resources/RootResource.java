@@ -1,8 +1,11 @@
 package store.server.resources;
 
+import javax.inject.Inject;
+import javax.json.JsonObject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
+import static store.common.json.JsonWriting.write;
+import store.server.service.NodeService;
 
 /**
  * Root REST resource.
@@ -10,13 +13,16 @@ import javax.ws.rs.core.Response;
 @Path("/")
 public class RootResource {
 
+    @Inject
+    private NodeService nodeService;
+
     /**
-     * Intended to test connection with this server.
+     * Provides the definition of the local node.
      *
-     * @return HTTP 200 OK.
+     * @return A NodeDef instance.
      */
     @GET
-    public Response getRoot() {
-        return Response.ok().build();
+    public JsonObject getNodeDef() {
+        return write(nodeService.getNodeDef());
     }
 }

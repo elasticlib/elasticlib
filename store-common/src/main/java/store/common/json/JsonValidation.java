@@ -7,6 +7,7 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import static javax.json.JsonValue.ValueType.ARRAY;
 import static javax.json.JsonValue.ValueType.FALSE;
 import static javax.json.JsonValue.ValueType.STRING;
 import static javax.json.JsonValue.ValueType.TRUE;
@@ -26,11 +27,22 @@ public final class JsonValidation {
     }
 
     /**
+     * Checks if supplied JSON object has an array value associated to supplied key.
+     *
+     * @param json A JSON object.
+     * @param key A key.
+     * @return <tt>true</tt> if supplied JSON object has an array value associated to supplied key.
+     */
+    public static boolean hasArrayValue(JsonObject json, String key) {
+        return hasValue(json, key, ARRAY);
+    }
+
+    /**
      * Checks if supplied JSON object has a string value associated to supplied key.
      *
      * @param json A JSON object.
      * @param key A key.
-     * @return <tt>true</tt> if supplied JSON object has a string getCode associated to supplied key.
+     * @return <tt>true</tt> if supplied JSON object has a string value associated to supplied key.
      */
     public static boolean hasStringValue(JsonObject json, String key) {
         return hasValue(json, key, STRING);
@@ -41,7 +53,7 @@ public final class JsonValidation {
      *
      * @param json A JSON object.
      * @param key A key.
-     * @return <tt>true</tt> if supplied JSON object has a boolean getCode associated to supplied key.
+     * @return <tt>true</tt> if supplied JSON object has a boolean value associated to supplied key.
      */
     public static boolean hasBooleanValue(JsonObject json, String key) {
         return hasValue(json, key, TRUE, FALSE);

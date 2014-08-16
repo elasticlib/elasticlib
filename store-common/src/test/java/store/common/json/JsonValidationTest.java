@@ -3,6 +3,7 @@ package store.common.json;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
 import javax.json.Json;
+import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -19,7 +20,14 @@ import store.common.RepositoryInfo;
 import static store.common.TestUtil.array;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
-import static store.common.json.JsonTestData.*;
+import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
+import static store.common.json.JsonTestData.EVENTS_ARRAY;
+import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
+import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
+import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasBooleanValue;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
@@ -30,6 +38,21 @@ import store.common.value.Value;
  * Unit tests.
  */
 public class JsonValidationTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void hasArrayValueTest() {
+        JsonObject json = createObjectBuilder()
+                .add("array", createArrayBuilder().build())
+                .add("text", "value")
+                .build();
+
+        assertThat(hasArrayValue(json, "array")).isTrue();
+        assertThat(hasArrayValue(json, "text")).isFalse();
+        assertThat(hasArrayValue(json, "unknown")).isFalse();
+    }
 
     /**
      * Test.

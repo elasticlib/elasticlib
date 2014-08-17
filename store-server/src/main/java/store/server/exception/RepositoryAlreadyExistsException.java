@@ -9,6 +9,6 @@ public final class RepositoryAlreadyExistsException extends ServerException {
 
     @Override
     public String getMessage() {
-        return "This Repository already exists";
+        return "This repository already exists";
     }
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -13,42 +12,31 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
-import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
-import store.server.exception.WriteException;
 import store.server.providers.LoggingFilter;
-import store.server.service.NodeService;
-import store.server.service.RemotesService;
+import store.server.service.NodesService;
 import store.server.service.RepositoriesService;
-import store.server.storage.StorageManager;
 
 /**
  * A Standalone HTTP server.
  */
 public class Server {
 
-    private static final String STORAGE = "storage";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
-    private final Config config;
-    private final RepositoriesService repositoriesService;
-    private final NodeService nodeService;
-    private final RemotesService remotesService;
+
+    private final ServicesContainer servicesContainer;
     private final HttpServer httpServer;
 
     /**
      * Constructor.
      *
-     * @param home Path to repository's home-directory.
+     * @param home Path to server home-directory.
      */
     public Server(Path home) {
-        config = ServerConfig.load(home.resolve("config.yml"));
+        Config config = ServerConfig.load(home.resolve("config.yml"));
         LOG.info(startingMessage(home, config));
 
-        AsyncManager asyncManager = new AsyncManager(config);
-        StorageManager storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
-        repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
-        nodeService = new NodeService(config, storageManager);
-        remotesService = new RemotesService(storageManager);
+        servicesContainer = new ServicesContainer(home, config);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -56,14 +44,14 @@ public class Server {
                 .register(new LoggingFilter())
                 .register(bindings());
 
-        httpServer = GrizzlyHttpServerFactory.createHttpServer(host(), resourceConfig, false);
+        httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config), resourceConfig, false);
 
         getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
-                repositoriesService.close();
+                servicesContainer.shutdown();
             }
         });
     }
@@ -77,29 +65,17 @@ public class Server {
                 .toString();
     }
 
-    private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {
-        try {
-            if (!Files.exists(path)) {
-                Files.createDirectory(path);
-            }
-        } catch (IOException e) {
-            throw new WriteException(e);
-        }
-        return new StorageManager(Server.class.getSimpleName(), path, config, asyncManager);
-    }
-
     private AbstractBinder bindings() {
         return new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(repositoriesService).to(RepositoriesService.class);
-                bind(nodeService).to(NodeService.class);
-                bind(remotesService).to(RemotesService.class);
+                bind(servicesContainer.getRepositoriesService()).to(RepositoriesService.class);
+                bind(servicesContainer.getNodesService()).to(NodesService.class);
             }
         };
     }
 
-    private URI host() {
+    private static URI host(Config config) {
         return UriBuilder.fromUri("http:/")
                 .host(config.getString(ServerConfig.NODE_BIND_HOST))
                 .port(config.getInt(ServerConfig.NODE_PORT))

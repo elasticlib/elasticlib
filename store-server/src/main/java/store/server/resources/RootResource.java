@@ -5,7 +5,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import static store.common.json.JsonWriting.write;
-import store.server.service.NodeService;
+import store.server.service.NodesService;
 
 /**
  * Root REST resource.
@@ -14,7 +14,7 @@ import store.server.service.NodeService;
 public class RootResource {
 
     @Inject
-    private NodeService nodeService;
+    private NodesService nodesService;
 
     /**
      * Provides the definition of the local node.
@@ -23,6 +23,6 @@ public class RootResource {
      */
     @GET
     public JsonObject getNodeDef() {
-        return write(nodeService.getNodeDef());
+        return write(nodesService.getNodeDef());
     }
 }

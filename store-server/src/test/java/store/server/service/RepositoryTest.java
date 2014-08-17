@@ -44,6 +44,8 @@ import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PER
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
+import store.server.dao.ReplicationsDao;
+import store.server.dao.RepositoriesDao;
 import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
@@ -84,10 +86,15 @@ public class RepositoryTest {
         Files.createDirectories(storageDir);
 
         AsyncManager asyncManager = new AsyncManager(config);
-        StorageManager storageManager = new StorageManager(RepositoryTest.class.getSimpleName(),
-                                                           storageDir, config, asyncManager);
+        StorageManager storageManager = new StorageManager("test", storageDir, config, asyncManager);
+        RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
+        ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
 
-        repositoriesService = new RepositoriesService(config, asyncManager, storageManager);
+        repositoriesService = new RepositoriesService(config,
+                                                      asyncManager,
+                                                      storageManager,
+                                                      repositoriesDao,
+                                                      replicationsDao);
     }
 
     /**

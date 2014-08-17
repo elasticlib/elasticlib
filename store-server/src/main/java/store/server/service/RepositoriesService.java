@@ -26,6 +26,8 @@ import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
 import store.server.async.AsyncManager;
+import store.server.dao.ReplicationsDao;
+import store.server.dao.RepositoriesDao;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
@@ -41,10 +43,13 @@ import store.server.storage.StorageManager;
 public class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
+
     private final Config config;
     private final AsyncManager asyncManager;
     private final StorageManager storageManager;
-    private final StorageService storageService;
+    private final RepositoriesDao repositoriesDao;
+    private final ReplicationsDao replicationsDao;
+
     private final ReplicationService replicationService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<Guid, Repository> repositories = new HashMap<>();
@@ -55,18 +60,29 @@ public class RepositoriesService {
      * @param config Configuration holder.
      * @param asyncManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
+     * @param repositoriesDao Repositories definitions DAO.
+     * @param replicationsDao Replications definitions DAO.
      */
-    public RepositoriesService(Config config, AsyncManager asyncManager, StorageManager storageManager) {
+    public RepositoriesService(Config config,
+                               AsyncManager asyncManager,
+                               StorageManager storageManager,
+                               RepositoriesDao repositoriesDao,
+                               ReplicationsDao replicationsDao) {
         this.config = config;
         this.asyncManager = asyncManager;
         this.storageManager = storageManager;
-        storageService = new StorageService(storageManager);
-        replicationService = new ReplicationService(storageManager);
+        this.repositoriesDao = repositoriesDao;
+        this.replicationsDao = replicationsDao;
 
+        replicationService = new ReplicationService(storageManager);
+        openAllRepositories();
+    }
+
+    private void openAllRepositories() {
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                for (RepositoryDef def : storageService.listRepositoryDefs()) {
+                for (RepositoryDef def : repositoriesDao.listRepositoryDefs()) {
                     try {
                         openRepository(def);
 
@@ -83,9 +99,9 @@ public class RepositoriesService {
         Repository repository = Repository.open(path, config, asyncManager, replicationService);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
-        storageService.updateRepositoryDef(updatedDef);
+        repositoriesDao.updateRepositoryDef(updatedDef);
 
-        for (ReplicationDef def : storageService.listReplicationDefs(updatedDef.getGuid())) {
+        for (ReplicationDef def : replicationsDao.listReplicationDefs(updatedDef.getGuid())) {
             if (repositories.containsKey(def.getSource()) && repositories.containsKey(def.getDestination())) {
                 replicationService.startReplication(repositories.get(def.getSource()),
                                                     repositories.get(def.getDestination()));
@@ -100,12 +116,10 @@ public class RepositoriesService {
     public void close() {
         lock.writeLock().lock();
         try {
-            asyncManager.close();
             replicationService.close();
             for (Repository repository : repositories.values()) {
                 repository.close();
             }
-            storageManager.close();
 
         } finally {
             lock.writeLock().unlock();
@@ -126,7 +140,7 @@ public class RepositoriesService {
                 public void apply() {
                     Repository repository = Repository.create(path, config, asyncManager, replicationService);
                     RepositoryDef def = repository.getDef();
-                    storageService.createRepositoryDef(def);
+                    repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);
                 }
             });
@@ -152,7 +166,7 @@ public class RepositoriesService {
                     }
                     Repository repository = Repository.open(path, config, asyncManager, replicationService);
                     RepositoryDef def = repository.getDef();
-                    storageService.createRepositoryDef(def);
+                    repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);
                 }
             });
@@ -173,7 +187,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    RepositoryDef repositoryDef = storageService.getRepositoryDef(key);
+                    RepositoryDef repositoryDef = repositoriesDao.getRepositoryDef(key);
                     if (repositories.containsKey(repositoryDef.getGuid())) {
                         return;
                     }
@@ -197,7 +211,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    RepositoryDef def = storageService.getRepositoryDef(key);
+                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                     if (!repositories.containsKey(def.getGuid())) {
                         return;
                     }
@@ -222,7 +236,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Guid guid = storageService.getRepositoryDef(key).getGuid();
+                    Guid guid = repositoriesDao.getRepositoryDef(key).getGuid();
                     removeRepository(guid);
                 }
             });
@@ -243,7 +257,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    RepositoryDef def = storageService.getRepositoryDef(key);
+                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                     removeRepository(def.getGuid());
                     if (!anyRepositoryExistsAt(def.getPath())) {
                         recursiveDelete(def.getPath());
@@ -260,12 +274,12 @@ public class RepositoriesService {
         if (repositories.containsKey(guid)) {
             repositories.remove(guid).close();
         }
-        storageService.deleteRepositoryDef(guid);
-        storageService.deleteAllReplicationDefs(guid);
+        repositoriesDao.deleteRepositoryDef(guid);
+        replicationsDao.deleteAllReplicationDefs(guid);
     }
 
     private boolean anyRepositoryExistsAt(Path path) {
-        for (RepositoryDef def : storageService.listRepositoryDefs()) {
+        for (RepositoryDef def : repositoriesDao.listRepositoryDefs()) {
             if (def.getPath().equals(path)) {
                 return true;
             }
@@ -318,10 +332,10 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
-                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
+                    Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
+                    Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
-                    storageService.createReplicationDef(new ReplicationDef(srcId, destId));
+                    replicationsDao.createReplicationDef(new ReplicationDef(srcId, destId));
                     if (repositories.containsKey(srcId) && repositories.containsKey(destId)) {
                         replicationService.createReplication(repositories.get(srcId), repositories.get(destId));
                     }
@@ -345,10 +359,10 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
-                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
+                    Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
+                    Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
-                    storageService.deleteReplicationDef(srcId, destId);
+                    replicationsDao.deleteReplicationDef(srcId, destId);
                     replicationService.deleteReplication(srcId, destId);
                 }
             });
@@ -371,8 +385,8 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    RepositoryDef srcDef = storageService.getRepositoryDef(source);
-                    RepositoryDef destDef = storageService.getRepositoryDef(destination);
+                    RepositoryDef srcDef = repositoriesDao.getRepositoryDef(source);
+                    RepositoryDef destDef = repositoriesDao.getRepositoryDef(destination);
                     if (!repositories.containsKey(srcDef.getGuid())) {
                         openRepository(srcDef);
                     }
@@ -401,8 +415,8 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Guid srcId = storageService.getRepositoryDef(source).getGuid();
-                    Guid destId = storageService.getRepositoryDef(destination).getGuid();
+                    Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
+                    Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
                     replicationService.stopReplication(srcId, destId);
                 }
@@ -426,7 +440,7 @@ public class RepositoriesService {
                 public List<ReplicationInfo> apply() {
                     List<ReplicationInfo> list = new ArrayList<>();
                     Map<Guid, RepositoryDef> defs = repositoryDefs();
-                    for (ReplicationDef replicationDef : storageService.listReplicationDefs()) {
+                    for (ReplicationDef replicationDef : replicationsDao.listReplicationDefs()) {
                         Guid srcId = replicationDef.getSource();
                         Guid destId = replicationDef.getDestination();
                         Optional<AgentInfo> agentInfo = replicationService.getInfo(srcId, destId);
@@ -445,7 +459,7 @@ public class RepositoriesService {
     }
 
     private Map<Guid, RepositoryDef> repositoryDefs() {
-        return Maps.uniqueIndex(storageService.listRepositoryDefs(), new Function<RepositoryDef, Guid>() {
+        return Maps.uniqueIndex(repositoriesDao.listRepositoryDefs(), new Function<RepositoryDef, Guid>() {
             @Override
             public Guid apply(RepositoryDef def) {
                 return def.getGuid();
@@ -465,13 +479,13 @@ public class RepositoriesService {
             return storageManager.inTransaction(new Query<List<RepositoryInfo>>() {
                 @Override
                 public List<RepositoryInfo> apply() {
-                    return Lists.transform(storageService.listRepositoryDefs(),
+                    return Lists.transform(repositoriesDao.listRepositoryDefs(),
                                            new Function<RepositoryDef, RepositoryInfo>() {
-                        @Override
-                        public RepositoryInfo apply(RepositoryDef def) {
-                            return repositoryInfoOf(def);
-                        }
-                    });
+                                               @Override
+                                               public RepositoryInfo apply(RepositoryDef def) {
+                                                   return repositoryInfoOf(def);
+                                               }
+                                           });
                 }
             });
         } finally {
@@ -492,7 +506,7 @@ public class RepositoriesService {
             return storageManager.inTransaction(new Query<RepositoryInfo>() {
                 @Override
                 public RepositoryInfo apply() {
-                    return repositoryInfoOf(storageService.getRepositoryDef(key));
+                    return repositoryInfoOf(repositoriesDao.getRepositoryDef(key));
                 }
             });
         } finally {
@@ -519,7 +533,7 @@ public class RepositoriesService {
             return storageManager.inTransaction(new Query<Repository>() {
                 @Override
                 public Repository apply() {
-                    RepositoryDef def = storageService.getRepositoryDef(key);
+                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                     if (!repositories.containsKey(def.getGuid())) {
                         throw new RepositoryClosedException();
                     }

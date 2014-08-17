@@ -18,16 +18,18 @@ import store.server.exception.BadRequestException;
 import store.server.exception.ConflictException;
 import store.server.exception.IntegrityCheckingFailedException;
 import store.server.exception.InvalidRepositoryPathException;
+import store.server.exception.NodeAlreadyTrackedException;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
+import store.server.exception.SelfTrackingException;
 import store.server.exception.ServerException;
 import store.server.exception.TransactionNotFoundException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownNodeException;
 import store.server.exception.UnknownRepositoryException;
 import store.server.exception.UnknownRevisionException;
-import store.server.exception.UnreachableRemoteException;
+import store.server.exception.UnreachableNodeException;
 import store.server.exception.WriteException;
 
 /**
@@ -46,6 +48,8 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         MAPPING.put(InvalidRepositoryPathException.class, PRECONDITION_FAILED);
         MAPPING.put(SelfReplicationException.class, PRECONDITION_FAILED);
         MAPPING.put(UnknownRevisionException.class, PRECONDITION_FAILED);
+        MAPPING.put(NodeAlreadyTrackedException.class, PRECONDITION_FAILED);
+        MAPPING.put(SelfTrackingException.class, PRECONDITION_FAILED);
 
         MAPPING.put(ConflictException.class, CONFLICT);
 
@@ -55,7 +59,7 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
 
         MAPPING.put(RepositoryClosedException.class, SERVICE_UNAVAILABLE);
         MAPPING.put(TransactionNotFoundException.class, SERVICE_UNAVAILABLE);
-        MAPPING.put(UnreachableRemoteException.class, SERVICE_UNAVAILABLE);
+        MAPPING.put(UnreachableNodeException.class, SERVICE_UNAVAILABLE);
 
         MAPPING.put(WriteException.class, INTERNAL_SERVER_ERROR);
     }

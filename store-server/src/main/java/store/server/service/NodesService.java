@@ -1,11 +1,8 @@
 package store.server.service;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import static com.google.common.collect.Lists.transform;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -16,29 +13,40 @@ import java.util.ArrayList;
 import static java.util.Collections.sort;
 import java.util.Enumeration;
 import java.util.List;
+import javax.json.JsonObject;
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.UriBuilder;
+import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
 import store.common.config.Config;
 import store.common.hash.Guid;
+import static store.common.json.JsonReading.read;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import store.server.config.ServerConfig;
-import static store.server.storage.DatabaseEntries.asGuid;
-import static store.server.storage.DatabaseEntries.entry;
+import store.server.dao.AttributesDao;
+import store.server.dao.NodesDao;
+import store.server.exception.SelfTrackingException;
+import store.server.exception.UnreachableNodeException;
+import store.server.providers.JsonBodyReader;
+import store.server.storage.Procedure;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;
 
 /**
- * Provides informations about the local node.
+ * Manages nodes in the cluster.
  */
-public class NodeService {
+public class NodesService {
 
-    private static final String NODE = "node";
-    private static final String GUID = "guid";
-    private static final Logger LOG = LoggerFactory.getLogger(NodeService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
+
     private final Config config;
+    private final StorageManager storageManager;
+    private final NodesDao nodesDao;
     private final Guid guid;
 
     /**
@@ -46,26 +54,21 @@ public class NodeService {
      *
      * @param config Configuration holder.
      * @param storageManager Persistent storage provider.
+     * @param nodesDao Nodes definitions DAO.
+     * @param attributesDao Attributes DAO.
      */
-    public NodeService(Config config, StorageManager storageManager) {
-        this.config = config;
-        guid = guid(storageManager);
-    }
+    public NodesService(Config config,
+                        StorageManager storageManager,
+                        NodesDao nodesDao,
+                        final AttributesDao attributesDao) {
 
-    private static Guid guid(final StorageManager storageManager) {
-        final Database nodeDb = storageManager.openDatabase(NODE);
-        return storageManager.inTransaction(new Query<Guid>() {
+        this.config = config;
+        this.storageManager = storageManager;
+        this.nodesDao = nodesDao;
+        this.guid = this.storageManager.inTransaction(new Query<Guid>() {
             @Override
             public Guid apply() {
-                DatabaseEntry key = entry(GUID);
-                DatabaseEntry value = new DatabaseEntry();
-                OperationStatus status = nodeDb.get(storageManager.currentTransaction(), key, value, LockMode.RMW);
-                if (status == OperationStatus.SUCCESS) {
-                    return asGuid(value);
-                }
-                Guid newGuid = Guid.random();
-                nodeDb.put(storageManager.currentTransaction(), key, entry(newGuid));
-                return newGuid;
+                return attributesDao.guid();
             }
         });
     }
@@ -141,6 +144,78 @@ public class NodeService {
                         .path(config.getString(ServerConfig.NODE_CONTEXT))
                         .build()
                         .toString();
+            }
+        });
+    }
+
+    /**
+     * Add a remote node to tracked ones. Fails if remote node is not reachable, is already tracked or its GUID is the
+     * same as the local one.
+     *
+     * @param addresses Publish addresses of the remote node.
+     */
+    public void addRemote(List<String> addresses) {
+        for (String address : addresses) {
+            final Optional<NodeDef> def = downloadDef(address);
+            if (def.isPresent()) {
+                if (def.get().getGuid().equals(guid)) {
+                    throw new SelfTrackingException();
+                }
+                storageManager.inTransaction(new Procedure() {
+                    @Override
+                    public void apply() {
+                        nodesDao.createNodeDef(def.get());
+                    }
+                });
+                return;
+            }
+        }
+        throw new UnreachableNodeException();
+    }
+
+    private static Optional<NodeDef> downloadDef(String address) {
+        ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class);
+        Client client = ClientBuilder.newClient(clientConfig);
+        try {
+            JsonObject json = client.target(address)
+                    .request()
+                    .get()
+                    .readEntity(JsonObject.class);
+
+            return Optional.of(read(json, NodeDef.class));
+
+        } catch (ProcessingException e) {
+            return Optional.absent();
+
+        } finally {
+            client.close();
+        }
+    }
+
+    /**
+     * Stops tracking a remote node.
+     *
+     * @param key Node name or encoded GUID.
+     */
+    public void removeRemote(final String key) {
+        storageManager.inTransaction(new Procedure() {
+            @Override
+            public void apply() {
+                nodesDao.deleteNodeDef(key);
+            }
+        });
+    }
+
+    /**
+     * Loads all remote nodes definitions.
+     *
+     * @return A list of NodeDef instances.
+     */
+    public List<NodeDef> listRemotes() {
+        return storageManager.inTransaction(new Query<List<NodeDef>>() {
+            @Override
+            public List<NodeDef> apply() {
+                return nodesDao.listNodeDefs();
             }
         });
     }

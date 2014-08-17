@@ -22,7 +22,7 @@ import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonWriting.writeAll;
 import store.server.exception.BadRequestException;
-import store.server.service.RemotesService;
+import store.server.service.NodesService;
 
 /**
  * Remote nodes REST resource.
@@ -34,7 +34,7 @@ public class RemotesResource {
     private static final String HOSTS = "hosts";
 
     @Inject
-    private RemotesService remotesService;
+    private NodesService nodesService;
 
     /**
      * Create a new remote node.
@@ -55,7 +55,7 @@ public class RemotesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addRemote(JsonObject json) {
-        remotesService.addRemote(parseAddRemoteRequest(json));
+        nodesService.addRemote(parseAddRemoteRequest(json));
         return Response.ok().build();
     }
 
@@ -93,7 +93,7 @@ public class RemotesResource {
     @DELETE
     @Path("{node}")
     public Response removeRemote(@PathParam("node") String nodeKey) {
-        remotesService.removeRemote(nodeKey);
+        nodesService.removeRemote(nodeKey);
         return Response.ok().build();
     }
 
@@ -108,6 +108,6 @@ public class RemotesResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listRemotes() {
-        return writeAll(remotesService.listRemotes());
+        return writeAll(nodesService.listRemotes());
     }
 }

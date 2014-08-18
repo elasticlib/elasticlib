@@ -5,6 +5,7 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.filter;
@@ -139,12 +140,24 @@ abstract class AbstractCommand implements Command {
             return params.isEmpty();
         }
         if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
-            return params.size() == getOnlyElement(syntax.values()).size();
+            List<String> commandParts = Splitter.on(' ').splitToList(name());
+            return params.size() == getOnlyElement(syntax.values()).size() + commandParts.size() - 1 &&
+                    matches(params, commandParts);
+
         }
         if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
             return false;
         }
         return params.size() == syntax.get(keyword(params)).size() + 1;
+    }
+
+    private static boolean matches(List<String> params, List<String> commandParts) {
+        for (int i = 1; i < commandParts.size(); i++) {
+            if (!params.get(i - 1).equals(commandParts.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String keyword(List<String> params) {

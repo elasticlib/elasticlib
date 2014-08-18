@@ -5,6 +5,8 @@ package store.server.exception;
  */
 public abstract class ServerException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Constructor.
      */

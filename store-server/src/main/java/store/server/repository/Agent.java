@@ -113,9 +113,9 @@ public abstract class Agent {
         private final Database curSeqsDb;
         private final DatabaseEntry curSeqKey;
         private final Deque<Event> events = new ArrayDeque<>(FETCH_SIZE);
+        private final AtomicReference<AgentInfo> info;
         private long curSeq;
         private long maxSeq;
-        private AtomicReference<AgentInfo> info;
 
         public AgentThread(String name, Database curSeqsDb, DatabaseEntry curSeqKey) {
             super(name);

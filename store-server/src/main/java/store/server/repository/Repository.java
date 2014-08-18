@@ -57,7 +57,7 @@ public class Repository {
     private final Index index;
     private final IndexingAgent indexingAgent;
     private final StatsAgent statsAgent;
-    private AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private Repository(RepositoryDef def,
                        Config config,

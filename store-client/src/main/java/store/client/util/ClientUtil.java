@@ -1,5 +1,7 @@
 package store.client.util;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +28,21 @@ public final class ClientUtil {
             throw new RequestFailedException("Invalid hash");
         }
         return new Hash(arg);
+    }
+
+    /**
+     * Safely parse supplied argument as an URI.
+     *
+     * @param arg A command line argument.
+     * @return Parsed URI.
+     */
+    public static URI parseUri(String arg) {
+        try {
+            return new URI(arg);
+
+        } catch (URISyntaxException e) {
+            throw new RequestFailedException("Invalid URI", e);
+        }
     }
 
     /**

@@ -26,7 +26,11 @@ enum Type {
      */
     DIRECTORY,
     /**
-     * A repository name.
+     * A node name or GUID.
+     */
+    NODE,
+    /**
+     * A repository name or GUID.
      */
     REPOSITORY,
     /**

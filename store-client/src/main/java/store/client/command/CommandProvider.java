@@ -1,10 +1,10 @@
 package store.client.command;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
+import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import static java.util.Collections.sort;
 import java.util.Comparator;
 import java.util.List;
 
@@ -21,10 +21,12 @@ final class CommandProvider {
                                                                          new Leave(),
                                                                          new Create(),
                                                                          new Drop(),
-                                                                         new Add(),
+                                                                         new AddRepository(),
+                                                                         new AddRemote(),
                                                                          new Open(),
                                                                          new Close(),
-                                                                         new Remove(),
+                                                                         new RemoveRepository(),
+                                                                         new RemoveRemote(),
                                                                          new Start(),
                                                                          new Stop(),
                                                                          new Remotes(),
@@ -46,7 +48,7 @@ final class CommandProvider {
                                                                          new OsCommand());
 
     static {
-        Collections.sort(COMMANDS, new Comparator<Command>() {
+        sort(COMMANDS, new Comparator<Command>() {
             @Override
             public int compare(Command c1, Command c2) {
                 return c1.name().compareTo(c2.name());
@@ -57,13 +59,14 @@ final class CommandProvider {
     private CommandProvider() {
     }
 
-    public static Optional<Command> command(String name) {
+    public static List<Command> commands(String name) {
+        List<Command> list = new ArrayList<>();
         for (Command command : COMMANDS) {
-            if (command.name().equals(name)) {
-                return Optional.of(command);
+            if (firstName(command).equals(name)) {
+                list.add(command);
             }
         }
-        return Optional.absent();
+        return list;
     }
 
     public static List<Command> commands() {
@@ -78,7 +81,7 @@ final class CommandProvider {
             for (Command command : COMMANDS) {
                 if (command.category() == category) {
                     builder.append(tab(2))
-                            .append(fixedSize(command.name(), 15))
+                            .append(fixedSize(firstName(command), 15))
                             .append(command.description())
                             .append(System.lineSeparator());
                 }
@@ -86,6 +89,10 @@ final class CommandProvider {
             categoryHelps.add(builder.toString());
         }
         return Joiner.on(System.lineSeparator()).join(categoryHelps);
+    }
+
+    private static String firstName(Command command) {
+        return Splitter.on(' ').split(command.name()).iterator().next();
     }
 
     private static String tab(int size) {

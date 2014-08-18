@@ -1,8 +1,8 @@
 package store.client.command;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
+import static java.util.Collections.emptyList;
 import java.util.List;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
@@ -47,17 +47,25 @@ public final class CommandParser implements Completer {
             return;
         }
         String firstArg = firstArg(argList);
-        Optional<Command> commandOpt = CommandProvider.command(firstArg);
-        if (!commandOpt.isPresent()) {
+        List<Command> commands = CommandProvider.commands(firstArg);
+        if (commands.isEmpty()) {
             display.println(CommandProvider.help());
             return;
         }
-        Command command = commandOpt.get();
         List<String> params = params(argList);
-        if (!command.isValid(params)) {
-            display.println(command.usage() + System.lineSeparator());
-            return;
+        for (Command command : commands) {
+            if (command.isValid(params)) {
+                execute(command, params);
+                return;
+            }
         }
+        // If there is no matching command, print all usages.
+        for (Command command : commands) {
+            display.println(command.usage() + System.lineSeparator());
+        }
+    }
+
+    private void execute(Command command, List<String> params) {
         try {
             session.printHttpDialog(true);
             command.execute(display, session, config, params);
@@ -93,9 +101,15 @@ public final class CommandParser implements Completer {
 
     private List<String> completions(List<String> argList) {
         String firstArg = firstArg(argList);
-        Optional<Command> commandOpt = CommandProvider.command(firstArg);
-        if (commandOpt.isPresent() && argList.size() > 1) {
-            return commandOpt.get().complete(session, params(argList));
+        List<Command> commands = CommandProvider.commands(firstArg);
+        if (!commands.isEmpty() && argList.size() > 1) {
+            for (Command command : commands) {
+                List<String> completions = command.complete(session, params(argList));
+                if (!completions.isEmpty()) {
+                    return completions;
+                }
+            }
+            return emptyList();
         }
         List<String> completions = new ArrayList<>();
         for (Command command : CommandProvider.commands()) {

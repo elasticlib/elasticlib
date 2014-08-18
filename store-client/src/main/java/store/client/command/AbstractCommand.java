@@ -1,5 +1,7 @@
 package store.client.command;
 
+import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -72,7 +74,7 @@ abstract class AbstractCommand implements Command {
 
     @Override
     public String name() {
-        return getClass().getSimpleName().toLowerCase();
+        return UPPER_CAMEL.to(LOWER_UNDERSCORE, getClass().getSimpleName()).replace('_', ' ');
     }
 
     @Override

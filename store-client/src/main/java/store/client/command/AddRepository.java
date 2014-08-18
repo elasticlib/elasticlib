@@ -1,18 +1,16 @@
 package store.client.command;
 
 import java.nio.file.Paths;
-import static java.util.Arrays.asList;
 import java.util.List;
-import static store.client.command.AbstractCommand.REPOSITORY;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 import store.client.util.Directories;
 
-class Add extends AbstractCommand {
+class AddRepository extends AbstractCommand {
 
-    Add() {
-        super(Category.SERVER, REPOSITORY, asList(Type.PATH));
+    AddRepository() {
+        super(Category.SERVER, Type.PATH);
     }
 
     @Override

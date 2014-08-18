@@ -132,6 +132,9 @@ public class NodesService {
         } catch (SocketException e) {
             LOG.warn("Failed to find publish hosts", e);
         }
+        if (hosts.isEmpty()) {
+            return singletonList("localhost");
+        }
         sort(hosts);
         return hosts;
     }

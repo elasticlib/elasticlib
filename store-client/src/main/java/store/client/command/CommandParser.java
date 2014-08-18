@@ -4,6 +4,8 @@ import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import static java.util.Collections.emptyList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
 import store.client.config.ClientConfig;
@@ -111,13 +113,13 @@ public final class CommandParser implements Completer {
             }
             return emptyList();
         }
-        List<String> completions = new ArrayList<>();
+        Set<String> completions = new TreeSet<>();
         for (Command command : CommandProvider.commands()) {
             if (command.name().startsWith(firstArg)) {
-                completions.add(command.name());
+                completions.add(Splitter.on(' ').split(command.name()).iterator().next());
             }
         }
-        return completions;
+        return new ArrayList<>(completions);
     }
 
     private static String firstArg(List<String> argList) {

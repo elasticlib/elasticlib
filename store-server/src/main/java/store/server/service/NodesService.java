@@ -139,9 +139,9 @@ public class NodesService {
     private List<URI> uris(List<String> hosts) {
         return transform(hosts, new Function<String, URI>() {
             @Override
-            public URI apply(String input) {
+            public URI apply(String host) {
                 return UriBuilder.fromUri("http:/")
-                        .host(input)
+                        .host(host)
                         .port(config.getInt(ServerConfig.NODE_PORT))
                         .path(config.getString(ServerConfig.NODE_CONTEXT))
                         .build();

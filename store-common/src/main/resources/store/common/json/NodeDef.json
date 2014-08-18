@@ -8,11 +8,11 @@
         "guid": {
             "type": "guid"
         },
-        "host": {
+        "uri": {
             "type": "string",
             "optional": true
         },
-        "hosts": {
+        "uris": {
             "type": "array",
             "optional": true,
             "items": {

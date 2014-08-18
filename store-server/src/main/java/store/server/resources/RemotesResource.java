@@ -1,6 +1,7 @@
 package store.server.resources;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -31,8 +32,8 @@ import store.server.service.NodesService;
 @Path("remotes")
 public class RemotesResource {
 
-    private static final String HOST = "host";
-    private static final String HOSTS = "hosts";
+    private static final String URI = "uri";
+    private static final String URIS = "uris";
 
     @Inject
     private NodesService nodesService;
@@ -41,9 +42,9 @@ public class RemotesResource {
      * Create a new remote node.
      * <p>
      * Input:<br>
-     * - hosts (String array): Publish hosts of the remote node.<br>
+     * - uris (String array): base URIs of the remote node.<br>
      * or<br>
-     * - host (String): same, but with a single host
+     * - uri (String): same, but with a single URI
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -61,20 +62,29 @@ public class RemotesResource {
     }
 
     private static List<URI> parseAddRemoteRequest(JsonObject json) {
-        if (hasStringValue(json, HOST)) {
-            return singletonList(URI.create(json.getString(HOST)));
+        if (hasStringValue(json, URI)) {
+            return singletonList(asUri(json.getString(URI)));
         }
-        if (hasArrayValue(json, HOSTS)) {
+        if (hasArrayValue(json, URIS)) {
             List<URI> list = new ArrayList<>();
-            for (JsonValue value : json.getJsonArray(HOSTS)) {
+            for (JsonValue value : json.getJsonArray(URIS)) {
                 if (value.getValueType() != ValueType.STRING) {
                     throw newInvalidJsonException();
                 }
-                list.add(URI.create(((JsonString) value).getString()));
+                list.add(asUri(((JsonString) value).getString()));
             }
             return list;
         }
         throw newInvalidJsonException();
+    }
+
+    private static URI asUri(String value) {
+        try {
+            return new URI(value);
+
+        } catch (URISyntaxException e) {
+            throw new BadRequestException(e);
+        }
     }
 
     private static BadRequestException newInvalidJsonException() {

@@ -233,7 +233,7 @@ public class HttpClient implements Closeable {
      */
     public void addRemote(URI uri) {
         JsonObject body = createObjectBuilder()
-                .add("host", uri.toString())
+                .add("uri", uri.toString())
                 .build();
 
         ensureSuccess(resource.path(REMOTES)

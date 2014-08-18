@@ -5,6 +5,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
+import java.util.Collections;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -150,13 +151,17 @@ public final class TestData {
                                                   REPOSITORY_DEFS.get(1)));
 
         NODE_DEFS.add(new NodeDef("alpha",
-                                  primaryId,
+                                  new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
                                   singletonList(URI.create("http://192.168.0.1:8080"))));
 
         NODE_DEFS.add(new NodeDef("beta",
-                                  secondaryId,
+                                  new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
                                   asList(URI.create("http://192.168.0.2:8080"),
                                          URI.create("http://31.34.134.14:8080"))));
+
+        NODE_DEFS.add(new NodeDef("gamma",
+                                  new Guid("39819150ee99549a8c0a59782169bb3b"),
+                                  Collections.<URI>emptyList()));
     }
 
     private TestData() {

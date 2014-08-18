@@ -3,6 +3,7 @@ package store.common;
 import static com.google.common.base.Objects.toStringHelper;
 import java.net.URI;
 import java.util.ArrayList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.Map;
@@ -18,23 +19,23 @@ public class NodeDef implements Mappable {
 
     private static final String NAME = "name";
     private static final String GUID = "guid";
-    private static final String HOSTS = "hosts";
-    private static final String HOST = "host";
+    private static final String URIS = "uris";
+    private static final String URI = "uri";
     private final String name;
     private final Guid guid;
-    private final List<URI> hosts;
+    private final List<URI> uris;
 
     /**
      * Constructor.
      *
      * @param name Node name.
      * @param guid Node GUID.
-     * @param hosts Node hosts.
+     * @param uris Node URI(s).
      */
-    public NodeDef(String name, Guid guid, List<URI> hosts) {
+    public NodeDef(String name, Guid guid, List<URI> uris) {
         this.name = requireNonNull(name);
         this.guid = requireNonNull(guid);
-        this.hosts = requireNonNull(hosts);
+        this.uris = requireNonNull(uris);
     }
 
     /**
@@ -52,12 +53,10 @@ public class NodeDef implements Mappable {
     }
 
     /**
-     * Provides the publish hosts of this node, ie the public addresses of this node.
-     *
-     * @return The publish addresses of this node.
+     * @return The base-URI(s) of this node.
      */
-    public List<URI> getHosts() {
-        return hosts;
+    public List<URI> getUris() {
+        return uris;
     }
 
     @Override
@@ -66,15 +65,15 @@ public class NodeDef implements Mappable {
                 .put(NAME, name)
                 .put(GUID, guid);
 
-        if (hosts.size() == 1) {
-            builder.put(HOST, hosts.get(0).toString());
+        if (uris.size() == 1) {
+            builder.put(URI, uris.get(0).toString());
 
-        } else {
+        } else if (!uris.isEmpty()) {
             List<Value> values = new ArrayList<>();
-            for (URI host : hosts) {
+            for (URI host : uris) {
                 values.add(Value.of(host.toString()));
             }
-            builder.put(HOSTS, values);
+            builder.put(URIS, values);
         }
         return builder.build();
     }
@@ -92,21 +91,28 @@ public class NodeDef implements Mappable {
     }
 
     private static List<URI> hosts(Map<String, Value> values) {
-        if (values.containsKey(HOST)) {
-            return singletonList(URI.create(values.get(HOST).asString()));
+        if (values.containsKey(URI)) {
+            return singletonList(asUri(values.get(URI)));
 
-        } else {
+        } else if (values.containsKey(URIS)) {
             List<URI> hosts = new ArrayList<>();
-            for (Value value : values.get(HOSTS).asList()) {
-                hosts.add(URI.create(value.asString()));
+            for (Value value : values.get(URIS).asList()) {
+                hosts.add(asUri(value));
             }
             return hosts;
+
+        } else {
+            return emptyList();
         }
+    }
+
+    private static URI asUri(Value value) {
+        return java.net.URI.create(value.asString());
     }
 
     @Override
     public int hashCode() {
-        return hash(name, guid, hosts);
+        return hash(name, guid, uris);
     }
 
     @Override
@@ -118,7 +124,7 @@ public class NodeDef implements Mappable {
         return new EqualsBuilder()
                 .append(name, other.name)
                 .append(guid, other.guid)
-                .append(hosts, other.hosts)
+                .append(uris, other.uris)
                 .build();
     }
 
@@ -127,7 +133,7 @@ public class NodeDef implements Mappable {
         return toStringHelper(this)
                 .add(NAME, name)
                 .add(GUID, guid)
-                .add(HOSTS, hosts)
+                .add(URIS, uris)
                 .toString();
     }
 }

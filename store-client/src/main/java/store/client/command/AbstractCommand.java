@@ -36,6 +36,7 @@ import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
 import store.common.IndexEntry;
+import store.common.NodeDef;
 import store.common.RepositoryInfo;
 
 abstract class AbstractCommand implements Command {
@@ -167,6 +168,9 @@ abstract class AbstractCommand implements Command {
                 case URL:
                     return completeUrl(param);
 
+                case NODE:
+                    return completeNode(session, param);
+
                 case REPOSITORY:
                     return completeRepository(session, param);
 
@@ -203,6 +207,15 @@ abstract class AbstractCommand implements Command {
         }));
         Collections.sort(list);
         return list;
+    }
+
+    private static List<String> completeNode(Session session, String param) {
+        Collection<String> nodes = new TreeSet<>();
+        for (NodeDef def : session.getClient().listRemotes()) {
+            nodes.add(def.getName());
+            nodes.add(def.getGuid().asHexadecimalString());
+        }
+        return filterStartWith(nodes, param);
     }
 
     private static List<String> completeRepository(Session session, String param) {

@@ -6,6 +6,7 @@ package store.client.command;
 enum Category {
 
     CONNECTION,
+    REMOTES,
     SERVER,
     REPOSITORY,
     CONFIG,

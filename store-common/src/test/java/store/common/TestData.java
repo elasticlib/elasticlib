@@ -1,6 +1,7 @@
 package store.common;
 
 import com.google.common.collect.ImmutableMap;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
@@ -150,11 +151,12 @@ public final class TestData {
 
         NODE_DEFS.add(new NodeDef("alpha",
                                   primaryId,
-                                  singletonList("192.168.0.1:8080")));
+                                  singletonList(URI.create("http://192.168.0.1:8080"))));
 
         NODE_DEFS.add(new NodeDef("beta",
                                   secondaryId,
-                                  asList("192.168.0.2:8080", "31.34.134.14:8080")));
+                                  asList(URI.create("http://192.168.0.2:8080"),
+                                         URI.create("http://31.34.134.14:8080"))));
     }
 
     private TestData() {

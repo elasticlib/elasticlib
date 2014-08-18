@@ -1,5 +1,6 @@
 package store.server.resources;
 
+import java.net.URI;
 import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -59,17 +60,17 @@ public class RemotesResource {
         return Response.ok().build();
     }
 
-    private static List<String> parseAddRemoteRequest(JsonObject json) {
+    private static List<URI> parseAddRemoteRequest(JsonObject json) {
         if (hasStringValue(json, HOST)) {
-            return singletonList(json.getString(HOST));
+            return singletonList(URI.create(json.getString(HOST)));
         }
         if (hasArrayValue(json, HOSTS)) {
-            List<String> list = new ArrayList<>();
+            List<URI> list = new ArrayList<>();
             for (JsonValue value : json.getJsonArray(HOSTS)) {
                 if (value.getValueType() != ValueType.STRING) {
                     throw newInvalidJsonException();
                 }
-                list.add(((JsonString) value).getString());
+                list.add(URI.create(((JsonString) value).getString()));
             }
             return list;
         }

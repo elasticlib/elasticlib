@@ -7,6 +7,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.size;
 import java.nio.file.Path;
@@ -228,11 +229,11 @@ public class HttpClient implements Closeable {
     /**
      * Add a remote node to the node this client is currently connected to.
      *
-     * @param host Remote node address
+     * @param uri Remote node URI
      */
-    public void addRemote(String host) {
+    public void addRemote(URI uri) {
         JsonObject body = createObjectBuilder()
-                .add("host", host)
+                .add("host", uri.toString())
                 .build();
 
         ensureSuccess(resource.path(REMOTES)

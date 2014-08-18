@@ -8,8 +8,10 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import static java.net.NetworkInterface.getNetworkInterfaces;
 import java.net.SocketException;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.sort;
 import java.util.Enumeration;
 import java.util.List;
@@ -77,7 +79,7 @@ public class NodesService {
      * @return The definition of the local node.
      */
     public NodeDef getNodeDef() {
-        return new NodeDef(name(), guid, urls(hosts()));
+        return new NodeDef(name(), guid, uris(hosts()));
     }
 
     private String name() {
@@ -103,7 +105,7 @@ public class NodesService {
         }
         Value configVal = config.get(ServerConfig.NODE_PUBLISH_HOSTS);
         if (configVal.type() == ValueType.STRING) {
-            return java.util.Collections.singletonList(configVal.asString());
+            return singletonList(configVal.asString());
         }
         return transform(configVal.asList(), new Function<Value, String>() {
             @Override
@@ -134,16 +136,15 @@ public class NodesService {
         return hosts;
     }
 
-    private List<String> urls(List<String> hosts) {
-        return transform(hosts, new Function<String, String>() {
+    private List<URI> uris(List<String> hosts) {
+        return transform(hosts, new Function<String, URI>() {
             @Override
-            public String apply(String input) {
+            public URI apply(String input) {
                 return UriBuilder.fromUri("http:/")
                         .host(input)
                         .port(config.getInt(ServerConfig.NODE_PORT))
                         .path(config.getString(ServerConfig.NODE_CONTEXT))
-                        .build()
-                        .toString();
+                        .build();
             }
         });
     }
@@ -152,10 +153,10 @@ public class NodesService {
      * Add a remote node to tracked ones. Fails if remote node is not reachable, is already tracked or its GUID is the
      * same as the local one.
      *
-     * @param addresses Publish addresses of the remote node.
+     * @param uris URIs of the remote node.
      */
-    public void addRemote(List<String> addresses) {
-        for (String address : addresses) {
+    public void addRemote(List<URI> uris) {
+        for (URI address : uris) {
             final Optional<NodeDef> def = downloadDef(address);
             if (def.isPresent()) {
                 if (def.get().getGuid().equals(guid)) {
@@ -173,11 +174,11 @@ public class NodesService {
         throw new UnreachableNodeException();
     }
 
-    private static Optional<NodeDef> downloadDef(String address) {
+    private static Optional<NodeDef> downloadDef(URI uri) {
         ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class);
         Client client = ClientBuilder.newClient(clientConfig);
         try {
-            JsonObject json = client.target(address)
+            JsonObject json = client.target(uri)
                     .request()
                     .get()
                     .readEntity(JsonObject.class);

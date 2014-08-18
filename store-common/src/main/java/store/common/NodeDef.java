@@ -1,6 +1,7 @@
 package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
+import java.net.URI;
 import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class NodeDef implements Mappable {
     private static final String HOST = "host";
     private final String name;
     private final Guid guid;
-    private final List<String> hosts;
+    private final List<URI> hosts;
 
     /**
      * Constructor.
@@ -30,7 +31,7 @@ public class NodeDef implements Mappable {
      * @param guid Node GUID.
      * @param hosts Node hosts.
      */
-    public NodeDef(String name, Guid guid, List<String> hosts) {
+    public NodeDef(String name, Guid guid, List<URI> hosts) {
         this.name = requireNonNull(name);
         this.guid = requireNonNull(guid);
         this.hosts = requireNonNull(hosts);
@@ -55,7 +56,7 @@ public class NodeDef implements Mappable {
      *
      * @return The publish addresses of this node.
      */
-    public List<String> getHosts() {
+    public List<URI> getHosts() {
         return hosts;
     }
 
@@ -66,12 +67,12 @@ public class NodeDef implements Mappable {
                 .put(GUID, guid);
 
         if (hosts.size() == 1) {
-            builder.put(HOST, hosts.get(0));
+            builder.put(HOST, hosts.get(0).toString());
 
         } else {
             List<Value> values = new ArrayList<>();
-            for (String host : hosts) {
-                values.add(Value.of(host));
+            for (URI host : hosts) {
+                values.add(Value.of(host.toString()));
             }
             builder.put(HOSTS, values);
         }
@@ -90,14 +91,14 @@ public class NodeDef implements Mappable {
                            hosts(map));
     }
 
-    private static List<String> hosts(Map<String, Value> values) {
+    private static List<URI> hosts(Map<String, Value> values) {
         if (values.containsKey(HOST)) {
-            return singletonList(values.get(HOST).asString());
+            return singletonList(URI.create(values.get(HOST).asString()));
 
         } else {
-            List<String> hosts = new ArrayList<>();
+            List<URI> hosts = new ArrayList<>();
             for (Value value : values.get(HOSTS).asList()) {
-                hosts.add(value.asString());
+                hosts.add(URI.create(value.asString()));
             }
             return hosts;
         }

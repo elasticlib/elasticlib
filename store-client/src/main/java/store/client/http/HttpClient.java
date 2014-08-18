@@ -23,6 +23,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import static javax.ws.rs.client.Entity.entity;
+import static javax.ws.rs.client.Entity.json;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -49,6 +50,7 @@ import store.common.IndexEntry;
 import static store.common.IoUtil.copy;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
+import store.common.NodeDef;
 import store.common.Operation;
 import store.common.ReplicationInfo;
 import store.common.RepositoryInfo;
@@ -75,6 +77,7 @@ public class HttpClient implements Closeable {
     private static final String REMOVE = "remove";
     private static final String START = "start";
     private static final String STOP = "stop";
+    private static final String REMOTES = "remotes";
     private static final String REPOSITORIES = "repositories";
     private static final String REPLICATIONS = "replications";
     private static final String SOURCE = "source";
@@ -92,6 +95,7 @@ public class HttpClient implements Closeable {
     private static final String SORT = "sort";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
+
     private final Display display;
     private final ClientConfig config;
     private final Client client;
@@ -199,6 +203,56 @@ public class HttpClient implements Closeable {
     }
 
     /**
+     * Provides the definition of the node this client is currently connected to.
+     *
+     * @return A node definition.
+     */
+    public NodeDef getNode() {
+        Response response = resource.request().get();
+        return read(response, NodeDef.class);
+    }
+
+    /**
+     * Lists remote nodes definitions.
+     *
+     * @return A list of node definitions.
+     */
+    public List<NodeDef> listRemotes() {
+        Response response = resource.path(REMOTES)
+                .request()
+                .get();
+
+        return readAll(response, NodeDef.class);
+    }
+
+    /**
+     * Add a remote node to the node this client is currently connected to.
+     *
+     * @param host Remote node address
+     */
+    public void addRemote(String host) {
+        JsonObject body = createObjectBuilder()
+                .add("host", host)
+                .build();
+
+        ensureSuccess(resource.path(REMOTES)
+                .request()
+                .post(json(body)));
+    }
+
+    /**
+     * Remove a remote node from the node this client is currently connected to.
+     *
+     * @param node Remote node name or encoded GUID.
+     */
+    public void removeRemote(String node) {
+        ensureSuccess(resource.path("remotes/{node}")
+                .resolveTemplate("node", node)
+                .request()
+                .delete());
+    }
+
+    /**
      * Creates a new repository at supplied path.
      *
      * @param path Repository path (from server perspective).
@@ -261,7 +315,7 @@ public class HttpClient implements Closeable {
     private void postRepository(JsonObject json) {
         ensureSuccess(resource.path(REPOSITORIES)
                 .request()
-                .post(Entity.json(json)));
+                .post(json(json)));
     }
 
     /**

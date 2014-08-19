@@ -28,7 +28,7 @@ public final class ServerConfig {
      */
     public static final String NODE_PUBLISH_HOSTS = "node.publishHosts";
     /**
-     * Node TCP port. Default to 8080.
+     * Node TCP port. Default to 9400.
      */
     public static final String NODE_PORT = "node.port";
     /**
@@ -62,7 +62,7 @@ public final class ServerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
     private static final Config DEFAULT = new Config()
             .set(NODE_BIND_HOST, "0.0.0.0")
-            .set(NODE_PORT, 80)
+            .set(NODE_PORT, 9400)
             .set(NODE_CONTEXT, "/")
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_PERIOD, "10 seconds")

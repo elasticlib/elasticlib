@@ -14,6 +14,8 @@ import store.common.hash.Hash;
  */
 public final class ClientUtil {
 
+    private static final String HTTP_SCHEME = "http://";
+
     private ClientUtil() {
     }
 
@@ -24,7 +26,7 @@ public final class ClientUtil {
      * @return Parsed hash.
      */
     public static Hash parseHash(String arg) {
-        if (!arg.matches("[a-zA-Z0-9]{40}")) {
+        if (!Hash.isValid(arg)) {
             throw new RequestFailedException("Invalid hash");
         }
         return new Hash(arg);
@@ -37,6 +39,9 @@ public final class ClientUtil {
      * @return Parsed URI.
      */
     public static URI parseUri(String arg) {
+        if (!arg.startsWith(HTTP_SCHEME)) {
+            arg = HTTP_SCHEME + arg;
+        }
         try {
             return new URI(arg);
 

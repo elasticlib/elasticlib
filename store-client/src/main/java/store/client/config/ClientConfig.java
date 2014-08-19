@@ -3,10 +3,12 @@ package store.client.config;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import store.client.exception.RequestFailedException;
+import static store.client.util.ClientUtil.parseUri;
 import static store.client.util.Directories.home;
 import store.common.config.Config;
 import store.common.config.ConfigException;
@@ -80,10 +82,14 @@ public class ClientConfig {
     }
 
     /**
-     * @return Default server to connect to. May be empty.
+     * @return Default node to connect to. May be null.
      */
-    public String getDefaultConnection() {
-        return extended.getString(DEFAULT_CONNECTION);
+    public URI getDefaultConnection() {
+        String value = extended.getString(DEFAULT_CONNECTION);
+        if (value.isEmpty()) {
+            return null;
+        }
+        return parseUri(value);
     }
 
     /**
@@ -144,6 +150,9 @@ public class ClientConfig {
     public void set(String key, String value) {
         switch (key) {
             case DEFAULT_CONNECTION:
+                config = config.set(key, parseUri(value).toString());
+                break;
+
             case DEFAULT_REPOSITORY:
             case EDITOR:
                 config = config.set(key, value);

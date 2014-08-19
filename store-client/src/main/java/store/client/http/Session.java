@@ -2,6 +2,7 @@ package store.client.http;
 
 import com.google.common.base.Joiner;
 import java.io.Closeable;
+import java.net.URI;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
@@ -13,7 +14,6 @@ public class Session implements Closeable {
 
     private static final String NOT_CONNECTED = "Not connected";
     private static final String NO_REPOSITORY = "No repository selected";
-    private static final String HTTP_SCHEME = "http://";
     private final Display display;
     private final ClientConfig config;
     private HttpClient restClient;
@@ -36,7 +36,7 @@ public class Session implements Closeable {
      * Initialisation. Set default connection, if any.
      */
     public void init() {
-        if (config.getDefaultConnection().isEmpty()) {
+        if (config.getDefaultConnection() == null) {
             return;
         }
         connect(config.getDefaultConnection());
@@ -47,21 +47,16 @@ public class Session implements Closeable {
     }
 
     /**
-     * Connects to server at supplied URL. If URL contains a path fragment, it is interpreted as a repository name.
+     * Connects to node at supplied URI.
      *
-     * @param url Server URL.
+     * @param uri Node URI.
      */
-    public void connect(String url) {
+    public void connect(URI uri) {
         close();
-        url = url.trim();
-        if (url.startsWith(HTTP_SCHEME)) {
-            url = url.substring(HTTP_SCHEME.length());
-        }
-        server = url;
-        restClient = new HttpClient(HTTP_SCHEME + server, display, config);
+        restClient = new HttpClient(uri, display, config);
         restClient.printHttpDialog(true);
         try {
-            restClient.testConnection();
+            server = restClient.getNode().getName();
             display.setPrompt(server);
 
         } finally {

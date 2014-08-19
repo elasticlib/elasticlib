@@ -42,7 +42,7 @@ import store.common.RepositoryInfo;
 
 abstract class AbstractCommand implements Command {
 
-    private static final List<String> URLS = Arrays.asList("127.0.0.1", "localhost");
+    private static final List<String> URIS = Arrays.asList("127.0.0.1", "localhost");
     private static final String USAGE = "Usage:";
     static final String OK = "ok" + System.lineSeparator();
     static final String REPOSITORY = "repository";
@@ -175,8 +175,8 @@ abstract class AbstractCommand implements Command {
                 case KEY:
                     return completeConfigKey(param);
 
-                case URL:
-                    return completeUrl(param);
+                case URI:
+                    return completeUri(param);
 
                 case NODE:
                     return completeNode(session, param);
@@ -208,8 +208,8 @@ abstract class AbstractCommand implements Command {
         return filterStartWith(ClientConfig.listKeys(), param.toLowerCase());
     }
 
-    private static List<String> completeUrl(final String param) {
-        List<String> list = newArrayList(Iterables.filter(URLS, new Predicate<String>() {
+    private static List<String> completeUri(final String param) {
+        List<String> list = newArrayList(Iterables.filter(URIS, new Predicate<String>() {
             @Override
             public boolean apply(String input) {
                 return input.startsWith(param.toLowerCase());

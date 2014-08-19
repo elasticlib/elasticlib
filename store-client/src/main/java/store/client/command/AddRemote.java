@@ -10,7 +10,7 @@ import static store.client.util.ClientUtil.parseUri;
 class AddRemote extends AbstractCommand {
 
     AddRemote() {
-        super(Category.REMOTES, Type.URL);
+        super(Category.REMOTES, Type.URI);
     }
 
     @Override

@@ -14,9 +14,9 @@ enum Type {
      */
     VALUE,
     /**
-     * A network URL.
+     * A node URI.
      */
-    URL,
+    URI,
     /**
      * A file-system path.
      */

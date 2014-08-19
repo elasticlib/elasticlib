@@ -96,7 +96,6 @@ public class HttpClient implements Closeable {
     private static final String SORT = "sort";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
-
     private final Display display;
     private final ClientConfig config;
     private final Client client;
@@ -106,11 +105,11 @@ public class HttpClient implements Closeable {
     /**
      * Constructor.
      *
-     * @param url Server url.
+     * @param uri Node URI.
      * @param display Display to use.
      * @param config Config to use.
      */
-    public HttpClient(String url, Display display, ClientConfig config) {
+    public HttpClient(URI uri, Display display, ClientConfig config) {
         this.display = display;
         this.config = config;
         printingFilter = new PrintingFilter(display, config);
@@ -127,7 +126,7 @@ public class HttpClient implements Closeable {
                 .register(printingFilter);
 
         client = ClientBuilder.newClient(clientConfig);
-        resource = client.target(url);
+        resource = client.target(uri);
     }
 
     /**
@@ -182,13 +181,6 @@ public class HttpClient implements Closeable {
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }
         return response;
-    }
-
-    /**
-     * Tests connection to current server. Fails if connection is down.
-     */
-    void testConnection() {
-        ensureSuccess(resource.request().get());
     }
 
     /**

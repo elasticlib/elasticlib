@@ -1,8 +1,9 @@
 package store.client.command;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
-import static java.util.Collections.emptyList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -48,23 +49,18 @@ public final class CommandParser implements Completer {
         if (argList.isEmpty()) {
             return;
         }
-        String firstArg = firstArg(argList);
-        List<Command> commands = CommandProvider.commands(firstArg);
-        if (commands.isEmpty()) {
+        Optional<Command> commandOpt = CommandProvider.command(argList);
+        if (!commandOpt.isPresent()) {
             display.println(CommandProvider.help());
             return;
         }
-        List<String> params = params(argList);
-        for (Command command : commands) {
-            if (command.isValid(params)) {
-                execute(command, params);
-                return;
-            }
-        }
-        // If there is no matching command, print all usages.
-        for (Command command : commands) {
+        Command command = commandOpt.get();
+        List<String> params = command.params(argList);
+        if (!command.isValid(params)) {
             display.println(command.usage() + System.lineSeparator());
+            return;
         }
+        execute(command, params);
     }
 
     private void execute(Command command, List<String> params) {
@@ -102,31 +98,37 @@ public final class CommandParser implements Completer {
     }
 
     private List<String> completions(List<String> argList) {
-        String firstArg = firstArg(argList);
-        List<Command> commands = CommandProvider.commands(firstArg);
-        if (!commands.isEmpty() && argList.size() > 1) {
-            for (Command command : commands) {
-                List<String> completions = command.complete(session, params(argList));
-                if (!completions.isEmpty()) {
-                    return completions;
-                }
+        Optional<Command> commandOpt = CommandProvider.command(argList);
+        if (commandOpt.isPresent()) {
+            Command command = commandOpt.get();
+            List<String> params = command.params(argList);
+            if (!params.isEmpty()) {
+                return command.complete(session, params);
             }
-            return emptyList();
         }
         Set<String> completions = new TreeSet<>();
         for (Command command : CommandProvider.commands()) {
-            if (command.name().startsWith(firstArg)) {
-                completions.add(Splitter.on(' ').split(command.name()).iterator().next());
+            String completion = completion(command, argList);
+            if (completion != null) {
+                completions.add(completion);
             }
         }
         return new ArrayList<>(completions);
     }
 
-    private static String firstArg(List<String> argList) {
-        return argList.get(0).toLowerCase();
-    }
-
-    private static List<String> params(List<String> argList) {
-        return argList.subList(1, argList.size());
+    private static String completion(Command command, List<String> argList) {
+        Iterator<String> parts = Splitter.on(' ').split(command.name()).iterator();
+        Iterator<String> args = argList.iterator();
+        while (parts.hasNext()) {
+            String part = parts.next();
+            String arg = args.hasNext() ? args.next() : "";
+            if (!part.startsWith(arg)) {
+                return null;
+            }
+            if (!args.hasNext()) {
+                return part;
+            }
+        }
+        return null;
     }
 }

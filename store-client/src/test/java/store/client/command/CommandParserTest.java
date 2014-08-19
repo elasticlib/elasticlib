@@ -59,7 +59,11 @@ public class CommandParserTest {
             {"drop repository p", asList("primary"), 16},
             {"drop repository primary", asList("primary"), 16},
             {"drop repository primary ", asList(), 24},
-            {"create repli", asList("replication"), 7}
+            {"create repli", asList("replication"), 7},
+            {"ad", asList("add"), 0},
+            {"add ", asList("remote", "repository"), 4},
+            {"add re", asList("remote", "repository"), 4},
+            {"add rem", asList("remote"), 4}
         };
     }
 

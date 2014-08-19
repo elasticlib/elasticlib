@@ -16,6 +16,37 @@ public class CommandTest {
      *
      * @return Test data.
      */
+    @DataProvider(name = "paramsDataProvider")
+    public Object[][] paramsDataProvider() {
+        return new Object[][]{
+            {new Quit(), asList(), asList()},
+            {new Quit(), asList("quit", "test"), asList("test")},
+            {new Quit(), asList("quit", "one", "two"), asList("one", "two")},
+            {new Get(), asList("get", "9d0a68c215bfcdc69b2a"), asList("9d0a68c215bfcdc69b2a")},
+            {new Drop(), asList("drop", "repository", "primary"), asList("repository", "primary")},
+            {new AddRemote(), asList("add"), asList()},
+            {new AddRemote(), asList("add", "remote"), asList()},
+            {new AddRemote(), asList("add", "remote", "http://localhost:9400"), asList("http://localhost:9400")}
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param command Command to test.
+     * @param argList Command line arguments list to test.
+     * @param params Expected parameters list.
+     */
+    @Test(dataProvider = "paramsDataProvider")
+    void paramsTest(Command command, List<String> argList, List<String> params) {
+        assertThat(command.params(argList)).as(command.name() + ", " + argList).isEqualTo(params);
+    }
+
+    /**
+     * Data provider.
+     *
+     * @return Test data.
+     */
     @DataProvider(name = "isValidDataProvider")
     public Object[][] isValidDataProvider() {
         return new Object[][]{

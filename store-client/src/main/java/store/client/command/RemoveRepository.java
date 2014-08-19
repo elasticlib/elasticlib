@@ -19,7 +19,7 @@ class RemoveRepository extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().removeRepository(params.get(1));
+        session.getClient().removeRepository(params.get(0));
         session.leave(params.get(1));
         display.println(OK);
     }

@@ -1,7 +1,7 @@
 package store.client.command;
 
+import com.google.common.base.Optional;
 import java.util.List;
-import static store.client.command.CommandProvider.commands;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
@@ -24,21 +24,18 @@ class Help extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        if (params.size() != 1 || commands(first(params)).isEmpty()) {
+        Optional<Command> commandOpt = CommandProvider.command(params);
+        if (!commandOpt.isPresent()) {
             display.println(CommandProvider.help());
             return;
         }
-        for (Command command : commands(first(params))) {
-            display.println(new StringBuilder()
-                    .append(command.description())
-                    .append(System.lineSeparator())
-                    .append(command.usage())
-                    .append(System.lineSeparator())
-                    .toString());
-        }
-    }
+        Command command = commandOpt.get();
+        display.println(new StringBuilder()
+                .append(command.description())
+                .append(System.lineSeparator())
+                .append(command.usage())
+                .append(System.lineSeparator())
+                .toString());
 
-    private static String first(List<String> params) {
-        return params.get(0).toLowerCase();
     }
 }

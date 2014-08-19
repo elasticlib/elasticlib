@@ -34,6 +34,14 @@ class OsCommand implements Command {
     }
 
     @Override
+    public List<String> params(List<String> argList) {
+        if (argList.isEmpty()) {
+            return argList;
+        }
+        return argList.subList(1, argList.size());
+    }
+
+    @Override
     public List<String> complete(Session session, List<String> params) {
         return Collections.emptyList();
     }

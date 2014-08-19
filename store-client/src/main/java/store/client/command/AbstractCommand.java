@@ -23,7 +23,6 @@ import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +102,15 @@ abstract class AbstractCommand implements Command {
         return builder.toString();
     }
 
+    @Override
+    public List<String> params(List<String> argList) {
+        int parts = Splitter.on(' ').splitToList(name()).size();
+        if (argList.size() < parts) {
+            return emptyList();
+        }
+        return argList.subList(parts, argList.size());
+    }
+
     private static String format(Entry<String, List<Type>> entry) {
         StringBuilder builder = new StringBuilder();
         if (!entry.getKey().isEmpty()) {
@@ -112,6 +120,24 @@ abstract class AbstractCommand implements Command {
             builder.append(type.name()).append(" ");
         }
         return builder.deleteCharAt(builder.length() - 1).toString();
+    }
+
+    @Override
+    public boolean isValid(List<String> params) {
+        if (syntax.isEmpty()) {
+            return params.isEmpty();
+        }
+        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
+            return params.size() == getOnlyElement(syntax.values()).size();
+        }
+        if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
+            return false;
+        }
+        return params.size() == syntax.get(keyword(params)).size() + 1;
+    }
+
+    private static String keyword(List<String> params) {
+        return params.get(0).toLowerCase();
     }
 
     @Override
@@ -135,53 +161,11 @@ abstract class AbstractCommand implements Command {
         return complete(session, params.subList(1, params.size()), syntax.get(keyword));
     }
 
-    @Override
-    public boolean isValid(List<String> params) {
-        if (syntax.isEmpty()) {
-            return params.isEmpty();
-        }
-        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
-            List<String> commandParts = commandParts();
-            return params.size() == getOnlyElement(syntax.values()).size() + commandParts.size() - 1 &&
-                    matches(params, commandParts);
-
-        }
-        if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
-            return false;
-        }
-        return params.size() == syntax.get(keyword(params)).size() + 1;
-    }
-
-    private static boolean matches(List<String> params, List<String> commandParts) {
-        for (int i = 1; i < commandParts.size(); i++) {
-            if (!params.get(i - 1).equals(commandParts.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private List<String> commandParts() {
-        return Splitter.on(' ').splitToList(name());
-    }
-
-    private static String keyword(List<String> params) {
-        return params.get(0).toLowerCase();
-    }
-
     private List<String> complete(Session session, List<String> params, List<Type> types) {
-        List<String> commandParts = commandParts();
-        if (params.size() > types.size() + commandParts.size() - 1) {
+        if (params.size() > types.size()) {
             return emptyList();
         }
         int lastIndex = params.size() - 1;
-        if (commandParts.size() > 1 && lastIndex < commandParts.size() - 1) {
-            if (commandParts.get(lastIndex + 1).startsWith(params.get(lastIndex))) {
-                return singletonList(commandParts.get(1));
-            } else {
-                return emptyList();
-            }
-        }
         return complete(session, params.get(lastIndex), types.get(lastIndex));
     }
 

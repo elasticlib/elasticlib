@@ -32,6 +32,14 @@ interface Command {
     String usage();
 
     /**
+     * Extract parameters list from supplied command line argument list (ie truncate command name).
+     *
+     * @param argList Command line argument list.
+     * @return Corresponding parameters list.
+     */
+    List<String> params(List<String> argList);
+
+    /**
      * Complete the supplied parameters list.
      *
      * @param session Current Session.

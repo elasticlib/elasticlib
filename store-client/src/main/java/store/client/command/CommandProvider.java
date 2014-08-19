@@ -1,11 +1,13 @@
 package store.client.command;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import static java.util.Collections.sort;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 final class CommandProvider {
@@ -59,14 +61,27 @@ final class CommandProvider {
     private CommandProvider() {
     }
 
-    public static List<Command> commands(String name) {
-        List<Command> list = new ArrayList<>();
+    public static Optional<Command> command(List<String> argList) {
+        if (argList.isEmpty()) {
+            return Optional.absent();
+        }
         for (Command command : COMMANDS) {
-            if (firstName(command).equals(name)) {
-                list.add(command);
+            if (matches(command, argList)) {
+                return Optional.of(command);
             }
         }
-        return list;
+        return Optional.absent();
+    }
+
+    private static boolean matches(Command command, List<String> argList) {
+        Iterator<String> parts = Splitter.on(' ').split(command.name()).iterator();
+        Iterator<String> args = argList.iterator();
+        while (parts.hasNext()) {
+            if (!args.hasNext() || !parts.next().equals(args.next())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static List<Command> commands() {

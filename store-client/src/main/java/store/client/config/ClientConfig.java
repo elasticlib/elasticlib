@@ -19,7 +19,7 @@ import store.common.config.ConfigReadWrite;
  */
 public class ClientConfig {
 
-    private static final String DEFAULT_CONNECTION = "default.connection";
+    private static final String DEFAULT_NODE = "default.node";
     private static final String DEFAULT_REPOSITORY = "default.repository";
     private static final String DISPLAY_FORMAT = "display.format";
     private static final String DISPLAY_COLOR = "display.color";
@@ -29,7 +29,7 @@ public class ClientConfig {
     private static final String EDITOR = "editor";
     private static final Path CONFIG_PATH = home().resolve("config.yml");
     private static final Config DEFAULT = new Config()
-            .set(DEFAULT_CONNECTION, "")
+            .set(DEFAULT_NODE, "")
             .set(DEFAULT_REPOSITORY, "")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
             .set(DISPLAY_COLOR, true)
@@ -82,10 +82,10 @@ public class ClientConfig {
     }
 
     /**
-     * @return Default node to connect to. May be null.
+     * @return The URI of the default node to connect to. May be null.
      */
-    public URI getDefaultConnection() {
-        String value = extended.getString(DEFAULT_CONNECTION);
+    public URI getDefaultNode() {
+        String value = extended.getString(DEFAULT_NODE);
         if (value.isEmpty()) {
             return null;
         }
@@ -149,7 +149,7 @@ public class ClientConfig {
      */
     public void set(String key, String value) {
         switch (key) {
-            case DEFAULT_CONNECTION:
+            case DEFAULT_NODE:
                 config = config.set(key, parseUri(value).toString());
                 break;
 

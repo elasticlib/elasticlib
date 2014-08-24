@@ -36,10 +36,10 @@ public class Session implements Closeable {
      * Initialisation. Set default connection, if any.
      */
     public void init() {
-        if (config.getDefaultConnection() == null) {
+        if (config.getDefaultNode() == null) {
             return;
         }
-        connect(config.getDefaultConnection());
+        connect(config.getDefaultNode());
         if (config.getDefaultRepository().isEmpty()) {
             return;
         }

@@ -1,6 +1,7 @@
 package store.client.command;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Splitter;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
@@ -24,7 +25,7 @@ class Help extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        Optional<Command> commandOpt = CommandProvider.command(params);
+        Optional<Command> commandOpt = command(params);
         if (!commandOpt.isPresent()) {
             display.println(CommandProvider.help());
             return;
@@ -36,6 +37,16 @@ class Help extends AbstractCommand {
                 .append(command.usage())
                 .append(System.lineSeparator())
                 .toString());
+    }
 
+    private Optional<Command> command(List<String> params) {
+        if (params.isEmpty()) {
+            return Optional.absent();
+        }
+        return CommandProvider.command(Splitter
+                .on(' ')
+                .omitEmptyStrings()
+                .trimResults()
+                .splitToList(params.get(0)));
     }
 }

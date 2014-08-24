@@ -98,7 +98,7 @@ final class CommandProvider {
             for (Command command : COMMANDS) {
                 if (command.category() == category) {
                     builder.append(tab(2))
-                            .append(fixedSize(firstName(command), 15))
+                            .append(fixedSize(command.name(), 24))
                             .append(command.description())
                             .append(System.lineSeparator());
                 }
@@ -106,10 +106,6 @@ final class CommandProvider {
             categoryHelps.add(builder.toString());
         }
         return Joiner.on(System.lineSeparator()).join(categoryHelps);
-    }
-
-    private static String firstName(Command command) {
-        return Splitter.on(' ').split(command.name()).iterator().next();
     }
 
     private static String tab(int size) {

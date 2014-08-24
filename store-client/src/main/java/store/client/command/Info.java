@@ -16,7 +16,7 @@ class Info extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info about an existing content in current repository";
+        return "Print info about an existing content";
     }
 
     @Override

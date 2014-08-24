@@ -35,7 +35,7 @@ class Update extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Update info about an existing content in current repository";
+        return "Update info about an existing content";
     }
 
     @Override

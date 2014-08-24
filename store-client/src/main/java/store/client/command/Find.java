@@ -16,7 +16,7 @@ class Find extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Search contents in current repository";
+        return "Search contents";
     }
 
     @Override

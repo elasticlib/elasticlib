@@ -16,7 +16,7 @@ class Tree extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info revisions tree of an existing content in current repository";
+        return "Print info revisions tree of an existing content";
     }
 
     @Override

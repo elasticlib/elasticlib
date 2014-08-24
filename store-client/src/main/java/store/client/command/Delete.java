@@ -16,7 +16,7 @@ class Delete extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Delete an existing content from current repository";
+        return "Delete an existing content";
     }
 
     @Override

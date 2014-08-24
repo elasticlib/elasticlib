@@ -15,7 +15,7 @@ class Get extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Get an existing content from current repository";
+        return "Get an existing content";
     }
 
     @Override

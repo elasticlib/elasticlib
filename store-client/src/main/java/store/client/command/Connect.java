@@ -15,7 +15,7 @@ class Connect extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Connect to a server";
+        return "Connect to a node";
     }
 
     @Override

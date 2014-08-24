@@ -15,7 +15,7 @@ class AddRepository extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Add an existing repository to this server";
+        return "Add an existing repository";
     }
 
     @Override

@@ -16,7 +16,7 @@ class Head extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info head revisions of an existing content in current repository";
+        return "Print info head revisions of an existing content";
     }
 
     @Override

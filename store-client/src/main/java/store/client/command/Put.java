@@ -30,7 +30,7 @@ class Put extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Put a new content in current repository";
+        return "Put a new content";
     }
 
     @Override

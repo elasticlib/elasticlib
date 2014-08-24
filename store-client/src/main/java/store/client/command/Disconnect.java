@@ -13,7 +13,7 @@ class Disconnect extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Disconnect from current server";
+        return "Disconnect from current node";
     }
 
     @Override

@@ -21,6 +21,6 @@ class CreateRepository extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         session.getClient().createRepository(Directories.resolve(Paths.get(params.get(0))));
-        display.println(OK);
+        display.printOk();
     }
 }

@@ -19,6 +19,6 @@ class DropReplication extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         session.getClient().deleteReplication(params.get(0), params.get(1));
-        display.println(OK);
+        display.printOk();
     }
 }

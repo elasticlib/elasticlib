@@ -20,6 +20,6 @@ class DropRepository extends AbstractCommand {
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         session.getClient().deleteRepository(params.get(0));
         session.leave(params.get(0));
-        display.println(OK);
+        display.printOk();
     }
 }

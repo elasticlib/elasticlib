@@ -61,6 +61,13 @@ public class Display {
     }
 
     /**
+     * Print "ok" and append a line-return.
+     */
+    public void printOk() {
+        println("ok");
+    }
+
+    /**
      * Print supplied exception.
      *
      * @param e Exception to print.

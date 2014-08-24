@@ -40,7 +40,6 @@ abstract class AbstractCommand implements Command {
 
     private static final List<String> URIS = Arrays.asList("127.0.0.1", "localhost");
     private static final String USAGE = "Usage:";
-    static final String OK = "ok" + System.lineSeparator();
     private final Category category;
     private final List<Type> syntax;
 

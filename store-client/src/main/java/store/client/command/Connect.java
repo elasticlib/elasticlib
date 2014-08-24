@@ -22,6 +22,6 @@ class Connect extends AbstractCommand {
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         URI uri = parseUri(params.get(0));
         session.connect(uri);
-        display.println(OK);
+        display.printOk();
     }
 }

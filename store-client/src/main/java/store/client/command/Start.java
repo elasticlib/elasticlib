@@ -19,6 +19,6 @@ class Start extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         session.getClient().startReplication(params.get(0), params.get(1));
-        display.println(OK);
+        display.printOk();
     }
 }

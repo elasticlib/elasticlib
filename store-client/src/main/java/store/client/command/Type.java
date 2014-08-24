@@ -45,4 +45,9 @@ enum Type {
      * A command name.
      */
     COMMAND;
+
+    @Override
+    public String toString() {
+        return name();
+    }
 }

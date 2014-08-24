@@ -6,10 +6,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 import java.io.IOException;
@@ -25,8 +23,6 @@ import java.util.Collections;
 import static java.util.Collections.emptyList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeSet;
 import javax.ws.rs.ProcessingException;
 import static store.client.command.CommandProvider.commands;
@@ -46,19 +42,11 @@ abstract class AbstractCommand implements Command {
     private static final String USAGE = "Usage:";
     static final String OK = "ok" + System.lineSeparator();
     private final Category category;
-    private final Map<String, List<Type>> syntax;
-
-    protected AbstractCommand(Category category) {
-        this(category, Collections.<String, List<Type>>emptyMap());
-    }
+    private final List<Type> syntax;
 
     protected AbstractCommand(Category category, Type... syntax) {
-        this(category, ImmutableMap.of("", asList(syntax)));
-    }
-
-    private AbstractCommand(Category category, Map<String, List<Type>> syntax) {
         this.category = category;
-        this.syntax = syntax;
+        this.syntax = asList(syntax);
     }
 
     @Override
@@ -77,16 +65,7 @@ abstract class AbstractCommand implements Command {
         if (syntax.isEmpty()) {
             return Joiner.on(" ").join(USAGE, name);
         }
-        StringBuilder builder = new StringBuilder();
-        Iterator<Entry<String, List<Type>>> it = syntax.entrySet().iterator();
-        Entry<String, List<Type>> entry = it.next();
-        builder.append(Joiner.on(" ").join(USAGE, name, format(entry)));
-        while (it.hasNext()) {
-            entry = it.next();
-            builder.append(System.lineSeparator())
-                    .append(Joiner.on(" ").join("      ", name, format(entry)));
-        }
-        return builder.toString();
+        return Joiner.on(" ").join(USAGE, name, Joiner.on(" ").join(syntax));
     }
 
     @Override
@@ -98,62 +77,18 @@ abstract class AbstractCommand implements Command {
         return argList.subList(parts, argList.size());
     }
 
-    private static String format(Entry<String, List<Type>> entry) {
-        StringBuilder builder = new StringBuilder();
-        if (!entry.getKey().isEmpty()) {
-            builder.append(entry.getKey()).append(" ");
-        }
-        for (Type type : entry.getValue()) {
-            builder.append(type.name()).append(" ");
-        }
-        return builder.deleteCharAt(builder.length() - 1).toString();
-    }
-
     @Override
     public boolean isValid(List<String> params) {
-        if (syntax.isEmpty()) {
-            return params.isEmpty();
-        }
-        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
-            return params.size() == getOnlyElement(syntax.values()).size();
-        }
-        if (params.isEmpty() || !syntax.containsKey(keyword(params))) {
-            return false;
-        }
-        return params.size() == syntax.get(keyword(params)).size() + 1;
-    }
-
-    private static String keyword(List<String> params) {
-        return params.get(0).toLowerCase();
+        return params.size() == syntax.size();
     }
 
     @Override
     public List<String> complete(Session session, List<String> params) {
-        if (syntax.isEmpty() || params.isEmpty()) {
-            return emptyList();
-        }
-        if (syntax.size() == 1 && getOnlyElement(syntax.keySet()).isEmpty()) {
-            return complete(session, params, getOnlyElement(syntax.values()));
-        }
-        return complete(session, keyword(params), params);
-    }
-
-    private List<String> complete(Session session, String keyword, List<String> params) {
-        if (params.size() == 1) {
-            return filterStartWith(syntax.keySet(), keyword);
-        }
-        if (!syntax.containsKey(keyword)) {
-            return emptyList();
-        }
-        return complete(session, params.subList(1, params.size()), syntax.get(keyword));
-    }
-
-    private List<String> complete(Session session, List<String> params, List<Type> types) {
-        if (params.size() > types.size()) {
+        if (params.isEmpty() || params.size() > syntax.size()) {
             return emptyList();
         }
         int lastIndex = params.size() - 1;
-        return complete(session, params.get(lastIndex), types.get(lastIndex));
+        return complete(session, params.get(lastIndex), syntax.get(lastIndex));
     }
 
     private static List<String> complete(Session session, String param, Type type) {

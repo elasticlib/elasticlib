@@ -19,22 +19,22 @@ public final class ServerConfig {
      */
     public static final String NODE_NAME = "node.name";
     /**
+     * URI(s) this node will publish itself in the cluster so that remote nodes may connect to it. Generated at runtime
+     * if missing.
+     */
+    public static final String NODE_URIS = "node.uris";
+    /**
      * Node bind host. Defaults to '0.0.0.0'.
      */
-    public static final String NODE_BIND_HOST = "node.bindHost";
-    /**
-     * Node publish host(s), ie the host(s) this node will publish itself in the cluster so that remote nodes may
-     * connect to it. Generated at runtime if missing.
-     */
-    public static final String NODE_PUBLISH_HOSTS = "node.publishHosts";
+    public static final String HTTP_HOST = "http.host";
     /**
      * Node TCP port. Default to 9400.
      */
-    public static final String NODE_PORT = "node.port";
+    public static final String HTTP_PORT = "http.port";
     /**
      * Node deployment context. Default to '/'.
      */
-    public static final String NODE_CONTEXT = "node.context";
+    public static final String HTTP_CONTEXT = "http.context";
     /**
      * Periodic tasks executor pool size. Default to 1.
      */
@@ -61,9 +61,9 @@ public final class ServerConfig {
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfig.class);
     private static final Config DEFAULT = new Config()
-            .set(NODE_BIND_HOST, "0.0.0.0")
-            .set(NODE_PORT, 9400)
-            .set(NODE_CONTEXT, "/")
+            .set(HTTP_HOST, "0.0.0.0")
+            .set(HTTP_PORT, 9400)
+            .set(HTTP_CONTEXT, "/")
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_PERIOD, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)

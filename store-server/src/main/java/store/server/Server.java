@@ -77,9 +77,9 @@ public class Server {
 
     private static URI host(Config config) {
         return UriBuilder.fromUri("http:/")
-                .host(config.getString(ServerConfig.NODE_BIND_HOST))
-                .port(config.getInt(ServerConfig.NODE_PORT))
-                .path(config.getString(ServerConfig.NODE_CONTEXT))
+                .host(config.getString(ServerConfig.HTTP_HOST))
+                .port(config.getInt(ServerConfig.HTTP_PORT))
+                .path(config.getString(ServerConfig.HTTP_CONTEXT))
                 .build();
     }
 

@@ -45,7 +45,6 @@ import store.server.storage.StorageManager;
 public class NodesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
-
     private final Config config;
     private final StorageManager storageManager;
     private final NodesDao nodesDao;
@@ -79,7 +78,7 @@ public class NodesService {
      * @return The definition of the local node.
      */
     public NodeDef getNodeDef() {
-        return new NodeDef(name(), guid, uris(hosts()));
+        return new NodeDef(name(), guid, uris());
     }
 
     private String name() {
@@ -99,23 +98,23 @@ public class NodesService {
         }
     }
 
-    private List<String> hosts() {
-        if (!config.containsKey(ServerConfig.NODE_PUBLISH_HOSTS)) {
-            return defaultPublishHosts();
+    private List<URI> uris() {
+        if (!config.containsKey(ServerConfig.NODE_URIS)) {
+            return uris(defaultHosts());
         }
-        Value configVal = config.get(ServerConfig.NODE_PUBLISH_HOSTS);
+        Value configVal = config.get(ServerConfig.NODE_URIS);
         if (configVal.type() == ValueType.STRING) {
-            return singletonList(configVal.asString());
+            return singletonList(URI.create(configVal.asString()));
         }
-        return transform(configVal.asList(), new Function<Value, String>() {
+        return transform(configVal.asList(), new Function<Value, URI>() {
             @Override
-            public String apply(Value val) {
-                return val.asString();
+            public URI apply(Value val) {
+                return URI.create(val.asString());
             }
         });
     }
 
-    private List<String> defaultPublishHosts() {
+    private List<String> defaultHosts() {
         List<String> hosts = new ArrayList<>();
         try {
             Enumeration<NetworkInterface> interfaces = getNetworkInterfaces();
@@ -145,8 +144,8 @@ public class NodesService {
             public URI apply(String host) {
                 return UriBuilder.fromUri("http:/")
                         .host(host)
-                        .port(config.getInt(ServerConfig.NODE_PORT))
-                        .path(config.getString(ServerConfig.NODE_CONTEXT))
+                        .port(config.getInt(ServerConfig.HTTP_PORT))
+                        .path(config.getString(ServerConfig.HTTP_CONTEXT))
                         .build();
             }
         });

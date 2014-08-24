@@ -11,7 +11,7 @@ class History extends AbstractCommand {
     private static final int CHUNK_SIZE = 20;
 
     History() {
-        super(Category.REPOSITORY);
+        super(Category.CONTENTS);
     }
 
     @Override

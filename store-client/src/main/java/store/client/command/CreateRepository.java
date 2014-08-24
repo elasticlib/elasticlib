@@ -1,25 +1,26 @@
 package store.client.command;
 
+import java.nio.file.Paths;
 import java.util.List;
-import static store.client.command.AbstractCommand.OK;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
+import store.client.util.Directories;
 
-class Close extends AbstractCommand {
+class CreateRepository extends AbstractCommand {
 
-    Close() {
-        super(Category.REPOSITORIES, Type.REPOSITORY);
+    CreateRepository() {
+        super(Category.REPOSITORIES, Type.PATH);
     }
 
     @Override
     public String description() {
-        return "Close an existing repository";
+        return "Create a new repository";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().closeRepository(params.get(0));
+        session.getClient().createRepository(Directories.resolve(Paths.get(params.get(0))));
         display.println(OK);
     }
 }

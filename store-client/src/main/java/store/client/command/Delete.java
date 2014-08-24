@@ -11,7 +11,7 @@ import store.common.hash.Hash;
 class Delete extends AbstractCommand {
 
     Delete() {
-        super(Category.REPOSITORY, Type.HASH);
+        super(Category.CONTENTS, Type.HASH);
     }
 
     @Override

@@ -8,7 +8,7 @@ import store.client.http.Session;
 class Open extends AbstractCommand {
 
     Open() {
-        super(Category.SERVER, Type.REPOSITORY);
+        super(Category.REPOSITORIES, Type.REPOSITORY);
     }
 
     @Override

@@ -8,7 +8,7 @@ import store.client.http.Session;
 class Start extends AbstractCommand {
 
     Start() {
-        super(Category.SERVER, Type.REPOSITORY, Type.REPOSITORY);
+        super(Category.REPLICATIONS, Type.REPOSITORY, Type.REPOSITORY);
     }
 
     @Override

@@ -25,7 +25,7 @@ import store.common.value.Value;
 class Put extends AbstractCommand {
 
     Put() {
-        super(Category.REPOSITORY, Type.PATH);
+        super(Category.CONTENTS, Type.PATH);
     }
 
     @Override

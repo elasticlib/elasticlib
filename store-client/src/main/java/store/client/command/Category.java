@@ -5,10 +5,11 @@ package store.client.command;
  */
 enum Category {
 
-    CONNECTION,
+    NODE,
     REMOTES,
-    SERVER,
-    REPOSITORY,
+    REPOSITORIES,
+    REPLICATIONS,
+    CONTENTS,
     CONFIG,
     MISC,;
 

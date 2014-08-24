@@ -10,7 +10,7 @@ import static store.client.util.ClientUtil.parseUri;
 class Connect extends AbstractCommand {
 
     Connect() {
-        super(Category.CONNECTION, Type.URI);
+        super(Category.NODE, Type.URI);
     }
 
     @Override

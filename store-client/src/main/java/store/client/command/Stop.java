@@ -9,7 +9,7 @@ import store.client.http.Session;
 class Stop extends AbstractCommand {
 
     Stop() {
-        super(Category.SERVER, Type.REPOSITORY, Type.REPOSITORY);
+        super(Category.REPLICATIONS, Type.REPOSITORY, Type.REPOSITORY);
     }
 
     @Override

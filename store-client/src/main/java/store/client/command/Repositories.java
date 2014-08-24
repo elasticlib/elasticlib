@@ -9,7 +9,7 @@ import store.common.RepositoryInfo;
 class Repositories extends AbstractCommand {
 
     Repositories() {
-        super(Category.SERVER);
+        super(Category.REPOSITORIES);
     }
 
     @Override

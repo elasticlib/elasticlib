@@ -30,7 +30,7 @@ import store.common.yaml.YamlWriting;
 class Update extends AbstractCommand {
 
     Update() {
-        super(Category.REPOSITORY, Type.HASH);
+        super(Category.CONTENTS, Type.HASH);
     }
 
     @Override

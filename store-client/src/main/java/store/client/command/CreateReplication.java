@@ -1,25 +1,24 @@
 package store.client.command;
 
 import java.util.List;
-import static store.client.command.AbstractCommand.OK;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 
-class Close extends AbstractCommand {
+class CreateReplication extends AbstractCommand {
 
-    Close() {
-        super(Category.REPOSITORIES, Type.REPOSITORY);
+    CreateReplication() {
+        super(Category.REPLICATIONS, Type.REPOSITORY, Type.REPOSITORY);
     }
 
     @Override
     public String description() {
-        return "Close an existing repository";
+        return "Create a new replication";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().closeRepository(params.get(0));
+        session.getClient().createReplication(params.get(0), params.get(1));
         display.println(OK);
     }
 }

@@ -9,7 +9,7 @@ import store.client.http.Session;
 class Disconnect extends AbstractCommand {
 
     Disconnect() {
-        super(Category.CONNECTION);
+        super(Category.NODE);
     }
 
     @Override

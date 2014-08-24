@@ -9,7 +9,7 @@ import store.client.http.Session;
 class Use extends AbstractCommand {
 
     Use() {
-        super(Category.CONNECTION, Type.REPOSITORY);
+        super(Category.NODE, Type.REPOSITORY);
     }
 
     @Override

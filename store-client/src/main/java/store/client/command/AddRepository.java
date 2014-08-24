@@ -10,7 +10,7 @@ import store.client.util.Directories;
 class AddRepository extends AbstractCommand {
 
     AddRepository() {
-        super(Category.SERVER, Type.PATH);
+        super(Category.REPOSITORIES, Type.PATH);
     }
 
     @Override

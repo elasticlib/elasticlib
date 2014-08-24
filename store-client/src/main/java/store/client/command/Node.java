@@ -8,7 +8,7 @@ import store.client.http.Session;
 class Node extends AbstractCommand {
 
     Node() {
-        super(Category.CONNECTION);
+        super(Category.NODE);
     }
 
     @Override

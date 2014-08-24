@@ -45,8 +45,6 @@ abstract class AbstractCommand implements Command {
     private static final List<String> URIS = Arrays.asList("127.0.0.1", "localhost");
     private static final String USAGE = "Usage:";
     static final String OK = "ok" + System.lineSeparator();
-    static final String REPOSITORY = "repository";
-    static final String REPLICATION = "replication";
     private final Category category;
     private final Map<String, List<Type>> syntax;
 
@@ -56,17 +54,6 @@ abstract class AbstractCommand implements Command {
 
     protected AbstractCommand(Category category, Type... syntax) {
         this(category, ImmutableMap.of("", asList(syntax)));
-    }
-
-    protected AbstractCommand(Category category, String key, List<Type> syntax) {
-        this(category, ImmutableMap.of(key, syntax));
-    }
-
-    protected AbstractCommand(Category category,
-                              String key1, List<Type> syntax1,
-                              String key2, List<Type> syntax2) {
-
-        this(category, ImmutableMap.of(key1, syntax1, key2, syntax2));
     }
 
     private AbstractCommand(Category category, Map<String, List<Type>> syntax) {

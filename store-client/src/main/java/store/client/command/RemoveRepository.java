@@ -9,12 +9,12 @@ import store.client.http.Session;
 class RemoveRepository extends AbstractCommand {
 
     RemoveRepository() {
-        super(Category.SERVER, Type.REPOSITORY);
+        super(Category.REPOSITORIES, Type.REPOSITORY);
     }
 
     @Override
     public String description() {
-        return "Remove an existing repository from this server, without deleting it";
+        return "Remove an existing repository from current node, without deleting it";
     }
 
     @Override

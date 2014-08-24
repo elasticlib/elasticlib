@@ -9,7 +9,7 @@ import store.common.ReplicationInfo;
 class Replications extends AbstractCommand {
 
     Replications() {
-        super(Category.SERVER);
+        super(Category.REPLICATIONS);
     }
 
     @Override

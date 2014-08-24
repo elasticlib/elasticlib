@@ -11,7 +11,7 @@ import store.common.hash.Hash;
 class Head extends AbstractCommand {
 
     Head() {
-        super(Category.REPOSITORY, Type.HASH);
+        super(Category.CONTENTS, Type.HASH);
     }
 
     @Override

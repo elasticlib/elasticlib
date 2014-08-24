@@ -9,7 +9,7 @@ import store.client.http.Session;
 class Leave extends AbstractCommand {
 
     Leave() {
-        super(Category.CONNECTION);
+        super(Category.NODE);
     }
 
     @Override

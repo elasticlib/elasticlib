@@ -11,7 +11,7 @@ import store.common.hash.Hash;
 class Tree extends AbstractCommand {
 
     Tree() {
-        super(Category.REPOSITORY, Type.HASH);
+        super(Category.CONTENTS, Type.HASH);
     }
 
     @Override

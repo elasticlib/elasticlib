@@ -23,7 +23,6 @@ public class CommandTest {
             {new Quit(), asList("quit", "test"), asList("test")},
             {new Quit(), asList("quit", "one", "two"), asList("one", "two")},
             {new Get(), asList("get", "9d0a68c215bfcdc69b2a"), asList("9d0a68c215bfcdc69b2a")},
-            {new Drop(), asList("drop", "repository", "primary"), asList("repository", "primary")},
             {new AddRemote(), asList("add"), asList()},
             {new AddRemote(), asList("add", "remote"), asList()},
             {new AddRemote(), asList("add", "remote", "http://localhost:9400"), asList("http://localhost:9400")}
@@ -52,7 +51,7 @@ public class CommandTest {
         return new Object[][]{
             {new Quit(), asList()},
             {new Get(), asList("9d0a68c215bfcdc69b2a0f4852ef5d7aa6aa047e")},
-            {new Drop(), asList("repository", "primary")}
+            {new DropRepository(), asList("primary")}
         };
     }
 
@@ -77,7 +76,7 @@ public class CommandTest {
         return new Object[][]{
             {new Quit(), asList("repository")},
             {new Get(), asList("repository", "9d0a68c215bfcdc69b2a0f4852ef5d7aa6aa047e")},
-            {new Drop(), asList("primary")}
+            {new DropRepository(), asList("repository", "primary")}
         };
     }
 

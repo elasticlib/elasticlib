@@ -25,6 +25,7 @@ public final class CommandParser implements Completer {
     private final Display display;
     private final Session session;
     private final ClientConfig config;
+    private final ParametersCompleter parametersCompleter;
 
     /**
      * Constructor.
@@ -37,6 +38,7 @@ public final class CommandParser implements Completer {
         this.display = display;
         this.session = session;
         this.config = config;
+        parametersCompleter = new ParametersCompleter(session);
     }
 
     /**
@@ -103,7 +105,7 @@ public final class CommandParser implements Completer {
             Command command = commandOpt.get();
             List<String> params = command.params(argList);
             if (!params.isEmpty()) {
-                return command.complete(session, params);
+                return command.complete(parametersCompleter, params);
             }
         }
         Set<String> completions = new TreeSet<>();

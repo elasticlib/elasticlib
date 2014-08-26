@@ -42,11 +42,11 @@ interface Command {
     /**
      * Complete the supplied parameters list.
      *
-     * @param session Current Session.
+     * @param completer Parameters completer.
      * @param params Parameters (Exclude command name).
      * @return A list of candidates for completion.
      */
-    List<String> complete(Session session, List<String> params);
+    List<String> complete(ParametersCompleter completer, List<String> params);
 
     /**
      * Validate the supplied parameters list.

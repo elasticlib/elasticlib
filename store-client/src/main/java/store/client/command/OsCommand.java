@@ -42,7 +42,7 @@ class OsCommand implements Command {
     }
 
     @Override
-    public List<String> complete(Session session, List<String> params) {
+    public List<String> complete(ParametersCompleter completer, List<String> params) {
         return Collections.emptyList();
     }
 

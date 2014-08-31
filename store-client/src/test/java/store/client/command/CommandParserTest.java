@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.client.config.ClientConfig;
+import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
 import store.client.http.HttpClient;
 import store.client.http.Session;
@@ -25,8 +26,8 @@ public class CommandParserTest {
     private final CommandParser parser;
 
     {
-        HttpClient client = mock(HttpClient.class);
-        when(client.listRepositoryInfos())
+        HttpClient httpClient = mock(HttpClient.class);
+        when(httpClient.listRepositoryInfos())
                 .thenReturn(asList(new RepositoryInfo(new RepositoryDef("primary",
                                                                         new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
                                                                         Paths.get("/repo/primary"))),
@@ -35,10 +36,11 @@ public class CommandParserTest {
                                                                         Paths.get("/repo/secondary")))));
         Display display = mock(Display.class);
         Session session = mock(Session.class);
+        DiscoveryClient discoveryClient = mock(DiscoveryClient.class);
         ClientConfig config = mock(ClientConfig.class);
-        when(session.getClient()).thenReturn(client);
+        when(session.getClient()).thenReturn(httpClient);
 
-        parser = new CommandParser(display, session, config);
+        parser = new CommandParser(display, session, config, discoveryClient);
     }
 
     /**

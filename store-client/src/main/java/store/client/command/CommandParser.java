@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
 import store.client.config.ClientConfig;
+import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
@@ -33,12 +34,13 @@ public final class CommandParser implements Completer {
      * @param display Display to inject.
      * @param session Session to inject.
      * @param config Config to inject.
+     * @param discoveryClient Discovery client to inject.
      */
-    public CommandParser(Display display, Session session, ClientConfig config) {
+    public CommandParser(Display display, Session session, ClientConfig config, DiscoveryClient discoveryClient) {
         this.display = display;
         this.session = session;
         this.config = config;
-        parametersCompleter = new ParametersCompleter(session);
+        parametersCompleter = new ParametersCompleter(session, discoveryClient);
     }
 
     /**

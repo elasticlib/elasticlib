@@ -1,10 +1,12 @@
 package store.client;
 
 import java.io.IOException;
+import static java.lang.Runtime.getRuntime;
 import javax.ws.rs.ProcessingException;
 import jline.console.ConsoleReader;
 import store.client.command.CommandParser;
 import store.client.config.ClientConfig;
+import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
 import store.client.exception.QuitException;
 import store.client.exception.RequestFailedException;
@@ -12,7 +14,7 @@ import store.client.http.Session;
 import store.client.util.EscapingCompletionHandler;
 
 /**
- * Client starting.
+ * Client app.
  */
 public final class App {
 
@@ -29,6 +31,16 @@ public final class App {
         ConsoleReader consoleReader = new ConsoleReader();
         ClientConfig config = new ClientConfig();
         Display display = new Display(consoleReader, config);
+        final DiscoveryClient discoveryClient = new DiscoveryClient(config);
+
+        getRuntime().addShutdownHook(new Thread("shutdown") {
+            @Override
+            public void run() {
+                // Do not shutdown the consoleReader here, it deadlocks otherwise.
+                discoveryClient.stop();
+            }
+        });
+
         try (Session session = new Session(display, config)) {
             try {
                 config.init();
@@ -38,7 +50,10 @@ public final class App {
             } catch (ProcessingException | RequestFailedException e) {
                 display.print(e);
             }
-            CommandParser parser = new CommandParser(display, session, config);
+
+            discoveryClient.start();
+
+            CommandParser parser = new CommandParser(display, session, config, discoveryClient);
             consoleReader.addCompleter(parser);
             consoleReader.setCompletionHandler(new EscapingCompletionHandler());
             consoleReader.setExpandEvents(false);

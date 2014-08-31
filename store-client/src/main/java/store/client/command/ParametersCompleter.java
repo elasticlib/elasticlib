@@ -3,17 +3,16 @@ package store.client.command;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
@@ -24,6 +23,7 @@ import javax.ws.rs.ProcessingException;
 import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.KEY;
 import store.client.config.ClientConfig;
+import store.client.discovery.DiscoveryClient;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.Directories;
@@ -37,16 +37,18 @@ import store.common.RepositoryInfo;
  */
 class ParametersCompleter {
 
-    private static final List<String> URIS = Arrays.asList("127.0.0.1", "localhost");
     private final Session session;
+    private final DiscoveryClient discoveryClient;
 
     /**
      * Constructor.
      *
      * @param session Session to inject.
+     * @param discoveryClient Discovery client to inject.
      */
-    public ParametersCompleter(Session session) {
+    public ParametersCompleter(Session session, DiscoveryClient discoveryClient) {
         this.session = session;
+        this.discoveryClient = discoveryClient;
     }
 
     /**
@@ -95,8 +97,8 @@ class ParametersCompleter {
         return filterStartWith(ClientConfig.listKeys(), param.toLowerCase());
     }
 
-    private static List<String> completeUri(final String param) {
-        List<String> list = newArrayList(Iterables.filter(URIS, new Predicate<String>() {
+    private List<String> completeUri(final String param) {
+        List<String> list = newArrayList(filter(uris(), new Predicate<String>() {
             @Override
             public boolean apply(String input) {
                 return input.startsWith(param.toLowerCase());
@@ -104,6 +106,16 @@ class ParametersCompleter {
         }));
         Collections.sort(list);
         return list;
+    }
+
+    private List<String> uris() {
+        List<String> uris = new ArrayList<>();
+        for (NodeDef def : discoveryClient.nodes()) {
+            for (URI uri : def.getUris()) {
+                uris.add(uri.toString());
+            }
+        }
+        return uris;
     }
 
     private List<String> completeNode(String param) {

@@ -3,16 +3,23 @@ package store.client.config;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import store.client.exception.RequestFailedException;
 import static store.client.util.ClientUtil.parseUri;
 import static store.client.util.Directories.home;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import store.common.config.ConfigReadWrite;
+import store.common.config.ConfigUtil;
+import static store.common.config.ConfigUtil.duration;
+import static store.common.config.ConfigUtil.unit;
 
 /**
  * Client config.
@@ -21,6 +28,11 @@ public class ClientConfig {
 
     private static final String DEFAULT_NODE = "default.node";
     private static final String DEFAULT_REPOSITORY = "default.repository";
+    private static final String DISCOVERY_ENABLED = "discovery.enabled";
+    private static final String DISCOVERY_GROUP = "discovery.group";
+    private static final String DISCOVERY_PORT = "discovery.port";
+    private static final String DISCOVERY_TTL = "discovery.ttl";
+    private static final String DISCOVERY_PING_INTERVAL = "discovery.pingInterval";
     private static final String DISPLAY_FORMAT = "display.format";
     private static final String DISPLAY_COLOR = "display.color";
     private static final String DISPLAY_PRETTY = "display.pretty";
@@ -31,6 +43,11 @@ public class ClientConfig {
     private static final Config DEFAULT = new Config()
             .set(DEFAULT_NODE, "")
             .set(DEFAULT_REPOSITORY, "")
+            .set(DISCOVERY_ENABLED, true)
+            .set(DISCOVERY_GROUP, "235.141.20.10")
+            .set(DISCOVERY_PORT, 23875)
+            .set(DISCOVERY_TTL, 3)
+            .set(DISCOVERY_PING_INTERVAL, "10 seconds")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
             .set(DISPLAY_COLOR, true)
             .set(DISPLAY_PRETTY, true)
@@ -100,6 +117,48 @@ public class ClientConfig {
     }
 
     /**
+     * @return Whether multicast discovery is enabled.
+     */
+    public boolean isDiscoveryEnabled() {
+        return extended.getBoolean(DISCOVERY_ENABLED);
+    }
+
+    /**
+     * @return Multicast discovery group address.
+     */
+    public String getDiscoveryGroup() {
+        return extended.getString(DISCOVERY_GROUP);
+    }
+
+    /**
+     * @return Multicast discovery port.
+     */
+    public int getDiscoveryPort() {
+        return extended.getInt(DISCOVERY_PORT);
+    }
+
+    /**
+     * @return Multicast discovery packets time to live.
+     */
+    public int getDiscoveryTimeToLive() {
+        return extended.getInt(DISCOVERY_TTL);
+    }
+
+    /**
+     * @return Multicast discovery ping interval duration.
+     */
+    public long getDiscoveryPingIntervalDuration() {
+        return duration(extended, DISCOVERY_PING_INTERVAL);
+    }
+
+    /**
+     * @return Multicast discovery ping interval time unit.
+     */
+    public TimeUnit getDiscoveryPingIntervalUnit() {
+        return unit(extended, DISCOVERY_PING_INTERVAL);
+    }
+
+    /**
      * @return Used format for entities rendering.
      */
     public Format getDisplayFormat() {
@@ -158,10 +217,27 @@ public class ClientConfig {
                 config = config.set(key, value);
                 break;
 
+            case DISCOVERY_GROUP:
+                config = config.set(key, checkGroup(value));
+                break;
+
+            case DISCOVERY_PORT:
+                config = config.set(key, checkInterval(value, 1, 65535));
+                break;
+
+            case DISCOVERY_TTL:
+                config = config.set(key, checkInterval(value, 0, 255));
+                break;
+
+            case DISCOVERY_PING_INTERVAL:
+                config = config.set(key, checkDuration(value));
+                break;
+
             case DISPLAY_FORMAT:
                 config = config.set(key, checkFormat(value));
                 break;
 
+            case DISCOVERY_ENABLED:
             case DISPLAY_COLOR:
             case DISPLAY_PRETTY:
             case DISPLAY_PROGRESS:
@@ -175,9 +251,43 @@ public class ClientConfig {
         save();
     }
 
+    private static String checkGroup(String value) {
+        try {
+            InetAddress address = Inet4Address.getByName(value);
+            if (!address.isMulticastAddress()) {
+                throw new RequestFailedException("Expected a valid multicast IP address");
+            }
+            return value;
+
+        } catch (UnknownHostException e) {
+            throw new RequestFailedException(e);
+        }
+    }
+
+    private static String checkInterval(String value, int min, int max) {
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed < min || parsed > max) {
+                String msg = String.format("Expected an integer value in the range %s to %s, inclusive", min, max);
+                throw new RequestFailedException(msg);
+            }
+            return value;
+
+        } catch (NumberFormatException e) {
+            throw new RequestFailedException(e);
+        }
+    }
+
+    private static String checkDuration(String value) {
+        if (!ConfigUtil.isValidDuration(value)) {
+            throw new RequestFailedException("Expected a valid duration");
+        }
+        return value;
+    }
+
     private static String checkFormat(String value) {
         if (!Format.isSupported(value)) {
-            throw new RequestFailedException(expectedValidFormat());
+            throw new RequestFailedException("Expected " + Joiner.on('|').join(Format.values()));
         }
         return value;
     }
@@ -195,7 +305,7 @@ public class ClientConfig {
                 return false;
 
             default:
-                throw new RequestFailedException(expectedBooleanValue());
+                throw new RequestFailedException("Expected a boolean value");
         }
     }
 
@@ -242,13 +352,5 @@ public class ClientConfig {
 
     private static String undefinedConfigKey(String key) {
         return "Undefined config key '" + key + "'";
-    }
-
-    private static String expectedBooleanValue() {
-        return "Expected a boolean value";
-    }
-
-    private static String expectedValidFormat() {
-        return "Expected " + Joiner.on('|').join(Format.values());
     }
 }

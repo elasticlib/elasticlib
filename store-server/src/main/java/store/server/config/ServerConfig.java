@@ -36,6 +36,25 @@ public final class ServerConfig {
      */
     public static final String HTTP_CONTEXT = "http.context";
     /**
+     * Whether multicast discovery is enabled. Default to true.
+     */
+    public static final String DISCOVERY_ENABLE = "discovery.enable";
+    /**
+     * Multicast discovery group address. Default to '235.141.20.10'. Valid multicast group addresses are in the range
+     * 224.0.0.0 to 239.255.255.255, inclusive (Class D IP addresses). The address 224.0.0.0 is reserved and should not
+     * be used.
+     */
+    public static final String DISCOVERY_GROUP = "discovery.group";
+    /**
+     * Multicast discovery port. Default to 23875.
+     */
+    public static final String DISCOVERY_PORT = "discovery.port";
+    /**
+     * Multicast discovery packets time to live. Default to 3. Must be in the range 0 to 255, inclusive. If TTL is set
+     * to 0, packets are only delivered locally.
+     */
+    public static final String DISCOVERY_TTL = "discovery.ttl";
+    /**
      * Periodic tasks executor pool size. Default to 1.
      */
     public static final String ASYNC_POOL_SIZE = "async.poolSize";
@@ -64,6 +83,10 @@ public final class ServerConfig {
             .set(HTTP_HOST, "0.0.0.0")
             .set(HTTP_PORT, 9400)
             .set(HTTP_CONTEXT, "/")
+            .set(DISCOVERY_ENABLE, true)
+            .set(DISCOVERY_GROUP, "235.141.20.10")
+            .set(DISCOVERY_PORT, 23875)
+            .set(DISCOVERY_TTL, 3)
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_PERIOD, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)

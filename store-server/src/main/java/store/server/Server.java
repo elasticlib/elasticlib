@@ -10,6 +10,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import store.server.config.ServerConfig;
@@ -22,10 +23,10 @@ import store.server.service.RepositoriesService;
  */
 public class Server {
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Server.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     private final ServicesContainer servicesContainer;
     private final HttpServer httpServer;
+    private final DiscoveryListener discoveryListener;
 
     /**
      * Constructor.
@@ -45,13 +46,16 @@ public class Server {
                 .register(bindings());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config), resourceConfig, false);
+        discoveryListener = new DiscoveryListener(config, servicesContainer.getNodesService());
 
-        getRuntime().addShutdownHook(new Thread() {
+        getRuntime().addShutdownHook(new Thread("shutdown") {
             @Override
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
+                discoveryListener.shutdown();
                 servicesContainer.shutdown();
+                LOG.info("Stopped");
             }
         });
     }
@@ -89,6 +93,8 @@ public class Server {
     public void start() {
         try {
             httpServer.start();
+            discoveryListener.start();
+            LOG.info("Started");
 
         } catch (IOException e) {
             throw new IllegalStateException(e);

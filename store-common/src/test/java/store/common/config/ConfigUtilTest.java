@@ -5,6 +5,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static store.common.config.ConfigUtil.duration;
+import static store.common.config.ConfigUtil.isValidDuration;
 import static store.common.config.ConfigUtil.unit;
 
 /**
@@ -13,6 +14,45 @@ import static store.common.config.ConfigUtil.unit;
 public class ConfigUtilTest {
 
     private static final String KEY = "test";
+
+    /**
+     * Data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "isValidDurationDataProvider")
+    public Object[][] isValidDurationDataProvider() {
+        return new Object[][]{
+            {"10    us", true},
+            {"10 us", true},
+            {"100   MicroSeconds", true},
+            {"5 MS", true},
+            {"5\tMILLISECONDS", true},
+            {"20 s", true},
+            {"30  seconds", true},
+            {"30 Min", true},
+            {"30  Minutes", true},
+            {"1 h", true},
+            {"1 hours", true},
+            {"10us", false},
+            {"MicroSeconds", false},
+            {"5", false},
+            {"ten seconds", false},
+            {"5 DAYS", false},
+            {"20 ko", false}
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param value Value.
+     * @param expected Expected result.
+     */
+    @Test(dataProvider = "isValidDurationDataProvider")
+    public void isValidDurationTest(String value, boolean expected) {
+        assertThat(isValidDuration(value)).as(value).isEqualTo(expected);
+    }
 
     /**
      * Data provider.
@@ -29,7 +69,7 @@ public class ConfigUtilTest {
             {"5\tMILLISECONDS", 5},
             {"20 s", 20},
             {"30  seconds", 30},
-            {"30 M", 30},
+            {"30 Min", 30},
             {"30  Minutes", 30},
             {"1 h", 1},
             {"1 hours", 1}
@@ -43,9 +83,9 @@ public class ConfigUtilTest {
      * @param expected Expected duration.
      */
     @Test(dataProvider = "durationDataProvider")
-    public static void durationTest(String value, long expected) {
+    public void durationTest(String value, long expected) {
         Config config = new Config().set(KEY, value);
-        assertThat(duration(config, KEY)).isEqualTo(expected);
+        assertThat(duration(config, KEY)).as(value).isEqualTo(expected);
     }
 
     /**
@@ -78,9 +118,9 @@ public class ConfigUtilTest {
      * @param expected Expected time unit.
      */
     @Test(dataProvider = "unitDataProvider")
-    public static void unitTest(String value, TimeUnit expected) {
+    public void unitTest(String value, TimeUnit expected) {
         Config config = new Config().set(KEY, value);
-        assertThat(unit(config, KEY)).isEqualTo(expected);
+        assertThat(unit(config, KEY)).as(value).isEqualTo(expected);
     }
 
     /**
@@ -104,7 +144,7 @@ public class ConfigUtilTest {
      * @param value Config value.
      */
     @Test(dataProvider = "malformedDurationDataProvider", expectedExceptions = ConfigException.class)
-    public static void malformedDurationTest(String value) {
+    public void malformedDurationTest(String value) {
         Config config = new Config().set(KEY, value);
         duration(config, KEY);
     }
@@ -129,7 +169,7 @@ public class ConfigUtilTest {
      * @param value Config value.
      */
     @Test(dataProvider = "malformedUnitDataProvider", expectedExceptions = ConfigException.class)
-    public static void malformedUnitTest(String value) {
+    public void malformedUnitTest(String value) {
         Config config = new Config().set(KEY, value);
         unit(config, KEY);
     }

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ConfigUtil {
 
+    private static final String NUMBER_REGEX = "^[0-9]+$";
     private static final Map<String, TimeUnit> UNIT_MAPPING = new HashMap<>();
 
     static {
@@ -40,6 +41,19 @@ public final class ConfigUtil {
     }
 
     /**
+     * Check whether supplied value represents a valid duration with its unit.
+     *
+     * @param value A string value.
+     * @return True If a duration and unit can be extracted from this value.
+     */
+    public static boolean isValidDuration(String value) {
+        List<String> parts = split(value);
+        return parts.size() == 2 &&
+                parts.get(0).matches(NUMBER_REGEX) &&
+                UNIT_MAPPING.containsKey(parts.get(1).toLowerCase());
+    }
+
+    /**
      * Extracts duration value from string config value.
      *
      * <tr><td>Config value</td><td>duration</td></tr>
@@ -52,7 +66,7 @@ public final class ConfigUtil {
      */
     public static long duration(Config config, String key) {
         List<String> parts = split(config.getString(key));
-        if (parts.size() != 2 || !parts.get(0).matches("^[0-9]+$")) {
+        if (parts.size() != 2 || !parts.get(0).matches(NUMBER_REGEX)) {
             throw newMalformedDurationException(key);
         }
         return Long.parseLong(parts.get(0));

@@ -13,13 +13,14 @@ import store.server.storage.Procedure;
 import store.server.storage.StorageManager;
 
 /**
- * Manages repository stats
+ * Manages repository stats.
  */
 class StatsManager {
 
     private static final String STATS = "stats";
     private final StorageManager storageManager;
     private final Database statsDb;
+    private final DatabaseEntry statsKey;
     private final AtomicReference<RepositoryStats> latestSnapshot;
 
     /**
@@ -30,6 +31,7 @@ class StatsManager {
     public StatsManager(StorageManager storageManager) {
         this.storageManager = storageManager;
         statsDb = storageManager.openDatabase(STATS);
+        statsKey = entry(STATS);
         latestSnapshot = new AtomicReference<>();
         storageManager.inTransaction(new Procedure() {
             @Override
@@ -40,9 +42,9 @@ class StatsManager {
     }
 
     private RepositoryStats loadPersistedStats() {
-        DatabaseEntry key = entry(STATS);
         DatabaseEntry data = new DatabaseEntry();
-        if (statsDb.get(storageManager.currentTransaction(), key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+        OperationStatus status = statsDb.get(storageManager.currentTransaction(), statsKey, data, LockMode.DEFAULT);
+        if (status == OperationStatus.SUCCESS) {
             return asMappable(data, RepositoryStats.class);
         }
         return new RepositoryStats(0, 0, 0, Collections.<String, Long>emptyMap());
@@ -67,7 +69,7 @@ class StatsManager {
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                statsDb.put(storageManager.currentTransaction(), entry(stats), entry(stats));
+                statsDb.put(storageManager.currentTransaction(), statsKey, entry(stats));
             }
         });
         latestSnapshot.set(stats);

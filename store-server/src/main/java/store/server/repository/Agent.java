@@ -189,6 +189,9 @@ public abstract class Agent {
 
             } else if (!chunk.isEmpty()) {
                 maxSeq = getLast(chunk).getSeq();
+
+            } else {
+                maxSeq = curSeq;
             }
             updateInfo(AgentState.RUNNING);
         }

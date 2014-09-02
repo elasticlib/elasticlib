@@ -251,12 +251,8 @@ public class RepositoryTest {
         async(new Runnable() {
             @Override
             public void run() {
-                RepositoryInfo info = repository(ALPHA).getInfo();
-
-                assertDone(info.getIndexingInfo());
-                assertDone(info.getStatsInfo());
-                assertThat(info.getStats()).isEqualTo(new RepositoryStats(1, 0, 0,
-                                                                          ImmutableMap.of(FILE_NAME.key(), 1L)));
+                assertUpToDate(repository(ALPHA).getInfo(),
+                               new RepositoryStats(1, 0, 0, ImmutableMap.of(FILE_NAME.key(), 1L)));
             }
         });
     }
@@ -280,23 +276,11 @@ public class RepositoryTest {
             @Override
             public void run() {
                 assertDeleted(repository(BETA), LOREM_IPSUM);
-            }
-        });
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertThat(repository(BETA).find("Lorem ipsum", 0, 10)).isEmpty();
-            }
-        });
-        async(new Runnable() {
-            @Override
-            public void run() {
-                RepositoryInfo info = repository(ALPHA).getInfo();
 
-                assertDone(info.getIndexingInfo());
-                assertDone(info.getStatsInfo());
-                assertThat(info.getStats()).isEqualTo(new RepositoryStats(1, 0, 1,
-                                                                          Collections.<String, Long>emptyMap()));
+                assertThat(repository(BETA).find("Lorem ipsum", 0, 10)).isEmpty();
+
+                assertUpToDate(repository(ALPHA).getInfo(),
+                               new RepositoryStats(1, 0, 1, Collections.<String, Long>emptyMap()));
             }
         });
     }
@@ -358,6 +342,14 @@ public class RepositoryTest {
         Repository alpha = repository(ALPHA);
         assertOpen(alpha, true);
         assertReplicationStarted(true);
+
+        async(new Runnable() {
+            @Override
+            public void run() {
+                assertUpToDate(repository(ALPHA).getInfo(),
+                               new RepositoryStats(1, 0, 1, Collections.<String, Long>emptyMap()));
+            }
+        });
     }
 
     /**
@@ -403,6 +395,12 @@ public class RepositoryTest {
     private static void assertDone(AgentInfo info) {
         assertThat(info.getState()).isEqualTo(AgentState.WAITING);
         assertThat(info.getCurSeq()).isEqualTo(info.getMaxSeq());
+    }
+
+    private static void assertUpToDate(RepositoryInfo info, RepositoryStats stats) {
+        assertDone(info.getIndexingInfo());
+        assertDone(info.getStatsInfo());
+        assertThat(info.getStats()).isEqualTo(stats);
     }
 
     private static void assertThrows(Class<? extends Throwable> clazz, Runnable runnable) {

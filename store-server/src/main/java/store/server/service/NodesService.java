@@ -168,6 +168,7 @@ public class NodesService {
         }
         final Optional<NodeDef> downloaded = downloadDef(def.getUris());
         if (downloaded.isPresent()) {
+            LOG.info("Saving remote node {}", downloaded.get().getName());
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
@@ -198,6 +199,7 @@ public class NodesService {
             if (def.get().getGuid().equals(guid)) {
                 throw new SelfTrackingException();
             }
+            LOG.info("Adding remote node {}", def.get().getName());
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
@@ -244,6 +246,7 @@ public class NodesService {
      * @param key Node name or encoded GUID.
      */
     public void removeRemote(final String key) {
+        LOG.info("Removing remote node {}", key);
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {

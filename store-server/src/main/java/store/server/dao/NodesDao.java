@@ -57,13 +57,7 @@ public class NodesDao {
      * @param def NodeDef to save.
      */
     public void saveNodeDef(NodeDef def) {
-        OperationStatus status = nodeDefs.put(storageManager.currentTransaction(),
-                                              entry(def.getGuid()),
-                                              entry(def));
-
-        if (status == OperationStatus.KEYEXIST) {
-            throw new NodeAlreadyTrackedException();
-        }
+        nodeDefs.put(storageManager.currentTransaction(), entry(def.getGuid()), entry(def));
     }
 
     /**

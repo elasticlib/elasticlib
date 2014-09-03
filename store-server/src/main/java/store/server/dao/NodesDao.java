@@ -23,7 +23,6 @@ import store.server.storage.StorageManager;
 public class NodesDao {
 
     private static final String NODES = "nodes";
-
     private final StorageManager storageManager;
     private final Database nodeDefs;
 
@@ -38,9 +37,39 @@ public class NodesDao {
     }
 
     /**
-     * Creates a new NodeDef. Fails if it already exists.
+     * Checks whether a NodeDef with supplied GUID is already stored.
      *
-     * @param def RepositoryDef to create.
+     * @param guid A node GUID.
+     * @return true if associated node definition is already stored.
+     */
+    public boolean containsNodeDef(Guid guid) {
+        OperationStatus status = nodeDefs.get(storageManager.currentTransaction(),
+                                              entry(guid),
+                                              new DatabaseEntry(),
+                                              LockMode.DEFAULT);
+
+        return status == OperationStatus.SUCCESS;
+    }
+
+    /**
+     * Creates a new NodeDef if it does not exist, does nothing otherwise.
+     *
+     * @param def NodeDef to save.
+     */
+    public void saveNodeDef(NodeDef def) {
+        OperationStatus status = nodeDefs.put(storageManager.currentTransaction(),
+                                              entry(def.getGuid()),
+                                              entry(def));
+
+        if (status == OperationStatus.KEYEXIST) {
+            throw new NodeAlreadyTrackedException();
+        }
+    }
+
+    /**
+     * Creates a new NodeDef. Fails if it already exist.
+     *
+     * @param def NodeDef to create.
      */
     public void createNodeDef(NodeDef def) {
         OperationStatus status = nodeDefs.put(storageManager.currentTransaction(),
@@ -53,7 +82,7 @@ public class NodesDao {
     }
 
     /**
-     * Deletes a NodeDef. Fail if it does not exists.
+     * Deletes a NodeDef. Fail if it does not exist.
      *
      * @param key Node name or encoded GUID.
      */

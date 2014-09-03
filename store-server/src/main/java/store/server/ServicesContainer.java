@@ -21,10 +21,8 @@ public class ServicesContainer {
 
     private static final String STORAGE = "storage";
     private static final String SERVICES = "services";
-
     private final AsyncManager asyncManager;
     private final StorageManager storageManager;
-
     private final RepositoriesService repositoriesService;
     private final NodesService nodesService;
 
@@ -61,6 +59,20 @@ public class ServicesContainer {
             throw new WriteException(e);
         }
         return new StorageManager(SERVICES, path, config, asyncManager);
+    }
+
+    /**
+     * @return The asynchronous tasks manager.
+     */
+    public AsyncManager getAsyncManager() {
+        return asyncManager;
+    }
+
+    /**
+     * @return The persistent storage provider.
+     */
+    public StorageManager getStorageManager() {
+        return storageManager;
     }
 
     /**

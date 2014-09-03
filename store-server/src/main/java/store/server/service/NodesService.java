@@ -152,28 +152,71 @@ public class NodesService {
     }
 
     /**
+     * Save supplied node definition if:<br>
+     * - It is not the local node one.<br>
+     * - It is not already stored.<br>
+     * - Associated node is reachable.
+     * <p>
+     * If any of theses conditions does not hold, does nothing. If the definition downloaded from remote node does not
+     * match with the supplied one, the downloaded one is saved instead of the supplied one.
+     *
+     * @param def Node definition to save
+     */
+    public void saveRemote(NodeDef def) {
+        if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
+            return;
+        }
+        final Optional<NodeDef> downloaded = downloadDef(def.getUris());
+        if (downloaded.isPresent()) {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    nodesDao.saveNodeDef(downloaded.get());
+                }
+            });
+        }
+    }
+
+    private boolean isAlreadyStored(final NodeDef def) {
+        return storageManager.inTransaction(new Query<Boolean>() {
+            @Override
+            public Boolean apply() {
+                return nodesDao.containsNodeDef(def.getGuid());
+            }
+        });
+    }
+
+    /**
      * Add a remote node to tracked ones. Fails if remote node is not reachable, is already tracked or its GUID is the
      * same as the local one.
      *
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        for (URI address : uris) {
-            final Optional<NodeDef> def = downloadDef(address);
-            if (def.isPresent()) {
-                if (def.get().getGuid().equals(guid)) {
-                    throw new SelfTrackingException();
-                }
-                storageManager.inTransaction(new Procedure() {
-                    @Override
-                    public void apply() {
-                        nodesDao.createNodeDef(def.get());
-                    }
-                });
-                return;
+        final Optional<NodeDef> def = downloadDef(uris);
+        if (def.isPresent()) {
+            if (def.get().getGuid().equals(guid)) {
+                throw new SelfTrackingException();
             }
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    nodesDao.createNodeDef(def.get());
+                }
+            });
+            return;
         }
         throw new UnreachableNodeException();
+    }
+
+    private static Optional<NodeDef> downloadDef(List<URI> uris) {
+        for (URI address : uris) {
+            Optional<NodeDef> def = downloadDef(address);
+            if (def.isPresent()) {
+                return def;
+            }
+        }
+        return Optional.absent();
     }
 
     private static Optional<NodeDef> downloadDef(URI uri) {

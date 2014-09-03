@@ -36,24 +36,33 @@ public final class ServerConfig {
      */
     public static final String HTTP_CONTEXT = "http.context";
     /**
-     * Whether multicast discovery is enabled. Default to true.
+     * Whether listening to multicast discovery requests is enabled. Default to true. If disabled, this node will not be
+     * discoverable by other ones.
      */
-    public static final String DISCOVERY_ENABLE = "discovery.enable";
+    public static final String DISCOVERY_MULTICAST_LISTEN = "discovery.multicast.listen";
+    /**
+     * Whether discovery by multicast requests is enabled. Default to true.
+     */
+    public static final String DISCOVERY_MULTICAST_PING_ENABLED = "discovery.multicast.ping.enabled";
+    /**
+     * Multicast discovery requests interval. Default to '30 seconds'.
+     */
+    public static final String DISCOVERY_MULTICAST_PING_INTERVAL = "discovery.multicast.ping.interval";
     /**
      * Multicast discovery group address. Default to '235.141.20.10'. Valid multicast group addresses are in the range
      * 224.0.0.0 to 239.255.255.255, inclusive (Class D IP addresses). The address 224.0.0.0 is reserved and should not
      * be used.
      */
-    public static final String DISCOVERY_GROUP = "discovery.group";
+    public static final String DISCOVERY_MULTICAST_GROUP = "discovery.multicast.group";
     /**
      * Multicast discovery port. Default to 23875.
      */
-    public static final String DISCOVERY_PORT = "discovery.port";
+    public static final String DISCOVERY_MULTICAST_PORT = "discovery.multicast.port";
     /**
      * Multicast discovery packets time to live. Default to 3. Must be in the range 0 to 255, inclusive. If TTL is set
      * to 0, packets are only delivered locally.
      */
-    public static final String DISCOVERY_TTL = "discovery.ttl";
+    public static final String DISCOVERY_MULTICAST_TTL = "discovery.multicast.ttl";
     /**
      * Periodic tasks executor pool size. Default to 1.
      */
@@ -83,10 +92,12 @@ public final class ServerConfig {
             .set(HTTP_HOST, "0.0.0.0")
             .set(HTTP_PORT, 9400)
             .set(HTTP_CONTEXT, "/")
-            .set(DISCOVERY_ENABLE, true)
-            .set(DISCOVERY_GROUP, "235.141.20.10")
-            .set(DISCOVERY_PORT, 23875)
-            .set(DISCOVERY_TTL, 3)
+            .set(DISCOVERY_MULTICAST_LISTEN, true)
+            .set(DISCOVERY_MULTICAST_PING_ENABLED, true)
+            .set(DISCOVERY_MULTICAST_PING_INTERVAL, "30 seconds")
+            .set(DISCOVERY_MULTICAST_GROUP, "235.141.20.10")
+            .set(DISCOVERY_MULTICAST_PORT, 23875)
+            .set(DISCOVERY_MULTICAST_TTL, 3)
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_PERIOD, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)

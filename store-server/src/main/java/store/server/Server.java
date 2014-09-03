@@ -26,7 +26,8 @@ public class Server {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     private final ServicesContainer servicesContainer;
     private final HttpServer httpServer;
-    private final DiscoveryListener discoveryListener;
+    private final MulticastDiscoveryListener multicastDiscoveryListener;
+    private final MulticastDiscoveryClient multicastDiscoveryClient;
 
     /**
      * Constructor.
@@ -45,15 +46,24 @@ public class Server {
                 .register(new LoggingFilter())
                 .register(bindings());
 
-        httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config), resourceConfig, false);
-        discoveryListener = new DiscoveryListener(config, servicesContainer.getNodesService());
+        httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config),
+                                                               resourceConfig,
+                                                               false);
+
+        multicastDiscoveryListener = new MulticastDiscoveryListener(config,
+                                                                    servicesContainer.getNodesService());
+
+        multicastDiscoveryClient = new MulticastDiscoveryClient(config,
+                                                                servicesContainer.getAsyncManager(),
+                                                                servicesContainer.getNodesService());
 
         getRuntime().addShutdownHook(new Thread("shutdown") {
             @Override
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
-                discoveryListener.shutdown();
+                multicastDiscoveryClient.shutdown();
+                multicastDiscoveryListener.shutdown();
                 servicesContainer.shutdown();
                 LOG.info("Stopped");
             }
@@ -93,7 +103,8 @@ public class Server {
     public void start() {
         try {
             httpServer.start();
-            discoveryListener.start();
+            multicastDiscoveryListener.start();
+            multicastDiscoveryClient.start();
             LOG.info("Started");
 
         } catch (IOException e) {

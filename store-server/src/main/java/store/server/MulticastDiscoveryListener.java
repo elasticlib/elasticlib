@@ -19,9 +19,9 @@ import store.server.service.NodesService;
 /**
  * Multicast discovery listener. Listen for incoming discovery requests and answer them.
  */
-public class DiscoveryListener {
+public class MulticastDiscoveryListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DiscoveryListener.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryListener.class);
     private final Config config;
     private final NodesService nodesService;
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -33,17 +33,17 @@ public class DiscoveryListener {
      * @param config Server config.
      * @param nodesService The nodes service.
      */
-    public DiscoveryListener(Config config, NodesService nodesService) {
+    public MulticastDiscoveryListener(Config config, NodesService nodesService) {
         this.config = config;
         this.nodesService = nodesService;
     }
 
     /**
-     * Start the module.
+     * Start the listener.
      */
     public void start() {
-        if (!config.getBoolean(ServerConfig.DISCOVERY_ENABLE)) {
-            LOG.info("Multicast discovery disabled");
+        if (!config.getBoolean(ServerConfig.DISCOVERY_MULTICAST_LISTEN)) {
+            LOG.info("Multicast discovery listening is disabled");
             return;
         }
         if (!started.compareAndSet(false, true)) {
@@ -62,7 +62,7 @@ public class DiscoveryListener {
     }
 
     /**
-     * Properly shutdown the module and release underlying ressources.
+     * Properly shutdown the listener and release underlying ressources.
      */
     public void shutdown() {
         if (!started.compareAndSet(true, false)) {
@@ -83,7 +83,7 @@ public class DiscoveryListener {
         private MulticastSocket socket;
 
         public DiscoveryThread() {
-            super("discovery-listener");
+            super("multicast-discovery-listener");
             setDaemon(true);
         }
 
@@ -103,11 +103,11 @@ public class DiscoveryListener {
         }
 
         private void buildSocket() {
-            synchronized (DiscoveryListener.this) {
+            synchronized (MulticastDiscoveryListener.this) {
                 try {
-                    String address = config.getString(ServerConfig.DISCOVERY_GROUP);
-                    int port = config.getInt(ServerConfig.DISCOVERY_PORT);
-                    int ttl = config.getInt(ServerConfig.DISCOVERY_TTL);
+                    String address = config.getString(ServerConfig.DISCOVERY_MULTICAST_GROUP);
+                    int port = config.getInt(ServerConfig.DISCOVERY_MULTICAST_PORT);
+                    int ttl = config.getInt(ServerConfig.DISCOVERY_MULTICAST_TTL);
 
                     group = InetAddress.getByName(address);
                     socket = new MulticastSocket(port);
@@ -116,7 +116,7 @@ public class DiscoveryListener {
                     socket.setLoopbackMode(false);
 
                     LOG.info("Multicast discovery listener bound to [{}:{}]", address, port);
-                    DiscoveryListener.this.notifyAll();
+                    MulticastDiscoveryListener.this.notifyAll();
 
                 } catch (IOException e) {
                     throw new IllegalStateException(e);
@@ -133,7 +133,7 @@ public class DiscoveryListener {
                 return;
             }
 
-            LOG.info("Responding to discovery request from {}", sender(packet));
+            LOG.info("Responding to multicast discovery request from {}", sender(packet));
 
             byte[] response = response();
             socket.send(new DatagramPacket(response,

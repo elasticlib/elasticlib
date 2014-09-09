@@ -1,4 +1,4 @@
-package store.server;
+package store.server.discovery;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;

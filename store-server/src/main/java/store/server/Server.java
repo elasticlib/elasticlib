@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import store.server.config.ServerConfig;
+import store.server.discovery.DiscoveryModule;
 import store.server.providers.LoggingFilter;
 import store.server.service.NodesService;
 import store.server.service.RepositoriesService;
@@ -25,10 +26,8 @@ public class Server {
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     private final ServicesContainer servicesContainer;
+    private final DiscoveryModule discoveryModule;
     private final HttpServer httpServer;
-    private final MulticastDiscoveryListener multicastDiscoveryListener;
-    private final MulticastDiscoveryClient multicastDiscoveryClient;
-    private final ExchangeDiscoveryClient exchangeDiscoveryClient;
 
     /**
      * Constructor.
@@ -40,6 +39,7 @@ public class Server {
         LOG.info(startingMessage(home, config));
 
         servicesContainer = new ServicesContainer(home, config);
+        discoveryModule = new DiscoveryModule(config, servicesContainer);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -51,25 +51,12 @@ public class Server {
                                                                resourceConfig,
                                                                false);
 
-        multicastDiscoveryListener = new MulticastDiscoveryListener(config,
-                                                                    servicesContainer.getNodesService());
-
-        multicastDiscoveryClient = new MulticastDiscoveryClient(config,
-                                                                servicesContainer.getAsyncManager(),
-                                                                servicesContainer.getNodesService());
-
-        exchangeDiscoveryClient = new ExchangeDiscoveryClient(config,
-                                                              servicesContainer.getAsyncManager(),
-                                                              servicesContainer.getNodesService());
-
         getRuntime().addShutdownHook(new Thread("shutdown") {
             @Override
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
-                exchangeDiscoveryClient.shutdown();
-                multicastDiscoveryClient.shutdown();
-                multicastDiscoveryListener.shutdown();
+                discoveryModule.shutdown();
                 servicesContainer.shutdown();
                 LOG.info("Stopped");
             }
@@ -109,9 +96,7 @@ public class Server {
     public void start() {
         try {
             httpServer.start();
-            multicastDiscoveryListener.start();
-            multicastDiscoveryClient.start();
-            exchangeDiscoveryClient.start();
+            discoveryModule.start();
             LOG.info("Started");
 
         } catch (IOException e) {

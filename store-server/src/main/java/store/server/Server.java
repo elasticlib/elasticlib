@@ -28,6 +28,7 @@ public class Server {
     private final HttpServer httpServer;
     private final MulticastDiscoveryListener multicastDiscoveryListener;
     private final MulticastDiscoveryClient multicastDiscoveryClient;
+    private final ExchangeDiscoveryClient exchangeDiscoveryClient;
 
     /**
      * Constructor.
@@ -57,11 +58,16 @@ public class Server {
                                                                 servicesContainer.getAsyncManager(),
                                                                 servicesContainer.getNodesService());
 
+        exchangeDiscoveryClient = new ExchangeDiscoveryClient(config,
+                                                              servicesContainer.getAsyncManager(),
+                                                              servicesContainer.getNodesService());
+
         getRuntime().addShutdownHook(new Thread("shutdown") {
             @Override
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
+                exchangeDiscoveryClient.shutdown();
                 multicastDiscoveryClient.shutdown();
                 multicastDiscoveryListener.shutdown();
                 servicesContainer.shutdown();
@@ -105,6 +111,7 @@ public class Server {
             httpServer.start();
             multicastDiscoveryListener.start();
             multicastDiscoveryClient.start();
+            exchangeDiscoveryClient.start();
             LOG.info("Started");
 
         } catch (IOException e) {

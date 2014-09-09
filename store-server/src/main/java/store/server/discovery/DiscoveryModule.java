@@ -1,7 +1,7 @@
 package store.server.discovery;
 
 import store.common.config.Config;
-import store.server.ServicesContainer;
+import store.server.service.ServiceModule;
 
 /**
  * Regroups discovery components.
@@ -16,19 +16,19 @@ public class DiscoveryModule {
      * Constructor.
      *
      * @param config Server config.
-     * @param servicesContainer Services container.
+     * @param serviceModule Service module.
      */
-    public DiscoveryModule(Config config, ServicesContainer servicesContainer) {
+    public DiscoveryModule(Config config, ServiceModule serviceModule) {
         multicastDiscoveryListener = new MulticastDiscoveryListener(config,
-                                                                    servicesContainer.getNodesService());
+                                                                    serviceModule.getNodesService());
 
         multicastDiscoveryClient = new MulticastDiscoveryClient(config,
-                                                                servicesContainer.getAsyncManager(),
-                                                                servicesContainer.getNodesService());
+                                                                serviceModule.getAsyncManager(),
+                                                                serviceModule.getNodesService());
 
         exchangeDiscoveryClient = new ExchangeDiscoveryClient(config,
-                                                              servicesContainer.getAsyncManager(),
-                                                              servicesContainer.getNodesService());
+                                                              serviceModule.getAsyncManager(),
+                                                              serviceModule.getNodesService());
     }
 
     /**

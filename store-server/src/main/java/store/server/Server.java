@@ -18,6 +18,7 @@ import store.server.discovery.DiscoveryModule;
 import store.server.providers.LoggingFilter;
 import store.server.service.NodesService;
 import store.server.service.RepositoriesService;
+import store.server.service.ServiceModule;
 
 /**
  * A Standalone HTTP server.
@@ -25,7 +26,7 @@ import store.server.service.RepositoriesService;
 public class Server {
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
-    private final ServicesContainer servicesContainer;
+    private final ServiceModule serviceModule;
     private final DiscoveryModule discoveryModule;
     private final HttpServer httpServer;
 
@@ -38,8 +39,8 @@ public class Server {
         Config config = ServerConfig.load(home.resolve("config.yml"));
         LOG.info(startingMessage(home, config));
 
-        servicesContainer = new ServicesContainer(home, config);
-        discoveryModule = new DiscoveryModule(config, servicesContainer);
+        serviceModule = new ServiceModule(home, config);
+        discoveryModule = new DiscoveryModule(config, serviceModule);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -57,7 +58,7 @@ public class Server {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
                 discoveryModule.shutdown();
-                servicesContainer.shutdown();
+                serviceModule.shutdown();
                 LOG.info("Stopped");
             }
         });
@@ -76,8 +77,8 @@ public class Server {
         return new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(servicesContainer.getRepositoriesService()).to(RepositoriesService.class);
-                bind(servicesContainer.getNodesService()).to(NodesService.class);
+                bind(serviceModule.getRepositoriesService()).to(RepositoriesService.class);
+                bind(serviceModule.getNodesService()).to(NodesService.class);
             }
         };
     }
@@ -95,8 +96,9 @@ public class Server {
      */
     public void start() {
         try {
-            httpServer.start();
+            serviceModule.start();
             discoveryModule.start();
+            httpServer.start();
             LOG.info("Started");
 
         } catch (IOException e) {

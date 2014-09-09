@@ -43,13 +43,11 @@ import store.server.storage.StorageManager;
 public class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
-
     private final Config config;
     private final AsyncManager asyncManager;
     private final StorageManager storageManager;
     private final RepositoriesDao repositoriesDao;
     private final ReplicationsDao replicationsDao;
-
     private final ReplicationService replicationService;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<Guid, Repository> repositories = new HashMap<>();
@@ -75,7 +73,19 @@ public class RepositoriesService {
         this.replicationsDao = replicationsDao;
 
         replicationService = new ReplicationService(storageManager);
-        openAllRepositories();
+    }
+
+    /**
+     * Open all repositories and start replications.
+     */
+    public void start() {
+        lock.writeLock().lock();
+        try {
+            openAllRepositories();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private void openAllRepositories() {
@@ -481,11 +491,11 @@ public class RepositoriesService {
                 public List<RepositoryInfo> apply() {
                     return Lists.transform(repositoriesDao.listRepositoryDefs(),
                                            new Function<RepositoryDef, RepositoryInfo>() {
-                                               @Override
-                                               public RepositoryInfo apply(RepositoryDef def) {
-                                                   return repositoryInfoOf(def);
-                                               }
-                                           });
+                        @Override
+                        public RepositoryInfo apply(RepositoryDef def) {
+                            return repositoryInfoOf(def);
+                        }
+                    });
                 }
             });
         } finally {

@@ -1,4 +1,4 @@
-package store.server;
+package store.server.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,14 +10,12 @@ import store.server.dao.NodesDao;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.WriteException;
-import store.server.service.NodesService;
-import store.server.service.RepositoriesService;
 import store.server.storage.StorageManager;
 
 /**
  * Manages services life-cycle.
  */
-public class ServicesContainer {
+public class ServiceModule {
 
     private static final String STORAGE = "storage";
     private static final String SERVICES = "services";
@@ -32,7 +30,7 @@ public class ServicesContainer {
      * @param home Server home directory path.
      * @param config Server config.
      */
-    public ServicesContainer(Path home, Config config) {
+    public ServiceModule(Path home, Config config) {
         asyncManager = new AsyncManager(config);
         storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
 
@@ -62,6 +60,22 @@ public class ServicesContainer {
     }
 
     /**
+     * Start the module.
+     */
+    public void start() {
+        repositoriesService.start();
+    }
+
+    /**
+     * Shutdown this module, properly closing all services.
+     */
+    public void shutdown() {
+        repositoriesService.close();
+        storageManager.close();
+        asyncManager.close();
+    }
+
+    /**
      * @return The asynchronous tasks manager.
      */
     public AsyncManager getAsyncManager() {
@@ -87,14 +101,5 @@ public class ServicesContainer {
      */
     public NodesService getNodesService() {
         return nodesService;
-    }
-
-    /**
-     * Shutdown this container, properly closing all services.
-     */
-    public void shutdown() {
-        asyncManager.close();
-        repositoriesService.close();
-        storageManager.close();
     }
 }

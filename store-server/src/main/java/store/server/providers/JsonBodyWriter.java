@@ -65,10 +65,18 @@ public class JsonBodyWriter implements MessageBodyWriter<JsonStructure> {
 
     private JsonWriterFactory writerFactory() {
         Map<String, Object> properties = new HashMap<>();
-        MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
-        if (params.containsKey(PRETTY) && params.getFirst(PRETTY).equalsIgnoreCase("true")) {
+        if (isPrettyPrintingRequested()) {
             properties.put(JsonGenerator.PRETTY_PRINTING, true);
         }
         return Json.createWriterFactory(properties);
+    }
+
+    private boolean isPrettyPrintingRequested() {
+        if (uriInfo == null) {
+            // For client-side usage.
+            return false;
+        }
+        MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
+        return params.containsKey(PRETTY) && params.getFirst(PRETTY).equalsIgnoreCase("true");
     }
 }

@@ -39,13 +39,20 @@ public class ServiceModule {
         RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
         ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
 
+        NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
+        PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
+
         repositoriesService = new RepositoriesService(config,
                                                       asyncManager,
                                                       storageManager,
                                                       repositoriesDao,
                                                       replicationsDao);
 
-        nodesService = new NodesService(config, storageManager, nodesDao, attributesDao);
+        nodesService = new NodesService(storageManager,
+                                        nodesDao,
+                                        attributesDao,
+                                        nodeNameProvider,
+                                        publishUrisProvider);
     }
 
     private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {

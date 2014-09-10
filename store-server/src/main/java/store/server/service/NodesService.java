@@ -1,35 +1,18 @@
 package store.server.service;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import static com.google.common.collect.Lists.transform;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import static java.net.NetworkInterface.getNetworkInterfaces;
-import java.net.SocketException;
 import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.sort;
-import java.util.Enumeration;
 import java.util.List;
 import javax.json.JsonObject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
-import store.common.config.Config;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.read;
-import store.common.value.Value;
-import store.common.value.ValueType;
-import store.server.config.ServerConfig;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.exception.SelfTrackingException;
@@ -45,27 +28,31 @@ import store.server.storage.StorageManager;
 public class NodesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
-    private final Config config;
     private final StorageManager storageManager;
     private final NodesDao nodesDao;
+    private final NodeNameProvider nodeNameProvider;
+    private final PublishUrisProvider publishUrisProvider;
     private final Guid guid;
 
     /**
      * Constructor.
      *
-     * @param config Configuration holder.
      * @param storageManager Persistent storage provider.
      * @param nodesDao Nodes definitions DAO.
      * @param attributesDao Attributes DAO.
+     * @param nodeNameProvider Node name provider.
+     * @param publishUrisProvider Publish URI(s) provider.
      */
-    public NodesService(Config config,
-                        StorageManager storageManager,
+    public NodesService(StorageManager storageManager,
                         NodesDao nodesDao,
-                        final AttributesDao attributesDao) {
+                        final AttributesDao attributesDao,
+                        NodeNameProvider nodeNameProvider,
+                        PublishUrisProvider publishUrisProvider) {
 
-        this.config = config;
         this.storageManager = storageManager;
         this.nodesDao = nodesDao;
+        this.nodeNameProvider = nodeNameProvider;
+        this.publishUrisProvider = publishUrisProvider;
         this.guid = this.storageManager.inTransaction(new Query<Guid>() {
             @Override
             public Guid apply() {
@@ -78,77 +65,7 @@ public class NodesService {
      * @return The definition of the local node.
      */
     public NodeDef getNodeDef() {
-        return new NodeDef(name(), guid, uris());
-    }
-
-    private String name() {
-        if (!config.containsKey(ServerConfig.NODE_NAME)) {
-            return defaultNodeName();
-        }
-        return config.getString(ServerConfig.NODE_NAME);
-    }
-
-    private static String defaultNodeName() {
-        try {
-            return InetAddress.getLocalHost().getHostName();
-
-        } catch (UnknownHostException e) {
-            LOG.warn("Failed to find node name", e);
-            return "unknown";
-        }
-    }
-
-    private List<URI> uris() {
-        if (!config.containsKey(ServerConfig.NODE_URIS)) {
-            return uris(defaultHosts());
-        }
-        Value configVal = config.get(ServerConfig.NODE_URIS);
-        if (configVal.type() == ValueType.STRING) {
-            return singletonList(URI.create(configVal.asString()));
-        }
-        return transform(configVal.asList(), new Function<Value, URI>() {
-            @Override
-            public URI apply(Value val) {
-                return URI.create(val.asString());
-            }
-        });
-    }
-
-    private List<String> defaultHosts() {
-        List<String> hosts = new ArrayList<>();
-        try {
-            Enumeration<NetworkInterface> interfaces = getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface iface = interfaces.nextElement();
-                Enumeration<InetAddress> addresses = iface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress address = addresses.nextElement();
-                    if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
-                        hosts.add(address.getHostAddress());
-                    }
-                }
-            }
-        } catch (SocketException e) {
-            LOG.warn("Failed to find publish hosts", e);
-        }
-        if (hosts.isEmpty()) {
-            return singletonList("localhost");
-        }
-        sort(hosts);
-        return hosts;
-    }
-
-    private List<URI> uris(List<String> hosts) {
-        return transform(hosts, new Function<String, URI>() {
-            @Override
-            public URI apply(String host) {
-                return UriBuilder.fromUri("http:/")
-                        .host(host)
-                        .port(config.getInt(ServerConfig.HTTP_PORT))
-                        .path(config.getString(ServerConfig.HTTP_CONTEXT))
-                        .build();
-            }
-        });
+        return new NodeDef(nodeNameProvider.name(), guid, publishUrisProvider.uris());
     }
 
     /**

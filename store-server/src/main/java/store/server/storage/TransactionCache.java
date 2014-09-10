@@ -11,7 +11,7 @@ import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.server.async.AsyncManager;
 import store.server.async.Task;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD;
+import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import store.server.exception.TransactionNotFoundException;
@@ -38,15 +38,19 @@ class TransactionCache implements Closeable {
             }
         }).build();
 
-        cleanUpTask = asyncManager.schedule(duration(config, STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD),
-                                            unit(config, STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD),
-                                            "[" + name + "] Evicting expired transactions",
-                                            new Runnable() {
-            @Override
-            public void run() {
-                cache.cleanUp();
-            }
-        });
+        if (config.getBoolean(ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED)) {
+            cleanUpTask = asyncManager.schedule(duration(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
+                                                unit(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
+                                                "[" + name + "] Evicting expired transactions",
+                                                new Runnable() {
+                @Override
+                public void run() {
+                    cache.cleanUp();
+                }
+            });
+        } else {
+            cleanUpTask = null;
+        }
     }
 
     public void suspend(TransactionContext ctx) {
@@ -66,7 +70,9 @@ class TransactionCache implements Closeable {
 
     @Override
     public void close() {
-        cleanUpTask.cancel();
+        if (cleanUpTask != null) {
+            cleanUpTask.cancel();
+        }
         cache.invalidateAll();
     }
 }

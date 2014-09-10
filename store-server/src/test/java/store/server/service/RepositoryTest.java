@@ -40,10 +40,12 @@ import static store.server.TestUtil.recursiveDelete;
 import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
-import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
+import static store.server.config.ServerConfig.STORAGE_SYNC_ENABLED;
+import static store.server.config.ServerConfig.STORAGE_SYNC_INTERVAL;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.ConflictException;
@@ -75,10 +77,12 @@ public class RepositoryTest {
     public void init() throws IOException {
         Config config = new Config()
                 .set(ASYNC_POOL_SIZE, 1)
-                .set(STORAGE_SYNC_PERIOD, "10 s")
+                .set(STORAGE_SYNC_ENABLED, true)
+                .set(STORAGE_SYNC_INTERVAL, "10 s")
                 .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
                 .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "10 s")
-                .set(STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD, "10 s")
+                .set(STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED, true)
+                .set(STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL, "10 s")
                 .set(ServerConfig.JE_LOCK_TIMEOUT, "1 min");
 
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");

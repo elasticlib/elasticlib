@@ -26,7 +26,7 @@ import static store.common.config.ConfigUtil.unit;
 import store.common.value.Value;
 import store.server.async.AsyncManager;
 import store.server.async.Task;
-import static store.server.config.ServerConfig.STORAGE_SYNC_PERIOD;
+import store.server.config.ServerConfig;
 import store.server.exception.RepositoryClosedException;
 import static store.server.storage.DatabaseEntries.entry;
 
@@ -165,15 +165,17 @@ public class StorageManager {
                 .setTransactional(false)
                 .setDeferredWrite(true));
 
-        tasks.add(asyncManager.schedule(duration(config, STORAGE_SYNC_PERIOD), unit(config, STORAGE_SYNC_PERIOD),
-                                        "[" + envName + "] Syncing database '" + name + "'",
-                                        new Runnable() {
-            @Override
-            public void run() {
-                database.sync();
-            }
-        }));
-
+        if (config.getBoolean(ServerConfig.STORAGE_SYNC_ENABLED)) {
+            tasks.add(asyncManager.schedule(duration(config, ServerConfig.STORAGE_SYNC_INTERVAL),
+                                            unit(config, ServerConfig.STORAGE_SYNC_INTERVAL),
+                                            "[" + envName + "] Syncing database '" + name + "'",
+                                            new Runnable() {
+                @Override
+                public void run() {
+                    database.sync();
+                }
+            }));
+        }
         return database;
     }
 

@@ -76,9 +76,13 @@ public final class ServerConfig {
      */
     public static final String ASYNC_POOL_SIZE = "async.poolSize";
     /**
+     * Whether deffered databases are periodically flushed. Default to true.
+     */
+    public static final String STORAGE_SYNC_ENABLED = "storage.sync.enabled";
+    /**
      * Periodicity at which deffered databases are flushed. Default to '10 seconds'.
      */
-    public static final String STORAGE_SYNC_PERIOD = "storage.syncPeriod";
+    public static final String STORAGE_SYNC_INTERVAL = "storage.sync.interval";
     /**
      * Maximum number of suspended transactions. Default to 20.
      */
@@ -88,9 +92,13 @@ public final class ServerConfig {
      */
     public static final String STORAGE_SUSPENDED_TXN_TIMEOUT = "storage.suspendedTransactions.timeout";
     /**
-     * Suspended transactions cleanup period. Default to '30 seconds'.
+     * Whether suspended transactions are periodically cleaned. Default to '30 seconds'.
      */
-    public static final String STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD = "storage.suspendedTransactions.cleanupPeriod";
+    public static final String STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED = "storage.suspendedTransactions.cleanup.enabled";
+    /**
+     * Periodicity at which suspended transactions cleanup is performed. Default to '30 seconds'.
+     */
+    public static final String STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL = "storage.suspendedTransactions.cleanup.interval";
     /**
      * The lock timeout for all Berkeley DB operations. Default to '0', meaning that locking never times out.
      */
@@ -109,10 +117,12 @@ public final class ServerConfig {
             .set(DISCOVERY_EXCHANGE_ENABLED, true)
             .set(DISCOVERY_EXCHANGE_INTERVAL, "30 seconds")
             .set(ASYNC_POOL_SIZE, 1)
-            .set(STORAGE_SYNC_PERIOD, "10 seconds")
+            .set(STORAGE_SYNC_ENABLED, true)
+            .set(STORAGE_SYNC_INTERVAL, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
             .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "60 seconds")
-            .set(STORAGE_SUSPENDED_TXN_CLEANUP_PERIOD, "30 seconds")
+            .set(STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED, true)
+            .set(STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL, "30 seconds")
             .set(JE_LOCK_TIMEOUT, "0");
 
     private ServerConfig() {

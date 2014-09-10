@@ -45,14 +45,14 @@ public class AsyncManager {
      * service is closed. If any execution of this task takes longer than its period, then subsequent executions may
      * start late, but will not concurrently execute.
      *
-     * @param period The period between successive executions.
-     * @param unit The time unit of the period parameter.
+     * @param interval The duration between successive executions.
+     * @param unit The time unit of the interval parameter.
      * @param description Task short description, intended for logging purposes.
      * @param command The task to executes
      * @return A task handle.
      */
-    public Task schedule(long period, TimeUnit unit, String description, Runnable command) {
-        return new Task(executor.scheduleAtFixedRate(new LoggedRunnable(description, command), 0, period, unit));
+    public Task schedule(long interval, TimeUnit unit, String description, Runnable command) {
+        return new Task(executor.scheduleAtFixedRate(new LoggedRunnable(description, command), 0, interval, unit));
     }
 
     /**

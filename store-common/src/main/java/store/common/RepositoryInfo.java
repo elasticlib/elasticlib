@@ -2,7 +2,6 @@ package store.common;
 
 import static com.google.common.base.Objects.toStringHelper;
 import com.google.common.collect.ImmutableMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
@@ -95,17 +94,16 @@ public final class RepositoryInfo implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        Map<String, Value> map = new LinkedHashMap<>();
-        map.putAll(def.toMap());
-        map.put(OPEN, Value.of(isOpen()));
+        MapBuilder builder = new MapBuilder()
+                .putAll(def.toMap())
+                .put(OPEN, isOpen());
+
         if (isOpen()) {
-            map.putAll(new MapBuilder()
-                    .put(STATS, stats.toMap())
+            builder.put(STATS, stats.toMap())
                     .put(AGENTS, ImmutableMap.of(INDEXING, Value.of(indexingInfo.toMap()),
-                                                 STATS, Value.of(statsInfo.toMap())))
-                    .build());
+                                                 STATS, Value.of(statsInfo.toMap())));
         }
-        return map;
+        return builder.build();
     }
 
     /**

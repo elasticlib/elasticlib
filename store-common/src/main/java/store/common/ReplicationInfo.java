@@ -46,7 +46,7 @@ public final class ReplicationInfo implements Mappable {
     }
 
     /**
-     * @return If this repository is open.
+     * @return If this replication is started.
      */
     public boolean isStarted() {
         return agentInfo != null;
@@ -67,9 +67,12 @@ public final class ReplicationInfo implements Mappable {
     }
 
     /**
-     * @return The replication agent info.
+     * @return The replication agent info. Fails if replication is not started.
      */
     public AgentInfo getAgentInfo() {
+        if (!isStarted()) {
+            throw new IllegalStateException();
+        }
         return agentInfo;
     }
 

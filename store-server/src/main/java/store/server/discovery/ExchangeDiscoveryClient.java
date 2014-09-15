@@ -169,7 +169,7 @@ public class ExchangeDiscoveryClient {
                 @Override
                 public Void apply(WebTarget target) {
                     JsonArrayBuilder uris = createArrayBuilder();
-                    for (URI uri : localNodeDef.getUris()) {
+                    for (URI uri : localNodeDef.getPublishUris()) {
                         uris.add(uri.toString());
                     }
                     JsonObject body = createObjectBuilder()
@@ -190,7 +190,7 @@ public class ExchangeDiscoveryClient {
             ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class, JsonBodyWriter.class);
             Client client = ClientBuilder.newClient(clientConfig);
             try {
-                for (URI uri : concat(preferedUri.asSet(), remoteNodeDef.getUris())) {
+                for (URI uri : concat(preferedUri.asSet(), remoteNodeDef.getPublishUris())) {
                     if (!started.get()) {
                         break;
                     }

@@ -19,23 +19,23 @@ public class NodeDef implements Mappable {
 
     private static final String NAME = "name";
     private static final String GUID = "guid";
-    private static final String URIS = "uris";
-    private static final String URI = "uri";
+    private static final String PUBLISH_URIS = "publishUris";
+    private static final String PUBLISH_URI = "publishUri";
     private final String name;
     private final Guid guid;
-    private final List<URI> uris;
+    private final List<URI> publishUris;
 
     /**
      * Constructor.
      *
      * @param name Node name.
      * @param guid Node GUID.
-     * @param uris Node URI(s).
+     * @param publishUris Node publish URI(s).
      */
-    public NodeDef(String name, Guid guid, List<URI> uris) {
+    public NodeDef(String name, Guid guid, List<URI> publishUris) {
         this.name = requireNonNull(name);
         this.guid = requireNonNull(guid);
-        this.uris = requireNonNull(uris);
+        this.publishUris = requireNonNull(publishUris);
     }
 
     /**
@@ -53,10 +53,10 @@ public class NodeDef implements Mappable {
     }
 
     /**
-     * @return The base-URI(s) of this node.
+     * @return The publish URI(s) of this node.
      */
-    public List<URI> getUris() {
-        return uris;
+    public List<URI> getPublishUris() {
+        return publishUris;
     }
 
     @Override
@@ -65,15 +65,15 @@ public class NodeDef implements Mappable {
                 .put(NAME, name)
                 .put(GUID, guid);
 
-        if (uris.size() == 1) {
-            builder.put(URI, uris.get(0).toString());
+        if (publishUris.size() == 1) {
+            builder.put(PUBLISH_URI, publishUris.get(0).toString());
 
-        } else if (!uris.isEmpty()) {
+        } else if (!publishUris.isEmpty()) {
             List<Value> values = new ArrayList<>();
-            for (URI host : uris) {
+            for (URI host : publishUris) {
                 values.add(Value.of(host.toString()));
             }
-            builder.put(URIS, values);
+            builder.put(PUBLISH_URIS, values);
         }
         return builder.build();
     }
@@ -87,23 +87,21 @@ public class NodeDef implements Mappable {
     public static NodeDef fromMap(Map<String, Value> map) {
         return new NodeDef(map.get(NAME).asString(),
                            map.get(GUID).asGuid(),
-                           hosts(map));
+                           publishUris(map));
     }
 
-    private static List<URI> hosts(Map<String, Value> values) {
-        if (values.containsKey(URI)) {
-            return singletonList(asUri(values.get(URI)));
-
-        } else if (values.containsKey(URIS)) {
-            List<URI> hosts = new ArrayList<>();
-            for (Value value : values.get(URIS).asList()) {
-                hosts.add(asUri(value));
-            }
-            return hosts;
-
-        } else {
-            return emptyList();
+    private static List<URI> publishUris(Map<String, Value> values) {
+        if (values.containsKey(PUBLISH_URI)) {
+            return singletonList(asUri(values.get(PUBLISH_URI)));
         }
+        if (values.containsKey(PUBLISH_URIS)) {
+            List<URI> uris = new ArrayList<>();
+            for (Value value : values.get(PUBLISH_URIS).asList()) {
+                uris.add(asUri(value));
+            }
+            return uris;
+        }
+        return emptyList();
     }
 
     private static URI asUri(Value value) {
@@ -112,7 +110,7 @@ public class NodeDef implements Mappable {
 
     @Override
     public int hashCode() {
-        return hash(name, guid, uris);
+        return hash(name, guid, publishUris);
     }
 
     @Override
@@ -124,7 +122,7 @@ public class NodeDef implements Mappable {
         return new EqualsBuilder()
                 .append(name, other.name)
                 .append(guid, other.guid)
-                .append(uris, other.uris)
+                .append(publishUris, other.publishUris)
                 .build();
     }
 
@@ -133,7 +131,7 @@ public class NodeDef implements Mappable {
         return toStringHelper(this)
                 .add(NAME, name)
                 .add(GUID, guid)
-                .add(URIS, uris)
+                .add(PUBLISH_URIS, publishUris)
                 .toString();
     }
 }

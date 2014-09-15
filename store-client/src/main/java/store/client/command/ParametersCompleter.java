@@ -111,7 +111,7 @@ class ParametersCompleter {
     private List<String> uris() {
         List<String> uris = new ArrayList<>();
         for (NodeDef def : discoveryClient.nodes()) {
-            for (URI uri : def.getUris()) {
+            for (URI uri : def.getPublishUris()) {
                 uris.add(uri.toString());
             }
         }

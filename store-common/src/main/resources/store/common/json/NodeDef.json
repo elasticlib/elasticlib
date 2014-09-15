@@ -8,11 +8,11 @@
         "guid": {
             "type": "guid"
         },
-        "uri": {
+        "publishUri": {
             "type": "string",
             "optional": true
         },
-        "uris": {
+        "publishUris": {
             "type": "array",
             "optional": true,
             "items": {

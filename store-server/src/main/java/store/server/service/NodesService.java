@@ -83,7 +83,7 @@ public class NodesService {
         if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
             return;
         }
-        final Optional<NodeDef> downloaded = downloadDef(def.getUris());
+        final Optional<NodeDef> downloaded = downloadDef(def.getPublishUris());
         if (downloaded.isPresent()) {
             LOG.info("Saving remote node {}", downloaded.get().getName());
             storageManager.inTransaction(new Procedure() {

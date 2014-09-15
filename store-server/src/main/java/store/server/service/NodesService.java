@@ -206,7 +206,7 @@ public class NodesService {
     }
 
     /**
-     * Loads all remote nodes infos.
+     * Loads info of all reachable remote nodes.
      *
      * @return A list of NodeInfo instances.
      */

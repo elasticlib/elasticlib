@@ -108,7 +108,7 @@ public class RepositoryTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
-        repositoriesService.close();
+        repositoriesService.stop();
         recursiveDelete(path);
     }
 

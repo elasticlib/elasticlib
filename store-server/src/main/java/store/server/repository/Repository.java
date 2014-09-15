@@ -177,7 +177,7 @@ public class Repository {
         indexingAgent.stop();
         statsAgent.stop();
         index.close();
-        storageManager.close();
+        storageManager.stop();
         contentManager.close();
     }
 

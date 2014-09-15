@@ -56,9 +56,9 @@ public class AsyncManager {
     }
 
     /**
-     * Closes this service, gracefully cancelling all scheduled tasks before.
+     * Stops this manager, gracefully cancelling all scheduled tasks before.
      */
-    public void close() {
+    public void stop() {
         executor.shutdown();
     }
 

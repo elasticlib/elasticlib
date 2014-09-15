@@ -89,7 +89,7 @@ public class MulticastDiscoveryClient {
     /**
      * Stops the client, releasing underlying ressources.
      */
-    public void shutdown() {
+    public void stop() {
         if (!started.compareAndSet(true, false)) {
             return;
         }

@@ -32,7 +32,7 @@ public class DiscoveryModule {
     }
 
     /**
-     * Start the module.
+     * Starts the module.
      */
     public void start() {
         multicastDiscoveryListener.start();
@@ -41,11 +41,11 @@ public class DiscoveryModule {
     }
 
     /**
-     * Properly shutdown the module and release underlying ressources.
+     * Properly stops the module and release underlying ressources.
      */
-    public void shutdown() {
-        exchangeDiscoveryClient.shutdown();
-        multicastDiscoveryClient.shutdown();
-        multicastDiscoveryListener.shutdown();
+    public void stop() {
+        exchangeDiscoveryClient.stop();
+        multicastDiscoveryClient.stop();
+        multicastDiscoveryListener.stop();
     }
 }

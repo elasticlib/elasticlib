@@ -39,7 +39,7 @@ public class MulticastDiscoveryListener {
     }
 
     /**
-     * Start the listener.
+     * Starts the listener.
      */
     public void start() {
         if (!config.getBoolean(ServerConfig.DISCOVERY_MULTICAST_LISTEN)) {
@@ -62,9 +62,9 @@ public class MulticastDiscoveryListener {
     }
 
     /**
-     * Properly shutdown the listener and release underlying ressources.
+     * Properly stops the listener and release underlying ressources.
      */
-    public void shutdown() {
+    public void stop() {
         if (!started.compareAndSet(true, false)) {
             return;
         }

@@ -82,7 +82,7 @@ public class ExchangeDiscoveryClient {
     /**
      * Stops the client, releasing underlying ressources.
      */
-    public void shutdown() {
+    public void stop() {
         if (!started.compareAndSet(true, false)) {
             return;
         }

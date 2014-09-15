@@ -101,7 +101,7 @@ public class NodesService {
     /**
      * Properly stops this service.
      */
-    public void close() {
+    public void stop() {
         if (!started.compareAndSet(true, false)) {
             return;
         }

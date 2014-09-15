@@ -58,7 +58,7 @@ public class StorageManager {
     private final Deque<Sequence> sequences = new ArrayDeque<>();
     private final Deque<TransactionContext> txContexts = new ArrayDeque<>();
     private final ThreadLocal<TransactionContext> currentTxContext = new ThreadLocal<>();
-    private boolean closed;
+    private boolean started = true;
 
     /**
      * Constructor.
@@ -96,13 +96,13 @@ public class StorageManager {
     }
 
     /**
-     * Closes this manager, safely releasing all its ressources.
+     * Stops this manager, safely releasing all its ressources.
      */
-    public synchronized void close() {
-        if (closed) {
+    public synchronized void stop() {
+        if (!started) {
             return;
         }
-        closed = true;
+        started = false;
         while (!tasks.isEmpty()) {
             tasks.remove().cancel();
         }
@@ -180,7 +180,7 @@ public class StorageManager {
     }
 
     private Database openDatabase(String name, DatabaseConfig config) {
-        ensureOpen();
+        ensureStarted();
         Database database = environment.openDatabase(null, name, config);
         databases.add(database);
         return database;
@@ -193,7 +193,7 @@ public class StorageManager {
      * @return Corresponding sequence handle.
      */
     public synchronized Sequence openSequence(String name) {
-        ensureOpen();
+        ensureStarted();
         SequenceConfig seqConfig = new SequenceConfig()
                 .setAllowCreate(true)
                 .setInitialValue(1);
@@ -278,7 +278,7 @@ public class StorageManager {
         try {
             T result = query.apply();
             synchronized (this) {
-                if (!closed) {
+                if (started) {
                     ctx.commitIfRunning();
                 }
             }
@@ -286,13 +286,13 @@ public class StorageManager {
 
         } catch (IllegalStateException e) {
             synchronized (this) {
-                // Hide JE exception that may be thrown if transaction is aborted because this manager is closed.
-                ensureOpen();
+                // Hide JE exception that may be thrown if transaction is aborted because this manager is stoppped.
+                ensureStarted();
                 throw e;
             }
         } finally {
             synchronized (this) {
-                if (!closed) {
+                if (started) {
                     ctx.abortIfRunning();
                     txContexts.remove(ctx);
                     currentTxContext.remove();
@@ -302,7 +302,7 @@ public class StorageManager {
     }
 
     private synchronized TransactionContext beginTransaction() {
-        ensureOpen();
+        ensureStarted();
         TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
         txContexts.add(ctx);
         currentTxContext.set(ctx);
@@ -310,7 +310,7 @@ public class StorageManager {
     }
 
     private synchronized TransactionContext resumeTransaction(long id) {
-        ensureOpen();
+        ensureStarted();
         TransactionContext ctx = cache.resume(id);
         txContexts.add(ctx);
         currentTxContext.set(ctx);
@@ -325,7 +325,7 @@ public class StorageManager {
      * in a new transactional block if he wants to performs other operations and to commit all pending changes.
      */
     public synchronized void suspendCurrentTransaction() {
-        ensureOpen();
+        ensureStarted();
         cache.suspend(currentTxContext.get());
 
         // This is redundant, because current context is removed when leaving the current transaction block.
@@ -359,15 +359,15 @@ public class StorageManager {
      * @return A new cursor.
      */
     public synchronized Cursor openCursor(Database database) {
-        ensureOpen();
+        ensureStarted();
         TransactionContext ctx = currentTxContext.get();
         Cursor cursor = database.openCursor(ctx.getTransaction(), CursorConfig.READ_COMMITTED);
         ctx.add(cursor);
         return cursor;
     }
 
-    private void ensureOpen() {
-        if (closed) {
+    private void ensureStarted() {
+        if (!started) {
             throw new RepositoryClosedException();
         }
     }

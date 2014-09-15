@@ -57,8 +57,8 @@ public class Server {
             public void run() {
                 LOG.info("Stopping...");
                 httpServer.shutdown();
-                discoveryModule.shutdown();
-                serviceModule.shutdown();
+                discoveryModule.stop();
+                serviceModule.stop();
                 LOG.info("Stopped");
             }
         });

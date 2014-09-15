@@ -120,13 +120,13 @@ public class RepositoriesService {
     }
 
     /**
-     * Close all managed repositories and stop all replications, releasing underlying resources. Does nothing if it
-     * already closed. Any latter operation will fail.
+     * Close all managed repositories and stop all replications, releasing underlying resources. Does nothing if this
+     * service is already stopped. Any latter operation will fail.
      */
-    public void close() {
+    public void stop() {
         lock.writeLock().lock();
         try {
-            replicationService.close();
+            replicationService.stop();
             for (Repository repository : repositories.values()) {
                 repository.close();
             }

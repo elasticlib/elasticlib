@@ -71,7 +71,7 @@ public class ServiceModule {
     }
 
     /**
-     * Start the module.
+     * Starts the module.
      */
     public void start() {
         repositoriesService.start();
@@ -79,13 +79,13 @@ public class ServiceModule {
     }
 
     /**
-     * Shutdown this module, properly closing all services.
+     * Properly stops all services.
      */
-    public void shutdown() {
-        nodesService.close();
-        repositoriesService.close();
-        storageManager.close();
-        asyncManager.close();
+    public void stop() {
+        nodesService.stop();
+        repositoriesService.stop();
+        storageManager.stop();
+        asyncManager.stop();
     }
 
     /**

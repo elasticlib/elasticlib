@@ -33,7 +33,7 @@ class ReplicationService implements Signalable {
     /**
      * Stops all replications.
      */
-    public synchronized void close() {
+    public synchronized void stop() {
         for (Map<Guid, Agent> map : agents.values()) {
             for (Agent agent : map.values()) {
                 agent.stop();

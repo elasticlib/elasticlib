@@ -60,6 +60,10 @@ public final class TestData {
      * Some NodeDef instances.
      */
     public static final List<NodeDef> NODE_DEFS = new ArrayList<>();
+    /**
+     * Some NodeInfo instances.
+     */
+    public static final List<NodeInfo> NODE_INFOS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -84,10 +88,10 @@ public final class TestData {
         CONTENT_INFO_TREE = new ContentInfoTree.ContentInfoTreeBuilder()
                 .add(CONTENT_INFOS.get(0))
                 .add(new ContentInfo.ContentInfoBuilder()
-                        .withContent(new Hash(HASHES[0]))
-                        .withLength(10)
-                        .withParent(new Hash(REVS[0]))
-                        .build(new Hash(REVS[1])))
+                .withContent(new Hash(HASHES[0]))
+                .withLength(10)
+                .withParent(new Hash(REVS[0]))
+                .build(new Hash(REVS[1])))
                 .build();
 
         EVENTS.add(new Event.EventBuilder()
@@ -162,6 +166,13 @@ public final class TestData {
         NODE_DEFS.add(new NodeDef("gamma",
                                   new Guid("39819150ee99549a8c0a59782169bb3b"),
                                   Collections.<URI>emptyList()));
+
+        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(0),
+                                    new Instant(0)));
+
+        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(1),
+                                    NODE_DEFS.get(1).getPublishUris().get(1),
+                                    new Instant(123000)));
     }
 
     private TestData() {

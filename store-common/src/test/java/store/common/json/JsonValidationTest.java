@@ -15,6 +15,8 @@ import store.common.ContentInfo;
 import store.common.ContentInfoTree;
 import store.common.Event;
 import store.common.IndexEntry;
+import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.ReplicationInfo;
 import store.common.RepositoryInfo;
 import static store.common.TestUtil.array;
@@ -25,6 +27,8 @@ import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
 import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
+import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
+import static store.common.json.JsonTestData.NODE_INFOS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
 import static store.common.json.JsonValidation.hasArrayValue;
@@ -197,5 +201,27 @@ public class JsonValidationTest {
             assertThat(isValid(json, ReplicationInfo.class)).isTrue();
         }
         assertThat(isValid(CONTENT_INFO_TREE_JSON, ReplicationInfo.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidNodeDefTest() {
+        for (JsonObject json : NODE_DEFS_ARRAY.getValuesAs(JsonObject.class)) {
+            assertThat(isValid(json, NodeDef.class)).isTrue();
+        }
+        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeDef.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidNodeInfoTest() {
+        for (JsonObject json : NODE_INFOS_ARRAY.getValuesAs(JsonObject.class)) {
+            assertThat(isValid(json, NodeInfo.class)).isTrue();
+        }
+        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeInfo.class)).isFalse();
     }
 }

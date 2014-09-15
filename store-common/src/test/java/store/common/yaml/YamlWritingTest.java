@@ -8,6 +8,7 @@ import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
+import static store.common.TestData.NODE_INFOS;
 import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
@@ -18,6 +19,7 @@ import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
+import static store.common.yaml.YamlTestData.NODE_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
@@ -116,5 +118,13 @@ public class YamlWritingTest {
     @Test
     public void writeAllNodeDefsTest() {
         assertThat(writeAll(NODE_DEFS)).isEqualTo(NODE_DEFS_YAML);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllNodeInfosTest() {
+        assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_YAML);
     }
 }

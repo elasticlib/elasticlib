@@ -1,0 +1,33 @@
+{
+    "title": "nodeInfo",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "guid": {
+            "type": "guid"
+        },
+        "publishUri": {
+            "type": "string",
+            "optional": true
+        },
+        "publishUris": {
+            "type": "array",
+            "optional": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "transportUri": {
+            "type": "string",
+            "optional": true
+        },
+        "reachable": {
+            "type": "boolean"
+        },
+        "refreshDate": {
+            "type": "date"
+        }
+    }
+}

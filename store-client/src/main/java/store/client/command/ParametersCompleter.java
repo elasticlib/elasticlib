@@ -30,6 +30,7 @@ import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
 import store.common.IndexEntry;
 import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.RepositoryInfo;
 
 /**
@@ -120,7 +121,8 @@ class ParametersCompleter {
 
     private List<String> completeNode(String param) {
         Collection<String> nodes = new TreeSet<>();
-        for (NodeDef def : session.getClient().listRemotes()) {
+        for (NodeInfo info : session.getClient().listRemotes()) {
+            NodeDef def = info.getDef();
             nodes.add(def.getName());
             nodes.add(def.getGuid().asHexadecimalString());
         }

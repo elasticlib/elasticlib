@@ -52,6 +52,7 @@ import static store.common.IoUtil.copy;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.Mappable;
 import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.Operation;
 import store.common.ReplicationInfo;
 import store.common.RepositoryInfo;
@@ -206,16 +207,16 @@ public class HttpClient implements Closeable {
     }
 
     /**
-     * Lists remote nodes definitions.
+     * Lists remote nodes.
      *
      * @return A list of node definitions.
      */
-    public List<NodeDef> listRemotes() {
+    public List<NodeInfo> listRemotes() {
         Response response = resource.path(REMOTES)
                 .request()
                 .get();
 
-        return readAll(response, NodeDef.class);
+        return readAll(response, NodeInfo.class);
     }
 
     /**

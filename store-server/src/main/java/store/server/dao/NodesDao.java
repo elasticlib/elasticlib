@@ -1,5 +1,6 @@
 package store.server.dao;
 
+import com.google.common.base.Predicate;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import static java.util.Collections.sort;
 import java.util.Comparator;
 import java.util.List;
-import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.hash.Guid;
 import store.server.exception.NodeAlreadyTrackedException;
 import store.server.exception.UnknownNodeException;
@@ -18,13 +19,13 @@ import static store.server.storage.DatabaseEntries.entry;
 import store.server.storage.StorageManager;
 
 /**
- * Provides a persistent storage for nodes definitions.
+ * Provides a persistent storage for nodes infos.
  */
 public class NodesDao {
 
     private static final String NODES = "nodes";
     private final StorageManager storageManager;
-    private final Database nodeDefs;
+    private final Database nodeInfos;
 
     /**
      * Constructor.
@@ -33,42 +34,42 @@ public class NodesDao {
      */
     public NodesDao(StorageManager storageManager) {
         this.storageManager = storageManager;
-        nodeDefs = storageManager.openDatabase(NODES);
+        nodeInfos = storageManager.openDatabase(NODES);
     }
 
     /**
-     * Checks whether a NodeDef with supplied GUID is already stored.
+     * Checks whether a NodeInfo with supplied GUID is already stored.
      *
      * @param guid A node GUID.
      * @return true if associated node definition is already stored.
      */
-    public boolean containsNodeDef(Guid guid) {
-        OperationStatus status = nodeDefs.get(storageManager.currentTransaction(),
-                                              entry(guid),
-                                              new DatabaseEntry(),
-                                              LockMode.DEFAULT);
+    public boolean containsNodeInfo(Guid guid) {
+        OperationStatus status = nodeInfos.get(storageManager.currentTransaction(),
+                                               entry(guid),
+                                               new DatabaseEntry(),
+                                               LockMode.DEFAULT);
 
         return status == OperationStatus.SUCCESS;
     }
 
     /**
-     * Creates a new NodeDef if it does not exist, does nothing otherwise.
+     * Creates a new NodeInfo if it does not exist, does nothing otherwise.
      *
-     * @param def NodeDef to save.
+     * @param info NodeInfo to save.
      */
-    public void saveNodeDef(NodeDef def) {
-        nodeDefs.put(storageManager.currentTransaction(), entry(def.getGuid()), entry(def));
+    public void saveNodeInfo(NodeInfo info) {
+        nodeInfos.put(storageManager.currentTransaction(), entry(info.getDef().getGuid()), entry(info));
     }
 
     /**
-     * Creates a new NodeDef. Fails if it already exist.
+     * Creates a new NodeInfo. Fails if it already exist.
      *
-     * @param def NodeDef to create.
+     * @param info NodeInfo to save.
      */
-    public void createNodeDef(NodeDef def) {
-        OperationStatus status = nodeDefs.put(storageManager.currentTransaction(),
-                                              entry(def.getGuid()),
-                                              entry(def));
+    public void createNodeInfo(NodeInfo info) {
+        OperationStatus status = nodeInfos.put(storageManager.currentTransaction(),
+                                               entry(info.getDef().getGuid()),
+                                               entry(info));
 
         if (status == OperationStatus.KEYEXIST) {
             throw new NodeAlreadyTrackedException();
@@ -76,23 +77,23 @@ public class NodesDao {
     }
 
     /**
-     * Deletes a NodeDef. Fail if it does not exist.
+     * Deletes a NodeInfo. Fail if it does not exist.
      *
      * @param key Node name or encoded GUID.
      */
-    public void deleteNodeDef(String key) {
+    public void deleteNodeInfo(String key) {
         if (Guid.isValid(key)) {
-            OperationStatus status = nodeDefs.delete(storageManager.currentTransaction(), entry(new Guid(key)));
+            OperationStatus status = nodeInfos.delete(storageManager.currentTransaction(), entry(new Guid(key)));
             if (status == OperationStatus.SUCCESS) {
                 return;
             }
         }
         DatabaseEntry curKey = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(nodeDefs)) {
+        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
             while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                NodeDef def = asMappable(data, NodeDef.class);
-                if (def.getName().equals(key)) {
+                NodeInfo info = asMappable(data, NodeInfo.class);
+                if (info.getDef().getName().equals(key)) {
                     cursor.delete();
                     return;
                 }
@@ -102,23 +103,27 @@ public class NodesDao {
     }
 
     /**
-     * Loads all NodeDef.
+     * Loads all NodeInfo matching supplied predicate.
      *
-     * @return All stored node definitions.
+     * @param predicate Filtering predicate.
+     * @return Matching stored node infos.
      */
-    public List<NodeDef> listNodeDefs() {
-        List<NodeDef> list = new ArrayList<>();
+    public List<NodeInfo> listNodeInfos(Predicate<NodeInfo> predicate) {
+        List<NodeInfo> list = new ArrayList<>();
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(nodeDefs)) {
+        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                list.add(asMappable(data, NodeDef.class));
+                NodeInfo info = asMappable(data, NodeInfo.class);
+                if (predicate.apply(info)) {
+                    list.add(asMappable(data, NodeInfo.class));
+                }
             }
         }
-        sort(list, new Comparator<NodeDef>() {
+        sort(list, new Comparator<NodeInfo>() {
             @Override
-            public int compare(NodeDef def1, NodeDef def2) {
-                return def1.getName().compareTo(def2.getName());
+            public int compare(NodeInfo info1, NodeInfo info2) {
+                return info1.getDef().getName().compareTo(info2.getDef().getName());
             }
         });
         return list;

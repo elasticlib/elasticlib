@@ -1,6 +1,8 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import java.net.URI;
 import java.util.List;
 import javax.json.JsonObject;
@@ -8,9 +10,11 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import org.glassfish.jersey.client.ClientConfig;
+import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.read;
 import store.server.dao.AttributesDao;
@@ -83,13 +87,13 @@ public class NodesService {
         if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
             return;
         }
-        final Optional<NodeDef> downloaded = downloadDef(def.getPublishUris());
-        if (downloaded.isPresent()) {
-            LOG.info("Saving remote node {}", downloaded.get().getName());
+        final Optional<NodeInfo> info = ping(def.getPublishUris());
+        if (info.isPresent()) {
+            LOG.info("Saving remote node {}", info.get().getDef().getName());
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    nodesDao.saveNodeDef(downloaded.get());
+                    nodesDao.saveNodeInfo(info.get());
                 }
             });
         }
@@ -99,7 +103,7 @@ public class NodesService {
         return storageManager.inTransaction(new Query<Boolean>() {
             @Override
             public Boolean apply() {
-                return nodesDao.containsNodeDef(def.getGuid());
+                return nodesDao.containsNodeInfo(def.getGuid());
             }
         });
     }
@@ -111,16 +115,16 @@ public class NodesService {
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        final Optional<NodeDef> def = downloadDef(uris);
-        if (def.isPresent()) {
-            if (def.get().getGuid().equals(guid)) {
+        final Optional<NodeInfo> info = ping(uris);
+        if (info.isPresent()) {
+            if (info.get().getDef().getGuid().equals(guid)) {
                 throw new SelfTrackingException();
             }
-            LOG.info("Adding remote node {}", def.get().getName());
+            LOG.info("Adding remote node {}", info.get().getDef().getName());
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    nodesDao.createNodeDef(def.get());
+                    nodesDao.createNodeInfo(info.get());
                 }
             });
             return;
@@ -128,17 +132,17 @@ public class NodesService {
         throw new UnreachableNodeException();
     }
 
-    private static Optional<NodeDef> downloadDef(List<URI> uris) {
+    private static Optional<NodeInfo> ping(List<URI> uris) {
         for (URI address : uris) {
-            Optional<NodeDef> def = downloadDef(address);
-            if (def.isPresent()) {
-                return def;
+            Optional<NodeInfo> info = ping(address);
+            if (info.isPresent()) {
+                return info;
             }
         }
         return Optional.absent();
     }
 
-    private static Optional<NodeDef> downloadDef(URI uri) {
+    private static Optional<NodeInfo> ping(URI uri) {
         ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class);
         Client client = ClientBuilder.newClient(clientConfig);
         try {
@@ -147,7 +151,7 @@ public class NodesService {
                     .get()
                     .readEntity(JsonObject.class);
 
-            return Optional.of(read(json, NodeDef.class));
+            return Optional.of(new NodeInfo(read(json, NodeDef.class), uri, now()));
 
         } catch (ProcessingException e) {
             return Optional.absent();
@@ -167,21 +171,40 @@ public class NodesService {
         storageManager.inTransaction(new Procedure() {
             @Override
             public void apply() {
-                nodesDao.deleteNodeDef(key);
+                nodesDao.deleteNodeInfo(key);
             }
         });
     }
 
     /**
-     * Loads all remote nodes definitions.
+     * Loads all remote nodes infos.
      *
-     * @return A list of NodeDef instances.
+     * @return A list of NodeInfo instances.
      */
-    public List<NodeDef> listRemotes() {
-        return storageManager.inTransaction(new Query<List<NodeDef>>() {
+    public List<NodeInfo> listRemotes() {
+        return storageManager.inTransaction(new Query<List<NodeInfo>>() {
             @Override
-            public List<NodeDef> apply() {
-                return nodesDao.listNodeDefs();
+            public List<NodeInfo> apply() {
+                return nodesDao.listNodeInfos(Predicates.<NodeInfo>alwaysTrue());
+            }
+        });
+    }
+
+    /**
+     * Loads all remote nodes infos.
+     *
+     * @return A list of NodeInfo instances.
+     */
+    public List<NodeInfo> listReachableRemotes() {
+        return storageManager.inTransaction(new Query<List<NodeInfo>>() {
+            @Override
+            public List<NodeInfo> apply() {
+                return nodesDao.listNodeInfos(new Predicate<NodeInfo>() {
+                    @Override
+                    public boolean apply(NodeInfo info) {
+                        return info.isReachable();
+                    }
+                });
             }
         });
     }

@@ -4,7 +4,7 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.NodeDef;
+import store.common.NodeInfo;
 
 class Remotes extends AbstractCommand {
 
@@ -19,8 +19,8 @@ class Remotes extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (NodeDef def : session.getClient().listRemotes()) {
-            display.print(def);
+        for (NodeInfo info : session.getClient().listRemotes()) {
+            display.print(info);
         }
     }
 }

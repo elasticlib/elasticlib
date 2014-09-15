@@ -2,7 +2,6 @@ package store.server.discovery;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import static com.google.common.collect.Iterables.concat;
 import java.net.URI;
 import static java.util.Collections.unmodifiableSet;
 import java.util.HashSet;
@@ -23,6 +22,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
+import store.common.NodeInfo;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
@@ -89,10 +89,10 @@ public class ExchangeDiscoveryClient {
         task.cancel();
     }
 
-    private static Set<Guid> guids(List<NodeDef> defs) {
+    private static Set<Guid> guids(List<NodeInfo> infos) {
         Set<Guid> guids = new HashSet<>();
-        for (NodeDef def : defs) {
-            guids.add(def.getGuid());
+        for (NodeInfo info : infos) {
+            guids.add(info.getDef().getGuid());
         }
         return unmodifiableSet(guids);
     }
@@ -102,70 +102,57 @@ public class ExchangeDiscoveryClient {
      */
     private class ExchangeTask implements Runnable {
 
+        private static final String REMOTES = "remotes";
+
         @Override
         public void run() {
             NodeDef local = nodesService.getNodeDef();
-            List<NodeDef> remotes = nodesService.listRemotes();
+            List<NodeInfo> remotes = nodesService.listReachableRemotes();
             Set<Guid> knownNodes = guids(remotes);
-            for (NodeDef remote : remotes) {
+            for (NodeInfo remote : remotes) {
                 if (!started.get()) {
                     return;
                 }
-                new SingleNodeExchangeTask(knownNodes, local, remote).run();
+                process(knownNodes, local, remote);
             }
         }
-    }
 
-    private class SingleNodeExchangeTask implements Runnable {
-
-        private static final String REMOTES = "remotes";
-        private final Set<Guid> knownNodes;
-        private final NodeDef localNodeDef;
-        private final NodeDef remoteNodeDef;
-        private Optional<URI> preferedUri = Optional.absent();
-
-        public SingleNodeExchangeTask(Set<Guid> knownNodes, NodeDef localNodeDef, NodeDef remoteNodeDef) {
-            this.knownNodes = knownNodes;
-            this.localNodeDef = localNodeDef;
-            this.remoteNodeDef = remoteNodeDef;
-        }
-
-        @Override
-        public void run() {
-            Optional<List<NodeDef>> remotesOpt = listRemoteNodes();
+        private void process(Set<Guid> knownNodes, NodeDef localNodeDef, NodeInfo remoteNodeInfo) {
+            Optional<List<NodeInfo>> remotesOpt = listRemoteNodes(remoteNodeInfo);
             if (!remotesOpt.isPresent()) {
                 return;
             }
-            List<NodeDef> remotes = remotesOpt.get();
-            for (NodeDef remote : remotes) {
+            List<NodeInfo> remotes = remotesOpt.get();
+            for (NodeInfo remote : remotes) {
+                NodeDef def = remote.getDef();
                 if (!started.get()) {
                     return;
                 }
-                if (!knownNodes.contains(remote.getGuid())) {
-                    nodesService.saveRemote(remote);
+                if (!knownNodes.contains(def.getGuid())) {
+                    nodesService.saveRemote(def);
                 }
             }
             if (!guids(remotes).contains(localNodeDef.getGuid())) {
-                addLocalNode();
+                addLocalNode(localNodeDef, remoteNodeInfo);
             }
         }
 
-        private Optional<List<NodeDef>> listRemoteNodes() {
-            return request(new Function<WebTarget, List<NodeDef>>() {
+        private Optional<List<NodeInfo>> listRemoteNodes(NodeInfo node) {
+            return request(node, new Function<WebTarget, List<NodeInfo>>() {
                 @Override
-                public List<NodeDef> apply(WebTarget target) {
+                public List<NodeInfo> apply(WebTarget target) {
                     JsonArray array = target.path(REMOTES)
                             .request()
                             .get()
                             .readEntity(JsonArray.class);
 
-                    return readAll(array, NodeDef.class);
+                    return readAll(array, NodeInfo.class);
                 }
             });
         }
 
-        private void addLocalNode() {
-            request(new Function<WebTarget, Void>() {
+        private void addLocalNode(final NodeDef localNodeDef, NodeInfo remoteNodeInfo) {
+            request(remoteNodeInfo, new Function<WebTarget, Void>() {
                 @Override
                 public Void apply(WebTarget target) {
                     JsonArrayBuilder uris = createArrayBuilder();
@@ -186,23 +173,17 @@ public class ExchangeDiscoveryClient {
             });
         }
 
-        private <T> Optional<T> request(Function<WebTarget, T> function) {
+        private <T> Optional<T> request(NodeInfo node, Function<WebTarget, T> function) {
+            if (!started.get()) {
+                return Optional.absent();
+            }
             ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class, JsonBodyWriter.class);
             Client client = ClientBuilder.newClient(clientConfig);
             try {
-                for (URI uri : concat(preferedUri.asSet(), remoteNodeDef.getPublishUris())) {
-                    if (!started.get()) {
-                        break;
-                    }
-                    try {
-                        T result = function.apply(client.target(uri));
-                        preferedUri = Optional.of(uri);
-                        return Optional.fromNullable(result);
+                return Optional.fromNullable(function.apply(client.target(node.getTransportUri())));
 
-                    } catch (ProcessingException e) {
-                        // Ignore it and try with another URI.
-                    }
-                }
+            } catch (ProcessingException e) {
+                LOG.warn("HTTP error", e);
                 return Optional.absent();
 
             } finally {

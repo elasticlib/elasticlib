@@ -41,6 +41,7 @@ public class ServiceModule {
 
         NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
         PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
+        NodePingHandler nodePingHandler = new NodePingHandler();
 
         repositoriesService = new RepositoriesService(config,
                                                       asyncManager,
@@ -52,7 +53,8 @@ public class ServiceModule {
                                         nodesDao,
                                         attributesDao,
                                         nodeNameProvider,
-                                        publishUrisProvider);
+                                        publishUrisProvider,
+                                        nodePingHandler);
     }
 
     private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {

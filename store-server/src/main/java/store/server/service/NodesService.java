@@ -5,23 +5,15 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import java.net.URI;
 import java.util.List;
-import javax.json.JsonObject;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import org.glassfish.jersey.client.ClientConfig;
-import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
 import store.common.NodeInfo;
 import store.common.hash.Guid;
-import static store.common.json.JsonReading.read;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.exception.SelfTrackingException;
 import store.server.exception.UnreachableNodeException;
-import store.server.providers.JsonBodyReader;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;
@@ -36,6 +28,7 @@ public class NodesService {
     private final NodesDao nodesDao;
     private final NodeNameProvider nodeNameProvider;
     private final PublishUrisProvider publishUrisProvider;
+    private final NodePingHandler nodePingHandler;
     private final Guid guid;
 
     /**
@@ -46,17 +39,20 @@ public class NodesService {
      * @param attributesDao Attributes DAO.
      * @param nodeNameProvider Node name provider.
      * @param publishUrisProvider Publish URI(s) provider.
+     * @param nodePingHandler remote nodes ping handler.
      */
     public NodesService(StorageManager storageManager,
                         NodesDao nodesDao,
                         final AttributesDao attributesDao,
                         NodeNameProvider nodeNameProvider,
-                        PublishUrisProvider publishUrisProvider) {
+                        PublishUrisProvider publishUrisProvider,
+                        NodePingHandler nodePingHandler) {
 
         this.storageManager = storageManager;
         this.nodesDao = nodesDao;
         this.nodeNameProvider = nodeNameProvider;
         this.publishUrisProvider = publishUrisProvider;
+        this.nodePingHandler = nodePingHandler;
         this.guid = this.storageManager.inTransaction(new Query<Guid>() {
             @Override
             public Guid apply() {
@@ -86,7 +82,7 @@ public class NodesService {
         if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
             return;
         }
-        final Optional<NodeInfo> info = ping(def.getPublishUris(), def.getGuid());
+        final Optional<NodeInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
         if (info.isPresent()) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
             storageManager.inTransaction(new Procedure() {
@@ -114,7 +110,7 @@ public class NodesService {
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        final Optional<NodeInfo> info = ping(uris, null);
+        final Optional<NodeInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
             if (info.get().getDef().getGuid().equals(guid)) {
                 throw new SelfTrackingException();
@@ -129,35 +125,6 @@ public class NodesService {
             return;
         }
         throw new UnreachableNodeException();
-    }
-
-    private static Optional<NodeInfo> ping(List<URI> uris, Guid expected) {
-        for (URI address : uris) {
-            Optional<NodeInfo> info = ping(address);
-            if (info.isPresent() && (expected == null || info.get().getDef().getGuid().equals(expected))) {
-                return info;
-            }
-        }
-        return Optional.absent();
-    }
-
-    private static Optional<NodeInfo> ping(URI uri) {
-        ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class);
-        Client client = ClientBuilder.newClient(clientConfig);
-        try {
-            JsonObject json = client.target(uri)
-                    .request()
-                    .get()
-                    .readEntity(JsonObject.class);
-
-            return Optional.of(new NodeInfo(read(json, NodeDef.class), uri, now()));
-
-        } catch (ProcessingException e) {
-            return Optional.absent();
-
-        } finally {
-            client.close();
-        }
     }
 
     /**

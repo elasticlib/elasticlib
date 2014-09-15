@@ -75,11 +75,10 @@ public class NodesService {
     /**
      * Save supplied node definition if:<br>
      * - It is not the local node one.<br>
-     * - It is not already stored.<br>
+     * - It is not already tracked.<br>
      * - Associated node is reachable.
      * <p>
-     * If any of theses conditions does not hold, does nothing. If the definition downloaded from remote node does not
-     * match with the supplied one, the downloaded one is saved instead of the supplied one.
+     * If any of theses conditions does not hold, does nothing.
      *
      * @param def Node definition to save
      */
@@ -87,7 +86,7 @@ public class NodesService {
         if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
             return;
         }
-        final Optional<NodeInfo> info = ping(def.getPublishUris());
+        final Optional<NodeInfo> info = ping(def.getPublishUris(), def.getGuid());
         if (info.isPresent()) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
             storageManager.inTransaction(new Procedure() {
@@ -115,7 +114,7 @@ public class NodesService {
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        final Optional<NodeInfo> info = ping(uris);
+        final Optional<NodeInfo> info = ping(uris, null);
         if (info.isPresent()) {
             if (info.get().getDef().getGuid().equals(guid)) {
                 throw new SelfTrackingException();
@@ -132,10 +131,10 @@ public class NodesService {
         throw new UnreachableNodeException();
     }
 
-    private static Optional<NodeInfo> ping(List<URI> uris) {
+    private static Optional<NodeInfo> ping(List<URI> uris, Guid expected) {
         for (URI address : uris) {
             Optional<NodeInfo> info = ping(address);
-            if (info.isPresent()) {
+            if (info.isPresent() && (expected == null || info.get().getDef().getGuid().equals(expected))) {
                 return info;
             }
         }

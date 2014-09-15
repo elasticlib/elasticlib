@@ -72,6 +72,14 @@ public final class ServerConfig {
      */
     public static final String DISCOVERY_EXCHANGE_INTERVAL = "discovery.exchange.interval";
     /**
+     * Whether remote nodes ping is enabled. Default to true.
+     */
+    public static final String PING_ENABLED = "ping.enabled";
+    /**
+     * Remote nodes exchange ping task scheduling interval. Default to '10 seconds'.
+     */
+    public static final String PING_INTERVAL = "ping.interval";
+    /**
      * Periodic tasks executor pool size. Default to 1.
      */
     public static final String ASYNC_POOL_SIZE = "async.poolSize";
@@ -116,6 +124,8 @@ public final class ServerConfig {
             .set(DISCOVERY_MULTICAST_TTL, 3)
             .set(DISCOVERY_EXCHANGE_ENABLED, true)
             .set(DISCOVERY_EXCHANGE_INTERVAL, "30 seconds")
+            .set(PING_ENABLED, true)
+            .set(PING_INTERVAL, "10 seconds")
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")

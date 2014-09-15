@@ -49,9 +49,11 @@ public class ServiceModule {
                                                       repositoriesDao,
                                                       replicationsDao);
 
-        nodesService = new NodesService(storageManager,
-                                        nodesDao,
+        nodesService = new NodesService(config,
+                                        asyncManager,
+                                        storageManager,
                                         attributesDao,
+                                        nodesDao,
                                         nodeNameProvider,
                                         publishUrisProvider,
                                         nodePingHandler);
@@ -73,12 +75,14 @@ public class ServiceModule {
      */
     public void start() {
         repositoriesService.start();
+        nodesService.start();
     }
 
     /**
      * Shutdown this module, properly closing all services.
      */
     public void shutdown() {
+        nodesService.close();
         repositoriesService.close();
         storageManager.close();
         asyncManager.close();

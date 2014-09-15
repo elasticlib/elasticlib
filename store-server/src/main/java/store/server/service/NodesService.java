@@ -3,13 +3,23 @@ package store.server.service;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import static com.google.common.collect.Iterables.concat;
 import java.net.URI;
+import static java.util.Collections.singleton;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
 import store.common.NodeInfo;
+import store.common.config.Config;
+import static store.common.config.ConfigUtil.duration;
+import static store.common.config.ConfigUtil.unit;
 import store.common.hash.Guid;
+import store.server.async.AsyncManager;
+import store.server.async.Task;
+import store.server.config.ServerConfig;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.exception.SelfTrackingException;
@@ -24,16 +34,23 @@ import store.server.storage.StorageManager;
 public class NodesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
+    private final Config config;
+    private final AsyncManager asyncManager;
     private final StorageManager storageManager;
+    private final AttributesDao attributesDao;
     private final NodesDao nodesDao;
     private final NodeNameProvider nodeNameProvider;
     private final PublishUrisProvider publishUrisProvider;
     private final NodePingHandler nodePingHandler;
-    private final Guid guid;
+    private final AtomicBoolean started = new AtomicBoolean();
+    private Guid guid;
+    private Task task;
 
     /**
      * Constructor.
      *
+     * @param config Configuration holder.
+     * @param asyncManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
      * @param nodesDao Nodes definitions DAO.
      * @param attributesDao Attributes DAO.
@@ -41,24 +58,56 @@ public class NodesService {
      * @param publishUrisProvider Publish URI(s) provider.
      * @param nodePingHandler remote nodes ping handler.
      */
-    public NodesService(StorageManager storageManager,
+    public NodesService(Config config,
+                        AsyncManager asyncManager,
+                        StorageManager storageManager,
+                        AttributesDao attributesDao,
                         NodesDao nodesDao,
-                        final AttributesDao attributesDao,
                         NodeNameProvider nodeNameProvider,
                         PublishUrisProvider publishUrisProvider,
                         NodePingHandler nodePingHandler) {
 
+        this.config = config;
+        this.asyncManager = asyncManager;
         this.storageManager = storageManager;
+        this.attributesDao = attributesDao;
         this.nodesDao = nodesDao;
         this.nodeNameProvider = nodeNameProvider;
         this.publishUrisProvider = publishUrisProvider;
         this.nodePingHandler = nodePingHandler;
-        this.guid = this.storageManager.inTransaction(new Query<Guid>() {
+    }
+
+    /**
+     * Starts this service.
+     */
+    public void start() {
+        if (!started.compareAndSet(false, true)) {
+            return;
+        }
+        guid = storageManager.inTransaction(new Query<Guid>() {
             @Override
             public Guid apply() {
                 return attributesDao.guid();
             }
         });
+        if (config.getBoolean(ServerConfig.PING_ENABLED)) {
+            task = asyncManager.schedule(duration(config, ServerConfig.PING_INTERVAL),
+                                         unit(config, ServerConfig.PING_INTERVAL),
+                                         "Pinging remote nodes",
+                                         new NodePingTask());
+        }
+    }
+
+    /**
+     * Properly stops this service.
+     */
+    public void close() {
+        if (!started.compareAndSet(true, false)) {
+            return;
+        }
+        if (task != null) {
+            task.cancel();
+        }
     }
 
     /**
@@ -173,5 +222,38 @@ public class NodesService {
                 });
             }
         });
+    }
+
+    /**
+     * Ping remote nodes and refresh info about them.
+     */
+    private class NodePingTask implements Runnable {
+
+        @Override
+        public void run() {
+            for (final NodeInfo current : listRemotes()) {
+                if (!started.get()) {
+                    return;
+                }
+                final Optional<NodeInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
+                storageManager.inTransaction(new Procedure() {
+                    @Override
+                    public void apply() {
+                        if (updated.isPresent()) {
+                            nodesDao.saveNodeInfo(updated.get());
+                        } else {
+                            nodesDao.saveNodeInfo(new NodeInfo(current.getDef(), Instant.now()));
+                        }
+                    }
+                });
+            }
+        }
+
+        private Iterable<URI> uris(NodeInfo info) {
+            if (!info.isReachable()) {
+                return info.getDef().getPublishUris();
+            }
+            return concat(singleton(info.getTransportUri()), info.getDef().getPublishUris());
+        }
     }
 }

@@ -34,6 +34,7 @@ import store.server.config.ServerConfig;
 import store.server.providers.JsonBodyReader;
 import store.server.providers.JsonBodyWriter;
 import store.server.service.NodesService;
+import store.server.service.ProcessingExceptionHandler;
 
 /**
  * Remote nodes exchange discovery client. Contacts periodically all known remote nodes in order to :<br>
@@ -43,6 +44,7 @@ import store.server.service.NodesService;
 public class ExchangeDiscoveryClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExchangeDiscoveryClient.class);
+    private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
     private final Config config;
     private final AsyncManager asyncManager;
     private final NodesService nodesService;
@@ -183,7 +185,7 @@ public class ExchangeDiscoveryClient {
                 return Optional.fromNullable(function.apply(client.target(node.getTransportUri())));
 
             } catch (ProcessingException e) {
-                LOG.warn("HTTP error", e);
+                HANDLER.log(node.getTransportUri(), e);
                 return Optional.absent();
 
             } finally {

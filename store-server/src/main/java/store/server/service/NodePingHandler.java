@@ -24,6 +24,7 @@ import store.server.providers.JsonBodyReader;
 public class NodePingHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodePingHandler.class);
+    private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
 
     /**
      * Calls the supplied uris and returns info of the first node that responds.
@@ -73,7 +74,7 @@ public class NodePingHandler {
             return Optional.of(new NodeInfo(read(json, NodeDef.class), uri, now()));
 
         } catch (ProcessingException e) {
-            LOG.warn("Failed to resolve local host", e);
+            HANDLER.log(uri, e);
             return Optional.absent();
 
         } finally {

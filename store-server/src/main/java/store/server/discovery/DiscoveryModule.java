@@ -10,7 +10,7 @@ public class DiscoveryModule {
 
     private final MulticastDiscoveryListener multicastDiscoveryListener;
     private final MulticastDiscoveryClient multicastDiscoveryClient;
-    private final ExchangeDiscoveryClient exchangeDiscoveryClient;
+    private final UnicastDiscoveryClient unicastDiscoveryClient;
 
     /**
      * Constructor.
@@ -26,9 +26,9 @@ public class DiscoveryModule {
                                                                 serviceModule.getAsyncManager(),
                                                                 serviceModule.getNodesService());
 
-        exchangeDiscoveryClient = new ExchangeDiscoveryClient(config,
-                                                              serviceModule.getAsyncManager(),
-                                                              serviceModule.getNodesService());
+        unicastDiscoveryClient = new UnicastDiscoveryClient(config,
+                                                            serviceModule.getAsyncManager(),
+                                                            serviceModule.getNodesService());
     }
 
     /**
@@ -37,14 +37,14 @@ public class DiscoveryModule {
     public void start() {
         multicastDiscoveryListener.start();
         multicastDiscoveryClient.start();
-        exchangeDiscoveryClient.start();
+        unicastDiscoveryClient.start();
     }
 
     /**
      * Properly stops the module and release underlying ressources.
      */
     public void stop() {
-        exchangeDiscoveryClient.stop();
+        unicastDiscoveryClient.stop();
         multicastDiscoveryClient.stop();
         multicastDiscoveryListener.stop();
     }

@@ -2,6 +2,7 @@ package store.server.discovery;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import java.net.URI;
 import static java.util.Collections.unmodifiableSet;
 import java.util.HashSet;
@@ -24,8 +25,10 @@ import org.slf4j.LoggerFactory;
 import store.common.NodeDef;
 import store.common.NodeInfo;
 import store.common.config.Config;
+import store.common.config.ConfigException;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
+import static store.common.config.ConfigUtil.uris;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.readAll;
 import store.server.async.AsyncManager;
@@ -37,13 +40,16 @@ import store.server.service.NodesService;
 import store.server.service.ProcessingExceptionHandler;
 
 /**
- * Remote nodes exchange discovery client. Contacts periodically all known remote nodes in order to :<br>
+ * Unicast discovery client. Contacts periodically one or several remote nodes in order to :<br>
  * - Collects their own remote nodes and register unknown ones among them.<br>
  * - Send them the local node if applicable.
+ * <p>
+ * Node(s) to contact may be statically supplied by URI in the configuration. If they are not specified by this mean,
+ * all known remotes notes are contacted.
  */
-public class ExchangeDiscoveryClient {
+public class UnicastDiscoveryClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExchangeDiscoveryClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UnicastDiscoveryClient.class);
     private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
     private final Config config;
     private final AsyncManager asyncManager;
@@ -58,7 +64,7 @@ public class ExchangeDiscoveryClient {
      * @param asyncManager Asynchronous tasks manager.
      * @param nodesService The nodes service.
      */
-    public ExchangeDiscoveryClient(Config config, AsyncManager asyncManager, NodesService nodesService) {
+    public UnicastDiscoveryClient(Config config, AsyncManager asyncManager, NodesService nodesService) {
         this.config = config;
         this.asyncManager = asyncManager;
         this.nodesService = nodesService;
@@ -68,17 +74,17 @@ public class ExchangeDiscoveryClient {
      * Starts the client.
      */
     public void start() {
-        if (!config.getBoolean(ServerConfig.DISCOVERY_EXCHANGE_ENABLED)) {
-            LOG.info("Node exchange discovery is disabled");
+        if (!config.getBoolean(ServerConfig.DISCOVERY_UNICAST_ENABLED)) {
+            LOG.info("Unicast discovery is disabled");
             return;
         }
         if (!started.compareAndSet(false, true)) {
             return;
         }
-        task = asyncManager.schedule(duration(config, ServerConfig.DISCOVERY_EXCHANGE_INTERVAL),
-                                     unit(config, ServerConfig.DISCOVERY_EXCHANGE_INTERVAL),
-                                     "Exchanging remote nodes",
-                                     new ExchangeTask());
+        task = asyncManager.schedule(duration(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
+                                     unit(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
+                                     "Performing unicast discovery",
+                                     new DiscoveryTask());
     }
 
     /**
@@ -100,32 +106,52 @@ public class ExchangeDiscoveryClient {
     }
 
     /**
-     * Node exchange task.
+     * Discovery task.
      */
-    private class ExchangeTask implements Runnable {
+    private class DiscoveryTask implements Runnable {
 
         private static final String REMOTES = "remotes";
+        private NodeDef local;
+        private List<NodeInfo> remotes;
+        private Set<Guid> knownNodes;
 
         @Override
         public void run() {
-            NodeDef local = nodesService.getNodeDef();
-            List<NodeInfo> remotes = nodesService.listReachableRemotes();
-            Set<Guid> knownNodes = guids(remotes);
-            for (NodeInfo remote : remotes) {
+            local = nodesService.getNodeDef();
+            remotes = nodesService.listReachableRemotes();
+            knownNodes = guids(remotes);
+            for (URI uri : targetUris()) {
                 if (!started.get()) {
                     return;
                 }
-                process(knownNodes, local, remote);
+                process(uri);
             }
         }
 
-        private void process(Set<Guid> knownNodes, NodeDef localNodeDef, NodeInfo remoteNodeInfo) {
-            Optional<List<NodeInfo>> remotesOpt = listRemoteNodes(remoteNodeInfo);
+        private Iterable<URI> targetUris() {
+            if (config.containsKey(ServerConfig.DISCOVERY_UNICAST_URIS)) {
+                try {
+                    return uris(config, ServerConfig.DISCOVERY_UNICAST_URIS);
+
+                } catch (ConfigException e) {
+                    LOG.warn("Config error, using default value", e);
+                }
+            }
+            return Lists.transform(remotes, new Function<NodeInfo, URI>() {
+                @Override
+                public URI apply(NodeInfo info) {
+                    return info.getTransportUri();
+                }
+            });
+        }
+
+        private void process(URI target) {
+            Optional<List<NodeInfo>> remotesOpt = listRemoteNodes(target);
             if (!remotesOpt.isPresent()) {
                 return;
             }
-            List<NodeInfo> remotes = remotesOpt.get();
-            for (NodeInfo remote : remotes) {
+            List<NodeInfo> targetRemotes = remotesOpt.get();
+            for (NodeInfo remote : targetRemotes) {
                 NodeDef def = remote.getDef();
                 if (!started.get()) {
                     return;
@@ -134,13 +160,13 @@ public class ExchangeDiscoveryClient {
                     nodesService.saveRemote(def);
                 }
             }
-            if (!guids(remotes).contains(localNodeDef.getGuid())) {
-                addLocalNode(localNodeDef, remoteNodeInfo);
+            if (!guids(targetRemotes).contains(local.getGuid())) {
+                addLocalNode(target);
             }
         }
 
-        private Optional<List<NodeInfo>> listRemoteNodes(NodeInfo node) {
-            return request(node, new Function<WebTarget, List<NodeInfo>>() {
+        private Optional<List<NodeInfo>> listRemoteNodes(URI target) {
+            return request(target, new Function<WebTarget, List<NodeInfo>>() {
                 @Override
                 public List<NodeInfo> apply(WebTarget target) {
                     JsonArray array = target.path(REMOTES)
@@ -153,12 +179,12 @@ public class ExchangeDiscoveryClient {
             });
         }
 
-        private void addLocalNode(final NodeDef localNodeDef, NodeInfo remoteNodeInfo) {
-            request(remoteNodeInfo, new Function<WebTarget, Void>() {
+        private void addLocalNode(URI target) {
+            request(target, new Function<WebTarget, Void>() {
                 @Override
                 public Void apply(WebTarget target) {
                     JsonArrayBuilder uris = createArrayBuilder();
-                    for (URI uri : localNodeDef.getPublishUris()) {
+                    for (URI uri : local.getPublishUris()) {
                         uris.add(uri.toString());
                     }
                     JsonObject body = createObjectBuilder()
@@ -175,17 +201,17 @@ public class ExchangeDiscoveryClient {
             });
         }
 
-        private <T> Optional<T> request(NodeInfo node, Function<WebTarget, T> function) {
+        private <T> Optional<T> request(URI target, Function<WebTarget, T> function) {
             if (!started.get()) {
                 return Optional.absent();
             }
             ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class, JsonBodyWriter.class);
             Client client = ClientBuilder.newClient(clientConfig);
             try {
-                return Optional.fromNullable(function.apply(client.target(node.getTransportUri())));
+                return Optional.fromNullable(function.apply(client.target(target)));
 
             } catch (ProcessingException e) {
-                HANDLER.log(node.getTransportUri(), e);
+                HANDLER.log(target, e);
                 return Optional.absent();
 
             } finally {

@@ -64,13 +64,17 @@ public final class ServerConfig {
      */
     public static final String DISCOVERY_MULTICAST_TTL = "discovery.multicast.ttl";
     /**
-     * Whether discovery by remote nodes exchange is enabled. Default to true.
+     * Whether unicast discovery is enabled. Default to true.
      */
-    public static final String DISCOVERY_EXCHANGE_ENABLED = "discovery.exchange.enabled";
+    public static final String DISCOVERY_UNICAST_ENABLED = "discovery.unicast.enabled";
     /**
-     * Remote nodes exchange discovery task scheduling interval. Default to '30 seconds'.
+     * Unicast discovery task scheduling interval. Default to '30 seconds'.
      */
-    public static final String DISCOVERY_EXCHANGE_INTERVAL = "discovery.exchange.interval";
+    public static final String DISCOVERY_UNICAST_INTERVAL = "discovery.unicast.interval";
+    /**
+     * URI(s) of the remotes node to contact for unicast discovery. All known remotes nodes are contacted if missing.
+     */
+    public static final String DISCOVERY_UNICAST_URIS = "discovery.unicast.uris";
     /**
      * Whether remote nodes ping is enabled. Default to true.
      */
@@ -122,8 +126,8 @@ public final class ServerConfig {
             .set(DISCOVERY_MULTICAST_GROUP, "235.141.20.10")
             .set(DISCOVERY_MULTICAST_PORT, 23875)
             .set(DISCOVERY_MULTICAST_TTL, 3)
-            .set(DISCOVERY_EXCHANGE_ENABLED, true)
-            .set(DISCOVERY_EXCHANGE_INTERVAL, "30 seconds")
+            .set(DISCOVERY_UNICAST_ENABLED, true)
+            .set(DISCOVERY_UNICAST_INTERVAL, "30 seconds")
             .set(PING_ENABLED, true)
             .set(PING_INTERVAL, "10 seconds")
             .set(ASYNC_POOL_SIZE, 1)

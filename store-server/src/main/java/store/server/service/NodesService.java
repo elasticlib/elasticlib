@@ -45,7 +45,8 @@ public class NodesService {
     private final NodePingHandler nodePingHandler;
     private final AtomicBoolean started = new AtomicBoolean();
     private Guid guid;
-    private Task task;
+    private Task pingTask;
+    private Task cleanupTask;
 
     /**
      * Constructor.
@@ -91,11 +92,17 @@ public class NodesService {
                 return attributesDao.guid();
             }
         });
-        if (config.getBoolean(ServerConfig.PING_ENABLED)) {
-            task = asyncManager.schedule(duration(config, ServerConfig.PING_INTERVAL),
-                                         unit(config, ServerConfig.PING_INTERVAL),
-                                         "Pinging remote nodes",
-                                         new NodePingTask());
+        if (config.getBoolean(ServerConfig.REMOTES_PING_ENABLED)) {
+            pingTask = asyncManager.schedule(duration(config, ServerConfig.REMOTES_PING_INTERVAL),
+                                             unit(config, ServerConfig.REMOTES_PING_INTERVAL),
+                                             "Pinging remote nodes",
+                                             new PingTask());
+        }
+        if (config.getBoolean(ServerConfig.REMOTES_CLEANUP_ENABLED)) {
+            cleanupTask = asyncManager.schedule(duration(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
+                                                unit(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
+                                                "Removing unreachable remote nodes",
+                                                new CleanupTask());
         }
     }
 
@@ -106,8 +113,11 @@ public class NodesService {
         if (!started.compareAndSet(true, false)) {
             return;
         }
-        if (task != null) {
-            task.cancel();
+        if (pingTask != null) {
+            pingTask.cancel();
+        }
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
         }
     }
 
@@ -228,7 +238,7 @@ public class NodesService {
     /**
      * Ping remote nodes and refresh info about them.
      */
-    private class NodePingTask implements Runnable {
+    private class PingTask implements Runnable {
 
         @Override
         public void run() {
@@ -261,6 +271,22 @@ public class NodesService {
                     return !uri.equals(info.getTransportUri());
                 }
             }));
+        }
+    }
+
+    /**
+     * Remove unreachable remote nodes.
+     */
+    private class CleanupTask implements Runnable {
+
+        @Override
+        public void run() {
+            storageManager.inTransaction(new Procedure() {
+                @Override
+                public void apply() {
+                    nodesDao.deleteUnreachableNodeInfos();
+                }
+            });
         }
     }
 }

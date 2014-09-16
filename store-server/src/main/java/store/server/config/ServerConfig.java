@@ -78,11 +78,19 @@ public final class ServerConfig {
     /**
      * Whether remote nodes ping is enabled. Default to true.
      */
-    public static final String PING_ENABLED = "ping.enabled";
+    public static final String REMOTES_PING_ENABLED = "remotes.ping.enabled";
     /**
      * Remote nodes exchange ping task scheduling interval. Default to '10 seconds'.
      */
-    public static final String PING_INTERVAL = "ping.interval";
+    public static final String REMOTES_PING_INTERVAL = "remotes.ping.interval";
+    /**
+     * Whether unreachable remote nodes are automatically removed. Default to true.
+     */
+    public static final String REMOTES_CLEANUP_ENABLED = "remotes.cleanup.enabled";
+    /**
+     * Unreachable remote nodes cleanup task scheduling interval. Default to '60 seconds'.
+     */
+    public static final String REMOTES_CLEANUP_INTERVAL = "remotes.cleanup.interval";
     /**
      * Periodic tasks executor pool size. Default to 1.
      */
@@ -128,8 +136,10 @@ public final class ServerConfig {
             .set(DISCOVERY_MULTICAST_TTL, 3)
             .set(DISCOVERY_UNICAST_ENABLED, true)
             .set(DISCOVERY_UNICAST_INTERVAL, "30 seconds")
-            .set(PING_ENABLED, true)
-            .set(PING_INTERVAL, "10 seconds")
+            .set(REMOTES_PING_ENABLED, true)
+            .set(REMOTES_PING_INTERVAL, "10 seconds")
+            .set(REMOTES_CLEANUP_ENABLED, true)
+            .set(REMOTES_CLEANUP_INTERVAL, "60 seconds")
             .set(ASYNC_POOL_SIZE, 1)
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")

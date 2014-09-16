@@ -103,6 +103,22 @@ public class NodesDao {
     }
 
     /**
+     * Deletes info of all unreachable nodes.
+     */
+    public void deleteUnreachableNodeInfos() {
+        DatabaseEntry curKey = new DatabaseEntry();
+        DatabaseEntry data = new DatabaseEntry();
+        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
+            while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                NodeInfo info = asMappable(data, NodeInfo.class);
+                if (!info.isReachable()) {
+                    cursor.delete();
+                }
+            }
+        }
+    }
+
+    /**
      * Loads all NodeInfo matching supplied predicate.
      *
      * @param predicate Filtering predicate.

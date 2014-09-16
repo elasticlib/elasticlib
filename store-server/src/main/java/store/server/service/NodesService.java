@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
 import static java.util.Collections.singleton;
 import java.util.List;
@@ -249,11 +250,17 @@ public class NodesService {
             }
         }
 
-        private Iterable<URI> uris(NodeInfo info) {
+        private Iterable<URI> uris(final NodeInfo info) {
             if (!info.isReachable()) {
                 return info.getDef().getPublishUris();
             }
-            return concat(singleton(info.getTransportUri()), info.getDef().getPublishUris());
+            return concat(singleton(info.getTransportUri()),
+                          filter(info.getDef().getPublishUris(), new Predicate<URI>() {
+                @Override
+                public boolean apply(URI uri) {
+                    return !uri.equals(info.getTransportUri());
+                }
+            }));
         }
     }
 }

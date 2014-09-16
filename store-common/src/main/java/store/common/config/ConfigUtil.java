@@ -2,10 +2,16 @@ package store.common.config;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import static java.util.Collections.singletonList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import store.common.value.Value;
+import store.common.value.ValueType;
 
 /**
  * Configuration utilities.
@@ -100,5 +106,40 @@ public final class ConfigUtil {
 
     private static ConfigException newMalformedDurationException(String key) {
         return new ConfigException("Key " + key + " is expected to represent a well-formed duration");
+    }
+
+    /**
+     * Extract URI(s) from config. Value associated with supplied key may be either a string or a list of strings. In
+     * the first case, a single URI is parsed. In the second one, a URI is parsed from each string of the list.
+     *
+     * @param config Configuration holder.
+     * @param key Config key.
+     * @return A list of URI.
+     */
+    public static List<URI> uris(Config config, String key) {
+        Value configVal = config.get(key);
+        if (configVal.type() == ValueType.STRING) {
+            return singletonList(parseUri(key, configVal));
+        }
+        if (configVal.type() == ValueType.ARRAY) {
+            List<URI> uris = new ArrayList<>();
+            for (Value value : configVal.asList()) {
+                uris.add(parseUri(key, value));
+            }
+            return uris;
+        }
+        throw new ConfigException("Key " + key + " is expected to be associated with a string or a list of strings");
+    }
+
+    private static URI parseUri(String key, Value value) {
+        if (value.type() != ValueType.STRING) {
+            throw new ConfigException("Key " + key + ": unexpected type " + value.type().name().toLowerCase());
+        }
+        try {
+            return new URI(value.asString());
+
+        } catch (URISyntaxException e) {
+            throw new ConfigException("Key " + key + ": ", e);
+        }
     }
 }

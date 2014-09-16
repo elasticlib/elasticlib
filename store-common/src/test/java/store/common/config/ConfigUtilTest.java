@@ -1,5 +1,9 @@
 package store.common.config;
 
+import java.net.URI;
+import java.util.ArrayList;
+import static java.util.Arrays.asList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;
@@ -7,6 +11,7 @@ import org.testng.annotations.Test;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.isValidDuration;
 import static store.common.config.ConfigUtil.unit;
+import store.common.value.Value;
 
 /**
  * Units tests.
@@ -172,5 +177,78 @@ public class ConfigUtilTest {
     public void malformedUnitTest(String value) {
         Config config = new Config().set(KEY, value);
         unit(config, KEY);
+    }
+
+    /**
+     * Data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "urisDataProvider")
+    public Object[][] urisDataProvider() {
+        return new Object[][]{
+            {value("http://127.0.0.1:9400"),
+             uris("http://127.0.0.1:9400")},
+            {value("http://192.168.1.1:9400", "http://192.168.1.2:9400"),
+             uris("http://192.168.1.1:9400", "http://192.168.1.2:9400")}
+        };
+    }
+
+    private static Value value(String first, String... others) {
+        if (others.length == 0) {
+            return Value.of(first);
+        }
+        List<Value> values = new ArrayList<>();
+        values.add(Value.of(first));
+        for (String other : others) {
+            values.add(Value.of(other));
+        }
+        return Value.of(values);
+    }
+
+    private static List<URI> uris(String first, String... others) {
+        List<URI> uris = new ArrayList<>();
+        uris.add(URI.create(first));
+        for (String other : others) {
+            uris.add(URI.create(other));
+        }
+        return uris;
+    }
+
+    /**
+     * Test.
+     *
+     * @param value Config value.
+     * @param expected Expected URI(s).
+     */
+    @Test(dataProvider = "urisDataProvider")
+    public void urisTest(Value value, List<URI> expected) {
+        Config config = new Config().set(KEY, value);
+        assertThat(ConfigUtil.uris(config, KEY)).as(value.toString()).isEqualTo(expected);
+    }
+
+    /**
+     * Data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "malformedUrisDataProvider")
+    public Object[][] malformedUrisDataProvider() {
+        return new Object[][]{
+            {Value.of(true)},
+            {Value.of(asList(Value.of("http://127.0.0.1:9400"), Value.of(42)))},
+            {Value.of("http://127.0.0.1:9400?p=^test")}
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param value Config value.
+     */
+    @Test(dataProvider = "malformedUrisDataProvider", expectedExceptions = ConfigException.class)
+    public void malformedUrisTest(Value value) {
+        Config config = new Config().set(KEY, value);
+        ConfigUtil.uris(config, KEY);
     }
 }

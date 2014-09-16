@@ -10,10 +10,10 @@ public class ConfigException extends RuntimeException {
     /**
      * Constructor.
      *
-     * @param e Root cause.
+     * @param cause Root cause.
      */
-    public ConfigException(Exception e) {
-        super(e);
+    public ConfigException(Throwable cause) {
+        super(cause);
     }
 
     /**
@@ -23,5 +23,15 @@ public class ConfigException extends RuntimeException {
      */
     public ConfigException(String message) {
         super(message);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param message Error message.
+     * @param cause Root cause.
+     */
+    public ConfigException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

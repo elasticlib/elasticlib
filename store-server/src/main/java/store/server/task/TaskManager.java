@@ -17,6 +17,8 @@ import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
  */
 public class TaskManager {
 
+    private static final String SUCCESS = " - Success";
+    private static final String FAILURE = " - Failure";
     private static final Logger LOG = LoggerFactory.getLogger(TaskManager.class);
     private final ScheduledExecutorService executor;
 
@@ -40,6 +42,28 @@ public class TaskManager {
     }
 
     /**
+     * Asynchronously execute the given task.
+     *
+     * @param description Task short description, intended for logging purposes.
+     * @param task The task to executes
+     */
+    public void execute(final String description, final Runnable task) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                LOG.info(description);
+                try {
+                    task.run();
+                    LOG.debug(description + SUCCESS);
+
+                } catch (Exception e) {
+                    LOG.error(description + FAILURE, e);
+                }
+            }
+        });
+    }
+
+    /**
      * Schedules execution of supplied task at periodic interval. If any execution of the task encounters an exception,
      * subsequent executions are suppressed. Otherwise, the task will only terminate via cancellation or when this
      * service is closed. If any execution of this task takes longer than its period, then subsequent executions may
@@ -48,11 +72,11 @@ public class TaskManager {
      * @param interval The duration between successive executions.
      * @param unit The time unit of the interval parameter.
      * @param description Task short description, intended for logging purposes.
-     * @param command The task to executes
+     * @param task The task to executes
      * @return A task handle.
      */
-    public Task schedule(long interval, TimeUnit unit, String description, Runnable command) {
-        return new Task(executor.scheduleAtFixedRate(new LoggedRunnable(description, command), 0, interval, unit));
+    public Task schedule(long interval, TimeUnit unit, String description, Runnable task) {
+        return new Task(executor.scheduleAtFixedRate(new LoggedRunnable(description, task), 0, interval, unit));
     }
 
     /**
@@ -83,10 +107,10 @@ public class TaskManager {
             LOG.info(message);
             try {
                 delegate.run();
-                LOG.debug(message + " - Success");
+                LOG.debug(message + SUCCESS);
 
             } catch (Exception e) {
-                LOG.error(message + " - Failure", e);
+                LOG.error(message + FAILURE, e);
                 throw new AbortException(e);
             }
         }

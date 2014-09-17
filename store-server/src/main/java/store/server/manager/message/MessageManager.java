@@ -1,4 +1,4 @@
-package store.server.message;
+package store.server.manager.message;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import store.server.task.TaskManager;
+import store.server.manager.task.TaskManager;
 
 /**
  * Provides infrastructure for a message-driven architecture.

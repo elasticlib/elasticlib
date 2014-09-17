@@ -1,4 +1,4 @@
-package store.server.message;
+package store.server.manager.message;
 
 import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;

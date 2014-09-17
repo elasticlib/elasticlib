@@ -1,4 +1,4 @@
-package store.server.message;
+package store.server.manager.message;
 
 /**
  * Represents a message, encapsulating information about a state change.

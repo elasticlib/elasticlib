@@ -9,8 +9,8 @@ import store.server.dao.NodesDao;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.WriteException;
-import store.server.storage.StorageManager;
-import store.server.task.TaskManager;
+import store.server.manager.storage.StorageManager;
+import store.server.manager.task.TaskManager;
 
 /**
  * Manages services life-cycle.
@@ -19,7 +19,7 @@ public class ServiceModule {
 
     private static final String STORAGE = "storage";
     private static final String SERVICES = "services";
-    private final TaskManager asyncManager;
+    private final TaskManager taskManager;
     private final StorageManager storageManager;
     private final RepositoriesService repositoriesService;
     private final NodesService nodesService;
@@ -31,8 +31,8 @@ public class ServiceModule {
      * @param config Server config.
      */
     public ServiceModule(Path home, Config config) {
-        asyncManager = new TaskManager(config);
-        storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
+        taskManager = new TaskManager(config);
+        storageManager = newStorageManager(home.resolve(STORAGE), config, taskManager);
 
         AttributesDao attributesDao = new AttributesDao(storageManager);
         NodesDao nodesDao = new NodesDao(storageManager);
@@ -44,13 +44,13 @@ public class ServiceModule {
         NodePingHandler nodePingHandler = new NodePingHandler();
 
         repositoriesService = new RepositoriesService(config,
-                                                      asyncManager,
+                                                      taskManager,
                                                       storageManager,
                                                       repositoriesDao,
                                                       replicationsDao);
 
         nodesService = new NodesService(config,
-                                        asyncManager,
+                                        taskManager,
                                         storageManager,
                                         attributesDao,
                                         nodesDao,
@@ -85,14 +85,14 @@ public class ServiceModule {
         nodesService.stop();
         repositoriesService.stop();
         storageManager.stop();
-        asyncManager.stop();
+        taskManager.stop();
     }
 
     /**
      * @return The asynchronous tasks manager.
      */
-    public TaskManager getAsyncManager() {
-        return asyncManager;
+    public TaskManager getTaskManager() {
+        return taskManager;
     }
 
     /**

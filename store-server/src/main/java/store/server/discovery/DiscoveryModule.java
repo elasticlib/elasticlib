@@ -23,11 +23,11 @@ public class DiscoveryModule {
                                                                     serviceModule.getNodesService());
 
         multicastDiscoveryClient = new MulticastDiscoveryClient(config,
-                                                                serviceModule.getAsyncManager(),
+                                                                serviceModule.getTaskManager(),
                                                                 serviceModule.getNodesService());
 
         unicastDiscoveryClient = new UnicastDiscoveryClient(config,
-                                                            serviceModule.getAsyncManager(),
+                                                            serviceModule.getTaskManager(),
                                                             serviceModule.getNodesService());
     }
 

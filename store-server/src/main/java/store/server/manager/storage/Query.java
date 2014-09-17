@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 /**
  * Functionnal interface defining a query, that is a non-mutative operation.

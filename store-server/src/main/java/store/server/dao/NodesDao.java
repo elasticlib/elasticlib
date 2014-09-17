@@ -14,9 +14,9 @@ import store.common.NodeInfo;
 import store.common.hash.Guid;
 import store.server.exception.NodeAlreadyTrackedException;
 import store.server.exception.UnknownNodeException;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Provides a persistent storage for nodes infos.

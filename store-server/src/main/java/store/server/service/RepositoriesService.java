@@ -31,11 +31,11 @@ import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
+import store.server.manager.storage.Procedure;
+import store.server.manager.storage.Query;
+import store.server.manager.storage.StorageManager;
+import store.server.manager.task.TaskManager;
 import store.server.repository.Repository;
-import store.server.storage.Procedure;
-import store.server.storage.Query;
-import store.server.storage.StorageManager;
-import store.server.task.TaskManager;
 
 /**
  * Manage repositories and replication between them.

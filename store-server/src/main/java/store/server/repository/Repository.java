@@ -30,11 +30,11 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
-import store.server.storage.Command;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.Query;
-import store.server.storage.StorageManager;
-import store.server.task.TaskManager;
+import store.server.manager.storage.Command;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.Query;
+import store.server.manager.storage.StorageManager;
+import store.server.manager.task.TaskManager;
 
 /**
  * Stores contents with their metadata and performs their asynchronous indexation transparently.

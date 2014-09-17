@@ -19,8 +19,8 @@ import store.common.AgentInfo;
 import store.common.AgentState;
 import store.common.Event;
 import store.server.exception.ServerException;
-import static store.server.storage.DatabaseEntries.asLong;
-import static store.server.storage.DatabaseEntries.entry;
+import static store.server.manager.storage.DatabaseEntries.asLong;
+import static store.server.manager.storage.DatabaseEntries.entry;
 
 /**
  * Tracks a repository and performs a task for each event of his history.

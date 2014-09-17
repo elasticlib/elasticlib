@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
@@ -26,9 +26,9 @@ import static store.common.config.ConfigUtil.unit;
 import store.common.value.Value;
 import store.server.config.ServerConfig;
 import store.server.exception.RepositoryClosedException;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.task.Task;
-import store.server.task.TaskManager;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.task.Task;
+import store.server.manager.task.TaskManager;
 
 /**
  * Provides persistent storage services build atop a Berkeley DB environment.

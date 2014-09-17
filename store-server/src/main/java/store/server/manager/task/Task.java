@@ -1,4 +1,4 @@
-package store.server.task;
+package store.server.manager.task;
 
 import java.util.concurrent.Future;
 

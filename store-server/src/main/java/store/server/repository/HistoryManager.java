@@ -16,10 +16,10 @@ import store.common.Event;
 import store.common.Operation;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
-import static store.server.storage.DatabaseEntries.asLong;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asLong;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Creates and provides access to events of a repository.

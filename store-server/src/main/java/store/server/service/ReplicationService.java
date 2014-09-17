@@ -11,11 +11,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import store.common.AgentInfo;
 import store.common.hash.Guid;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
 import store.server.repository.Signalable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
 
 /**
  * Manages replication agents between repositories.

@@ -1,4 +1,4 @@
-package store.server.task;
+package store.server.manager.task;
 
 import static java.util.concurrent.Executors.defaultThreadFactory;
 import static java.util.concurrent.Executors.newScheduledThreadPool;

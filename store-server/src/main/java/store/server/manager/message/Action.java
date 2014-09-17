@@ -1,4 +1,4 @@
-package store.server.message;
+package store.server.manager.message;
 
 /**
  * Represents an action to apply when a message is posted.

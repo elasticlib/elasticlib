@@ -14,9 +14,9 @@ import store.common.hash.Hash;
 import store.server.exception.ConflictException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownRevisionException;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Stores and retrieves content info inside a repository.

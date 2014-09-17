@@ -32,12 +32,12 @@ import static store.common.config.ConfigUtil.uris;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.readAll;
 import store.server.config.ServerConfig;
+import store.server.manager.task.Task;
+import store.server.manager.task.TaskManager;
 import store.server.providers.JsonBodyReader;
 import store.server.providers.JsonBodyWriter;
 import store.server.service.NodesService;
 import store.server.service.ProcessingExceptionHandler;
-import store.server.task.Task;
-import store.server.task.TaskManager;
 
 /**
  * Unicast discovery client. Contacts periodically one or several remote nodes in order to :<br>

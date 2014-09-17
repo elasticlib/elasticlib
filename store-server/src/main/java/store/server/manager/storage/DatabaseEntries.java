@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 import com.google.common.base.Charsets;
 import com.sleepycat.je.DatabaseEntry;

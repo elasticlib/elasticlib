@@ -23,11 +23,11 @@ import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.exception.SelfTrackingException;
 import store.server.exception.UnreachableNodeException;
-import store.server.storage.Procedure;
-import store.server.storage.Query;
-import store.server.storage.StorageManager;
-import store.server.task.Task;
-import store.server.task.TaskManager;
+import store.server.manager.storage.Procedure;
+import store.server.manager.storage.Query;
+import store.server.manager.storage.StorageManager;
+import store.server.manager.task.Task;
+import store.server.manager.task.TaskManager;
 
 /**
  * Manages nodes in the cluster.

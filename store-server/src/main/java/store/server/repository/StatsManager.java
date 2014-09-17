@@ -7,10 +7,10 @@ import com.sleepycat.je.OperationStatus;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 import store.common.RepositoryStats;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.Procedure;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.Procedure;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Manages repository stats.

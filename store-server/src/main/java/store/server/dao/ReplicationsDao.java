@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import store.common.ReplicationDef;
 import store.common.hash.Guid;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Provides a persistent storage for replications definitions.

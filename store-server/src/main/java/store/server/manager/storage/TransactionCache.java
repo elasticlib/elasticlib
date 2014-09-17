@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -13,8 +13,8 @@ import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import store.server.exception.TransactionNotFoundException;
-import store.server.task.Task;
-import store.server.task.TaskManager;
+import store.server.manager.task.Task;
+import store.server.manager.task.TaskManager;
 
 /**
  * Retains suspended transactions, allowing to resume them latter. Suspended transactions may be aborted and deleted

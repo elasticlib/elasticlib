@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 import java.util.logging.Handler;
 import java.util.logging.Level;

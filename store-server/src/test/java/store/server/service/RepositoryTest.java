@@ -38,21 +38,21 @@ import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.config.ServerConfig;
-import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import static store.server.config.ServerConfig.STORAGE_SYNC_ENABLED;
 import static store.server.config.ServerConfig.STORAGE_SYNC_INTERVAL;
+import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
+import store.server.manager.storage.StorageManager;
+import store.server.manager.task.TaskManager;
 import store.server.repository.Repository;
-import store.server.storage.StorageManager;
-import store.server.task.TaskManager;
 
 /**
  * Unit tests.

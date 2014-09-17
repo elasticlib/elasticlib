@@ -5,9 +5,9 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import store.common.hash.Guid;
-import static store.server.storage.DatabaseEntries.asGuid;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asGuid;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Provides a persistent storage for various attributes.

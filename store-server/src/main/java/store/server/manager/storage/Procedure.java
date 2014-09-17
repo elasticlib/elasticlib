@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 /**
  * Functionnal interface defining a procedure, that is an operation which returns nothing.

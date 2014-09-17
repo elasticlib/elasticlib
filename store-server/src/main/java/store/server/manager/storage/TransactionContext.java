@@ -1,4 +1,4 @@
-package store.server.storage;
+package store.server.manager.storage;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Transaction;

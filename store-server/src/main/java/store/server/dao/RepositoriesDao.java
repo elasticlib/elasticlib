@@ -13,9 +13,9 @@ import store.common.RepositoryDef;
 import store.common.hash.Guid;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.UnknownRepositoryException;
-import static store.server.storage.DatabaseEntries.asMappable;
-import static store.server.storage.DatabaseEntries.entry;
-import store.server.storage.StorageManager;
+import static store.server.manager.storage.DatabaseEntries.asMappable;
+import static store.server.manager.storage.DatabaseEntries.entry;
+import store.server.manager.storage.StorageManager;
 
 /**
  * Provides a persistent storage for repositories definitions.

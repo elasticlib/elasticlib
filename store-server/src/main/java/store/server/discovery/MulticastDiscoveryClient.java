@@ -18,9 +18,9 @@ import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.json.JsonReading;
 import store.server.config.ServerConfig;
+import store.server.manager.task.Task;
+import store.server.manager.task.TaskManager;
 import store.server.service.NodesService;
-import store.server.task.Task;
-import store.server.task.TaskManager;
 
 /**
  * Multicast discovery client. Sends periodically discovery requests and collects responses.

@@ -1,6 +1,7 @@
 package store.server.discovery;
 
 import store.common.config.Config;
+import store.server.manager.ManagerModule;
 import store.server.service.ServiceModule;
 
 /**
@@ -16,18 +17,19 @@ public class DiscoveryModule {
      * Constructor.
      *
      * @param config Server config.
+     * @param managerModule Manager module.
      * @param serviceModule Service module.
      */
-    public DiscoveryModule(Config config, ServiceModule serviceModule) {
+    public DiscoveryModule(Config config, ManagerModule managerModule, ServiceModule serviceModule) {
         multicastDiscoveryListener = new MulticastDiscoveryListener(config,
                                                                     serviceModule.getNodesService());
 
         multicastDiscoveryClient = new MulticastDiscoveryClient(config,
-                                                                serviceModule.getTaskManager(),
+                                                                managerModule.getTaskManager(),
                                                                 serviceModule.getNodesService());
 
         unicastDiscoveryClient = new UnicastDiscoveryClient(config,
-                                                            serviceModule.getTaskManager(),
+                                                            managerModule.getTaskManager(),
                                                             serviceModule.getNodesService());
     }
 

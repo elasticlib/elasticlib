@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import store.server.config.ServerConfig;
 import store.server.discovery.DiscoveryModule;
+import store.server.manager.ManagerModule;
 import store.server.providers.LoggingFilter;
 import store.server.service.NodesService;
 import store.server.service.RepositoriesService;
@@ -26,6 +27,7 @@ import store.server.service.ServiceModule;
 public class Server {
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+    private final ManagerModule managerModule;
     private final ServiceModule serviceModule;
     private final DiscoveryModule discoveryModule;
     private final HttpServer httpServer;
@@ -39,8 +41,9 @@ public class Server {
         Config config = ServerConfig.load(home.resolve("config.yml"));
         LOG.info(startingMessage(home, config));
 
-        serviceModule = new ServiceModule(home, config);
-        discoveryModule = new DiscoveryModule(config, serviceModule);
+        managerModule = new ManagerModule(home, config);
+        serviceModule = new ServiceModule(config, managerModule);
+        discoveryModule = new DiscoveryModule(config, managerModule, serviceModule);
 
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("store.server.resources",
@@ -59,6 +62,7 @@ public class Server {
                 httpServer.shutdown();
                 discoveryModule.stop();
                 serviceModule.stop();
+                managerModule.stop();
                 LOG.info("Stopped");
             }
         });
@@ -96,6 +100,7 @@ public class Server {
      */
     public void start() {
         try {
+            managerModule.start();
             serviceModule.start();
             discoveryModule.start();
             httpServer.start();

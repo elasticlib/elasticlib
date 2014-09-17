@@ -50,8 +50,7 @@ import store.server.dao.RepositoriesDao;
 import store.server.exception.ConflictException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
-import store.server.manager.storage.StorageManager;
-import store.server.manager.task.TaskManager;
+import store.server.manager.ManagerModule;
 import store.server.repository.Repository;
 
 /**
@@ -64,8 +63,9 @@ public class RepositoryTest {
     private static final String DELETE = "delete";
     private static final String ALPHA = "alpha";
     private static final String BETA = "beta";
-    private RepositoriesService repositoriesService;
     private Path path;
+    private ManagerModule managerModule;
+    private RepositoriesService repositoriesService;
     private Map<String, RepositoryDef> defs;
 
     /**
@@ -86,19 +86,15 @@ public class RepositoryTest {
                 .set(ServerConfig.JE_LOCK_TIMEOUT, "1 min");
 
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
-        Path storageDir = path.resolve("home").resolve("storage");
-        Files.createDirectories(storageDir);
-
-        TaskManager taskManager = new TaskManager(config);
-        StorageManager storageManager = new StorageManager("test", storageDir, config, taskManager);
-        RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
-        ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
-
+        managerModule = new ManagerModule(path.resolve("home"), config);
         repositoriesService = new RepositoriesService(config,
-                                                      taskManager,
-                                                      storageManager,
-                                                      repositoriesDao,
-                                                      replicationsDao);
+                                                      managerModule.getTaskManager(),
+                                                      managerModule.getStorageManager(),
+                                                      managerModule.getMessageManager(),
+                                                      new RepositoriesDao(managerModule.getStorageManager()),
+                                                      new ReplicationsDao(managerModule.getStorageManager()));
+
+        managerModule.start();
     }
 
     /**
@@ -109,6 +105,7 @@ public class RepositoryTest {
     @AfterClass
     public void cleanUp() throws IOException {
         repositoriesService.stop();
+        managerModule.stop();
         recursiveDelete(path);
     }
 

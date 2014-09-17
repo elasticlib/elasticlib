@@ -31,6 +31,7 @@ import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.exception.ServerException;
+import store.server.manager.message.MessageManager;
 import store.server.manager.storage.Procedure;
 import store.server.manager.storage.Query;
 import store.server.manager.storage.StorageManager;
@@ -46,6 +47,7 @@ public class RepositoriesService {
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
+    private final MessageManager messageManager;
     private final RepositoriesDao repositoriesDao;
     private final ReplicationsDao replicationsDao;
     private final ReplicationService replicationService;
@@ -58,21 +60,24 @@ public class RepositoriesService {
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
+     * @param messageManager Messaging infrastructure manager.
      * @param repositoriesDao Repositories definitions DAO.
      * @param replicationsDao Replications definitions DAO.
      */
     public RepositoriesService(Config config,
                                TaskManager taskManager,
                                StorageManager storageManager,
+                               MessageManager messageManager,
                                RepositoriesDao repositoriesDao,
                                ReplicationsDao replicationsDao) {
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
+        this.messageManager = messageManager;
         this.repositoriesDao = repositoriesDao;
         this.replicationsDao = replicationsDao;
 
-        replicationService = new ReplicationService(storageManager);
+        replicationService = new ReplicationService(storageManager, messageManager);
     }
 
     /**
@@ -106,7 +111,7 @@ public class RepositoriesService {
 
     private void openRepository(RepositoryDef repositoryDef) {
         Path path = repositoryDef.getPath();
-        Repository repository = Repository.open(path, config, taskManager, replicationService);
+        Repository repository = Repository.open(path, config, taskManager, messageManager);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
         repositoriesDao.updateRepositoryDef(updatedDef);
@@ -148,7 +153,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Repository repository = Repository.create(path, config, taskManager, replicationService);
+                    Repository repository = Repository.create(path, config, taskManager, messageManager);
                     RepositoryDef def = repository.getDef();
                     repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);
@@ -174,7 +179,7 @@ public class RepositoriesService {
                     if (anyRepositoryExistsAt(path)) {
                         throw new RepositoryAlreadyExistsException();
                     }
-                    Repository repository = Repository.open(path, config, taskManager, replicationService);
+                    Repository repository = Repository.open(path, config, taskManager, messageManager);
                     RepositoryDef def = repository.getDef();
                     repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);

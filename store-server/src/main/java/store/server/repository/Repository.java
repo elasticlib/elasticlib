@@ -30,6 +30,8 @@ import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
+import store.server.manager.message.MessageManager;
+import store.server.manager.message.NewRepositoryEventMessage;
 import store.server.manager.storage.Command;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.Query;
@@ -48,8 +50,8 @@ public class Repository {
     private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
     private final RepositoryDef def;
-    private final Signalable changesTracker;
     private final StorageManager storageManager;
+    private final MessageManager messageManager;
     private final InfoManager infoManager;
     private final HistoryManager historyManager;
     private final StatsManager statsManager;
@@ -62,12 +64,12 @@ public class Repository {
     private Repository(RepositoryDef def,
                        Config config,
                        TaskManager taskManager,
-                       Signalable changesTracker,
+                       MessageManager messageManager,
                        ContentManager contentManager,
                        Index index) {
         this.def = def;
-        this.changesTracker = changesTracker;
         storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, taskManager);
+        this.messageManager = messageManager;
         infoManager = new InfoManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         statsManager = new StatsManager(storageManager);
@@ -88,10 +90,10 @@ public class Repository {
      * @param path Repository home. Expected not to exist.
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
-     * @param changesTracker An instance which tracks repository changes.
+     * @param messageManager Messaging infrastructure manager.
      * @return Created repository.
      */
-    public static Repository create(Path path, Config config, TaskManager taskManager, Signalable changesTracker) {
+    public static Repository create(Path path, Config config, TaskManager taskManager, MessageManager messageManager) {
         try {
             Files.createDirectories(path);
             if (!isEmptyDir(path)) {
@@ -108,7 +110,7 @@ public class Repository {
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               taskManager,
-                              changesTracker,
+                              messageManager,
                               ContentManager.create(path.resolve(CONTENT)),
                               Index.create(name, path.resolve(INDEX)));
     }
@@ -125,10 +127,10 @@ public class Repository {
      * @param path Repository home.
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
-     * @param changesTracker An instance which tracks repository changes.
+     * @param messageManager Messaging infrastructure manager.
      * @return Opened repository.
      */
-    public static Repository open(Path path, Config config, TaskManager taskManager, Signalable changesTracker) {
+    public static Repository open(Path path, Config config, TaskManager taskManager, MessageManager messageManager) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }
@@ -138,7 +140,7 @@ public class Repository {
         return new Repository(new RepositoryDef(name, guid, path),
                               config,
                               taskManager,
-                              changesTracker,
+                              messageManager,
                               ContentManager.open(path.resolve(CONTENT)),
                               Index.open(name, path.resolve(INDEX)));
     }
@@ -295,7 +297,7 @@ public class Repository {
         if (condition) {
             indexingAgent.signal();
             statsAgent.signal();
-            changesTracker.signal(def.getGuid());
+            messageManager.post(new NewRepositoryEventMessage(def.getGuid()));
         }
     }
 

@@ -6,6 +6,7 @@ import store.server.dao.NodesDao;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.manager.ManagerModule;
+import store.server.manager.message.MessageManager;
 import store.server.manager.storage.StorageManager;
 import store.server.manager.task.TaskManager;
 
@@ -26,6 +27,7 @@ public class ServiceModule {
     public ServiceModule(Config config, ManagerModule managerModule) {
         TaskManager taskManager = managerModule.getTaskManager();
         StorageManager storageManager = managerModule.getStorageManager();
+        MessageManager messageManager = managerModule.getMessageManager();
 
         AttributesDao attributesDao = new AttributesDao(storageManager);
         NodesDao nodesDao = new NodesDao(storageManager);
@@ -39,6 +41,7 @@ public class ServiceModule {
         repositoriesService = new RepositoriesService(config,
                                                       taskManager,
                                                       storageManager,
+                                                      messageManager,
                                                       repositoriesDao,
                                                       replicationsDao);
 

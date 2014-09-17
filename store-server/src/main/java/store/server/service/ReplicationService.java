@@ -11,23 +11,44 @@ import java.util.Map.Entry;
 import java.util.Set;
 import store.common.AgentInfo;
 import store.common.hash.Guid;
+import store.server.manager.message.Action;
+import store.server.manager.message.Message;
+import store.server.manager.message.MessageManager;
+import static store.server.manager.message.MessageType.NEW_REPOSITORY_EVENT;
+import store.server.manager.message.NewRepositoryEventMessage;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.StorageManager;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
-import store.server.repository.Signalable;
 
 /**
  * Manages replication agents between repositories.
  */
-class ReplicationService implements Signalable {
+class ReplicationService {
 
     private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
     private final Database curSeqsDb;
     private final Map<Guid, Map<Guid, Agent>> agents = new HashMap<>();
 
-    public ReplicationService(StorageManager storageManager) {
+    public ReplicationService(StorageManager storageManager, MessageManager messageManager) {
         curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
+        messageManager.register(NEW_REPOSITORY_EVENT, new Action() {
+            @Override
+            public String description() {
+                return "Signaling replication agents";
+            }
+
+            @Override
+            public void apply(Message message) {
+                Guid guid = NewRepositoryEventMessage.class.cast(message).getRepositoryGuid();
+                if (!agents.containsKey(guid)) {
+                    return;
+                }
+                for (Agent agent : agents.get(guid).values()) {
+                    agent.signal();
+                }
+            }
+        });
     }
 
     /**
@@ -158,21 +179,6 @@ class ReplicationService implements Signalable {
             }
         }
         return sources;
-    }
-
-    /**
-     * Signals all agents from repository which GUID is supplied.
-     *
-     * @param guid A repository GUID.
-     */
-    @Override
-    public synchronized void signal(Guid guid) {
-        if (!agents.containsKey(guid)) {
-            return;
-        }
-        for (Agent agent : agents.get(guid).values()) {
-            agent.signal();
-        }
     }
 
     /**

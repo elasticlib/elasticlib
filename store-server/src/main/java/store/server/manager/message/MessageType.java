@@ -8,7 +8,10 @@ import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
  */
 public enum MessageType {
 
-    ;
+    /**
+     * Indicates that a new event happened in a repository.
+     */
+    NEW_REPOSITORY_EVENT;
 
     @Override
     public String toString() {

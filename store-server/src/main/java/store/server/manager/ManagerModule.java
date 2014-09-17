@@ -35,7 +35,7 @@ public class ManagerModule {
     private static StorageManager newStorageManager(Path path, Config config, TaskManager asyncManager) {
         try {
             if (!Files.exists(path)) {
-                Files.createDirectory(path);
+                Files.createDirectories(path);
             }
         } catch (IOException e) {
             throw new WriteException(e);

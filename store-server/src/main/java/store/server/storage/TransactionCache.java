@@ -9,12 +9,12 @@ import static java.util.Objects.requireNonNull;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
-import store.server.async.AsyncManager;
-import store.server.async.Task;
 import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import store.server.exception.TransactionNotFoundException;
+import store.server.task.Task;
+import store.server.task.TaskManager;
 
 /**
  * Retains suspended transactions, allowing to resume them latter. Suspended transactions may be aborted and deleted
@@ -25,7 +25,7 @@ class TransactionCache implements Closeable {
     private final Cache<Long, TransactionContext> cache;
     private final Task cleanUpTask;
 
-    public TransactionCache(final String name, Config config, AsyncManager asyncManager) {
+    public TransactionCache(final String name, Config config, TaskManager taskManager) {
         cache = CacheBuilder.newBuilder()
                 .maximumSize(config.getInt(STORAGE_SUSPENDED_TXN_MAX_SIZE))
                 .expireAfterWrite(duration(config, STORAGE_SUSPENDED_TXN_TIMEOUT),
@@ -39,10 +39,10 @@ class TransactionCache implements Closeable {
         }).build();
 
         if (config.getBoolean(ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED)) {
-            cleanUpTask = asyncManager.schedule(duration(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
-                                                unit(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
-                                                "[" + name + "] Evicting expired transactions",
-                                                new Runnable() {
+            cleanUpTask = taskManager.schedule(duration(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
+                                               unit(config, ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL),
+                                               "[" + name + "] Evicting expired transactions",
+                                               new Runnable() {
                 @Override
                 public void run() {
                     cache.cleanUp();

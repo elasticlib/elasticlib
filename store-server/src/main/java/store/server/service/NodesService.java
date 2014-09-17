@@ -18,8 +18,6 @@ import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.hash.Guid;
-import store.server.async.AsyncManager;
-import store.server.async.Task;
 import store.server.config.ServerConfig;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
@@ -28,6 +26,8 @@ import store.server.exception.UnreachableNodeException;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;
+import store.server.task.Task;
+import store.server.task.TaskManager;
 
 /**
  * Manages nodes in the cluster.
@@ -36,7 +36,7 @@ public class NodesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
     private final Config config;
-    private final AsyncManager asyncManager;
+    private final TaskManager taskManager;
     private final StorageManager storageManager;
     private final AttributesDao attributesDao;
     private final NodesDao nodesDao;
@@ -52,7 +52,7 @@ public class NodesService {
      * Constructor.
      *
      * @param config Configuration holder.
-     * @param asyncManager Asynchronous tasks manager.
+     * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
      * @param nodesDao Nodes definitions DAO.
      * @param attributesDao Attributes DAO.
@@ -61,7 +61,7 @@ public class NodesService {
      * @param nodePingHandler remote nodes ping handler.
      */
     public NodesService(Config config,
-                        AsyncManager asyncManager,
+                        TaskManager taskManager,
                         StorageManager storageManager,
                         AttributesDao attributesDao,
                         NodesDao nodesDao,
@@ -70,7 +70,7 @@ public class NodesService {
                         NodePingHandler nodePingHandler) {
 
         this.config = config;
-        this.asyncManager = asyncManager;
+        this.taskManager = taskManager;
         this.storageManager = storageManager;
         this.attributesDao = attributesDao;
         this.nodesDao = nodesDao;
@@ -93,16 +93,16 @@ public class NodesService {
             }
         });
         if (config.getBoolean(ServerConfig.REMOTES_PING_ENABLED)) {
-            pingTask = asyncManager.schedule(duration(config, ServerConfig.REMOTES_PING_INTERVAL),
-                                             unit(config, ServerConfig.REMOTES_PING_INTERVAL),
-                                             "Pinging remote nodes",
-                                             new PingTask());
+            pingTask = taskManager.schedule(duration(config, ServerConfig.REMOTES_PING_INTERVAL),
+                                            unit(config, ServerConfig.REMOTES_PING_INTERVAL),
+                                            "Pinging remote nodes",
+                                            new PingTask());
         }
         if (config.getBoolean(ServerConfig.REMOTES_CLEANUP_ENABLED)) {
-            cleanupTask = asyncManager.schedule(duration(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
-                                                unit(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
-                                                "Removing unreachable remote nodes",
-                                                new CleanupTask());
+            cleanupTask = taskManager.schedule(duration(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
+                                               unit(config, ServerConfig.REMOTES_CLEANUP_INTERVAL),
+                                               "Removing unreachable remote nodes",
+                                               new CleanupTask());
         }
     }
 

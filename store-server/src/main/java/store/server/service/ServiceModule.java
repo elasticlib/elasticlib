@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import store.common.config.Config;
-import store.server.async.AsyncManager;
+import store.server.task.TaskManager;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.dao.ReplicationsDao;
@@ -19,7 +19,7 @@ public class ServiceModule {
 
     private static final String STORAGE = "storage";
     private static final String SERVICES = "services";
-    private final AsyncManager asyncManager;
+    private final TaskManager asyncManager;
     private final StorageManager storageManager;
     private final RepositoriesService repositoriesService;
     private final NodesService nodesService;
@@ -31,7 +31,7 @@ public class ServiceModule {
      * @param config Server config.
      */
     public ServiceModule(Path home, Config config) {
-        asyncManager = new AsyncManager(config);
+        asyncManager = new TaskManager(config);
         storageManager = newStorageManager(home.resolve(STORAGE), config, asyncManager);
 
         AttributesDao attributesDao = new AttributesDao(storageManager);
@@ -59,7 +59,7 @@ public class ServiceModule {
                                         nodePingHandler);
     }
 
-    private static StorageManager newStorageManager(Path path, Config config, AsyncManager asyncManager) {
+    private static StorageManager newStorageManager(Path path, Config config, TaskManager asyncManager) {
         try {
             if (!Files.exists(path)) {
                 Files.createDirectory(path);
@@ -91,7 +91,7 @@ public class ServiceModule {
     /**
      * @return The asynchronous tasks manager.
      */
-    public AsyncManager getAsyncManager() {
+    public TaskManager getAsyncManager() {
         return asyncManager;
     }
 

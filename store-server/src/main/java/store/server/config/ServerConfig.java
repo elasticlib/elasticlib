@@ -1,6 +1,7 @@
 package store.server.config;
 
 import com.google.common.base.Optional;
+import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.nio.file.Path;
 import org.slf4j.Logger;
@@ -92,9 +93,9 @@ public final class ServerConfig {
      */
     public static final String REMOTES_CLEANUP_INTERVAL = "remotes.cleanup.interval";
     /**
-     * Periodic tasks executor pool size. Default to 1.
+     * Asynchronous tasks executor pool size. Default to the number of available processors.
      */
-    public static final String ASYNC_POOL_SIZE = "async.poolSize";
+    public static final String TASKS_POOL_SIZE = "tasks.poolSize";
     /**
      * Whether deffered databases are periodically flushed. Default to true.
      */
@@ -140,7 +141,7 @@ public final class ServerConfig {
             .set(REMOTES_PING_INTERVAL, "10 seconds")
             .set(REMOTES_CLEANUP_ENABLED, true)
             .set(REMOTES_CLEANUP_INTERVAL, "60 seconds")
-            .set(ASYNC_POOL_SIZE, 1)
+            .set(TASKS_POOL_SIZE, getRuntime().availableProcessors())
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")
             .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)

@@ -1,4 +1,4 @@
-package store.server.async;
+package store.server.task;
 
 import static java.util.concurrent.Executors.defaultThreadFactory;
 import static java.util.concurrent.Executors.newScheduledThreadPool;
@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
-import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
+import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
 
 /**
- * Provides periodic tasks execution service.
+ * Provides asynchronous tasks execution infrastructure.
  */
-public class AsyncManager {
+public class TaskManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AsyncManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TaskManager.class);
     private final ScheduledExecutorService executor;
 
     /**
@@ -25,15 +25,15 @@ public class AsyncManager {
      *
      * @param config Configuration holder.
      */
-    public AsyncManager(Config config) {
-        executor = newScheduledThreadPool(config.getInt(ASYNC_POOL_SIZE), new ThreadFactory() {
+    public TaskManager(Config config) {
+        executor = newScheduledThreadPool(config.getInt(TASKS_POOL_SIZE), new ThreadFactory() {
             private final ThreadFactory defaultFactory = defaultThreadFactory();
             private final AtomicInteger counter = new AtomicInteger();
 
             @Override
             public Thread newThread(Runnable runnable) {
                 Thread thread = defaultFactory.newThread(runnable);
-                thread.setName("async-service-thread-" + counter.incrementAndGet());
+                thread.setName("task-" + counter.incrementAndGet());
                 return thread;
             }
         });

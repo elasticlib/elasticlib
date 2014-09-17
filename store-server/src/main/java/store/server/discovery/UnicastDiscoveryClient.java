@@ -31,13 +31,13 @@ import static store.common.config.ConfigUtil.unit;
 import static store.common.config.ConfigUtil.uris;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.readAll;
-import store.server.async.AsyncManager;
-import store.server.async.Task;
 import store.server.config.ServerConfig;
 import store.server.providers.JsonBodyReader;
 import store.server.providers.JsonBodyWriter;
 import store.server.service.NodesService;
 import store.server.service.ProcessingExceptionHandler;
+import store.server.task.Task;
+import store.server.task.TaskManager;
 
 /**
  * Unicast discovery client. Contacts periodically one or several remote nodes in order to :<br>
@@ -52,7 +52,7 @@ public class UnicastDiscoveryClient {
     private static final Logger LOG = LoggerFactory.getLogger(UnicastDiscoveryClient.class);
     private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
     private final Config config;
-    private final AsyncManager asyncManager;
+    private final TaskManager taskManager;
     private final NodesService nodesService;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private Task task;
@@ -61,12 +61,12 @@ public class UnicastDiscoveryClient {
      * Constructor.
      *
      * @param config Config.
-     * @param asyncManager Asynchronous tasks manager.
+     * @param taskManager Asynchronous tasks manager.
      * @param nodesService The nodes service.
      */
-    public UnicastDiscoveryClient(Config config, AsyncManager asyncManager, NodesService nodesService) {
+    public UnicastDiscoveryClient(Config config, TaskManager taskManager, NodesService nodesService) {
         this.config = config;
-        this.asyncManager = asyncManager;
+        this.taskManager = taskManager;
         this.nodesService = nodesService;
     }
 
@@ -81,10 +81,10 @@ public class UnicastDiscoveryClient {
         if (!started.compareAndSet(false, true)) {
             return;
         }
-        task = asyncManager.schedule(duration(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
-                                     unit(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
-                                     "Performing unicast discovery",
-                                     new DiscoveryTask());
+        task = taskManager.schedule(duration(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
+                                    unit(config, ServerConfig.DISCOVERY_UNICAST_INTERVAL),
+                                    "Performing unicast discovery",
+                                    new DiscoveryTask());
     }
 
     /**

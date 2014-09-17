@@ -37,9 +37,8 @@ import store.server.Content;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.async.AsyncManager;
 import store.server.config.ServerConfig;
-import static store.server.config.ServerConfig.ASYNC_POOL_SIZE;
+import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
@@ -53,6 +52,7 @@ import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.repository.Repository;
 import store.server.storage.StorageManager;
+import store.server.task.TaskManager;
 
 /**
  * Unit tests.
@@ -76,7 +76,7 @@ public class RepositoryTest {
     @BeforeClass
     public void init() throws IOException {
         Config config = new Config()
-                .set(ASYNC_POOL_SIZE, 1)
+                .set(TASKS_POOL_SIZE, 1)
                 .set(STORAGE_SYNC_ENABLED, true)
                 .set(STORAGE_SYNC_INTERVAL, "10 s")
                 .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
@@ -89,13 +89,13 @@ public class RepositoryTest {
         Path storageDir = path.resolve("home").resolve("storage");
         Files.createDirectories(storageDir);
 
-        AsyncManager asyncManager = new AsyncManager(config);
-        StorageManager storageManager = new StorageManager("test", storageDir, config, asyncManager);
+        TaskManager taskManager = new TaskManager(config);
+        StorageManager storageManager = new StorageManager("test", storageDir, config, taskManager);
         RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
         ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
 
         repositoriesService = new RepositoriesService(config,
-                                                      asyncManager,
+                                                      taskManager,
                                                       storageManager,
                                                       repositoriesDao,
                                                       replicationsDao);

@@ -24,11 +24,11 @@ import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.value.Value;
-import store.server.async.AsyncManager;
-import store.server.async.Task;
 import store.server.config.ServerConfig;
 import store.server.exception.RepositoryClosedException;
 import static store.server.storage.DatabaseEntries.entry;
+import store.server.task.Task;
+import store.server.task.TaskManager;
 
 /**
  * Provides persistent storage services build atop a Berkeley DB environment.
@@ -50,7 +50,7 @@ public class StorageManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
     private final String envName;
     private final Config config;
-    private final AsyncManager asyncManager;
+    private final TaskManager taskManager;
     private final Environment environment;
     private final TransactionCache cache;
     private final Deque<Task> tasks = new ArrayDeque<>();
@@ -66,9 +66,9 @@ public class StorageManager {
      * @param name Name of this storage.
      * @param path Home path of the Berkeley DB environment.
      * @param config Configuration holder.
-     * @param asyncManager Asynchronous tasks manager.
+     * @param taskManager Asynchronous tasks manager.
      */
-    public StorageManager(String name, Path path, Config config, AsyncManager asyncManager) {
+    public StorageManager(String name, Path path, Config config, TaskManager taskManager) {
         EnvironmentConfig envConfig = new EnvironmentConfig()
                 .setNodeName(name)
                 .setSharedCache(true)
@@ -90,9 +90,9 @@ public class StorageManager {
 
         envName = name;
         this.config = config;
-        this.asyncManager = asyncManager;
+        this.taskManager = taskManager;
         this.environment = new Environment(path.toFile(), envConfig);
-        this.cache = new TransactionCache(envName, config, asyncManager);
+        this.cache = new TransactionCache(envName, config, taskManager);
     }
 
     /**
@@ -166,10 +166,10 @@ public class StorageManager {
                 .setDeferredWrite(true));
 
         if (config.getBoolean(ServerConfig.STORAGE_SYNC_ENABLED)) {
-            tasks.add(asyncManager.schedule(duration(config, ServerConfig.STORAGE_SYNC_INTERVAL),
-                                            unit(config, ServerConfig.STORAGE_SYNC_INTERVAL),
-                                            "[" + envName + "] Syncing database '" + name + "'",
-                                            new Runnable() {
+            tasks.add(taskManager.schedule(duration(config, ServerConfig.STORAGE_SYNC_INTERVAL),
+                                           unit(config, ServerConfig.STORAGE_SYNC_INTERVAL),
+                                           "[" + envName + "] Syncing database '" + name + "'",
+                                           new Runnable() {
                 @Override
                 public void run() {
                     database.sync();

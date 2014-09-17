@@ -17,10 +17,10 @@ import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.json.JsonReading;
-import store.server.async.AsyncManager;
-import store.server.async.Task;
 import store.server.config.ServerConfig;
 import store.server.service.NodesService;
+import store.server.task.Task;
+import store.server.task.TaskManager;
 
 /**
  * Multicast discovery client. Sends periodically discovery requests and collects responses.
@@ -31,7 +31,7 @@ public class MulticastDiscoveryClient {
     private static final String ERROR_MESSAGE = "Unexpected IO error";
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryClient.class);
     private final Config config;
-    private final AsyncManager asyncManager;
+    private final TaskManager taskManager;
     private final NodesService nodesService;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private MulticastSocket socket;
@@ -42,12 +42,12 @@ public class MulticastDiscoveryClient {
      * Constructor.
      *
      * @param config Config.
-     * @param asyncManager Asynchronous tasks manager.
+     * @param taskManager Asynchronous tasks manager.
      * @param nodesService The nodes service.
      */
-    public MulticastDiscoveryClient(Config config, AsyncManager asyncManager, NodesService nodesService) {
+    public MulticastDiscoveryClient(Config config, TaskManager taskManager, NodesService nodesService) {
         this.config = config;
-        this.asyncManager = asyncManager;
+        this.taskManager = taskManager;
         this.nodesService = nodesService;
     }
 
@@ -80,10 +80,10 @@ public class MulticastDiscoveryClient {
         listeningThread = new ListeningThread();
         listeningThread.start();
 
-        pingTask = asyncManager.schedule(duration(config, ServerConfig.DISCOVERY_MULTICAST_PING_INTERVAL),
-                                         unit(config, ServerConfig.DISCOVERY_MULTICAST_PING_INTERVAL),
-                                         "Sending multicast discovery request",
-                                         new PingTask());
+        pingTask = taskManager.schedule(duration(config, ServerConfig.DISCOVERY_MULTICAST_PING_INTERVAL),
+                                        unit(config, ServerConfig.DISCOVERY_MULTICAST_PING_INTERVAL),
+                                        "Sending multicast discovery request",
+                                        new PingTask());
     }
 
     /**

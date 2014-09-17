@@ -25,7 +25,6 @@ import store.common.RepositoryDef;
 import store.common.RepositoryInfo;
 import store.common.config.Config;
 import store.common.hash.Guid;
-import store.server.async.AsyncManager;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.RepositoryAlreadyExistsException;
@@ -36,6 +35,7 @@ import store.server.repository.Repository;
 import store.server.storage.Procedure;
 import store.server.storage.Query;
 import store.server.storage.StorageManager;
+import store.server.task.TaskManager;
 
 /**
  * Manage repositories and replication between them.
@@ -44,7 +44,7 @@ public class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
     private final Config config;
-    private final AsyncManager asyncManager;
+    private final TaskManager taskManager;
     private final StorageManager storageManager;
     private final RepositoriesDao repositoriesDao;
     private final ReplicationsDao replicationsDao;
@@ -56,18 +56,18 @@ public class RepositoriesService {
      * Constructor.
      *
      * @param config Configuration holder.
-     * @param asyncManager Asynchronous tasks manager.
+     * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
      * @param repositoriesDao Repositories definitions DAO.
      * @param replicationsDao Replications definitions DAO.
      */
     public RepositoriesService(Config config,
-                               AsyncManager asyncManager,
+                               TaskManager taskManager,
                                StorageManager storageManager,
                                RepositoriesDao repositoriesDao,
                                ReplicationsDao replicationsDao) {
         this.config = config;
-        this.asyncManager = asyncManager;
+        this.taskManager = taskManager;
         this.storageManager = storageManager;
         this.repositoriesDao = repositoriesDao;
         this.replicationsDao = replicationsDao;
@@ -106,7 +106,7 @@ public class RepositoriesService {
 
     private void openRepository(RepositoryDef repositoryDef) {
         Path path = repositoryDef.getPath();
-        Repository repository = Repository.open(path, config, asyncManager, replicationService);
+        Repository repository = Repository.open(path, config, taskManager, replicationService);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
         repositoriesDao.updateRepositoryDef(updatedDef);
@@ -148,7 +148,7 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
-                    Repository repository = Repository.create(path, config, asyncManager, replicationService);
+                    Repository repository = Repository.create(path, config, taskManager, replicationService);
                     RepositoryDef def = repository.getDef();
                     repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);
@@ -174,7 +174,7 @@ public class RepositoriesService {
                     if (anyRepositoryExistsAt(path)) {
                         throw new RepositoryAlreadyExistsException();
                     }
-                    Repository repository = Repository.open(path, config, asyncManager, replicationService);
+                    Repository repository = Repository.open(path, config, taskManager, replicationService);
                     RepositoryDef def = repository.getDef();
                     repositoriesDao.createRepositoryDef(def);
                     repositories.put(def.getGuid(), repository);

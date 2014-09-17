@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import store.common.config.Config;
-import store.server.task.TaskManager;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
 import store.server.exception.WriteException;
 import store.server.storage.StorageManager;
+import store.server.task.TaskManager;
 
 /**
  * Manages services life-cycle.

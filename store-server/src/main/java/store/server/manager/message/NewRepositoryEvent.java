@@ -3,9 +3,9 @@ package store.server.manager.message;
 import store.common.hash.Guid;
 
 /**
- * Indicates that a new event happened in a repository.
+ * Message indicating that a new event happened in a repository.
  */
-public final class NewRepositoryEventMessage implements Message {
+public final class NewRepositoryEvent {
 
     private final Guid repositoryGuid;
 
@@ -14,13 +14,8 @@ public final class NewRepositoryEventMessage implements Message {
      *
      * @param repositoryGuid The repository GUID.
      */
-    public NewRepositoryEventMessage(Guid repositoryGuid) {
+    public NewRepositoryEvent(Guid repositoryGuid) {
         this.repositoryGuid = repositoryGuid;
-    }
-
-    @Override
-    public MessageType getType() {
-        return MessageType.NEW_REPOSITORY_EVENT;
     }
 
     /**

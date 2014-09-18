@@ -2,8 +2,10 @@ package store.server.manager.message;
 
 /**
  * Represents an action to apply when a message is posted.
+ *
+ * @param <T> Type of the message this action is associated to.
  */
-public interface Action {
+public interface Action<T> {
 
     /**
      * Provides a short description of this action, intended for logging purposes.
@@ -17,5 +19,5 @@ public interface Action {
      *
      * @param message The message sent.
      */
-    void apply(Message message);
+    void apply(T message);
 }

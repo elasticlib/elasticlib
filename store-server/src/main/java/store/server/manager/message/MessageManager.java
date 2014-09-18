@@ -1,9 +1,14 @@
 package store.server.manager.message;
 
-import java.util.EnumMap;
+import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static java.util.Collections.emptySet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.server.manager.task.TaskManager;
@@ -22,7 +27,8 @@ public class MessageManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageManager.class);
     private final TaskManager taskManager;
-    private final Map<MessageType, Set<Action>> receivers;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Map<Class<?>, Set<Action<?>>> actions = new HashMap<>();
 
     /**
      * Constructor.
@@ -31,34 +37,40 @@ public class MessageManager {
      */
     public MessageManager(TaskManager taskManager) {
         this.taskManager = taskManager;
-        receivers = new EnumMap<>(MessageType.class);
-        for (MessageType type : MessageType.values()) {
-            receivers.put(type, new CopyOnWriteArraySet<Action>());
-        }
     }
 
     /**
      * Registers an action to apply each time a message of the supplied type is posted. Different actions may be
-     * registered for a given message type. However, if the same action is registered twice, the second registration
-     * will be ignored.
+     * registered for a given message type. However, if the an action is registered twice, the second registration will
+     * be ignored.
      *
-     * @param type Type to listen to.
-     * @param action Action to apply.
+     * @param <T> Class of the message to listen to.
+     * @param messageType Message type to listen to.
+     * @param action Associated action to register.
      */
-    public void register(MessageType type, Action action) {
-        LOG.info("Registering [{}] => {}", type, action.description());
-        receivers.get(type).add(action);
+    public <T> void register(Class<T> messageType, Action<T> action) {
+        LOG.info("Registering [{}] => {}", format(messageType), action.description());
+        lock.writeLock().lock();
+        try {
+            if (!actions.containsKey(messageType)) {
+                actions.put(messageType, new CopyOnWriteArraySet<Action<?>>());
+            }
+            actions.get(messageType).add(action);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
-     * Posts a message, applying all previously registered actions for its associated message type. Each action is
-     * asynchronously applied in a separate task.
+     * Posts a message, applying all previously registered actions to its type. Each action is asynchronously applied in
+     * a separate task.
      *
      * @param message The message to post.
      */
-    public void post(final Message message) {
-        LOG.info("Receiving [{}]", message.getType());
-        for (final Action action : receivers.get(message.getType())) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void post(final Object message) {
+        LOG.info("Receiving [{}]", format(message.getClass()));
+        for (final Action action : actions(message.getClass())) {
             taskManager.execute(action.description(), new Runnable() {
                 @Override
                 public void run() {
@@ -66,5 +78,22 @@ public class MessageManager {
                 }
             });
         }
+    }
+
+    private <T> Set<Action<?>> actions(Class<T> messageType) {
+        lock.readLock().lock();
+        try {
+            if (!actions.containsKey(messageType)) {
+                return emptySet();
+            }
+            return actions.get(messageType);
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private static String format(Class<?> messageType) {
+        return UPPER_CAMEL.to(LOWER_HYPHEN, messageType.getSimpleName());
     }
 }

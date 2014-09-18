@@ -31,7 +31,7 @@ import store.server.exception.RepositoryClosedException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.WriteException;
 import store.server.manager.message.MessageManager;
-import store.server.manager.message.NewRepositoryEventMessage;
+import store.server.manager.message.NewRepositoryEvent;
 import store.server.manager.storage.Command;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.Query;
@@ -297,7 +297,7 @@ public class Repository {
         if (condition) {
             indexingAgent.signal();
             statsAgent.signal();
-            messageManager.post(new NewRepositoryEventMessage(def.getGuid()));
+            messageManager.post(new NewRepositoryEvent(def.getGuid()));
         }
     }
 

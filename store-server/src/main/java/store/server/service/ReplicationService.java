@@ -12,10 +12,8 @@ import java.util.Set;
 import store.common.AgentInfo;
 import store.common.hash.Guid;
 import store.server.manager.message.Action;
-import store.server.manager.message.Message;
 import store.server.manager.message.MessageManager;
-import static store.server.manager.message.MessageType.NEW_REPOSITORY_EVENT;
-import store.server.manager.message.NewRepositoryEventMessage;
+import store.server.manager.message.NewRepositoryEvent;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.StorageManager;
 import store.server.repository.Agent;
@@ -32,15 +30,15 @@ class ReplicationService {
 
     public ReplicationService(StorageManager storageManager, MessageManager messageManager) {
         curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
-        messageManager.register(NEW_REPOSITORY_EVENT, new Action() {
+        messageManager.register(NewRepositoryEvent.class, new Action<NewRepositoryEvent>() {
             @Override
             public String description() {
                 return "Signaling replication agents";
             }
 
             @Override
-            public void apply(Message message) {
-                Guid guid = NewRepositoryEventMessage.class.cast(message).getRepositoryGuid();
+            public void apply(NewRepositoryEvent message) {
+                Guid guid = message.getRepositoryGuid();
                 if (!agents.containsKey(guid)) {
                     return;
                 }

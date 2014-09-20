@@ -1,10 +1,11 @@
 package store.server.providers;
 
+import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import java.util.HashMap;
 import java.util.Map;
 import javax.json.Json;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -14,6 +15,8 @@ import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import store.server.exception.BadRequestException;
 import store.server.exception.ConflictException;
 import store.server.exception.IntegrityCheckingFailedException;
@@ -34,11 +37,15 @@ import store.server.exception.UnreachableNodeException;
 import store.server.exception.WriteException;
 
 /**
- * Map exceptions to HTTP responses.
+ * Handles exceptions that happen while servicing HTTP requests.
+ * <p>
+ * Builds an adequate response to return to the client. Additionally, if the exception is not an expected one, logs its
+ * stacktrace for debugging purposes.
  */
 @Provider
-public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
+public class HttpExceptionMapper implements ExceptionMapper<Throwable> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(HttpExceptionMapper.class);
     private static final Map<Class<?>, Status> MAPPING = new HashMap<>();
 
     static {
@@ -66,21 +73,20 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         MAPPING.put(WriteException.class, INTERNAL_SERVER_ERROR);
     }
 
-    private static Status of(ServerException exception) {
-        Status status = MAPPING.get(exception.getClass());
-        return status != null ? status : INTERNAL_SERVER_ERROR;
+    @Override
+    public Response toResponse(Throwable exception) {
+        if (!(exception instanceof ServerException)) {
+            LOG.error("An unexpected error happened", exception);
+        }
+        return Response
+                .status(of(exception))
+                .entity(Json.createObjectBuilder().add("error", message(exception)).build())
+                .build();
     }
 
-    @Override
-    public Response toResponse(ServerException exception) {
-        ResponseBuilder builder = Response.status(of(exception));
-        String message = message(exception);
-        if (message.isEmpty()) {
-            return builder.build();
-        }
-        return builder
-                .entity(Json.createObjectBuilder().add("error", message).build())
-                .build();
+    private static Status of(Throwable exception) {
+        Status status = MAPPING.get(exception.getClass());
+        return status != null ? status : INTERNAL_SERVER_ERROR;
     }
 
     private static String message(Throwable exception) {
@@ -90,6 +96,18 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         if (exception.getCause() != null) {
             return message(exception.getCause());
         }
-        return "";
+        return toHumanCase(truncate(exception.getClass().getSimpleName(), "Exception"));
+    }
+
+    private static String truncate(String value, String suffix) {
+        if (!value.endsWith(suffix)) {
+            return value;
+        }
+        return value.substring(0, value.length() - suffix.length());
+    }
+
+    private static String toHumanCase(String className) {
+        String lowerSpaced = UPPER_CAMEL.to(LOWER_HYPHEN, className).replace('-', ' ');
+        return Character.toUpperCase(lowerSpaced.charAt(0)) + lowerSpaced.substring(1);
     }
 }

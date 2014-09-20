@@ -16,6 +16,7 @@ import store.server.manager.task.TaskManager;
 public class ServiceModule {
 
     private final RepositoriesService repositoriesService;
+    private final ReplicationsService replicationsService;
     private final NodesService nodesService;
 
     /**
@@ -42,8 +43,13 @@ public class ServiceModule {
                                                       taskManager,
                                                       storageManager,
                                                       messageManager,
+                                                      repositoriesDao);
+
+        replicationsService = new ReplicationsService(storageManager,
+                                                      messageManager,
                                                       repositoriesDao,
-                                                      replicationsDao);
+                                                      replicationsDao,
+                                                      repositoriesService);
 
         nodesService = new NodesService(config,
                                         taskManager,
@@ -60,6 +66,7 @@ public class ServiceModule {
      */
     public void start() {
         repositoriesService.start();
+        replicationsService.start();
         nodesService.start();
     }
 
@@ -68,6 +75,7 @@ public class ServiceModule {
      */
     public void stop() {
         nodesService.stop();
+        replicationsService.stop();
         repositoriesService.stop();
     }
 
@@ -76,6 +84,13 @@ public class ServiceModule {
      */
     public RepositoriesService getRepositoriesService() {
         return repositoriesService;
+    }
+
+    /**
+     * @return The replications service.
+     */
+    public ReplicationsService getReplicationsService() {
+        return replicationsService;
     }
 
     /**

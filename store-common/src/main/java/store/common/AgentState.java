@@ -20,7 +20,11 @@ public enum AgentState {
     /**
      * Agent is down, due to an unexpected error.
      */
-    ERROR;
+    ERROR,
+    /**
+     * Agent is down, because its source or target is unavailable.
+     */
+    STOPPED;
 
     /**
      * Provides state matching with supplied string argument. Fails if supplied string is unknown.

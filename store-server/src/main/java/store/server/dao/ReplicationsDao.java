@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import store.common.ReplicationDef;
 import store.common.hash.Guid;
+import store.server.exception.UnknownReplicationException;
 import static store.server.manager.storage.DatabaseEntries.asMappable;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.StorageManager;
@@ -21,7 +22,6 @@ import store.server.manager.storage.StorageManager;
 public class ReplicationsDao {
 
     private static final String REPLICATIONS = "replications";
-
     private final StorageManager storageManager;
     private final Database replicationDefs;
 
@@ -69,6 +69,25 @@ public class ReplicationsDao {
         for (ReplicationDef def : listReplicationDefs(guid)) {
             deleteReplicationDef(def.getSource(), def.getDestination());
         }
+    }
+
+    /**
+     * Loads a ReplicationDef. Fails if no replication is associated with supplied repository GUIDs.
+     *
+     * @param source Source repository GUID.
+     * @param destination Destination repository GUID.
+     * @return Corresponding ReplicationDef.
+     */
+    public ReplicationDef getReplicationDef(Guid source, Guid destination) {
+        DatabaseEntry entry = new DatabaseEntry();
+        OperationStatus status = replicationDefs.get(storageManager.currentTransaction(),
+                                                     entry(source, destination),
+                                                     entry,
+                                                     LockMode.DEFAULT);
+        if (status != OperationStatus.SUCCESS) {
+            throw new UnknownReplicationException();
+        }
+        return asMappable(entry, ReplicationDef.class);
     }
 
     /**

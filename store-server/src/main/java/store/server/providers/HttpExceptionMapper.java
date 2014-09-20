@@ -27,6 +27,7 @@ import store.server.exception.ServerException;
 import store.server.exception.TransactionNotFoundException;
 import store.server.exception.UnknownContentException;
 import store.server.exception.UnknownNodeException;
+import store.server.exception.UnknownReplicationException;
 import store.server.exception.UnknownRepositoryException;
 import store.server.exception.UnknownRevisionException;
 import store.server.exception.UnreachableNodeException;
@@ -54,6 +55,7 @@ public class HttpExceptionMapper implements ExceptionMapper<ServerException> {
         MAPPING.put(ConflictException.class, CONFLICT);
 
         MAPPING.put(UnknownRepositoryException.class, NOT_FOUND);
+        MAPPING.put(UnknownReplicationException.class, NOT_FOUND);
         MAPPING.put(UnknownContentException.class, NOT_FOUND);
         MAPPING.put(UnknownNodeException.class, NOT_FOUND);
 

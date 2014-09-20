@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonWriting.writeAll;
 import store.server.exception.BadRequestException;
-import store.server.service.RepositoriesService;
+import store.server.service.ReplicationsService;
 
 /**
  * Replications REST resource.
@@ -30,7 +30,7 @@ public class ReplicationsResource {
     private static final String SOURCE = "source";
     private static final String TARGET = "target";
     @Inject
-    private RepositoriesService repositoriesService;
+    private ReplicationsService replicationsService;
     @Context
     private UriInfo uriInfo;
 
@@ -91,7 +91,7 @@ public class ReplicationsResource {
     }
 
     private Response createReplication(String source, String target) {
-        repositoriesService.createReplication(source, target);
+        replicationsService.createReplication(source, target);
         URI location = uriInfo.getAbsolutePathBuilder()
                 .queryParam(SOURCE, source)
                 .queryParam(TARGET, target)
@@ -102,12 +102,12 @@ public class ReplicationsResource {
     }
 
     private Response startReplication(String source, String target) {
-        repositoriesService.startReplication(source, target);
+        replicationsService.startReplication(source, target);
         return Response.ok().build();
     }
 
     private Response stopReplication(String source, String target) {
-        repositoriesService.stopReplication(source, target);
+        replicationsService.stopReplication(source, target);
         return Response.ok().build();
     }
 
@@ -132,7 +132,7 @@ public class ReplicationsResource {
         if (source == null || target == null) {
             throw new BadRequestException();
         }
-        repositoriesService.deleteReplication(source, target);
+        replicationsService.deleteReplication(source, target);
         return Response.ok().build();
     }
 
@@ -147,7 +147,7 @@ public class ReplicationsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonArray listReplications() {
-        return writeAll(repositoriesService.listReplicationInfos());
+        return writeAll(replicationsService.listReplicationInfos());
     }
 
     private static BadRequestException newInvalidJsonException() {

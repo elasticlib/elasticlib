@@ -18,6 +18,7 @@ import store.server.discovery.DiscoveryModule;
 import store.server.manager.ManagerModule;
 import store.server.providers.LoggingFilter;
 import store.server.service.NodesService;
+import store.server.service.ReplicationsService;
 import store.server.service.RepositoriesService;
 import store.server.service.ServiceModule;
 
@@ -82,6 +83,7 @@ public class Server {
             @Override
             protected void configure() {
                 bind(serviceModule.getRepositoriesService()).to(RepositoriesService.class);
+                bind(serviceModule.getReplicationsService()).to(ReplicationsService.class);
                 bind(serviceModule.getNodesService()).to(NodesService.class);
             }
         };

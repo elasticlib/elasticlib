@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import store.common.AgentInfo;
 import store.common.AgentState;
 import store.common.Event;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.ServerException;
 import static store.server.manager.storage.DatabaseEntries.asLong;
 import static store.server.manager.storage.DatabaseEntries.entry;
@@ -150,6 +151,10 @@ public abstract class Agent {
                     }
                     nextEvent = next();
                 }
+            } catch (RepositoryClosedException e) {
+                LOG.info("Repository closed, stopping");
+                updateInfo(AgentState.STOPPED);
+
             } catch (ServerException e) {
                 LOG.error("Unexpected error, stopping", e);
                 updateInfo(AgentState.ERROR);

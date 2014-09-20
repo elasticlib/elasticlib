@@ -49,8 +49,8 @@ import store.common.value.ValueType;
 import store.server.exception.BadRequestException;
 import store.server.exception.WriteException;
 import store.server.multipart.FormDataMultipart;
-import store.server.service.RepositoriesService;
 import store.server.repository.Repository;
+import store.server.service.RepositoriesService;
 
 /**
  * Repositories REST resource.

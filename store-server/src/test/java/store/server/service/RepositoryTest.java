@@ -66,6 +66,7 @@ public class RepositoryTest {
     private Path path;
     private ManagerModule managerModule;
     private RepositoriesService repositoriesService;
+    private ReplicationsService replicationsService;
     private Map<String, RepositoryDef> defs;
 
     /**
@@ -87,14 +88,24 @@ public class RepositoryTest {
 
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         managerModule = new ManagerModule(path.resolve("home"), config);
+
+        RepositoriesDao repositoriesDao = new RepositoriesDao(managerModule.getStorageManager());
+        ReplicationsDao replicationsDao = new ReplicationsDao(managerModule.getStorageManager());
+
         repositoriesService = new RepositoriesService(config,
                                                       managerModule.getTaskManager(),
                                                       managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
-                                                      new RepositoriesDao(managerModule.getStorageManager()),
-                                                      new ReplicationsDao(managerModule.getStorageManager()));
+                                                      repositoriesDao);
 
+        replicationsService = new ReplicationsService(managerModule.getStorageManager(),
+                                                      managerModule.getMessageManager(),
+                                                      repositoriesDao,
+                                                      replicationsDao,
+                                                      repositoriesService);
         managerModule.start();
+        repositoriesService.start();
+        replicationsService.start();
     }
 
     /**
@@ -104,6 +115,7 @@ public class RepositoryTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
+        replicationsService.stop();
         repositoriesService.stop();
         managerModule.stop();
         recursiveDelete(path);
@@ -214,9 +226,9 @@ public class RepositoryTest {
      */
     @Test(groups = OPERATIONS, dependsOnGroups = INIT)
     public void createReplicationTest() {
-        repositoriesService.createReplication(ALPHA, BETA);
+        replicationsService.createReplication(ALPHA, BETA);
 
-        ReplicationInfo info = getOnlyElement(repositoriesService.listReplicationInfos());
+        ReplicationInfo info = getOnlyElement(replicationsService.listReplicationInfos());
         assertThat(info.getSourceDef()).isEqualTo(defs.get(ALPHA));
         assertThat(info.getDestinationdef()).isEqualTo(defs.get(BETA));
         assertThat(info.isStarted()).isTrue();
@@ -225,7 +237,7 @@ public class RepositoryTest {
             @Override
             public void run() {
                 assertHas(repository(BETA), LOREM_IPSUM);
-                assertDone(getOnlyElement(repositoriesService.listReplicationInfos()).getAgentInfo());
+                assertDone(getOnlyElement(replicationsService.listReplicationInfos()).getAgentInfo());
             }
         });
     }
@@ -324,12 +336,18 @@ public class RepositoryTest {
         final Repository alpha = repository(ALPHA);
         repositoriesService.closeRepository(ALPHA);
         assertOpen(alpha, false);
-        assertReplicationStarted(false);
 
         assertThrows(RepositoryClosedException.class, new Runnable() {
             @Override
             public void run() {
                 alpha.getContentInfoTree(UNKNOWN_HASH);
+            }
+        });
+
+        async(new Runnable() {
+            @Override
+            public void run() {
+                assertReplicationStarted(false);
             }
         });
     }
@@ -342,11 +360,11 @@ public class RepositoryTest {
         repositoriesService.openRepository(ALPHA);
         Repository alpha = repository(ALPHA);
         assertOpen(alpha, true);
-        assertReplicationStarted(true);
 
         async(new Runnable() {
             @Override
             public void run() {
+                assertReplicationStarted(true);
                 assertUpToDate(repository(ALPHA).getInfo(),
                                new RepositoryStats(1, 0, 1, Collections.<String, Long>emptyMap()));
             }
@@ -359,7 +377,13 @@ public class RepositoryTest {
     @Test(dependsOnMethods = "reopenTest")
     public void closeDestinationRepositoryTest() {
         repositoriesService.closeRepository(BETA);
-        assertReplicationStarted(false);
+
+        async(new Runnable() {
+            @Override
+            public void run() {
+                assertReplicationStarted(false);
+            }
+        });
     }
 
     private Repository repository(String name) {
@@ -381,7 +405,7 @@ public class RepositoryTest {
     }
 
     private void assertReplicationStarted(boolean expected) {
-        boolean actual = getOnlyElement(repositoriesService.listReplicationInfos()).isStarted();
+        boolean actual = getOnlyElement(replicationsService.listReplicationInfos()).isStarted();
         assertThat(actual).isEqualTo(expected);
     }
 

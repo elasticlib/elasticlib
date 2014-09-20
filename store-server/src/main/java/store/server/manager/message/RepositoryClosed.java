@@ -3,16 +3,16 @@ package store.server.manager.message;
 import store.common.hash.Guid;
 
 /**
- * Message indicating that a new event happened in a repository.
+ * Message indicating that a repository has been closed.
  */
-public final class NewRepositoryEvent extends RepositoryChangeMessage {
+public class RepositoryClosed extends RepositoryChangeMessage {
 
     /**
      * Constructor.
      *
      * @param repositoryGuid The repository GUID.
      */
-    public NewRepositoryEvent(Guid repositoryGuid) {
+    public RepositoryClosed(Guid repositoryGuid) {
         super(repositoryGuid);
     }
 }

@@ -210,8 +210,20 @@ public class ReplicationsServiceTest {
      * Test.
      */
     @Test(dependsOnMethods = "openRepositoryTest")
-    public void removeRepositoryTest() {
-        repositoriesService.removeRepository(SOURCE);
+    public void removeSourceRepositoryTest() {
+        removeRepositoryTest(SOURCE);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(dependsOnMethods = "removeSourceRepositoryTest")
+    public void removeDestinationRepositoryTest() {
+        removeRepositoryTest(DESTINATION);
+    }
+
+    private void removeRepositoryTest(String repositoryName) {
+        repositoriesService.removeRepository(repositoryName);
         async(new Runnable() {
             @Override
             public void run() {
@@ -220,14 +232,17 @@ public class ReplicationsServiceTest {
         });
 
         // Restore previous state.
-        repositoriesService.addRepository(path.resolve(SOURCE));
+        repositoriesService.addRepository(path.resolve(repositoryName));
         replicationsService.createReplication(SOURCE, DESTINATION);
+
+        assertReplicationStarted();
+        assertDestinationUpToDate();
     }
 
     /**
      * Test.
      */
-    @Test(dependsOnMethods = "removeRepositoryTest")
+    @Test(dependsOnMethods = "removeDestinationRepositoryTest")
     public void deleteReplicationTest() {
         replicationsService.deleteReplication(SOURCE, DESTINATION);
         assertThat(replicationsService.listReplicationInfos()).isEmpty();

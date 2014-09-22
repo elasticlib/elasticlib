@@ -101,6 +101,14 @@ public class RepositoriesServiceTest {
      * Test.
      */
     @Test(groups = CREATE_REPOSITORY_CHECKS, dependsOnGroups = CREATE_REPOSITORY)
+    public void getRepositoryInfoTest() {
+        assertOpen(repositoriesService.getRepositoryInfo(REPOSITORY));
+    }
+
+    /**
+     * Test.
+     */
+    @Test(groups = CREATE_REPOSITORY_CHECKS, dependsOnGroups = CREATE_REPOSITORY)
     public void getRepositoryByNameTest() {
         Repository repository = repositoriesService.getRepository(REPOSITORY);
         assertOpen(repository.getInfo());
@@ -150,6 +158,14 @@ public class RepositoriesServiceTest {
     @Test(groups = CLOSE_REPOSITORY_CHECKS, dependsOnGroups = CLOSE_REPOSITORY)
     public void closeRepositoryIsIndempotentTest() {
         repositoriesService.closeRepository(REPOSITORY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(groups = CLOSE_REPOSITORY_CHECKS, dependsOnGroups = CLOSE_REPOSITORY)
+    public void getRepositoryInfoAfterCloseTest() {
+        assertClosed(repositoriesService.getRepositoryInfo(REPOSITORY));
     }
 
     /**

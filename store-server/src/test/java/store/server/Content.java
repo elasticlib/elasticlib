@@ -1,5 +1,6 @@
 package store.server;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.util.SortedSet;
 import store.common.ContentInfo;
 import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.ContentInfoTree;
+import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import static store.common.IoUtil.copyAndDigest;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
@@ -16,37 +18,77 @@ import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.value.Value;
 
 /**
- * Represents a test content. Its only metadata is its filename.
+ * Represents a test content, with its metadata.
  */
 public final class Content {
 
     private final byte[] bytes;
-    private final ContentInfo info;
     private final ContentInfoTree tree;
 
+    private Content(byte[] bytes, ContentInfoTree tree) {
+        this.bytes = bytes;
+        this.tree = tree;
+    }
+
     /**
-     * Constructor. Loads the actual resource from the classpath.
+     * Builds a content by loading an actual resource from the classpath.
      *
      * @param filename Resource filename.
+     * @return A content on this resource.
      */
-    public Content(String filename) {
+    public static Content of(String filename) {
         try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
             Digest digest = copyAndDigest(inputStream, outputStream);
 
-            bytes = outputStream.toByteArray();
-            info = new ContentInfoBuilder()
+            ContentInfo info = new ContentInfoBuilder()
                     .withLength(digest.getLength())
                     .withContent(digest.getHash())
                     .with(FILE_NAME.key(), Value.of(filename))
                     .computeRevisionAndBuild();
 
-            tree = new ContentInfoTree.ContentInfoTreeBuilder().add(info).build();
+            return new Content(outputStream.toByteArray(),
+                               new ContentInfoTreeBuilder().add(info).build());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Build a new Content instance with same bytes as this one and a new metadata revision obtained by adding supplied
+     * entry.
+     *
+     * @param key Metadata entry key.
+     * @param value Metadata entry value.
+     * @return A new Content instance.
+     */
+    public Content add(String key, Value value) {
+        ContentInfo head = getInfo();
+        return new Content(bytes, tree.add(new ContentInfoBuilder()
+                .withParent(head.getRevision())
+                .withLength(head.getLength())
+                .withContent(head.getContent())
+                .withMetadata(head.getMetadata())
+                .with(key, value)
+                .computeRevisionAndBuild()));
+    }
+
+    /**
+     * Build a new Content instance with same bytes as this one and a new metadata revision obtained by adding supplied
+     * entry.
+     *
+     * @return A new Content instance.
+     */
+    public Content delete() {
+        ContentInfo head = getInfo();
+        return new Content(bytes, tree.add(new ContentInfoBuilder()
+                .withParent(head.getRevision())
+                .withLength(head.getLength())
+                .withContent(head.getContent())
+                .withDeleted(true)
+                .computeRevisionAndBuild()));
     }
 
     /**
@@ -78,10 +120,10 @@ public final class Content {
     }
 
     /**
-     * @return Info on this content.
+     * @return Head info on this content. Fails if head is not a singleton.
      */
     public ContentInfo getInfo() {
-        return info;
+        return tree.get(getOnlyElement(tree.getHead()));
     }
 
     /**

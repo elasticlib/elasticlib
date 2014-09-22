@@ -23,6 +23,7 @@ import store.common.RepositoryDef;
 import store.common.hash.Guid;
 import store.server.dao.ReplicationsDao;
 import store.server.dao.RepositoriesDao;
+import store.server.exception.RepositoryClosedException;
 import store.server.exception.SelfReplicationException;
 import store.server.manager.message.Action;
 import store.server.manager.message.MessageManager;
@@ -164,9 +165,10 @@ public class ReplicationsService {
                     Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
                     Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
-                    replicationsDao.deleteReplicationDef(srcId, destId);
-                    stopReplication(source, destination);
-                    curSeqsDb.delete(null, entry(srcId, destId));
+                    if (replicationsDao.deleteReplicationDef(srcId, destId)) {
+                        stopReplication(source, destination);
+                        curSeqsDb.delete(null, entry(srcId, destId));
+                    }
                 }
             });
         } finally {
@@ -175,8 +177,8 @@ public class ReplicationsService {
     }
 
     /**
-     * Start an existing replication from source to destination. If source or destination are not started, first starts
-     * them. Does nothing if replication is already started.
+     * Start an existing replication from source to destination. Does nothing if replication is already started. Fails
+     * if source or destination are not started.
      *
      * @param source Source repository name or encoded GUID.
      * @param destination Destination repository name or encoded GUID.
@@ -191,7 +193,9 @@ public class ReplicationsService {
                     Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
                     Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
-                    startReplication(replicationsDao.getReplicationDef(srcId, destId));
+                    if (!startReplication(replicationsDao.getReplicationDef(srcId, destId))) {
+                        throw new RepositoryClosedException();
+                    }
                 }
             });
         } finally {
@@ -271,25 +275,26 @@ public class ReplicationsService {
         startReplication(def, true);
     }
 
-    private void startReplication(ReplicationDef def) {
-        startReplication(def, false);
+    private boolean startReplication(ReplicationDef def) {
+        return startReplication(def, false);
     }
 
-    private void startReplication(ReplicationDef def, boolean resetCursor) {
+    private boolean startReplication(ReplicationDef def, boolean resetCursor) {
         Guid srcId = def.getSource();
         Guid destId = def.getDestination();
         if (agents.containsKey(srcId) && agents.get(srcId).containsKey(destId)) {
-            return;
+            return true;
         }
         Optional<Agent> agent = newAgent(srcId, destId, resetCursor);
         if (!agent.isPresent()) {
-            return;
+            return false;
         }
         if (!agents.containsKey(srcId)) {
             agents.put(srcId, new HashMap<Guid, Agent>());
         }
         agents.get(srcId).put(destId, agent.get());
         agent.get().start();
+        return true;
     }
 
     private Optional<Agent> newAgent(Guid srcId, Guid destId, boolean resetCursor) {

@@ -130,6 +130,9 @@ public class RepositoriesService {
             storageManager.inTransaction(new Procedure() {
                 @Override
                 public void apply() {
+                    if (hasRepositoryAt(path)) {
+                        throw new RepositoryAlreadyExistsException();
+                    }
                     Repository repository = Repository.create(path, config, taskManager, messageManager);
                     RepositoryDef def = repository.getDef();
                     repositoriesDao.createRepositoryDef(def);

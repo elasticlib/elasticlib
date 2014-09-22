@@ -43,15 +43,19 @@ class InfoManager {
                     .add(info)
                     .build();
         } else {
-            if (!existing.get().getHead().equals(info.getParents())) {
+            if (existing.get().contains(info.getRevision())) {
+                updated = existing.get();
+
+            } else if (!existing.get().getHead().equals(info.getParents())) {
                 throw new ConflictException();
+
+            } else {
+                updated = existing.get()
+                        .add(info)
+                        .merge();
             }
-            updated = existing.get()
-                    .add(info)
-                    .merge();
         }
-        save(updated);
-        return result(existing, updated);
+        return save(existing, updated);
     }
 
     public CommandResult put(ContentInfoTree tree) {
@@ -64,8 +68,7 @@ class InfoManager {
                     .add(tree)
                     .merge();
         }
-        save(updated);
-        return result(existing, updated);
+        return save(existing, updated);
     }
 
     public CommandResult delete(Hash hash, SortedSet<Hash> head) {
@@ -87,8 +90,7 @@ class InfoManager {
                     .withDeleted(true)
                     .computeRevisionAndBuild());
         }
-        save(updated);
-        return result(existing, updated);
+        return save(existing, updated);
     }
 
     public Optional<ContentInfoTree> get(Hash hash) {
@@ -108,19 +110,16 @@ class InfoManager {
         return Optional.of(asMappable(data, ContentInfoTree.class));
     }
 
-    private void save(ContentInfoTree tree) {
-        if (!tree.getUnknownParents().isEmpty()) {
-            throw new UnknownRevisionException();
-        }
-        database.put(storageManager.currentTransaction(), entry(tree.getContent()), entry(tree));
-    }
-
-    private CommandResult result(Optional<ContentInfoTree> before, ContentInfoTree after) {
+    private CommandResult save(Optional<ContentInfoTree> before, ContentInfoTree after) {
         long id = storageManager.currentTransaction().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
             return CommandResult.noOp(id, after.getContent(), after.getHead());
         }
+        if (!after.getUnknownParents().isEmpty()) {
+            throw new UnknownRevisionException();
+        }
+        database.put(storageManager.currentTransaction(), entry(after.getContent()), entry(after));
         return CommandResult.of(id, operation.get(), after.getContent(), after.getHead());
     }
 

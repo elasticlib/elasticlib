@@ -7,7 +7,16 @@ import static java.nio.file.Files.walkFileTree;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import store.common.config.Config;
 import store.common.hash.Hash;
+import static store.server.config.ServerConfig.JE_LOCK_TIMEOUT;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
+import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
+import static store.server.config.ServerConfig.STORAGE_SYNC_ENABLED;
+import static store.server.config.ServerConfig.STORAGE_SYNC_INTERVAL;
+import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
 
 /**
  * Test utilities.
@@ -21,9 +30,24 @@ public final class TestUtil {
     /**
      * A test content.
      */
-    public static final Content LOREM_IPSUM = new Content("loremIpsum.txt");
+    public static final Content LOREM_IPSUM = Content.of("loremIpsum.txt");
 
     private TestUtil() {
+    }
+
+    /**
+     * @return Test config.
+     */
+    public static Config config() {
+        return new Config()
+                .set(TASKS_POOL_SIZE, 1)
+                .set(STORAGE_SYNC_ENABLED, true)
+                .set(STORAGE_SYNC_INTERVAL, "10 s")
+                .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
+                .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "10 s")
+                .set(STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED, true)
+                .set(STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL, "10 s")
+                .set(JE_LOCK_TIMEOUT, "1 min");
     }
 
     /**
@@ -51,5 +75,48 @@ public final class TestUtil {
                 }
             }
         });
+    }
+
+    /**
+     * Checks that supplied runnable will eventually succesfully run.
+     *
+     * @param runnable Runnable to execute.
+     */
+    public static void async(Runnable runnable) {
+        int timeout = 60_000;
+        int delay = 25;
+        int time = 0;
+        while (true) {
+            try {
+                wait(delay);
+                time += delay;
+                delay *= 4;
+                if (delay > 5000) {
+                    delay = 5000;
+                }
+                runnable.run();
+                return;
+
+            } catch (Exception e) {
+                if (time >= timeout) {
+                    throw new AssertionError(e);
+                }
+            } catch (AssertionError e) {
+                if (time >= timeout) {
+                    throw e;
+                }
+            } catch (Error e) {
+                throw e;
+            }
+        }
+    }
+
+    private static void wait(int millis) {
+        try {
+            Thread.sleep(millis);
+
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 }

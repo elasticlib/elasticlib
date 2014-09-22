@@ -310,16 +310,7 @@ public class Repository {
     public ContentInfoTree getContentInfoTree(final Hash hash) {
         ensureOpen();
         log("Returning content info tree of {}", hash);
-        return storageManager.inTransaction(new Query<ContentInfoTree>() {
-            @Override
-            public ContentInfoTree apply() {
-                Optional<ContentInfoTree> tree = infoManager.get(hash);
-                if (!tree.isPresent()) {
-                    throw new UnknownContentException();
-                }
-                return tree.get();
-            }
-        });
+        return loadContentInfoTree(hash);
     }
 
     /**
@@ -331,7 +322,7 @@ public class Repository {
     public List<ContentInfo> getContentInfoHead(final Hash hash) {
         ensureOpen();
         log("Returning content info head of {}", hash);
-        ContentInfoTree tree = getContentInfoTree(hash);
+        ContentInfoTree tree = loadContentInfoTree(hash);
         return tree.get(tree.getHead());
     }
 
@@ -345,8 +336,20 @@ public class Repository {
     public List<ContentInfo> getContentInfoRevisions(Hash hash, Collection<Hash> revs) {
         ensureOpen();
         log("Returning content info revs of {} [{}]", hash, on(", ").join(revs));
-        ContentInfoTree tree = getContentInfoTree(hash);
-        return tree.get(revs);
+        return loadContentInfoTree(hash).get(revs);
+    }
+
+    private ContentInfoTree loadContentInfoTree(final Hash hash) {
+        return storageManager.inTransaction(new Query<ContentInfoTree>() {
+            @Override
+            public ContentInfoTree apply() {
+                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                if (!tree.isPresent()) {
+                    throw new UnknownContentException();
+                }
+                return tree.get();
+            }
+        });
     }
 
     /**

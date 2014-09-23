@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
@@ -487,7 +488,7 @@ public class ContentInfoTree implements Mappable {
          */
         public static Diff of(Map<String, Value> from, Map<String, Value> to) {
             Map<String, Value> diff = new HashMap<>();
-            for (Map.Entry<String, Value> entry : to.entrySet()) {
+            for (Entry<String, Value> entry : to.entrySet()) {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (!Objects.equals(from.get(key), value)) {
@@ -511,7 +512,7 @@ public class ContentInfoTree implements Mappable {
          */
         public static Optional<Diff> merge(Diff left, Diff right) {
             Map<String, Value> merge = new HashMap<>(left.diff);
-            for (Map.Entry<String, Value> entry : right.diff.entrySet()) {
+            for (Entry<String, Value> entry : right.diff.entrySet()) {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (merge.containsKey(key) && !merge.get(key).equals(value)) {
@@ -532,7 +533,7 @@ public class ContentInfoTree implements Mappable {
          */
         public Map<String, Value> apply(Map<String, Value> source) {
             Map<String, Value> result = new TreeMap<>(source);
-            for (Map.Entry<String, Value> entry : diff.entrySet()) {
+            for (Entry<String, Value> entry : diff.entrySet()) {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (value.type() == ValueType.NULL) {

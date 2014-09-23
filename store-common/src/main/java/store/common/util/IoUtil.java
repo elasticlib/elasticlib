@@ -1,4 +1,4 @@
-package store.common;
+package store.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -5,8 +5,8 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.parseHash;
-import store.common.CommandResult;
 import store.common.hash.Hash;
+import store.common.model.CommandResult;
 
 class Delete extends AbstractCommand {
 

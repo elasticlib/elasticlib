@@ -18,8 +18,8 @@ import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.Directories;
-import store.common.CommandResult;
 import store.common.metadata.Properties.Common;
+import store.common.model.CommandResult;
 import store.common.value.Value;
 
 class Put extends AbstractCommand {

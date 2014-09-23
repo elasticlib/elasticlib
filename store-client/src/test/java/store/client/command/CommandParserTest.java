@@ -14,9 +14,9 @@ import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
 import store.client.http.HttpClient;
 import store.client.http.Session;
-import store.common.RepositoryDef;
-import store.common.RepositoryInfo;
 import store.common.hash.Guid;
+import store.common.model.RepositoryDef;
+import store.common.model.RepositoryInfo;
 
 /**
  * Unit tests.

@@ -1,6 +1,6 @@
 package store.server.manager.storage;
 
-import store.common.CommandResult;
+import store.common.model.CommandResult;
 
 /**
  * Functionnal interface defining a command, that is a pure mutative operation.

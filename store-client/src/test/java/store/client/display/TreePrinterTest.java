@@ -3,9 +3,9 @@ package store.client.display;
 import com.google.common.base.Function;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
-import store.common.ContentInfo;
-import store.common.ContentInfo.ContentInfoBuilder;
 import store.common.hash.Hash;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfo.ContentInfoBuilder;
 
 /**
  * Unit tests.

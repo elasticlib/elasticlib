@@ -27,9 +27,9 @@ import javax.json.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.client.config.ClientConfig;
-import store.common.NodeDef;
 import store.common.hash.Guid;
 import store.common.json.JsonReading;
+import store.common.model.NodeDef;
 
 /**
  * Multicast discovery client. Sends periodically discovery requests and collects responses. Maintains a list of alive

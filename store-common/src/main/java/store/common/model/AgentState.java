@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 /**
  * Defines all possible agent states.

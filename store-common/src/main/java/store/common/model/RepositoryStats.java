@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import com.google.common.base.Function;
 import static com.google.common.base.Objects.toStringHelper;
@@ -8,6 +8,9 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import static java.util.Objects.hash;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import store.common.util.EqualsBuilder;
 import store.common.value.Value;
 
 /**

@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import store.client.exception.RequestFailedException;
-import store.common.ContentInfo;
 import store.common.hash.Hash;
+import store.common.model.ContentInfo;
 
 /**
  * Client utils.

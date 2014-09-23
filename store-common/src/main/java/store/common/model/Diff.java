@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import com.google.common.base.Optional;
 import static java.util.Collections.unmodifiableMap;

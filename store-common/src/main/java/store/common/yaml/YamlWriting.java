@@ -11,7 +11,7 @@ import org.yaml.snakeyaml.emitter.Emitter;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.resolver.Resolver;
 import org.yaml.snakeyaml.serializer.Serializer;
-import store.common.Mappable;
+import store.common.mappable.Mappable;
 import store.common.value.Value;
 
 /**

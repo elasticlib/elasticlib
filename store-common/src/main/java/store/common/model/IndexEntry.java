@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import static com.google.common.base.Objects.toStringHelper;
 import static java.util.Collections.unmodifiableSortedSet;
@@ -7,9 +7,12 @@ import static java.util.Objects.hash;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import static store.common.MappableUtil.putRevisions;
-import static store.common.MappableUtil.revisions;
 import store.common.hash.Hash;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import static store.common.mappable.MappableUtil.putRevisions;
+import static store.common.mappable.MappableUtil.revisions;
+import store.common.util.EqualsBuilder;
 import store.common.value.Value;
 
 /**

@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import store.common.ContentInfo;
 import store.common.hash.Hash;
+import store.common.model.ContentInfo;
 
 /**
  * Draws a text-based representation of a content info tree.

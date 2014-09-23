@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import store.common.Mappable;
-import store.common.MappableUtil;
 import store.common.json.schema.Schema;
+import store.common.mappable.Mappable;
+import store.common.mappable.MappableUtil;
 import store.common.value.Value;
 
 /**

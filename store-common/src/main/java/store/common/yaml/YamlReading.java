@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
-import store.common.Mappable;
-import store.common.MappableUtil;
+import store.common.mappable.Mappable;
+import store.common.mappable.MappableUtil;
 import store.common.value.Value;
 
 /**

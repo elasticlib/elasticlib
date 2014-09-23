@@ -11,8 +11,8 @@ import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import store.common.MapBuilder;
 import static store.common.config.Config.key;
+import store.common.mappable.MapBuilder;
 import store.common.value.Value;
 
 /**

@@ -2,17 +2,6 @@ package store.common.json;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
-import store.common.CommandResult;
-import store.common.ContentInfo;
-import store.common.ContentInfoTree;
-import store.common.Event;
-import store.common.IndexEntry;
-import store.common.NodeDef;
-import store.common.NodeInfo;
-import store.common.ReplicationDef;
-import store.common.ReplicationInfo;
-import store.common.RepositoryDef;
-import store.common.RepositoryInfo;
 import static store.common.TestData.COMMAND_RESULTS;
 import static store.common.TestData.CONTENT_INFOS;
 import static store.common.TestData.CONTENT_INFO_TREE;
@@ -37,6 +26,17 @@ import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfoTree;
+import store.common.model.Event;
+import store.common.model.IndexEntry;
+import store.common.model.NodeDef;
+import store.common.model.NodeInfo;
+import store.common.model.ReplicationDef;
+import store.common.model.ReplicationInfo;
+import store.common.model.RepositoryDef;
+import store.common.model.RepositoryInfo;
 
 /**
  * Unit tests.

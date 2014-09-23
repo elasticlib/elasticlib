@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
@@ -19,10 +19,12 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import store.common.ContentInfo.ContentInfoBuilder;
-import static store.common.Diff.diff;
-import static store.common.Diff.mergeDiff;
 import store.common.hash.Hash;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import store.common.model.ContentInfo.ContentInfoBuilder;
+import static store.common.model.Diff.diff;
+import static store.common.model.Diff.mergeDiff;
 import store.common.value.Value;
 
 /**

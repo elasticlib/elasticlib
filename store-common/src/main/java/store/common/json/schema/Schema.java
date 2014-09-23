@@ -11,7 +11,7 @@ import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
-import store.common.EqualsBuilder;
+import store.common.util.EqualsBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import static store.common.value.ValueType.ARRAY;

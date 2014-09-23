@@ -1,4 +1,4 @@
-package store.common;
+package store.common.mappable;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;

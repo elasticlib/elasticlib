@@ -5,10 +5,10 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
-import store.common.CommandResult;
-import store.common.ContentInfoTree;
-import store.common.Event;
-import store.common.Operation;
+import store.common.model.CommandResult;
+import store.common.model.ContentInfoTree;
+import store.common.model.Event;
+import store.common.model.Operation;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
 

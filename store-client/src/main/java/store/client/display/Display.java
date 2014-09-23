@@ -10,10 +10,10 @@ import javax.json.stream.JsonGenerator;
 import jline.console.ConsoleReader;
 import store.client.config.ClientConfig;
 import static store.client.display.MappableFormatting.format;
-import store.common.ContentInfo;
-import store.common.ContentInfoTree;
-import store.common.Mappable;
 import store.common.json.JsonWriting;
+import store.common.mappable.Mappable;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfoTree;
 import store.common.value.Value;
 import store.common.yaml.YamlWriting;
 

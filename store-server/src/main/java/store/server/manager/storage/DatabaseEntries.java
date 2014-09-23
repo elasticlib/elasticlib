@@ -3,12 +3,12 @@ package store.server.manager.storage;
 import com.google.common.base.Charsets;
 import com.sleepycat.je.DatabaseEntry;
 import java.nio.ByteBuffer;
-import store.common.Mappable;
-import store.common.MappableUtil;
 import store.common.bson.BsonReader;
 import store.common.bson.BsonWriter;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
+import store.common.mappable.Mappable;
+import store.common.mappable.MappableUtil;
 
 /**
  * Utilities to wrap/unwrap data to or from Berkeley DB database entries.

@@ -1,10 +1,13 @@
-package store.common;
+package store.common.model;
 
 import static com.google.common.base.Objects.toStringHelper;
 import java.net.URI;
 import java.util.Map;
 import static java.util.Objects.hash;
 import org.joda.time.Instant;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import store.common.util.EqualsBuilder;
 import store.common.value.Value;
 
 /**

@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -13,9 +13,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import org.fest.assertions.api.IterableAssert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import store.common.ContentInfo.ContentInfoBuilder;
-import store.common.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.hash.Hash;
+import store.common.model.ContentInfo.ContentInfoBuilder;
+import store.common.model.ContentInfoTree.ContentInfoTreeBuilder;
 import store.common.value.Value;
 
 /**

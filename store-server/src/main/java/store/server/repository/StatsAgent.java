@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import store.common.ContentInfo;
-import store.common.ContentInfoTree;
-import store.common.Event;
-import store.common.RepositoryStats;
 import store.common.hash.Hash;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfoTree;
+import store.common.model.Event;
+import store.common.model.RepositoryStats;
 
 /**
  * An agent that computes statistics about a repository.

@@ -1,4 +1,4 @@
-package store.common;
+package store.common.model;
 
 import static com.google.common.base.Objects.toStringHelper;
 import java.io.ByteArrayInputStream;
@@ -14,11 +14,15 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import static store.common.MappableUtil.fromList;
-import static store.common.MappableUtil.toList;
-import static store.common.SinkOutputStream.sink;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import static store.common.mappable.MappableUtil.fromList;
+import static store.common.mappable.MappableUtil.toList;
+import store.common.util.EqualsBuilder;
+import store.common.util.IoUtil;
+import static store.common.util.SinkOutputStream.sink;
 import store.common.value.Value;
 
 /**

@@ -1,7 +1,7 @@
-package store.common;
+package store.common.model;
 
 /**
- * Define types of write operations on a volume.
+ * Define types of write operations on a repository.
  */
 public enum Operation {
 

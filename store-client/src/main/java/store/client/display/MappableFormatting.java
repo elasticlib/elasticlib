@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
-import store.common.Mappable;
+import store.common.mappable.Mappable;
 import store.common.value.Value;
 import store.common.value.ValueType;
 

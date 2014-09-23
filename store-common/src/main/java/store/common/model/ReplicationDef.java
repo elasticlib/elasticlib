@@ -1,10 +1,13 @@
-package store.common;
+package store.common.model;
 
 import static com.google.common.base.Objects.toStringHelper;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import store.common.hash.Guid;
+import store.common.mappable.MapBuilder;
+import store.common.mappable.Mappable;
+import store.common.util.EqualsBuilder;
 import store.common.value.Value;
 
 /**

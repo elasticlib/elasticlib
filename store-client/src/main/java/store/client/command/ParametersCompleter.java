@@ -28,10 +28,10 @@ import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
-import store.common.IndexEntry;
-import store.common.NodeDef;
-import store.common.NodeInfo;
-import store.common.RepositoryInfo;
+import store.common.model.IndexEntry;
+import store.common.model.NodeDef;
+import store.common.model.NodeInfo;
+import store.common.model.RepositoryInfo;
 
 /**
  * Provides parameters completion.

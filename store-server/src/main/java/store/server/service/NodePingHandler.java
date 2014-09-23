@@ -12,10 +12,10 @@ import org.glassfish.jersey.client.ClientConfig;
 import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import store.common.NodeDef;
-import store.common.NodeInfo;
 import store.common.hash.Guid;
 import static store.common.json.JsonReading.read;
+import store.common.model.NodeDef;
+import store.common.model.NodeInfo;
 import store.server.providers.JsonBodyReader;
 
 /**

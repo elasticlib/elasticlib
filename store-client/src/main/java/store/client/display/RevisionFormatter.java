@@ -1,8 +1,8 @@
 package store.client.display;
 
 import com.google.common.base.Function;
-import store.common.ContentInfo;
-import store.common.MapBuilder;
+import store.common.mappable.MapBuilder;
+import store.common.model.ContentInfo;
 import store.common.value.Value;
 import store.common.yaml.YamlWriting;
 

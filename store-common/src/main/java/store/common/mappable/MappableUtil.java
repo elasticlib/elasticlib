@@ -1,4 +1,4 @@
-package store.common;
+package store.common.mappable;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import store.common.hash.Hash;
 import store.common.value.Value;
 
 /**
- * Mappable utils.
+ * Utilities to deal with mappables.
  */
 public final class MappableUtil {
 
@@ -20,7 +20,13 @@ public final class MappableUtil {
     private MappableUtil() {
     }
 
-    static List<Value> toList(SortedSet<Hash> hashes) {
+    /**
+     * Converts supplied set of hashes to a list of values.
+     *
+     * @param hashes A set of hashes.
+     * @return Corresponding list of values.
+     */
+    public static List<Value> toList(SortedSet<Hash> hashes) {
         List<Value> values = new ArrayList<>();
         for (Hash hash : hashes) {
             values.add(Value.of(hash));
@@ -28,7 +34,13 @@ public final class MappableUtil {
         return values;
     }
 
-    static SortedSet<Hash> fromList(List<Value> values) {
+    /**
+     * Extracts a set of hashes from supplied list of values. All values are expected to be hash ones.
+     *
+     * @param values A list of values.
+     * @return Corresponding set of hashes
+     */
+    public static SortedSet<Hash> fromList(List<Value> values) {
         SortedSet<Hash> hashes = new TreeSet<>();
         for (Value value : values) {
             hashes.add(value.asHash());
@@ -36,14 +48,27 @@ public final class MappableUtil {
         return hashes;
     }
 
-    static MapBuilder putRevisions(MapBuilder builder, SortedSet<Hash> revisions) {
+    /**
+     * Adds supplied revisions to builder, with adequate key.
+     *
+     * @param builder A map builder.
+     * @param revisions Revisions to add.
+     * @return Supplied builder instance.
+     */
+    public static MapBuilder putRevisions(MapBuilder builder, SortedSet<Hash> revisions) {
         if (revisions.size() == 1) {
             return builder.put(REVISION, revisions.first());
         }
         return builder.put(REVISIONS, toList(revisions));
     }
 
-    static SortedSet<Hash> revisions(Map<String, Value> values) {
+    /**
+     * Extracts a set of revisions from supplied map of values.
+     *
+     * @param values A map of values.
+     * @return A set of revision hashes.
+     */
+    public static SortedSet<Hash> revisions(Map<String, Value> values) {
         if (values.containsKey(REVISION)) {
             SortedSet<Hash> revisions = new TreeSet<>();
             revisions.add(values.get(REVISION).asHash());
@@ -55,7 +80,7 @@ public final class MappableUtil {
     }
 
     /**
-     * Convert supplied map of values to a {@link Mappable} instance.
+     * Converts supplied map of values to a {@link Mappable} instance.
      *
      * @param <T> Actual class to convert to.
      * @param values A map of values.

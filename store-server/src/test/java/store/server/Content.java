@@ -7,14 +7,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Thread.currentThread;
 import java.util.SortedSet;
-import store.common.ContentInfo;
-import store.common.ContentInfo.ContentInfoBuilder;
-import store.common.ContentInfoTree;
-import store.common.ContentInfoTree.ContentInfoTreeBuilder;
-import static store.common.IoUtil.copyAndDigest;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
 import static store.common.metadata.Properties.Common.FILE_NAME;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfo.ContentInfoBuilder;
+import store.common.model.ContentInfoTree;
+import store.common.model.ContentInfoTree.ContentInfoTreeBuilder;
+import static store.common.util.IoUtil.copyAndDigest;
 import store.common.value.Value;
 
 /**

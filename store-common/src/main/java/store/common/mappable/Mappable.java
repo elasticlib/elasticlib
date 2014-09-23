@@ -1,4 +1,4 @@
-package store.common;
+package store.common.mappable;
 
 import java.util.Map;
 import store.common.value.Value;

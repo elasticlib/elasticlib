@@ -1,4 +1,4 @@
-package store.common;
+package store.common.util;
 
 import static java.lang.Double.doubleToLongBits;
 import static java.lang.Float.floatToIntBits;

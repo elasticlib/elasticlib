@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import static java.util.Collections.sort;
 import java.util.Comparator;
 import java.util.List;
-import store.common.RepositoryDef;
 import store.common.hash.Guid;
+import store.common.model.RepositoryDef;
 import store.server.exception.RepositoryAlreadyExistsException;
 import store.server.exception.UnknownRepositoryException;
 import static store.server.manager.storage.DatabaseEntries.asMappable;
@@ -23,7 +23,6 @@ import store.server.manager.storage.StorageManager;
 public class RepositoriesDao {
 
     private static final String REPOSITORIES = "repositories";
-
     private final StorageManager storageManager;
     private final Database repositoryDefs;
 

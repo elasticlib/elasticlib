@@ -1,4 +1,4 @@
-package store.common;
+package store.common.util;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;

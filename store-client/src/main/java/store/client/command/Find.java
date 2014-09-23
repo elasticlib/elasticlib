@@ -4,7 +4,7 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.ContentInfo;
+import store.common.model.ContentInfo;
 
 class Find extends AbstractCommand {
 

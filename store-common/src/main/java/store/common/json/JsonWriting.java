@@ -5,8 +5,8 @@ import static javax.json.Json.createArrayBuilder;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import store.common.Mappable;
 import store.common.json.schema.Schema;
+import store.common.mappable.Mappable;
 
 /**
  * JSON writing utils.

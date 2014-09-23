@@ -10,20 +10,20 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import javax.json.Json;
 import javax.json.JsonObject;
-import store.common.AgentInfo;
-import store.common.CommandResult;
-import store.common.ContentInfo;
-import store.common.ContentInfoTree;
-import store.common.Event;
-import store.common.IndexEntry;
-import store.common.NodeDef;
-import store.common.NodeInfo;
-import store.common.ReplicationDef;
-import store.common.ReplicationInfo;
-import store.common.RepositoryDef;
-import store.common.RepositoryInfo;
-import store.common.RepositoryStats;
 import store.common.json.schema.Schema;
+import store.common.model.AgentInfo;
+import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentInfoTree;
+import store.common.model.Event;
+import store.common.model.IndexEntry;
+import store.common.model.NodeDef;
+import store.common.model.NodeInfo;
+import store.common.model.ReplicationDef;
+import store.common.model.ReplicationInfo;
+import store.common.model.RepositoryDef;
+import store.common.model.RepositoryInfo;
+import store.common.model.RepositoryStats;
 
 final class SchemaProvider {
 

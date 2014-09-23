@@ -16,16 +16,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
 import store.common.model.ContentInfo.ContentInfoBuilder;
-import static store.common.model.Diff.diff;
-import static store.common.model.Diff.mergeDiff;
 import store.common.value.Value;
+import store.common.value.ValueType;
 
 /**
  * Represents a content info revision tree.
@@ -194,40 +195,6 @@ public class ContentInfoTree implements Mappable {
     }
 
     /**
-     * A simple topological sorting algorithm based on a depth-first search.
-     */
-    private static class TopologicalSort {
-
-        private final Map<Hash, ContentInfo> unsorted;
-        private final Collection<Hash> head;
-        private final List<ContentInfo> sorted = new ArrayList<>();
-
-        public TopologicalSort(Map<Hash, ContentInfo> nodes, Collection<Hash> head) {
-            unsorted = new HashMap<>(nodes);
-            this.head = head;
-        }
-
-        public List<ContentInfo> sort() {
-            for (Hash seed : head) {
-                visit(unsorted.get(seed));
-            }
-            // Nodes are actually sorted in reverse order at this point.
-            Collections.reverse(sorted);
-            return sorted;
-        }
-
-        private void visit(ContentInfo info) {
-            for (Hash parent : info.getParents()) {
-                if (unsorted.containsKey(parent)) {
-                    visit(unsorted.get(parent));
-                }
-            }
-            sorted.add(info);
-            unsorted.remove(info.getRevision());
-        }
-    }
-
-    /**
      * Adds a new node to this tree.
      *
      * @param info revision to add.
@@ -321,8 +288,8 @@ public class ContentInfoTree implements Mappable {
     }
 
     private Optional<ContentInfo> threeWayMerge(ContentInfo left, ContentInfo right, Map<String, Value> base) {
-        Optional<Diff> diff = mergeDiff(diff(base, left.getMetadata()),
-                                        diff(base, right.getMetadata()));
+        Optional<Diff> diff = Diff.merge(Diff.of(base, left.getMetadata()),
+                                         Diff.of(base, right.getMetadata()));
         if (!diff.isPresent()) {
             return Optional.absent();
         }
@@ -452,6 +419,129 @@ public class ContentInfoTree implements Mappable {
          */
         public ContentInfoTree build() {
             return new ContentInfoTree(nodes);
+        }
+    }
+
+    /**
+     * A simple topological sorting algorithm based on a depth-first search.
+     */
+    private static class TopologicalSort {
+
+        private final Map<Hash, ContentInfo> unsorted;
+        private final Collection<Hash> head;
+        private final List<ContentInfo> sorted = new ArrayList<>();
+
+        /**
+         * Constructor.
+         *
+         * @param nodes Nodes to sort, mapped by their revisions hashes.
+         * @param head head revisions hashes.
+         */
+        public TopologicalSort(Map<Hash, ContentInfo> nodes, Collection<Hash> head) {
+            unsorted = new HashMap<>(nodes);
+            this.head = head;
+        }
+
+        /**
+         * Sorts nodes in topological order. Any node in the returned list is always before all its parents.
+         *
+         * @return A topologically ordered list.
+         */
+        public List<ContentInfo> sort() {
+            for (Hash seed : head) {
+                visit(unsorted.get(seed));
+            }
+            // Nodes are actually sorted in reverse order at this point.
+            Collections.reverse(sorted);
+            return sorted;
+        }
+
+        private void visit(ContentInfo info) {
+            for (Hash parent : info.getParents()) {
+                if (unsorted.containsKey(parent)) {
+                    visit(unsorted.get(parent));
+                }
+            }
+            sorted.add(info);
+            unsorted.remove(info.getRevision());
+        }
+    }
+
+    /**
+     * Represents a diff from a set of metadata to another one.
+     */
+    private static final class Diff {
+
+        private final Map<String, Value> diff;
+
+        private Diff(Map<String, Value> diff) {
+            this.diff = unmodifiableMap(new TreeMap<>(diff));
+        }
+
+        /**
+         * Compute diff between two sets of metadata.
+         *
+         * @param from Source metadata set.
+         * @param to Target metadata set.
+         * @return A new Diff instance.
+         */
+        public static Diff of(Map<String, Value> from, Map<String, Value> to) {
+            Map<String, Value> diff = new HashMap<>();
+            for (Map.Entry<String, Value> entry : to.entrySet()) {
+                String key = entry.getKey();
+                Value value = entry.getValue();
+                if (!Objects.equals(from.get(key), value)) {
+                    diff.put(key, value);
+                }
+            }
+            for (String key : from.keySet()) {
+                if (!to.keySet().contains(key)) {
+                    diff.put(key, Value.ofNull());
+                }
+            }
+            return new Diff(diff);
+        }
+
+        /**
+         * Merge two diffs. Returns a merge diff if there is no conflict, or nothing otherwise.
+         *
+         * @param left First diff.
+         * @param right Second diff.
+         * @return An optional new resulting diff.
+         */
+        public static Optional<Diff> merge(Diff left, Diff right) {
+            Map<String, Value> merge = new HashMap<>(left.diff);
+            for (Map.Entry<String, Value> entry : right.diff.entrySet()) {
+                String key = entry.getKey();
+                Value value = entry.getValue();
+                if (merge.containsKey(key) && !merge.get(key).equals(value)) {
+                    return Optional.absent();
+                }
+                if (!merge.containsKey(key)) {
+                    merge.put(key, value);
+                }
+            }
+            return Optional.of(new Diff(merge));
+        }
+
+        /**
+         * Apply this diff to a metadata set.
+         *
+         * @param source A metadata set.
+         * @return Resulting metadata.
+         */
+        public Map<String, Value> apply(Map<String, Value> source) {
+            Map<String, Value> result = new TreeMap<>(source);
+            for (Map.Entry<String, Value> entry : diff.entrySet()) {
+                String key = entry.getKey();
+                Value value = entry.getValue();
+                if (value.type() == ValueType.NULL) {
+                    result.remove(key);
+                } else {
+                    result.put(key, value);
+                }
+            }
+            return result;
         }
     }
 }

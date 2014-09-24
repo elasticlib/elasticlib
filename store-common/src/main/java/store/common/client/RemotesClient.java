@@ -1,8 +1,11 @@
 package store.common.client;
 
 import java.net.URI;
+import static java.util.Collections.singletonList;
 import java.util.List;
+import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import static javax.ws.rs.client.Entity.json;
 import javax.ws.rs.client.WebTarget;
@@ -20,6 +23,7 @@ public class RemotesClient {
     private static final String REMOTES = "remotes";
     private static final String NODE_TEMPLATE = "{node}";
     private static final String URI = "uri";
+    private static final String URIS = "uris";
     private static final String NODE = "node";
     private final WebTarget resource;
 
@@ -43,22 +47,45 @@ public class RemotesClient {
     }
 
     /**
-     * Add a remote node.
+     * Adds a remote node.
      *
      * @param uri Remote node URI
      */
     public void add(URI uri) {
-        JsonObject body = createObjectBuilder()
-                .add(URI, uri.toString())
-                .build();
-
-        ensureSuccess(resource
-                .request()
-                .post(json(body)));
+        add(singletonList(uri));
     }
 
     /**
-     * Remove a remote node.
+     * Adds a remote node. Expects supplied list not to be empty.
+     *
+     * @param uris Remote node URI(s)
+     */
+    public void add(List<URI> uris) {
+        ensureSuccess(resource
+                .request()
+                .post(json(addRemoteBody(uris))));
+    }
+
+    private static JsonObject addRemoteBody(List<URI> uris) {
+        if (uris.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+        if (uris.size() == 1) {
+            return createObjectBuilder()
+                    .add(URI, uris.get(0).toString())
+                    .build();
+        }
+        JsonArrayBuilder urisArray = createArrayBuilder();
+        for (URI uri : uris) {
+            urisArray.add(uri.toString());
+        }
+        return createObjectBuilder()
+                .add(URIS, urisArray)
+                .build();
+    }
+
+    /**
+     * Removes a remote node.
      *
      * @param node Remote node name or encoded GUID.
      */
@@ -70,7 +97,7 @@ public class RemotesClient {
     }
 
     /**
-     * Remove a remote node.
+     * Removes a remote node.
      *
      * @param guid Remote node guid.
      */

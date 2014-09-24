@@ -4,19 +4,14 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import java.net.URI;
-import javax.json.JsonObject;
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import org.glassfish.jersey.client.ClientConfig;
 import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.client.Client;
 import store.common.hash.Guid;
-import static store.common.json.JsonReading.read;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
-import store.server.providers.JsonBodyReader;
 
 /**
  * Remote nodes ping handler.
@@ -24,7 +19,8 @@ import store.server.providers.JsonBodyReader;
 public class NodePingHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodePingHandler.class);
-    private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
+    private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
+    private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
 
     /**
      * Calls the supplied uris and returns info of the first node that responds.
@@ -63,22 +59,13 @@ public class NodePingHandler {
     }
 
     private static Optional<NodeInfo> ping(URI uri) {
-        ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class);
-        Client client = ClientBuilder.newClient(clientConfig);
-        try {
-            JsonObject json = client.target(uri)
-                    .request()
-                    .get()
-                    .readEntity(JsonObject.class);
-
-            return Optional.of(new NodeInfo(read(json, NodeDef.class), uri, now()));
+        try (Client client = new Client(uri, LOGGING_HANDLER)) {
+            NodeDef def = client.node().getDef();
+            return Optional.of(new NodeInfo(def, uri, now()));
 
         } catch (ProcessingException e) {
-            HANDLER.log(uri, e);
+            EXCEPTION_HANDLER.log(uri, e);
             return Optional.absent();
-
-        } finally {
-            client.close();
         }
     }
 }

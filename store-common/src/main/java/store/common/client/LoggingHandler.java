@@ -10,5 +10,12 @@ public interface LoggingHandler {
      *
      * @param message A log message.
      */
-    public void log(String message);
+    public void logRequest(String message);
+
+    /**
+     * Logs the supplied message.
+     *
+     * @param message A log message.
+     */
+    public void logResponse(String message);
 }

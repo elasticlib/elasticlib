@@ -1,7 +1,6 @@
 package store.server.discovery;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import java.net.URI;
 import static java.util.Collections.unmodifiableSet;
@@ -9,33 +8,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import static javax.json.Json.createArrayBuilder;
-import static javax.json.Json.createObjectBuilder;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import static javax.ws.rs.client.Entity.json;
-import javax.ws.rs.client.WebTarget;
-import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.client.Client;
+import store.common.client.RequestFailedException;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import static store.common.config.ConfigUtil.uris;
 import store.common.hash.Guid;
-import static store.common.json.JsonReading.readAll;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
 import store.server.config.ServerConfig;
 import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
-import store.server.providers.JsonBodyReader;
-import store.server.providers.JsonBodyWriter;
+import store.server.service.ClientLoggingHandler;
 import store.server.service.NodesService;
 import store.server.service.ProcessingExceptionHandler;
 
@@ -50,7 +39,8 @@ import store.server.service.ProcessingExceptionHandler;
 public class UnicastDiscoveryClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnicastDiscoveryClient.class);
-    private static final ProcessingExceptionHandler HANDLER = new ProcessingExceptionHandler(LOG);
+    private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
+    private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
     private final Config config;
     private final TaskManager taskManager;
     private final NodesService nodesService;
@@ -110,7 +100,6 @@ public class UnicastDiscoveryClient {
      */
     private class DiscoveryTask implements Runnable {
 
-        private static final String REMOTES = "remotes";
         private NodeDef local;
         private List<NodeInfo> remotes;
         private Set<Guid> knownNodes;
@@ -146,76 +135,24 @@ public class UnicastDiscoveryClient {
         }
 
         private void process(URI target) {
-            Optional<List<NodeInfo>> remotesOpt = listRemoteNodes(target);
-            if (!remotesOpt.isPresent()) {
-                return;
-            }
-            List<NodeInfo> targetRemotes = remotesOpt.get();
-            for (NodeInfo remote : targetRemotes) {
-                NodeDef def = remote.getDef();
-                if (!started.get()) {
-                    return;
-                }
-                if (!knownNodes.contains(def.getGuid())) {
-                    nodesService.saveRemote(def);
-                }
-            }
-            if (!guids(targetRemotes).contains(local.getGuid())) {
-                addLocalNode(target);
-            }
-        }
-
-        private Optional<List<NodeInfo>> listRemoteNodes(URI target) {
-            return request(target, new Function<WebTarget, List<NodeInfo>>() {
-                @Override
-                public List<NodeInfo> apply(WebTarget target) {
-                    JsonArray array = target.path(REMOTES)
-                            .request()
-                            .get()
-                            .readEntity(JsonArray.class);
-
-                    return readAll(array, NodeInfo.class);
-                }
-            });
-        }
-
-        private void addLocalNode(URI target) {
-            request(target, new Function<WebTarget, Void>() {
-                @Override
-                public Void apply(WebTarget target) {
-                    JsonArrayBuilder uris = createArrayBuilder();
-                    for (URI uri : local.getPublishUris()) {
-                        uris.add(uri.toString());
+            try (Client client = new Client(target, LOGGING_HANDLER)) {
+                List<NodeInfo> targetRemotes = client.remotes().listInfos();
+                for (NodeInfo remote : targetRemotes) {
+                    NodeDef def = remote.getDef();
+                    if (!knownNodes.contains(def.getGuid())) {
+                        nodesService.saveRemote(def);
                     }
-                    JsonObject body = createObjectBuilder()
-                            .add("uris", uris)
-                            .build();
-
-                    target.path(REMOTES)
-                            .request()
-                            .post(json(body))
-                            .close();
-
-                    return null;
                 }
-            });
-        }
+                if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
+                    try {
+                        client.remotes().add(local.getPublishUris());
 
-        private <T> Optional<T> request(URI target, Function<WebTarget, T> function) {
-            if (!started.get()) {
-                return Optional.absent();
-            }
-            ClientConfig clientConfig = new ClientConfig(JsonBodyReader.class, JsonBodyWriter.class);
-            Client client = ClientBuilder.newClient(clientConfig);
-            try {
-                return Optional.fromNullable(function.apply(client.target(target)));
-
+                    } catch (RequestFailedException e) {
+                        LOG.warn("Failed to add local node to {}. Remote responded: {}", target, e.getMessage());
+                    }
+                }
             } catch (ProcessingException e) {
-                HANDLER.log(target, e);
-                return Optional.absent();
-
-            } finally {
-                client.close();
+                EXCEPTION_HANDLER.log(target, e);
             }
         }
     }

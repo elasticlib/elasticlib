@@ -19,6 +19,7 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response.StatusType;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.internal.util.collection.StringIgnoreCaseKeyComparator;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
 
     private static final String SPACE = " ";
+    private static final String DASH = " - ";
     private static final String NOTIFICATION_PREFIX = "* ";
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
@@ -74,7 +76,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
                 .append(System.lineSeparator());
     }
 
-    private void printResponseLine(StringBuilder builder, String note, long id, int status) {
+    private void printResponseLine(StringBuilder builder, String note, long id, StatusType status) {
         prefixId(builder, id)
                 .append(NOTIFICATION_PREFIX)
                 .append(note)
@@ -82,7 +84,9 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
 
         prefixId(builder, id)
                 .append(RESPONSE_PREFIX)
-                .append(Integer.toString(status))
+                .append(status.getStatusCode())
+                .append(DASH)
+                .append(status.getReasonPhrase())
                 .append(System.lineSeparator());
     }
 
@@ -159,7 +163,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         printResponseLine(builder,
                           RESPONSE_NOTE,
                           currentId,
-                          responseCtx.getStatus());
+                          responseCtx.getStatusInfo());
 
         printPrefixedHeaders(builder,
                              currentId,

@@ -34,9 +34,18 @@ class PrintingHandler implements LoggingHandler {
     }
 
     @Override
-    public void log(String message) {
+    public void logRequest(String message) {
+        log(message);
+    }
+
+    @Override
+    public void logResponse(String message) {
+        log(message);
+    }
+
+    private void log(String message) {
         if (enabled && config.isDisplayHttp()) {
-            display.print(message);
+            display.println(message);
         }
     }
 }

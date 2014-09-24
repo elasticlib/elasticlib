@@ -6,7 +6,7 @@ import javax.ws.rs.ProcessingException;
 import org.slf4j.Logger;
 
 /**
- * Utility handler used to properly log instances of ProcessingException, thrown by Jersey client HTTP requests.
+ * Utility handler used to properly log instances of ProcessingException, thrown by client HTTP requests.
  */
 public class ProcessingExceptionHandler {
 

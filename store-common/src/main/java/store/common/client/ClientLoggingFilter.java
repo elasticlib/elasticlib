@@ -1,7 +1,7 @@
 package store.common.client;
 
 import com.google.common.base.Joiner;
-import java.net.URI;
+import static java.lang.System.lineSeparator;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -22,6 +22,8 @@ import org.glassfish.jersey.internal.util.collection.StringIgnoreCaseKeyComparat
 @Priority(Integer.MIN_VALUE)
 public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseFilter {
 
+    private static final String SPACE = " ";
+    private static final String DASH = " - ";
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
     private static final Comparator<Entry<String, List<String>>> COMPARATOR =
@@ -44,33 +46,30 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
 
     @Override
     public void filter(ClientRequestContext context) {
-        StringBuilder builder = new StringBuilder();
-        printRequestLine(builder, context.getMethod(), context.getUri());
+        StringBuilder builder = new StringBuilder()
+                .append(REQUEST_PREFIX)
+                .append(context.getMethod())
+                .append(SPACE)
+                .append(context.getUri().toASCIIString())
+                .append(lineSeparator());
+
         printPrefixedHeaders(builder, REQUEST_PREFIX, context.getStringHeaders());
-        handler.log(builder.toString());
+
+        handler.logRequest(builder.toString());
     }
 
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) {
-        StringBuilder builder = new StringBuilder();
-        printResponseLine(builder, responseContext.getStatus());
+        StringBuilder builder = new StringBuilder()
+                .append(RESPONSE_PREFIX)
+                .append(responseContext.getStatus())
+                .append(DASH)
+                .append(responseContext.getStatusInfo().getReasonPhrase())
+                .append(lineSeparator());
+
         printPrefixedHeaders(builder, RESPONSE_PREFIX, responseContext.getHeaders());
-        builder.append(System.lineSeparator());
-        handler.log(builder.toString());
-    }
 
-    private void printRequestLine(StringBuilder builder, String method, URI uri) {
-        builder.append(REQUEST_PREFIX)
-                .append(method)
-                .append(" ")
-                .append(uri.toASCIIString())
-                .append(System.lineSeparator());
-    }
-
-    private void printResponseLine(StringBuilder builder, int status) {
-        builder.append(RESPONSE_PREFIX)
-                .append(Integer.toString(status))
-                .append(System.lineSeparator());
+        handler.logResponse(builder.toString());
     }
 
     private void printPrefixedHeaders(StringBuilder builder, String prefix, MultivaluedMap<String, String> headers) {
@@ -89,7 +88,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
                     .append(header)
                     .append(": ")
                     .append(value)
-                    .append(System.lineSeparator());
+                    .append(lineSeparator());
         }
     }
 }

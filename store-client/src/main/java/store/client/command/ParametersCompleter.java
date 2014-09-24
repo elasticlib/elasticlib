@@ -11,7 +11,6 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,10 +23,10 @@ import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.KEY;
 import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
-import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
+import store.common.client.RequestFailedException;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
@@ -121,7 +120,7 @@ class ParametersCompleter {
 
     private List<String> completeNode(String param) {
         Collection<String> nodes = new TreeSet<>();
-        for (NodeInfo info : session.getClient().listRemotes()) {
+        for (NodeInfo info : session.getClient().remotes().listInfos()) {
             NodeDef def = info.getDef();
             nodes.add(def.getName());
             nodes.add(def.getGuid().asHexadecimalString());
@@ -131,7 +130,7 @@ class ParametersCompleter {
 
     private List<String> completeRepository(String param) {
         Collection<String> repositories = new TreeSet<>();
-        for (RepositoryInfo info : session.getClient().listRepositoryInfos()) {
+        for (RepositoryInfo info : session.getClient().repositories().listInfos()) {
             repositories.add(info.getDef().getName());
             repositories.add(info.getDef().getGuid().asHexadecimalString());
         }
@@ -143,9 +142,9 @@ class ParametersCompleter {
             return emptyList();
         }
         List<String> hashes = new ArrayList<>();
-        for (IndexEntry entry : session.getClient().find(session.getRepository(),
-                                                         Joiner.on("").join("content:", param.toLowerCase(), "*"),
-                                                         0, 100)) {
+        for (IndexEntry entry : session.getRepository()
+                .find(Joiner.on("").join("content:", param.toLowerCase(), "*"), 0, 100)) {
+
             hashes.add(entry.getHash().asHexadecimalString());
         }
         return filterStartWith(hashes, param);
@@ -190,7 +189,7 @@ class ParametersCompleter {
     }
 
     private static DirectoryStream<Path> directoryStream(String param) throws IOException {
-        Path path = Directories.resolve(Paths.get(param));
+        Path path = Directories.resolve(param);
         Path dir = Files.isDirectory(path) ? path : path.getParent();
         if (dir == null) {
             dir = path.getRoot();

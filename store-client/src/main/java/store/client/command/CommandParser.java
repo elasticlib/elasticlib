@@ -12,11 +12,11 @@ import jline.console.completer.Completer;
 import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
-import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.tokenizing.Tokenizing;
 import static store.client.tokenizing.Tokenizing.argList;
 import static store.client.tokenizing.Tokenizing.isComplete;
+import store.common.client.RequestFailedException;
 
 /**
  * Provide actual command implementations.

@@ -5,7 +5,11 @@ import java.io.Closeable;
 import java.net.URI;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
-import store.client.exception.RequestFailedException;
+import store.common.client.Client;
+import store.common.client.RepositoryClient;
+import store.common.client.RequestFailedException;
+import store.common.hash.Guid;
+import store.common.model.RepositoryDef;
 
 /**
  * A command line session. Keep everything that need to survive across sussessive command invocations.
@@ -16,9 +20,10 @@ public class Session implements Closeable {
     private static final String NO_REPOSITORY = "No repository selected";
     private final Display display;
     private final ClientConfig config;
-    private HttpClient restClient;
-    private String server;
-    private String repository;
+    private PrintingHandler printingHandler;
+    private Client client;
+    private String node;
+    private Guid repository;
 
     /**
      * Constructor.
@@ -29,7 +34,7 @@ public class Session implements Closeable {
     public Session(Display display, ClientConfig config) {
         this.display = display;
         this.config = config;
-
+        printingHandler = new PrintingHandler(display, config);
     }
 
     /**
@@ -53,14 +58,14 @@ public class Session implements Closeable {
      */
     public void connect(URI uri) {
         close();
-        restClient = new HttpClient(uri, display, config);
-        restClient.printHttpDialog(true);
+        client = new Client(uri, printingHandler);
+        printingHandler.setEnabled(true);
         try {
-            server = restClient.getNode().getName();
-            display.setPrompt(server);
+            node = client.node().getDef().getName();
+            display.setPrompt(node);
 
         } finally {
-            restClient.printHttpDialog(false);
+            printingHandler.setEnabled(false);
         }
     }
 
@@ -70,9 +75,7 @@ public class Session implements Closeable {
      * @param val If this feature should be activated.
      */
     public void printHttpDialog(boolean val) {
-        if (restClient != null) {
-            restClient.printHttpDialog(val);
-        }
+        printingHandler.setEnabled(val);
     }
 
     /**
@@ -88,76 +91,79 @@ public class Session implements Closeable {
      * @param repositoryName Repository name.
      */
     public void use(String repositoryName) {
-        restClient.printHttpDialog(true);
+        printingHandler.setEnabled(true);
         try {
-            restClient.testRepository(repositoryName);
-            display.setPrompt(Joiner.on('/').join(server, repositoryName));
-            repository = repositoryName;
+            RepositoryDef def = client.repositories()
+                    .getInfo(repositoryName)
+                    .getDef();
+
+            repository = def.getGuid();
+            display.setPrompt(Joiner.on('/').join(node, def.getName()));
         } finally {
-            restClient.printHttpDialog(false);
+            printingHandler.setEnabled(false);
         }
     }
 
     /**
-     * Stop using current repository, if any.
+     * Stops using current repository, if any.
      */
     public void leave() {
         if (repository != null) {
             repository = null;
-            if (server == null) {
+            if (node == null) {
                 display.resetPrompt();
             } else {
-                display.setPrompt(server);
+                display.setPrompt(node);
             }
         }
     }
 
     /**
-     * Stop using repository which name is supplied, if applicable. Does nothing otherwise.
+     * Stops using repository which GUID is supplied, if applicable. Does nothing otherwise.
      *
-     * @param repositoryName Repository name.
+     * @param repositoryGuid Repository GUID.
      */
-    public void leave(String repositoryName) {
-        if (repository != null && repository.equals(repositoryName)) {
+    public void leave(Guid repositoryGuid) {
+        if (repository != null && repository.equals(repositoryGuid)) {
             leave();
         }
     }
 
     /**
-     * Provides current repository name. Fails if there is currently no selected repository.
+     * Provides current node client. Fails if there is currently no alive connection.
      *
-     * @return A repository name.
+     * @return A node client.
      */
-    public String getRepository() {
-        if (restClient == null) {
+    public Client getClient() {
+        if (client == null) {
+            throw new RequestFailedException(NOT_CONNECTED);
+        }
+        return client;
+    }
+
+    /**
+     * Provides a client on current repository. Fails if there is currently no selected repository.
+     *
+     * @return A repository client.
+     */
+    public RepositoryClient getRepository() {
+        if (client == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
         if (repository == null) {
             throw new RequestFailedException(NO_REPOSITORY);
         }
-        return repository;
-    }
-
-    /**
-     * Provides current HTTP client. Fails if there is currently no alive connection.
-     *
-     * @return A HTTP client.
-     */
-    public HttpClient getClient() {
-        if (restClient == null) {
-            throw new RequestFailedException(NOT_CONNECTED);
-        }
-        return restClient;
+        return client.repositories().get(repository);
     }
 
     @Override
     public void close() {
-        server = null;
+        node = null;
         repository = null;
         display.resetPrompt();
-        if (restClient != null) {
-            restClient.close();
-            restClient = null;
+        if (client != null) {
+            client.close();
+            client = null;
         }
     }
 }

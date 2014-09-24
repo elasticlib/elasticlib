@@ -5,12 +5,14 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import store.client.exception.RequestFailedException;
+import store.common.client.Client;
+import store.common.client.RequestFailedException;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.ContentInfo;
 
 /**
- * Client utils.
+ * Client utilities.
  */
 public final class ClientUtil {
 
@@ -20,7 +22,7 @@ public final class ClientUtil {
     }
 
     /**
-     * Safely parse supplied argument as a Hash.
+     * Safely parses supplied argument as a Hash.
      *
      * @param arg A command line argument.
      * @return Parsed hash.
@@ -33,7 +35,7 @@ public final class ClientUtil {
     }
 
     /**
-     * Safely parse supplied argument as an URI.
+     * Safely parses supplied argument as an URI.
      *
      * @param arg A command line argument.
      * @return Parsed URI.
@@ -77,5 +79,19 @@ public final class ClientUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * Resolves the GUID of a repository, using supplied client.
+     *
+     * @param client Node client.
+     * @param repository Repository name or encoded GUID.
+     * @return GUID of this repository.
+     */
+    public static Guid resolveRepositoryGuid(Client client, String repository) {
+        return client.repositories()
+                .getInfo(repository)
+                .getDef()
+                .getGuid();
     }
 }

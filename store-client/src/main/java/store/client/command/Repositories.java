@@ -19,7 +19,7 @@ class Repositories extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (RepositoryInfo info : session.getClient().listRepositoryInfos()) {
+        for (RepositoryInfo info : session.getClient().repositories().listInfos()) {
             display.print(info);
         }
     }

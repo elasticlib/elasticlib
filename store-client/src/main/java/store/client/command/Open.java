@@ -18,7 +18,10 @@ class Open extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().openRepository(params.get(0));
+        session.getClient()
+                .repositories()
+                .open(params.get(0));
+
         display.printOk();
     }
 }

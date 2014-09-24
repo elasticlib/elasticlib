@@ -1,4 +1,4 @@
-package store.client.http;
+package store.client.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,9 +6,9 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 
 /**
- * An input stream that logs read progression.
+ * An input stream that prints read progression.
  */
-class LoggingInputStream extends InputStream {
+public class LoggingInputStream extends InputStream {
 
     private static final int EOF = -1;
     private final Display display;
@@ -20,6 +20,15 @@ class LoggingInputStream extends InputStream {
     private int currentProgress;
     private boolean closed;
 
+    /**
+     * Constructor.
+     *
+     * @param display Display.
+     * @param config Config.
+     * @param task Task description to print.
+     * @param inputStream Underlying input-stream.
+     * @param length Expected total length to read.
+     */
     public LoggingInputStream(Display display, ClientConfig config, String task, InputStream inputStream, long length) {
         this.display = display;
         this.config = config;

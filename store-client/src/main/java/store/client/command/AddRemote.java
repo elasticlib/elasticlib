@@ -19,7 +19,10 @@ class AddRemote extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().addRemote(parseUri(params.get(0)));
+        session.getClient()
+                .remotes()
+                .add(parseUri(params.get(0)));
+
         display.printOk();
     }
 }

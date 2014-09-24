@@ -3,7 +3,7 @@ package store.client.util;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import store.client.exception.RequestFailedException;
+import store.common.client.RequestFailedException;
 
 /**
  * Files utilities.
@@ -32,7 +32,7 @@ public final class Directories {
     }
 
     /**
-     * Change current working directory.
+     * Changes current working directory.
      *
      * @param path New working directory.
      */
@@ -48,19 +48,29 @@ public final class Directories {
     }
 
     /**
-     * Change current working directory to the user home directory.
+     * Changes current working directory to the user home directory.
      */
     public static void changeToUserHome() {
         workingDirectory = USER_HOME;
     }
 
     /**
-     * Resolve supplied path against current working directory.
+     * Resolves supplied path against current working directory.
      *
      * @param path A path.
      * @return The resulting path.
      */
     public static Path resolve(Path path) {
         return path.isAbsolute() ? path : workingDirectory.resolve(path).normalize();
+    }
+
+    /**
+     * Converts supplied string as a Path instance and resolves this path against current working directory.
+     *
+     * @param path A string representing a path.
+     * @return The resulting path.
+     */
+    public static Path resolve(String path) {
+        return resolve(Paths.get(path));
     }
 }

@@ -19,7 +19,7 @@ class Remotes extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (NodeInfo info : session.getClient().listRemotes()) {
+        for (NodeInfo info : session.getClient().remotes().listInfos()) {
             display.print(info);
         }
     }

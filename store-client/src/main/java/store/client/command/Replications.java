@@ -19,7 +19,7 @@ class Replications extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        for (ReplicationInfo info : session.getClient().listReplicationInfos()) {
+        for (ReplicationInfo info : session.getClient().replications().listInfos()) {
             display.print(info);
         }
     }

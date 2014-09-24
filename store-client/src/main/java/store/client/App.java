@@ -9,9 +9,9 @@ import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
 import store.client.exception.QuitException;
-import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.EscapingCompletionHandler;
+import store.common.client.RequestFailedException;
 
 /**
  * Client app.

@@ -18,7 +18,10 @@ class Stop extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().stopReplication(params.get(0), params.get(1));
+        session.getClient()
+                .replications()
+                .stop(params.get(0), params.get(1));
+
         display.printOk();
     }
 }

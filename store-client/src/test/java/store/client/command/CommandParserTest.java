@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
-import store.client.http.HttpClient;
 import store.client.http.Session;
 import store.common.hash.Guid;
 import store.common.model.RepositoryDef;
@@ -23,22 +24,25 @@ import store.common.model.RepositoryInfo;
  */
 public class CommandParserTest {
 
-    private final CommandParser parser;
+    private CommandParser parser;
 
-    {
-        HttpClient httpClient = mock(HttpClient.class);
-        when(httpClient.listRepositoryInfos())
+    /**
+     * Initialization.
+     */
+    @BeforeClass
+    public void init() {
+        Display display = mock(Display.class);
+        Session session = mock(Session.class, RETURNS_DEEP_STUBS);
+        ClientConfig config = mock(ClientConfig.class);
+        DiscoveryClient discoveryClient = mock(DiscoveryClient.class);
+
+        when(session.getClient().repositories().listInfos())
                 .thenReturn(asList(new RepositoryInfo(new RepositoryDef("primary",
                                                                         new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
                                                                         Paths.get("/repo/primary"))),
                                    new RepositoryInfo(new RepositoryDef("secondary",
                                                                         new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
                                                                         Paths.get("/repo/secondary")))));
-        Display display = mock(Display.class);
-        Session session = mock(Session.class);
-        DiscoveryClient discoveryClient = mock(DiscoveryClient.class);
-        ClientConfig config = mock(ClientConfig.class);
-        when(session.getClient()).thenReturn(httpClient);
 
         parser = new CommandParser(display, session, config, discoveryClient);
     }

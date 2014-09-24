@@ -18,7 +18,10 @@ class RemoveRemote extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().removeRemote(params.get(0));
+        session.getClient()
+                .remotes()
+                .remove(params.get(0));
+
         display.printOk();
     }
 }

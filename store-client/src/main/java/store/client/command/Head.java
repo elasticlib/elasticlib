@@ -21,9 +21,8 @@ class Head extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        String repository = session.getRepository();
         Hash hash = parseHash(params.get(0));
-        for (ContentInfo info : session.getClient().getInfoHead(repository, hash)) {
+        for (ContentInfo info : session.getRepository().getInfoHead(hash)) {
             display.print(info);
         }
     }

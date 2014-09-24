@@ -1,19 +1,24 @@
-package store.client.http;
+package store.client.util;
 
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
+import static java.nio.file.Files.newOutputStream;
 import java.nio.file.Path;
 
 /**
  * A file output stream that create or truncate file in a lazy way, only when first byte is written.
  */
-class DefferedFileOutputStream extends OutputStream {
+public class DefferedFileOutputStream extends OutputStream {
 
     private final Path path;
     private Optional<OutputStream> outputStream;
 
+    /**
+     * Constructor.
+     *
+     * @param path Path to write to.
+     */
     public DefferedFileOutputStream(Path path) {
         this.path = path;
         outputStream = Optional.absent();
@@ -22,7 +27,7 @@ class DefferedFileOutputStream extends OutputStream {
     @Override
     public void write(int b) throws IOException {
         if (!outputStream.isPresent()) {
-            outputStream = Optional.of(Files.newOutputStream(path));
+            outputStream = Optional.of(newOutputStream(path));
         }
         outputStream.get().write(b);
     }
@@ -38,7 +43,7 @@ class DefferedFileOutputStream extends OutputStream {
             return;
         }
         if (!outputStream.isPresent()) {
-            outputStream = Optional.of(Files.newOutputStream(path));
+            outputStream = Optional.of(newOutputStream(path));
         }
         outputStream.get().write(buf, off, len);
     }

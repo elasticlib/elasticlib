@@ -21,9 +21,9 @@ class Info extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        String repository = session.getRepository();
         Hash hash = parseHash(params.get(0));
-        ContentInfoTree tree = session.getClient().getInfoTree(repository, hash);
+        ContentInfoTree tree = session.getRepository().getInfoTree(hash);
+
         display.print(tree);
     }
 }

@@ -21,11 +21,10 @@ class History extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        String repository = session.getRepository();
         long cursor = Long.MAX_VALUE;
         List<Event> events;
         do {
-            events = session.getClient().history(repository, false, cursor, CHUNK_SIZE);
+            events = session.getRepository().history(false, cursor, CHUNK_SIZE);
             for (Event event : events) {
                 cursor = event.getSeq();
                 display.print(event);

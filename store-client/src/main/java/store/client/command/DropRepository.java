@@ -4,6 +4,8 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
+import static store.client.util.ClientUtil.resolveRepositoryGuid;
+import store.common.hash.Guid;
 
 class DropRepository extends AbstractCommand {
 
@@ -18,8 +20,12 @@ class DropRepository extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().deleteRepository(params.get(0));
-        session.leave(params.get(0));
+        Guid guid = resolveRepositoryGuid(session.getClient(), params.get(0));
+        session.getClient()
+                .repositories()
+                .delete(guid);
+
+        session.leave(guid);
         display.printOk();
     }
 }

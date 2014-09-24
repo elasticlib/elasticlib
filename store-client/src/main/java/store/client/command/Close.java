@@ -18,7 +18,10 @@ class Close extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
-        session.getClient().closeRepository(params.get(0));
+        session.getClient()
+                .repositories()
+                .close(params.get(0));
+
         display.printOk();
     }
 }

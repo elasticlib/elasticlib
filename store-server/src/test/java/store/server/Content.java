@@ -106,6 +106,13 @@ public final class Content {
     }
 
     /**
+     * @return This content's filename.
+     */
+    public String filename() {
+        return getInfo().getMetadata().get(FILE_NAME.key()).asString();
+    }
+
+    /**
      * @return This content's hash.
      */
     public Hash getHash() {

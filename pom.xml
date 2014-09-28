@@ -20,8 +20,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
-        <jersey.version>2.10</jersey.version>
-        <lucene.version>4.9.0</lucene.version>
+        <jersey.version>2.12</jersey.version>
+        <lucene.version>4.10.0</lucene.version>
     </properties>
 
     <build>
@@ -87,13 +87,13 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>17.0</version>
+                <version>18.0</version>
             </dependency>
 
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.3</version>
+                <version>2.4</version>
             </dependency>
 
             <dependency>
@@ -110,7 +110,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.13</version>
+                <version>1.14</version>
             </dependency>
 
             <dependency>
@@ -174,7 +174,7 @@
             <dependency>
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers</artifactId>
-                <version>1.5</version>
+                <version>1.6</version>
             </dependency>
 
             <dependency>

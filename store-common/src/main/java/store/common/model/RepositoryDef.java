@@ -1,6 +1,6 @@
 package store.common.model;
 
-import static com.google.common.base.Objects.toStringHelper;
+import static com.google.common.base.MoreObjects.toStringHelper;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;

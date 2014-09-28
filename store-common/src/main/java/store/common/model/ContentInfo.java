@@ -1,6 +1,6 @@
 package store.common.model;
 
-import static com.google.common.base.Objects.toStringHelper;
+import static com.google.common.base.MoreObjects.toStringHelper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;

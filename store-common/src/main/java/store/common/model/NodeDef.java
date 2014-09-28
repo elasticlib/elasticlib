@@ -1,6 +1,6 @@
 package store.common.model;
 
-import static com.google.common.base.Objects.toStringHelper;
+import static com.google.common.base.MoreObjects.toStringHelper;
 import java.net.URI;
 import java.util.ArrayList;
 import static java.util.Collections.emptyList;

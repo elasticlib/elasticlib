@@ -63,7 +63,6 @@ class Index {
     private static final String LENGTH = "length";
     private static final String REVISION = "revision";
     private static final String BODY = "body";
-    private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
     private final String name;
     private final Directory directory;
@@ -72,11 +71,11 @@ class Index {
     private Index(String name, Path path) throws IOException {
         this.name = name;
         directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
-        analyzer = new StandardAnalyzer(LUCENE_VERSION);
+        analyzer = new StandardAnalyzer();
     }
 
     private IndexWriter newIndexWriter() throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(LUCENE_VERSION, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_0, analyzer);
         return new IndexWriter(directory, config);
     }
 
@@ -320,7 +319,7 @@ class Index {
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
-                QueryParser parser = new QueryParser(LUCENE_VERSION, BODY, analyzer);
+                QueryParser parser = new QueryParser(BODY, analyzer);
                 ScoreDoc[] hits = searcher.search(parser.parse(query), first + number).scoreDocs;
                 List<IndexEntry> entries = new ArrayList<>(number);
                 int last = min(first + number, hits.length);

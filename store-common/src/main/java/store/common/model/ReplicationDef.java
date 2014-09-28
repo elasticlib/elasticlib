@@ -1,6 +1,6 @@
 package store.common.model;
 
-import static com.google.common.base.Objects.toStringHelper;
+import static com.google.common.base.MoreObjects.toStringHelper;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;

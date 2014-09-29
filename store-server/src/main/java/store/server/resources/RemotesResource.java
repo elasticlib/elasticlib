@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import javax.inject.Inject;
-import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
@@ -17,12 +16,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasStringValue;
-import static store.common.json.JsonWriting.writeAll;
+import store.common.model.NodeInfo;
 import store.server.exception.BadRequestException;
 import store.server.service.NodesService;
 
@@ -34,7 +33,6 @@ public class RemotesResource {
 
     private static final String URI = "uri";
     private static final String URIS = "uris";
-
     @Inject
     private NodesService nodesService;
 
@@ -114,11 +112,11 @@ public class RemotesResource {
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      *
-     * @return output JSON data
+     * @return output data
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray listRemotes() {
-        return writeAll(nodesService.listRemotes());
+    public GenericEntity<List<NodeInfo>> listRemotes() {
+        return new GenericEntity<List<NodeInfo>>(nodesService.listRemotes()) {
+        };
     }
 }

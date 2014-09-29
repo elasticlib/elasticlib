@@ -36,7 +36,6 @@ import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import static store.server.TestUtil.LOREM_IPSUM;
-import store.server.providers.MultipartReader;
 import store.server.repository.Repository;
 import store.server.service.RepositoriesService;
 
@@ -65,10 +64,9 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     }
 
     @Override
-    protected Application configure() {
+    protected Application testConfiguration() {
         return new ResourceConfig()
                 .register(RepositoriesResource.class)
-                .register(MultipartReader.class)
                 .register(new AbstractBinder() {
             @Override
             protected void configure() {

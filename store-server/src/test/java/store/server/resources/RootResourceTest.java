@@ -32,7 +32,7 @@ public class RootResourceTest extends AbstractResourceTest {
     }
 
     @Override
-    protected Application configure() {
+    protected Application testConfiguration() {
         return new ResourceConfig()
                 .register(RootResource.class)
                 .register(new AbstractBinder() {

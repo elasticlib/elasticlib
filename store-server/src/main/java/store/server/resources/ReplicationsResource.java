@@ -1,22 +1,22 @@
 package store.server.resources;
 
 import java.net.URI;
+import java.util.List;
 import javax.inject.Inject;
-import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import static store.common.json.JsonValidation.hasStringValue;
-import static store.common.json.JsonWriting.writeAll;
+import store.common.model.ReplicationInfo;
 import store.server.exception.BadRequestException;
 import store.server.service.ReplicationsService;
 
@@ -142,12 +142,12 @@ public class ReplicationsResource {
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      *
-     * @return output JSON data
+     * @return output data
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray listReplications() {
-        return writeAll(replicationsService.listReplicationInfos());
+    public GenericEntity<List<ReplicationInfo>> listReplications() {
+        return new GenericEntity<List<ReplicationInfo>>(replicationsService.listReplicationInfos()) {
+        };
     }
 
     private static BadRequestException newInvalidJsonException() {

@@ -39,7 +39,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
     }
 
     @Override
-    protected Application configure() {
+    protected Application testConfiguration() {
         return new ResourceConfig()
                 .register(RemotesResource.class)
                 .register(new AbstractBinder() {

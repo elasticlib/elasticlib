@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import javax.inject.Inject;
-import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonStructure;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -23,9 +21,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -35,14 +33,14 @@ import store.common.hash.Hash;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
-import static store.common.json.JsonWriting.write;
-import static store.common.json.JsonWriting.writeAll;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfoTree;
+import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
+import store.common.model.RepositoryInfo;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -209,12 +207,12 @@ public class RepositoriesResource {
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
      *
-     * @return output JSON data
+     * @return output data
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray listRepositories() {
-        return writeAll(repositoriesService.listRepositoryInfos());
+    public GenericEntity<List<RepositoryInfo>> listRepositories() {
+        return new GenericEntity<List<RepositoryInfo>>(repositoriesService.listRepositoryInfos()) {
+        };
     }
 
     /**
@@ -225,13 +223,12 @@ public class RepositoriesResource {
      * - 404 NOT FOUND: Repository was not found.
      *
      * @param repositoryKey repository name or encoded GUID
-     * @return output JSON data
+     * @return output data
      */
     @GET
     @Path("{repository}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonObject getRepository(@PathParam(REPOSITORY) String repositoryKey) {
-        return write(repositoriesService.getRepositoryInfo(repositoryKey));
+    public RepositoryInfo getRepository(@PathParam(REPOSITORY) String repositoryKey) {
+        return repositoriesService.getRepositoryInfo(repositoryKey);
     }
 
     /**
@@ -331,7 +328,9 @@ public class RepositoriesResource {
     }
 
     private static Response response(CommandResult result) {
-        return Response.ok().entity(write(result)).build();
+        return Response.ok()
+                .entity(result)
+                .build();
     }
 
     private static Response response(URI uri, CommandResult result) {
@@ -341,7 +340,7 @@ public class RepositoriesResource {
         } else {
             builder = Response.ok();
         }
-        return builder.entity(write(result)).build();
+        return builder.entity(result).build();
     }
 
     /**
@@ -415,21 +414,23 @@ public class RepositoriesResource {
      * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
      * @param rev requested revisions
-     * @return output JSON data
+     * @return HTTP response
      */
     @GET
     @Path("{repository}/info/{hash}")
-    public JsonStructure getInfo(@PathParam(REPOSITORY) String repositoryKey,
-                                 @PathParam(HASH) Hash hash,
-                                 @QueryParam(REV) @DefaultValue("") String rev) {
+    public Response getInfo(@PathParam(REPOSITORY) String repositoryKey,
+                            @PathParam(HASH) Hash hash,
+                            @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
-            return write(repository(repositoryKey).getContentInfoTree(hash));
+            return Response.ok()
+                    .entity(repository(repositoryKey).getContentInfoTree(hash))
+                    .build();
         }
         if (rev.equals(HEAD)) {
-            return writeAll(repository(repositoryKey).getContentInfoHead(hash));
+            return response(repository(repositoryKey).getContentInfoHead(hash));
         }
-        return writeAll(repository(repositoryKey).getContentInfoRevisions(hash, parseRevisions(rev)));
+        return response(repository(repositoryKey).getContentInfoRevisions(hash, parseRevisions(rev)));
     }
 
     private static List<Hash> parseRevisions(String arg) {
@@ -438,6 +439,14 @@ public class RepositoriesResource {
             revisions.add(new Hash(part));
         }
         return revisions;
+    }
+
+    private static Response response(List<ContentInfo> contentInfos) {
+        GenericEntity<List<ContentInfo>> entity = new GenericEntity<List<ContentInfo>>(contentInfos) {
+        };
+        return Response.ok()
+                .entity(entity)
+                .build();
     }
 
     /**
@@ -453,21 +462,23 @@ public class RepositoriesResource {
      * @param sort chronological sorting. Allowed values are "asc" and "desc".
      * @param from sequence value to start with.
      * @param size number of results to return.
-     * @return output JSON data
+     * @return output data
      */
     @GET
     @Path("{repository}/history")
-    public JsonArray history(@PathParam(REPOSITORY) String repositoryKey,
-                             @QueryParam(SORT) @DefaultValue(DESC) String sort,
-                             @QueryParam(FROM) Long from,
-                             @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
+    public GenericEntity<List<Event>> history(@PathParam(REPOSITORY) String repositoryKey,
+                                              @QueryParam(SORT) @DefaultValue(DESC) String sort,
+                                              @QueryParam(FROM) Long from,
+                                              @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         if (!sort.equals(ASC) && !sort.equals(DESC)) {
             throw newInvalidJsonException();
         }
         if (from == null) {
             from = sort.equals(ASC) ? 0 : Long.MAX_VALUE;
         }
-        return writeAll(repository(repositoryKey).history(sort.equals(ASC), from, size));
+        List<Event> events = repository(repositoryKey).history(sort.equals(ASC), from, size);
+        return new GenericEntity<List<Event>>(events) {
+        };
     }
 
     /**
@@ -484,16 +495,18 @@ public class RepositoriesResource {
      * @param query Query
      * @param from sequence value to start with.
      * @param size number of results to return.
-     * @return output JSON data
+     * @return output data
      */
     @GET
     @Path("{repository}/index")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray find(@PathParam(REPOSITORY) String repositoryKey,
-                          @QueryParam(QUERY) String query,
-                          @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
-                          @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
-        return writeAll(repository(repositoryKey).find(query, from, size));
+    public GenericEntity<List<IndexEntry>> find(@PathParam(REPOSITORY) String repositoryKey,
+                                                @QueryParam(QUERY) String query,
+                                                @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
+                                                @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
+
+        List<IndexEntry> entries = repository(repositoryKey).find(query, from, size);
+        return new GenericEntity<List<IndexEntry>>(entries) {
+        };
     }
 
     /**
@@ -510,21 +523,21 @@ public class RepositoriesResource {
      * @param query Query
      * @param from sequence value to start with.
      * @param size number of results to return.
-     * @return output JSON data
+     * @return output data
      */
     @GET
     @Path("{repository}/info")
-    @Produces(MediaType.APPLICATION_JSON)
-    public JsonArray findInfo(@PathParam(REPOSITORY) String repositoryKey,
-                              @QueryParam(QUERY) String query,
-                              @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
-                              @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
+    public GenericEntity<List<ContentInfo>> findInfo(@PathParam(REPOSITORY) String repositoryKey,
+                                                     @QueryParam(QUERY) String query,
+                                                     @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
+                                                     @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
         List<ContentInfo> infos = new ArrayList<>(size);
         Repository repository = repository(repositoryKey);
         for (IndexEntry entry : repository.find(query, from, size)) {
             infos.addAll(repository.getContentInfoRevisions(entry.getHash(), entry.getRevisions()));
         }
-        return writeAll(infos);
+        return new GenericEntity<List<ContentInfo>>(infos) {
+        };
     }
 
     private Repository repository(String name) {

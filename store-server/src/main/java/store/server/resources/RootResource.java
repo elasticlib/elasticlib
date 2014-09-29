@@ -1,10 +1,9 @@
 package store.server.resources;
 
 import javax.inject.Inject;
-import javax.json.JsonObject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import static store.common.json.JsonWriting.write;
+import store.common.model.NodeDef;
 import store.server.service.NodesService;
 
 /**
@@ -18,11 +17,14 @@ public class RootResource {
 
     /**
      * Provides the definition of the local node.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
      *
-     * @return A NodeDef instance.
+     * @return output data
      */
     @GET
-    public JsonObject getNodeDef() {
-        return write(nodesService.getNodeDef());
+    public NodeDef getNodeDef() {
+        return nodesService.getNodeDef();
     }
 }

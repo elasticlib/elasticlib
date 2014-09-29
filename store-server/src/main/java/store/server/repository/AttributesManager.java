@@ -1,10 +1,10 @@
 package store.server.repository;
 
-import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
-import static java.nio.file.Files.readAllBytes;
-import static java.nio.file.Files.write;
 import java.nio.file.Path;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
@@ -12,8 +12,8 @@ import store.common.hash.Guid;
 import store.common.mappable.MapBuilder;
 import store.common.value.Value;
 import static store.common.value.Value.of;
-import store.common.yaml.YamlReading;
-import store.common.yaml.YamlWriting;
+import store.common.yaml.YamlReader;
+import store.common.yaml.YamlWriter;
 import store.server.exception.InvalidRepositoryPathException;
 import store.server.exception.WriteException;
 
@@ -38,9 +38,10 @@ class AttributesManager {
                 .put(NAME, path.getFileName().toString())
                 .put(GUID, Guid.random())
                 .build();
-        try {
-            write(path.resolve(ATTRIBUTES),
-                  YamlWriting.writeValue(of(attributes)).getBytes(Charsets.UTF_8));
+
+        try (OutputStream output = Files.newOutputStream(path.resolve(ATTRIBUTES));
+                YamlWriter writer = new YamlWriter(output)) {
+            writer.writeValue(of(attributes));
 
         } catch (IOException e) {
             throw new WriteException(e);
@@ -52,9 +53,14 @@ class AttributesManager {
         if (!Files.exists(path.resolve(ATTRIBUTES))) {
             throw new InvalidRepositoryPathException();
         }
-        try {
-            String yaml = new String(readAllBytes(path.resolve(ATTRIBUTES)), Charsets.UTF_8);
-            return new AttributesManager(YamlReading.readValue(yaml).asMap());
+        try (InputStream input = Files.newInputStream(path.resolve(ATTRIBUTES));
+                YamlReader reader = new YamlReader(input)) {
+
+            Optional<Value> value = reader.readValue();
+            if (!value.isPresent()) {
+                throw new InvalidRepositoryPathException();
+            }
+            return new AttributesManager(value.get().asMap());
 
         } catch (IOException e) {
             throw new WriteException(e);

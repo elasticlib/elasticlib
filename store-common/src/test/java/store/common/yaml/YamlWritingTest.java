@@ -1,5 +1,9 @@
 package store.common.yaml;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
@@ -13,6 +17,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import store.common.mappable.Mappable;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
@@ -24,8 +29,6 @@ import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_INFOS_YAML;
-import static store.common.yaml.YamlWriting.write;
-import static store.common.yaml.YamlWriting.writeAll;
 
 /**
  * Unit tests.
@@ -126,5 +129,29 @@ public class YamlWritingTest {
     @Test
     public void writeAllNodeInfosTest() {
         assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_YAML);
+    }
+
+    private static String write(Mappable mappable) {
+        try (Writer stringWriter = new StringWriter();
+                YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
+
+            yamlWriter.write(mappable);
+            return stringWriter.toString();
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static String writeAll(List<? extends Mappable> mappables) {
+        try (Writer stringWriter = new StringWriter();
+                YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
+
+            yamlWriter.writeAll(mappables);
+            return stringWriter.toString();
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 }

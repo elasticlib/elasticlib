@@ -16,7 +16,7 @@ import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import store.common.value.Value;
 import store.common.value.ValueType;
-import store.common.yaml.YamlWriting;
+import store.common.yaml.YamlWriter;
 
 /**
  * Configuration holder, built atop a Value. Root config value is expected to be a map, but this is not necessary.
@@ -367,6 +367,6 @@ public class Config {
 
     @Override
     public String toString() {
-        return YamlWriting.writeValue(root);
+        return YamlWriter.writeToString(root);
     }
 }

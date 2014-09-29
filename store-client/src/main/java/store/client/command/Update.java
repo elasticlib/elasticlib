@@ -1,9 +1,10 @@
 package store.client.command;
 
 import com.google.common.base.Charsets;
-import java.io.BufferedReader;
+import com.google.common.base.Optional;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -24,8 +25,8 @@ import store.common.model.ContentInfo;
 import store.common.model.ContentInfo.ContentInfoBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
-import store.common.yaml.YamlReading;
-import store.common.yaml.YamlWriting;
+import store.common.yaml.YamlReader;
+import store.common.yaml.YamlWriter;
 
 class Update extends AbstractCommand {
 
@@ -69,7 +70,7 @@ class Update extends AbstractCommand {
                         .withContent(head.get(0).getContent())
                         .withLength(head.get(0).getLength())
                         .withParents(revisions(head))
-                        .withMetadata(metadata(read(tmp)))
+                        .withMetadata(metadata(tmp))
                         .computeRevisionAndBuild();
 
             } finally {
@@ -84,48 +85,34 @@ class Update extends AbstractCommand {
     }
 
     private static void write(List<ContentInfo> head, Path file) throws IOException {
-        try (BufferedWriter writer = Files.newBufferedWriter(file, Charsets.UTF_8)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(file, Charsets.UTF_8);
+                YamlWriter yamlWriter = new YamlWriter(writer)) {
             if (head.size() == 1) {
-                writer.write(YamlWriting.writeValue(Value.of(head.get(0).getMetadata())));
+                yamlWriter.writeValue(Value.of(head.get(0).getMetadata()));
 
             } else {
                 for (ContentInfo info : head) {
                     writer.write("#revision " + info.getRevision().asHexadecimalString());
                     writer.newLine();
-                    writer.write(YamlWriting.writeValue(Value.of(info.getMetadata())));
+                    yamlWriter.writeValue(Value.of(info.getMetadata()));
                     writer.newLine();
                 }
             }
         }
     }
 
-    private static String read(Path file) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(file, Charsets.UTF_8)) {
-            StringBuilder builder = new StringBuilder();
-            char[] buffer = new char[1024];
-            int length = reader.read(buffer);
-            while (length > 0) {
-                builder.append(buffer, 0, length);
-                length = reader.read(buffer);
+    private static Map<String, Value> metadata(Path file) throws IOException {
+        try (InputStream input = Files.newInputStream(file);
+                YamlReader reader = new YamlReader(input)) {
+
+            Optional<Value> value = reader.readValue();
+            if (!value.isPresent()) {
+                return Collections.emptyMap();
             }
-            return builder.toString();
-        }
-    }
-
-    private static Map<String, Value> metadata(String text) {
-        if (text.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        Value value = readYaml(text);
-        if (value.type() != ValueType.OBJECT) {
-            throw new RequestFailedException("Failed to read updated metadata");
-        }
-        return value.asMap();
-    }
-
-    private static Value readYaml(String text) {
-        try {
-            return YamlReading.readValue(text);
+            if (value.get().type() != ValueType.OBJECT) {
+                throw new RequestFailedException("Failed to read updated metadata");
+            }
+            return value.get().asMap();
 
         } catch (YAMLException e) {
             throw new RequestFailedException(e);

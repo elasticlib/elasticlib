@@ -69,6 +69,7 @@ public class RepositoryTest {
     private Path repositoryPath;
     private ManagerModule managerModule;
     private Repository repository;
+    private RepositoryDef def;
 
     /**
      * Initialization.
@@ -109,7 +110,7 @@ public class RepositoryTest {
                                        managerModule.getTaskManager(),
                                        managerModule.getMessageManager());
 
-        RepositoryDef def = repository.getDef();
+        def = repository.getDef();
         assertThat(def.getName()).isEqualTo(REPOSITORY);
         assertThat(def.getPath()).isEqualTo(repositoryPath);
 
@@ -447,6 +448,9 @@ public class RepositoryTest {
                                      managerModule.getMessageManager());
 
         assertThat(repository.getInfo().isOpen()).isTrue();
+
+        // Checks repository attributes have been properly saved / loaded.
+        assertThat(repository.getDef()).isEqualTo(def);
     }
 
     /**

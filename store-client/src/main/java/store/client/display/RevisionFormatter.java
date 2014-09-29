@@ -4,7 +4,7 @@ import com.google.common.base.Function;
 import store.common.mappable.MapBuilder;
 import store.common.model.ContentInfo;
 import store.common.value.Value;
-import store.common.yaml.YamlWriting;
+import store.common.yaml.YamlWriter;
 
 /**
  * Revision formatter for tree representation.
@@ -36,6 +36,6 @@ class RevisionFormatter implements Function<ContentInfo, String> {
         if (prettyDisplay) {
             value = MappableFormatting.formatValue(value);
         }
-        return YamlWriting.writeValue(value);
+        return YamlWriter.writeToString(value);
     }
 }

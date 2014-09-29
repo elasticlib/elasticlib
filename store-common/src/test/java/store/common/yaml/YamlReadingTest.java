@@ -1,5 +1,8 @@
 package store.common.yaml;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
@@ -13,6 +16,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import store.common.mappable.Mappable;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfoTree;
@@ -24,8 +28,6 @@ import store.common.model.ReplicationDef;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
-import static store.common.yaml.YamlReading.read;
-import static store.common.yaml.YamlReading.readAll;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
@@ -137,5 +139,25 @@ public class YamlReadingTest {
     @Test
     public void readAllNodeInfosTest() {
         assertThat(readAll(NODE_INFOS_YAML, NodeInfo.class)).isEqualTo(NODE_INFOS);
+    }
+
+    private static <T extends Mappable> T read(String yaml, Class<T> clazz) {
+        try (YamlReader yamlReader = new YamlReader(new StringReader(yaml))) {
+
+            return yamlReader.read(clazz).get();
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static <T extends Mappable> List<T> readAll(String yaml, Class<T> clazz) {
+        try (YamlReader yamlReader = new YamlReader(new StringReader(yaml))) {
+
+            return yamlReader.readAll(clazz);
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 }

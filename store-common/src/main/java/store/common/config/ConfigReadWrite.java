@@ -1,19 +1,15 @@
 package store.common.config;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.yaml.snakeyaml.error.YAMLException;
-import store.common.yaml.YamlReading;
-import store.common.yaml.YamlWriting;
+import store.common.value.Value;
+import store.common.yaml.YamlReader;
+import store.common.yaml.YamlWriter;
 
 /**
  * Config reading and writing utils.
@@ -34,21 +30,15 @@ public final class ConfigReadWrite {
         if (!Files.exists(path)) {
             return Optional.absent();
         }
-        try (InputStream inputStream = Files.newInputStream(path);
-                Reader streamReader = new InputStreamReader(inputStream, Charsets.UTF_8)) {
 
-            StringBuilder builder = new StringBuilder();
-            char[] buffer = new char[1024];
-            int length = streamReader.read(buffer);
-            while (length > 0) {
-                builder.append(buffer, 0, length);
-                length = streamReader.read(buffer);
-            }
-            String text = builder.toString();
-            if (text.isEmpty()) {
+        try (InputStream input = Files.newInputStream(path);
+                YamlReader reader = new YamlReader(input)) {
+
+            Optional<Value> value = reader.readValue();
+            if (!value.isPresent()) {
                 return Optional.absent();
             }
-            return Optional.of(new Config(YamlReading.readValue(text)));
+            return Optional.of(new Config(value.get()));
 
         } catch (IOException | YAMLException e) {
             throw new ConfigException(e);
@@ -62,10 +52,10 @@ public final class ConfigReadWrite {
      * @param config Config to write.
      */
     public static void write(Path path, Config config) {
-        try (OutputStream outputStream = Files.newOutputStream(path);
-                Writer writer = new OutputStreamWriter(outputStream, Charsets.UTF_8)) {
+        try (OutputStream output = Files.newOutputStream(path);
+                YamlWriter writer = new YamlWriter(output)) {
 
-            writer.write(YamlWriting.writeValue(config.asValue()));
+            writer.writeValue(config.asValue());
 
         } catch (IOException e) {
             throw new ConfigException(e);

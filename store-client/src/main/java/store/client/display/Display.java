@@ -2,10 +2,13 @@ package store.client.display;
 
 import static com.google.common.base.Joiner.on;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonWriter;
 import javax.json.stream.JsonGenerator;
 import jline.console.ConsoleReader;
 import store.client.config.ClientConfig;
@@ -15,7 +18,7 @@ import store.common.mappable.Mappable;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfoTree;
 import store.common.value.Value;
-import store.common.yaml.YamlWriting;
+import store.common.yaml.YamlWriter;
 
 /**
  * Console display interface.
@@ -103,7 +106,7 @@ public class Display {
         switch (config.getDisplayFormat()) {
             case YAML:
                 Value value = config.isDisplayPretty() ? format(mappable) : Value.of(mappable.toMap());
-                return YamlWriting.writeValue(value);
+                return YamlWriter.writeToString(value);
             case JSON:
                 return writeJson(JsonWriting.write(mappable));
             default:
@@ -112,14 +115,19 @@ public class Display {
     }
 
     private String writeJson(JsonObject json) {
-        StringWriter output = new StringWriter();
-        Json.createWriterFactory(ImmutableMap.of(JsonGenerator.PRETTY_PRINTING, true))
-                .createWriter(output)
-                .writeObject(json);
-        return output
-                .append(System.lineSeparator())
-                .toString()
-                .substring(1);
+        Map<String, ?> writerConfig = ImmutableMap.of(JsonGenerator.PRETTY_PRINTING, true);
+        try (StringWriter writer = new StringWriter();
+                JsonWriter jsonWriter = Json.createWriterFactory(writerConfig).createWriter(writer)) {
+
+            jsonWriter.writeObject(json);
+            return writer
+                    .append(System.lineSeparator())
+                    .toString()
+                    .substring(1);
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**

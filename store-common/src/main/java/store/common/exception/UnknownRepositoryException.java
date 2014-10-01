@@ -1,6 +1,7 @@
 package store.common.exception;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import javax.ws.rs.core.Response.StatusType;
 
 /**
  * Thrown if an operation references an unknown repository.
@@ -10,8 +11,8 @@ public final class UnknownRepositoryException extends NodeException {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public int getCode() {
-        return code(NOT_FOUND, 01);
+    public StatusType getStatus() {
+        return NOT_FOUND;
     }
 
     @Override

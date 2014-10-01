@@ -11,11 +11,14 @@ import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
+import static store.common.TestData.NODE_EXCEPTIONS;
 import static store.common.TestData.NODE_INFOS;
 import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestUtil.assertMatches;
+import store.common.exception.NodeException;
 import store.common.mappable.Mappable;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
@@ -34,6 +37,7 @@ import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
+import static store.common.yaml.YamlTestData.NODE_EXCEPTIONS_YAML;
 import static store.common.yaml.YamlTestData.NODE_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
@@ -139,6 +143,14 @@ public class YamlReadingTest {
     @Test
     public void readAllNodeInfosTest() {
         assertThat(readAll(NODE_INFOS_YAML, NodeInfo.class)).isEqualTo(NODE_INFOS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllNodeExceptionsTest() {
+        assertMatches(readAll(NODE_EXCEPTIONS_YAML, NodeException.class), NODE_EXCEPTIONS);
     }
 
     private static <T extends Mappable> T read(String yaml, Class<T> clazz) {

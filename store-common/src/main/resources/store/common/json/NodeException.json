@@ -5,8 +5,8 @@
         "status": {
             "type": "string"
         },
-        "code": {
-            "type": "integer"
+        "error": {
+            "type": "string"
         },
         "message": {
             "type": "string"

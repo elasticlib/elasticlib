@@ -12,6 +12,7 @@ import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
+import static store.common.TestData.NODE_EXCEPTIONS;
 import static store.common.TestData.NODE_INFOS;
 import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
@@ -24,6 +25,7 @@ import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
+import static store.common.yaml.YamlTestData.NODE_EXCEPTIONS_YAML;
 import static store.common.yaml.YamlTestData.NODE_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
@@ -129,6 +131,14 @@ public class YamlWritingTest {
     @Test
     public void writeAllNodeInfosTest() {
         assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_YAML);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllNodeExceptionsTest() {
+        assertThat(writeAll(NODE_EXCEPTIONS)).isEqualTo(NODE_EXCEPTIONS_YAML);
     }
 
     private static String write(Mappable mappable) {

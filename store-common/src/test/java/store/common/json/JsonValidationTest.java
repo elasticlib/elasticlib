@@ -11,6 +11,7 @@ import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.array;
+import store.common.exception.NodeException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
@@ -19,6 +20,7 @@ import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
+import static store.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static store.common.json.JsonTestData.NODE_INFOS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
@@ -223,5 +225,16 @@ public class JsonValidationTest {
             assertThat(isValid(json, NodeInfo.class)).isTrue();
         }
         assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeInfo.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidNodeExceptionTest() {
+        for (JsonObject json : NODE_EXCEPTIONS_ARRAY.getValuesAs(JsonObject.class)) {
+            assertThat(isValid(json, NodeException.class)).isTrue();
+        }
+        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeException.class)).isFalse();
     }
 }

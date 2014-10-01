@@ -1,27 +1,21 @@
 package store.common.exception;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static store.common.exception.ExceptionUtil.message;
+import javax.ws.rs.core.Response.StatusType;
 
 /**
- * Thrown if an unexpected exception occurs on a node.
+ * Thrown if a IO error occurs on a node.
  */
-public final class NodeFailureException extends NodeException {
+public class IOFailureException extends NodeException {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Constructor.
-     */
-    public NodeFailureException() {
-    }
 
     /**
      * Constructor.
      *
      * @param message Detail message explaining the error.
      */
-    public NodeFailureException(String message) {
+    public IOFailureException(String message) {
         super(message);
     }
 
@@ -30,12 +24,12 @@ public final class NodeFailureException extends NodeException {
      *
      * @param cause Cause exception to wrap.
      */
-    public NodeFailureException(Throwable cause) {
+    public IOFailureException(Throwable cause) {
         super(message(cause), cause);
     }
 
     @Override
-    public int getCode() {
-        return code(INTERNAL_SERVER_ERROR, 01);
+    public StatusType getStatus() {
+        return INTERNAL_SERVER_ERROR;
     }
 }

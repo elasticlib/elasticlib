@@ -1,6 +1,7 @@
 package store.common;
 
 import com.google.common.collect.ImmutableMap;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,6 +12,10 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.TreeSet;
 import org.joda.time.Instant;
+import store.common.exception.IOFailureException;
+import store.common.exception.NodeException;
+import store.common.exception.UnexpectedFailureException;
+import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.AgentInfo;
@@ -79,6 +84,10 @@ public final class TestData {
      * Some NodeInfo instances.
      */
     public static final List<NodeInfo> NODE_INFOS = new ArrayList<>();
+    /**
+     * Some NodeException instances.
+     */
+    public static final List<NodeException> NODE_EXCEPTIONS = new ArrayList<>();
 
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
@@ -188,6 +197,10 @@ public final class TestData {
         NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(1),
                                     NODE_DEFS.get(1).getPublishUris().get(1),
                                     new Instant(123000)));
+
+        NODE_EXCEPTIONS.add(new UnknownRepositoryException());
+        NODE_EXCEPTIONS.add(new UnexpectedFailureException(new NullPointerException()));
+        NODE_EXCEPTIONS.add(new IOFailureException(new FileNotFoundException("/tmp/test")));
     }
 
     private TestData() {

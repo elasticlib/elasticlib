@@ -8,6 +8,7 @@ import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
+import static store.common.TestData.NODE_EXCEPTIONS;
 import static store.common.TestData.NODE_INFOS;
 import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
@@ -19,6 +20,7 @@ import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
+import static store.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static store.common.json.JsonTestData.NODE_INFOS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
@@ -126,5 +128,13 @@ public class JsonWritingTest {
     @Test
     public void writeAllNodeInfosTest() {
         assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_ARRAY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllNodeExceptionsTest() {
+        assertThat(writeAll(NODE_EXCEPTIONS)).isEqualTo(NODE_EXCEPTIONS_ARRAY);
     }
 }

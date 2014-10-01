@@ -1,6 +1,7 @@
 package store.common.exception;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import javax.ws.rs.core.Response.StatusType;
 
 /**
  * Thrown if an operation references an unknown content.
@@ -25,8 +26,8 @@ public final class UnknownContentException extends NodeException {
     }
 
     @Override
-    public int getCode() {
-        return code(NOT_FOUND, 03);
+    public StatusType getStatus() {
+        return NOT_FOUND;
     }
 
     @Override

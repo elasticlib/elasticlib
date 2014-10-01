@@ -1,7 +1,7 @@
 package store.common.exception;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static store.common.exception.ExceptionUtil.message;
+import javax.ws.rs.core.Response.StatusType;
 
 /**
  * Thrown if request validation fails for any reason.
@@ -35,7 +35,7 @@ public final class BadRequestException extends NodeException {
     }
 
     @Override
-    public int getCode() {
-        return code(BAD_REQUEST, 01);
+    public StatusType getStatus() {
+        return BAD_REQUEST;
     }
 }

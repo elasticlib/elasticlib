@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import static java.util.Objects.requireNonNull;
 import javax.json.Json;
 import javax.json.JsonObject;
 import store.common.exception.NodeException;
@@ -26,6 +25,9 @@ import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
 
+/**
+ * Provides schemas used to write/read/validate Mappable instances as JSON.
+ */
 final class SchemaProvider {
 
     private static final Map<Class<?>, Schema> SCHEMAS = new HashMap<>();
@@ -70,7 +72,21 @@ final class SchemaProvider {
         }
     }
 
+    /**
+     * Provides the schema associated with supplied class, or one of its parents classes.
+     *
+     * @param clazz A class.
+     * @return Associated schema.
+     */
     public static Schema getSchema(Class<?> clazz) {
-        return requireNonNull(SCHEMAS.get(clazz));
+        Schema schema = SCHEMAS.get(clazz);
+        if (schema != null) {
+            return schema;
+        }
+        Class<?> superClazz = clazz.getSuperclass();
+        if (superClazz != null) {
+            return getSchema(superClazz);
+        }
+        throw new AssertionError("No defined schema for " + clazz);
     }
 }

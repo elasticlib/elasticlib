@@ -1,6 +1,7 @@
 package store.common.exception;
 
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
+import javax.ws.rs.core.Response.StatusType;
 
 /**
  * Thrown if an operation fails because repository is closed.
@@ -25,8 +26,8 @@ public final class RepositoryClosedException extends NodeException {
     }
 
     @Override
-    public int getCode() {
-        return code(SERVICE_UNAVAILABLE, 01);
+    public StatusType getStatus() {
+        return SERVICE_UNAVAILABLE;
     }
 
     @Override

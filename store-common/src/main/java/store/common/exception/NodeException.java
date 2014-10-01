@@ -1,8 +1,11 @@
 package store.common.exception;
 
-import static java.lang.Integer.parseInt;
+import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
+import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import com.google.common.base.Joiner;
+import static com.google.common.base.Joiner.on;
+import java.lang.reflect.Constructor;
 import java.util.Map;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.StatusType;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
@@ -13,10 +16,14 @@ import store.common.value.Value;
  */
 public abstract class NodeException extends RuntimeException implements Mappable {
 
+    private static final String DOT = ".";
+    private static final String DASH = " - ";
     private static final String STATUS = "status";
-    private static final String CODE = "code";
+    private static final String ERROR = "error";
     private static final String MESSAGE = "message";
+    private static final String EXCEPTION = "Exception";
     private static final long serialVersionUID = 1L;
+    private static String PACKAGE = NodeException.class.getPackage().getName();
 
     /**
      * Constructor.
@@ -53,39 +60,18 @@ public abstract class NodeException extends RuntimeException implements Mappable
     }
 
     /**
-     * Provides a unique code identifying this exception type, The 3 first digits of this code matches the HTTP response
-     * status associated with this exception.
-     *
-     * @return This exception code.
-     */
-    public abstract int getCode();
-
-    /**
-     * Helper method to build a code.
-     *
-     * @param status Code associated HTTP response status.
-     * @param suffix Unique suffix among all exceptions with supplied status.
-     * @return Corresponding node exception code.
-     */
-    protected final int code(StatusType status, int suffix) {
-        return parseInt(Integer.toString(status.getStatusCode()) + suffix);
-    }
-
-    /**
      * Provides the HTTP response status associated with this exception.
      *
      * @return A HTTP response status.
      */
-    public final StatusType getStatus() {
-        int statusCode = parseInt(Integer.toString(getCode()).substring(0, 3));
-        return Status.fromStatusCode(statusCode);
-    }
+    public abstract StatusType getStatus();
 
     @Override
     public final Map<String, Value> toMap() {
+        StatusType status = getStatus();
         return new MapBuilder()
-                .put(STATUS, getStatus().getReasonPhrase())
-                .put(CODE, getCode())
+                .put(STATUS, on(DASH).join(status.getStatusCode(), status.getReasonPhrase()))
+                .put(ERROR, type(getClass()))
                 .put(MESSAGE, getMessage())
                 .build();
     }
@@ -97,8 +83,68 @@ public abstract class NodeException extends RuntimeException implements Mappable
      * @return A new instance.
      */
     public static NodeException fromMap(Map<String, Value> map) {
-        int code = (int) map.get(CODE).asLong();
-        String message = map.get(MESSAGE).asString();
-        return NodeExceptionProvider.newInstance(code, message);
+        return newInstance(map.get(ERROR).asString(),
+                           map.get(MESSAGE).asString());
+    }
+
+    private static NodeException newInstance(String type, String message) {
+        try {
+            Class<?> clazz = loadClass(type);
+            Constructor<?> withMsg = constructorWithMessage(clazz);
+            if (withMsg != null) {
+                return (NodeException) withMsg.newInstance(message);
+            }
+            return (NodeException) clazz.newInstance();
+
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static String type(Class<?> clazz) {
+        return truncate(clazz.getSimpleName(), EXCEPTION);
+    }
+
+    private static Class<?> loadClass(String type) throws ClassNotFoundException {
+        return Class.forName(on("").join(PACKAGE, DOT, type, EXCEPTION));
+    }
+
+    private static Constructor<?> constructorWithMessage(Class<?> clazz) {
+        for (Constructor<?> constructor : clazz.getConstructors()) {
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            if (parameterTypes.length == 1 && parameterTypes[0] == String.class) {
+                return constructor;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extracts message from supplied exception, containing its formatted name. Always returns a non empty string.
+     *
+     * @param exception An exception
+     * @return a adequate message for this exception.
+     */
+    protected static String message(Throwable exception) {
+        if (exception.getMessage() != null && !exception.getMessage().isEmpty()) {
+            return Joiner.on(" - ").join(name(exception), exception.getMessage());
+        }
+        return name(exception);
+    }
+
+    private static String name(Throwable exception) {
+        return toHumanCase(truncate(exception.getClass().getSimpleName(), EXCEPTION));
+    }
+
+    private static String truncate(String value, String suffix) {
+        if (!value.endsWith(suffix)) {
+            return value;
+        }
+        return value.substring(0, value.length() - suffix.length());
+    }
+
+    private static String toHumanCase(String className) {
+        String lowerSpaced = UPPER_CAMEL.to(LOWER_HYPHEN, className).replace('-', ' ');
+        return Character.toUpperCase(lowerSpaced.charAt(0)) + lowerSpaced.substring(1);
     }
 }

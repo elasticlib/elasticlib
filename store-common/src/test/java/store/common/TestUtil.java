@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonStructure;
+import static org.fest.assertions.api.Assertions.assertThat;
+import store.common.exception.NodeException;
 
 /**
  * Test utilities.
@@ -95,5 +98,24 @@ public final class TestUtil {
             array[i] = (byte) values[i];
         }
         return array;
+    }
+
+    /**
+     * Asserts that actual and expected have same size. Then for that each pair of their items, asserts that actual and
+     * excepted item are instances of the same class and have same message.
+     *
+     * @param actual The actual exception list.
+     * @param expected The expected exception list.
+     */
+    public static void assertMatches(List<NodeException> actual, List<NodeException> expected) {
+        assertThat(actual).hasSameSizeAs(expected);
+        for (int i = 0; i < expected.size(); i++) {
+            assertMatches(actual.get(i), expected.get(i));
+        }
+    }
+
+    private static void assertMatches(NodeException actual, NodeException expected) {
+        assertThat(actual).hasSameClassAs(expected);
+        assertThat(actual.getMessage()).isEqualTo(expected.getMessage());
     }
 }

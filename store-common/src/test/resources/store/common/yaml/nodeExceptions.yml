@@ -1,0 +1,15 @@
+---
+status: 404 - Not Found
+error: UnknownRepository
+message: This repository is unknown
+...
+---
+status: 500 - Internal Server Error
+error: UnexpectedFailure
+message: Null pointer
+...
+---
+status: 500 - Internal Server Error
+error: IOFailure
+message: File not found - /tmp/test
+...

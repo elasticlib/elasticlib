@@ -1,0 +1,15 @@
+{
+    "title": "nodeException",
+    "type": "object",
+    "properties": {
+        "status": {
+            "type": "string"
+        },
+        "code": {
+            "type": "integer"
+        },
+        "message": {
+            "type": "string"
+        }
+    }
+}

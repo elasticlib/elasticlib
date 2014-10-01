@@ -10,6 +10,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import javax.json.Json;
 import javax.json.JsonObject;
+import store.common.exception.NodeException;
 import store.common.json.schema.Schema;
 import store.common.model.AgentInfo;
 import store.common.model.CommandResult;
@@ -42,7 +43,8 @@ final class SchemaProvider {
                  RepositoryInfo.class,
                  ReplicationInfo.class,
                  NodeDef.class,
-                 NodeInfo.class);
+                 NodeInfo.class,
+                 NodeException.class);
     }
 
     private SchemaProvider() {

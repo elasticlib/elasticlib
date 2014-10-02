@@ -12,6 +12,7 @@ import store.client.exception.QuitException;
 import store.client.http.Session;
 import store.client.util.EscapingCompletionHandler;
 import store.common.client.RequestFailedException;
+import store.common.exception.NodeException;
 
 /**
  * Client app.
@@ -47,7 +48,11 @@ public final class App {
                 display.println("Using config:" + System.lineSeparator() + config.print());
                 session.init();
 
-            } catch (ProcessingException | RequestFailedException e) {
+            } catch (NodeException e) {
+                display.print(e);
+            } catch (RequestFailedException e) {
+                display.print(e);
+            } catch (ProcessingException e) {
                 display.print(e);
             }
 

@@ -8,14 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
+import store.common.exception.IOFailureException;
+import store.common.exception.InvalidRepositoryPathException;
 import store.common.hash.Guid;
 import store.common.mappable.MapBuilder;
 import store.common.value.Value;
 import static store.common.value.Value.of;
 import store.common.yaml.YamlReader;
 import store.common.yaml.YamlWriter;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.WriteException;
 
 /**
  * Manages immutable persisted attributes of a repository, that are currently its name and GUID.
@@ -44,7 +44,7 @@ class AttributesManager {
             writer.writeValue(of(attributes));
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
         return new AttributesManager(attributes);
     }
@@ -63,7 +63,7 @@ class AttributesManager {
             return new AttributesManager(value.get().asMap());
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 

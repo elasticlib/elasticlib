@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import store.common.exception.RepositoryClosedException;
 import store.common.hash.Hash;
-import store.server.exception.RepositoryClosedException;
 
 /**
  * Provides shared and exclusive locks on hashes.

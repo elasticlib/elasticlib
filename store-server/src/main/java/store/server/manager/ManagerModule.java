@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import store.common.config.Config;
-import store.server.exception.WriteException;
+import store.common.exception.IOFailureException;
 import store.server.manager.message.MessageManager;
 import store.server.manager.storage.StorageManager;
 import store.server.manager.task.TaskManager;
@@ -38,7 +38,7 @@ public class ManagerModule {
                 Files.createDirectories(path);
             }
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
         return new StorageManager(SERVICES, path, config, asyncManager);
     }

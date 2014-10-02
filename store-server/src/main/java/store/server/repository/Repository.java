@@ -15,6 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
+import store.common.exception.BadRequestException;
+import store.common.exception.IOFailureException;
+import store.common.exception.InvalidRepositoryPathException;
+import store.common.exception.RepositoryClosedException;
+import store.common.exception.UnknownContentException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
@@ -25,11 +30,6 @@ import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
-import store.server.exception.BadRequestException;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.UnknownContentException;
-import store.server.exception.WriteException;
 import store.server.manager.message.MessageManager;
 import store.server.manager.message.NewRepositoryEvent;
 import store.server.manager.storage.Command;
@@ -102,7 +102,7 @@ public class Repository {
             Files.createDirectory(path.resolve(STORAGE));
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
         AttributesManager attributesManager = AttributesManager.create(path);
         String name = attributesManager.getName();

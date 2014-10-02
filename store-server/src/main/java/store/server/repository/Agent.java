@@ -15,11 +15,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.exception.NodeException;
+import store.common.exception.RepositoryClosedException;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.Event;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.ServerException;
 import static store.server.manager.storage.DatabaseEntries.asLong;
 import static store.server.manager.storage.DatabaseEntries.entry;
 
@@ -155,7 +155,7 @@ public abstract class Agent {
                 LOG.info("Repository closed, stopping");
                 updateInfo(AgentState.STOPPED);
 
-            } catch (ServerException e) {
+            } catch (NodeException e) {
                 LOG.error("Unexpected error, stopping", e);
                 updateInfo(AgentState.ERROR);
             }

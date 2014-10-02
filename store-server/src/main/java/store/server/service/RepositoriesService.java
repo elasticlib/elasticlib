@@ -18,13 +18,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
+import store.common.exception.NodeException;
+import store.common.exception.RepositoryAlreadyExistsException;
+import store.common.exception.RepositoryClosedException;
 import store.common.hash.Guid;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.server.dao.RepositoriesDao;
-import store.server.exception.RepositoryAlreadyExistsException;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.ServerException;
 import store.server.manager.message.MessageManager;
 import store.server.manager.message.RepositoryClosed;
 import store.server.manager.message.RepositoryOpened;
@@ -83,7 +83,7 @@ public class RepositoriesService {
                         try {
                             openRepository(def);
 
-                        } catch (ServerException e) {
+                        } catch (NodeException e) {
                             LOG.error("Failed to open repository at '" + def.getPath() + "'", e);
                         }
                     }

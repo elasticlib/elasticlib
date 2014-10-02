@@ -29,6 +29,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import store.common.exception.BadRequestException;
+import store.common.exception.IOFailureException;
 import store.common.hash.Hash;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonValidation.hasStringValue;
@@ -44,8 +46,6 @@ import store.common.model.RepositoryInfo;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.common.value.ValueType;
-import store.server.exception.BadRequestException;
-import store.server.exception.WriteException;
 import store.server.multipart.FormDataMultipart;
 import store.server.repository.Repository;
 import store.server.service.RepositoriesService;
@@ -295,7 +295,7 @@ public class RepositoriesResource {
                             repository(repositoryKey).addContent(transactionId, hash, inputStream));
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 

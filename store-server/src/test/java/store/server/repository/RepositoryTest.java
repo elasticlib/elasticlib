@@ -15,6 +15,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.config.Config;
+import store.common.exception.ConflictException;
+import store.common.exception.InvalidRepositoryPathException;
+import store.common.exception.RepositoryClosedException;
+import store.common.exception.UnknownContentException;
 import store.common.hash.Hash;
 import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.AgentInfo;
@@ -35,10 +39,6 @@ import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.async;
 import static store.server.TestUtil.config;
 import static store.server.TestUtil.recursiveDelete;
-import store.server.exception.ConflictException;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.UnknownContentException;
 import store.server.manager.ManagerModule;
 
 /**

@@ -44,15 +44,15 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.exception.BadRequestException;
+import store.common.exception.IOFailureException;
+import store.common.exception.InvalidRepositoryPathException;
+import store.common.exception.RepositoryClosedException;
 import store.common.hash.Hash;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfoTree;
 import store.common.model.IndexEntry;
 import store.common.value.Value;
-import store.server.exception.BadRequestException;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.WriteException;
 
 /**
  * A Lucene index on a repository.
@@ -101,7 +101,7 @@ class Index {
             return new Index(name, path);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -120,7 +120,7 @@ class Index {
             return new Index(name, path);
 
         } catch (IOException ex) {
-            throw new WriteException(ex);
+            throw new IOFailureException(ex);
         }
     }
 
@@ -146,7 +146,7 @@ class Index {
             throw new RepositoryClosedException(e);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -277,7 +277,7 @@ class Index {
             throw new RepositoryClosedException(e);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -295,7 +295,7 @@ class Index {
             throw new RepositoryClosedException(e);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -341,7 +341,7 @@ class Index {
             throw new BadRequestException(e);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 

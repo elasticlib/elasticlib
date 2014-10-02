@@ -17,6 +17,7 @@ import store.client.tokenizing.Tokenizing;
 import static store.client.tokenizing.Tokenizing.argList;
 import static store.client.tokenizing.Tokenizing.isComplete;
 import store.common.client.RequestFailedException;
+import store.common.exception.NodeException;
 
 /**
  * Provide actual command implementations.
@@ -72,12 +73,15 @@ public final class CommandParser implements Completer {
             session.printHttpDialog(true);
             command.execute(display, session, config, params);
 
-        } catch (RequestFailedException e) {
+        } catch (NodeException e) {
             display.print(e);
 
+        } catch (RequestFailedException e) {
+            display.print(e);
+            session.disconnect();
+
         } catch (ProcessingException e) {
-            String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
-            display.println(message + System.lineSeparator());
+            display.print(e);
             session.disconnect();
 
         } finally {

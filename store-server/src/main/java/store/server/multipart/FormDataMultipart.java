@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.text.ParseException;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jvnet.mimepull.MIMEPart;
-import store.server.exception.BadRequestException;
+import store.common.exception.BadRequestException;
 
 /**
  * A form-data multi-part read-only representation.

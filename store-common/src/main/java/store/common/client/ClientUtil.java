@@ -1,11 +1,11 @@
 package store.common.client;
 
-import com.google.common.base.Joiner;
 import java.util.List;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import store.common.exception.NodeException;
 import store.common.json.JsonReading;
 import store.common.mappable.Mappable;
 import store.common.model.CommandResult;
@@ -87,9 +87,7 @@ final class ClientUtil {
     public static Response checkStatus(Response response) {
         if (response.getStatus() >= 400) {
             if (response.hasEntity() && response.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-                String reason = response.getStatusInfo().getReasonPhrase();
-                String message = response.readEntity(JsonObject.class).getString("error");
-                throw new RequestFailedException(Joiner.on(" - ").join(reason, message));
+                throw JsonReading.read(response.readEntity(JsonObject.class), NodeException.class);
             }
             throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
         }

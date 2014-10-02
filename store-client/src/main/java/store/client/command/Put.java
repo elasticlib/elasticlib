@@ -23,6 +23,7 @@ import static store.client.util.ClientUtil.revisions;
 import store.client.util.Directories;
 import store.common.client.RepositoryClient;
 import store.common.client.RequestFailedException;
+import store.common.exception.NodeException;
 import store.common.hash.Digest;
 import static store.common.metadata.MetadataUtil.metadata;
 import store.common.metadata.Properties.Common;
@@ -174,7 +175,7 @@ class Put extends AbstractCommand {
                     CommandResult result = uploader.put(file, metadata);
                     display.print(result);
 
-                } catch (RequestFailedException e) {
+                } catch (NodeException e) {
                     display.print(e);
                 }
             }

@@ -9,10 +9,10 @@ import static java.util.Objects.requireNonNull;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
+import store.common.exception.TransactionNotFoundException;
 import store.server.config.ServerConfig;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
 import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
-import store.server.exception.TransactionNotFoundException;
 import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
 

@@ -9,7 +9,7 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.mimepull.Header;
 import org.jvnet.mimepull.MIMEMessage;
 import org.jvnet.mimepull.MIMEPart;
-import store.server.exception.BadRequestException;
+import store.common.exception.BadRequestException;
 
 /**
  * A read-only multi-part entity. Intended to be accessed in a streaming fashion in order to avoid the entity to be

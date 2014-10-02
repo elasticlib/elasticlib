@@ -1,6 +1,7 @@
 package store.client.display;
 
 import static com.google.common.base.Joiner.on;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,9 +11,11 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonWriter;
 import javax.json.stream.JsonGenerator;
+import javax.ws.rs.ProcessingException;
 import jline.console.ConsoleReader;
 import store.client.config.ClientConfig;
 import static store.client.display.MappableFormatting.format;
+import store.common.client.RequestFailedException;
 import store.common.json.JsonWriting;
 import store.common.mappable.Mappable;
 import store.common.model.ContentInfo;
@@ -75,8 +78,19 @@ public class Display {
      *
      * @param e Exception to print.
      */
-    public void print(Exception e) {
+    public void print(RequestFailedException e) {
         out.println(e.getMessage() + System.lineSeparator());
+        out.flush();
+    }
+
+    /**
+     * Print supplied exception.
+     *
+     * @param e Exception to print.
+     */
+    public void print(ProcessingException e) {
+        String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
+        out.println(message + System.lineSeparator());
         out.flush();
     }
 

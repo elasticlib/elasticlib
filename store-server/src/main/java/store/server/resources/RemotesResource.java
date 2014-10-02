@@ -19,10 +19,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import store.common.exception.BadRequestException;
 import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasStringValue;
 import store.common.model.NodeInfo;
-import store.server.exception.BadRequestException;
 import store.server.service.NodesService;
 
 /**

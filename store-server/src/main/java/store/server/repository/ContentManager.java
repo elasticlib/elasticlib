@@ -12,13 +12,13 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.exception.IOFailureException;
+import store.common.exception.IntegrityCheckingFailedException;
+import store.common.exception.InvalidRepositoryPathException;
+import store.common.exception.UnknownContentException;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
 import static store.common.util.IoUtil.copyAndDigest;
-import store.server.exception.IntegrityCheckingFailedException;
-import store.server.exception.InvalidRepositoryPathException;
-import store.server.exception.UnknownContentException;
-import store.server.exception.WriteException;
 
 /**
  * Stores and retrieves contents inside a repository.
@@ -44,7 +44,7 @@ class ContentManager {
             return new ContentManager(path);
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -80,7 +80,7 @@ class ContentManager {
                 throw new IntegrityCheckingFailedException();
             }
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
 
         } finally {
             lockManager.writeUnlock(hash);
@@ -93,7 +93,7 @@ class ContentManager {
             Files.delete(path(hash));
 
         } catch (IOException e) {
-            throw new WriteException(e);
+            throw new IOFailureException(e);
 
         } finally {
             lockManager.writeUnlock(hash);
@@ -113,7 +113,7 @@ class ContentManager {
 
         } catch (IOException e) {
             lockManager.readUnlock(hash);
-            throw new WriteException(e);
+            throw new IOFailureException(e);
         }
     }
 
@@ -139,7 +139,7 @@ class ContentManager {
                 return delegate.read();
 
             } catch (IOException e) {
-                throw new WriteException(e);
+                throw new IOFailureException(e);
             }
         }
 
@@ -149,7 +149,7 @@ class ContentManager {
                 return delegate.read(b, off, len);
 
             } catch (IOException e) {
-                throw new WriteException(e);
+                throw new IOFailureException(e);
             }
         }
 
@@ -159,7 +159,7 @@ class ContentManager {
                 return delegate.available();
 
             } catch (IOException e) {
-                throw new WriteException(e);
+                throw new IOFailureException(e);
             }
         }
 
@@ -169,7 +169,7 @@ class ContentManager {
                 delegate.close();
 
             } catch (IOException e) {
-                throw new WriteException(e);
+                throw new IOFailureException(e);
 
             } finally {
                 inputStreams.remove(this);

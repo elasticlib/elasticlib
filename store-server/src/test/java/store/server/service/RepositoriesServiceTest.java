@@ -10,15 +10,15 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import store.common.config.Config;
+import store.common.exception.RepositoryAlreadyExistsException;
+import store.common.exception.RepositoryClosedException;
+import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Guid;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import static store.server.TestUtil.config;
 import static store.server.TestUtil.recursiveDelete;
 import store.server.dao.RepositoriesDao;
-import store.server.exception.RepositoryAlreadyExistsException;
-import store.server.exception.RepositoryClosedException;
-import store.server.exception.UnknownRepositoryException;
 import store.server.manager.ManagerModule;
 import store.server.repository.Repository;
 

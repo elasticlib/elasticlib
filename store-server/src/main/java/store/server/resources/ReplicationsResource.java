@@ -15,9 +15,9 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import store.common.exception.BadRequestException;
 import static store.common.json.JsonValidation.hasStringValue;
 import store.common.model.ReplicationInfo;
-import store.server.exception.BadRequestException;
 import store.server.service.ReplicationsService;
 
 /**

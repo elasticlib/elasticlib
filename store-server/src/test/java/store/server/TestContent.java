@@ -21,24 +21,24 @@ import store.common.value.Value;
 /**
  * Represents a test content, with its metadata.
  */
-public final class Content {
+public final class TestContent {
 
     private final byte[] bytes;
     private final ContentInfoTree tree;
 
-    private Content(byte[] bytes, ContentInfoTree tree) {
+    private TestContent(byte[] bytes, ContentInfoTree tree) {
         this.bytes = bytes;
         this.tree = tree;
     }
 
     /**
-     * Builds a content by loading an actual resource from the classpath.
+     * Builds a new test content by loading an actual resource from the classpath.
      *
      * @param filename Resource filename.
      * @param contentType Resource content type.
      * @return A content on this resource.
      */
-    public static Content of(String filename, String contentType) {
+    public static TestContent of(String filename, String contentType) {
         try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
@@ -51,8 +51,8 @@ public final class Content {
                     .with(CONTENT_TYPE.key(), Value.of(contentType))
                     .computeRevisionAndBuild();
 
-            return new Content(outputStream.toByteArray(),
-                               new ContentInfoTreeBuilder().add(info).build());
+            return new TestContent(outputStream.toByteArray(),
+                                   new ContentInfoTreeBuilder().add(info).build());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -60,16 +60,16 @@ public final class Content {
     }
 
     /**
-     * Build a new Content instance with same bytes as this one and a new metadata revision obtained by adding supplied
-     * entry.
+     * Build a new test content instance with same bytes as this one and a new metadata revision obtained by adding
+     * supplied entry.
      *
      * @param key Metadata entry key.
      * @param value Metadata entry value.
-     * @return A new Content instance.
+     * @return A new TestContent instance.
      */
-    public Content add(String key, Value value) {
+    public TestContent add(String key, Value value) {
         ContentInfo head = getInfo();
-        return new Content(bytes, tree.add(new ContentInfoBuilder()
+        return new TestContent(bytes, tree.add(new ContentInfoBuilder()
                 .withParent(head.getRevision())
                 .withLength(head.getLength())
                 .withContent(head.getContent())
@@ -79,14 +79,14 @@ public final class Content {
     }
 
     /**
-     * Build a new Content instance with same bytes as this one and a new metadata revision obtained by adding supplied
-     * entry.
+     * Build a new test content instance with same bytes as this one and a new metadata revision obtained by adding
+     * supplied entry.
      *
-     * @return A new Content instance.
+     * @return A new TestContent instance.
      */
-    public Content delete() {
+    public TestContent delete() {
         ContentInfo head = getInfo();
-        return new Content(bytes, tree.add(new ContentInfoBuilder()
+        return new TestContent(bytes, tree.add(new ContentInfoBuilder()
                 .withParent(head.getRevision())
                 .withLength(head.getLength())
                 .withContent(head.getContent())

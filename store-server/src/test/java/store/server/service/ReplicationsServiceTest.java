@@ -21,7 +21,7 @@ import store.common.model.ContentInfoTree;
 import store.common.model.Operation;
 import store.common.model.ReplicationInfo;
 import store.common.value.Value;
-import store.server.Content;
+import store.server.TestContent;
 import static store.server.TestUtil.LOREM_IPSUM;
 import static store.server.TestUtil.async;
 import static store.server.TestUtil.config;
@@ -43,7 +43,7 @@ public class ReplicationsServiceTest {
     private ManagerModule managerModule;
     private RepositoriesService repositoriesService;
     private ReplicationsService replicationsService;
-    private Content content;
+    private TestContent content;
 
     /**
      * Initialization.
@@ -146,7 +146,7 @@ public class ReplicationsServiceTest {
     @Test(dependsOnMethods = "newRepositoryEventTest")
     public void stopReplicationTest() {
         replicationsService.stopReplication(SOURCE, DESTINATION);
-        Content previousContent = content;
+        TestContent previousContent = content;
         updateSourceContent("stopReplicationTest");
 
         assertReplicationStopped();
@@ -314,7 +314,7 @@ public class ReplicationsServiceTest {
         });
     }
 
-    private void assertDestinationHas(Content content) {
+    private void assertDestinationHas(TestContent content) {
         ContentInfoTree actual = repositoriesService.getRepository(DESTINATION).getContentInfoTree(content.getHash());
         assertThat(actual).isEqualTo(content.getTree());
     }

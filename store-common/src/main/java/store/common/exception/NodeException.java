@@ -12,7 +12,8 @@ import store.common.mappable.Mappable;
 import store.common.value.Value;
 
 /**
- * Base class for all exceptions thrown by a node.
+ * Base class for all exceptions thrown by a node. These exceptions are mappable so they can be transmitted in HTTP
+ * response body and restored on the client side.
  */
 public abstract class NodeException extends RuntimeException implements Mappable {
 

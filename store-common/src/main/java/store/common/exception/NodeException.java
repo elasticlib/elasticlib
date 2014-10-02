@@ -24,7 +24,7 @@ public abstract class NodeException extends RuntimeException implements Mappable
     private static final String MESSAGE = "message";
     private static final String EXCEPTION = "Exception";
     private static final long serialVersionUID = 1L;
-    private static String PACKAGE = NodeException.class.getPackage().getName();
+    private static final String PACKAGE = NodeException.class.getPackage().getName();
 
     /**
      * Constructor.

@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 import store.common.client.Client;
 import store.common.client.Content;
+import store.common.exception.IOFailureException;
+import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
@@ -168,6 +170,19 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     /**
      * Test.
      */
+    @Test(expectedExceptions = UnknownRepositoryException.class)
+    public void getRepositoryUnknownTest() {
+        when(repositoriesService.getRepositoryInfo(guid.asHexadecimalString()))
+                .thenThrow(new UnknownRepositoryException());
+
+        try (Client client = newClient()) {
+            client.repositories().getInfo(guid);
+        }
+    }
+
+    /**
+     * Test.
+     */
     @Test
     public void postInfoTest() {
         ContentInfo contentInfo = LOREM_IPSUM.getInfo();
@@ -198,6 +213,26 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
 
             CommandResult actual = client.repositories().get(guid).addContent(txId, hash, input);
             assertThat(actual).isEqualTo(result);
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException Actually unexpected.
+     */
+    @Test(expectedExceptions = IOFailureException.class)
+    public void addContentWithIOFailureTest() throws IOException {
+        long txId = 1;
+
+        Repository repository = newRepositoryMock();
+        when(repository.addContent(eq(txId), eq(hash), matches(LOREM_IPSUM.getBytes())))
+                .thenThrow(new IOFailureException("test"));
+
+        try (Client client = newClient();
+                InputStream input = LOREM_IPSUM.getInputStream()) {
+
+            client.repositories().get(guid).addContent(txId, hash, input);
         }
     }
 

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 import store.common.client.Client;
+import store.common.exception.UnexpectedFailureException;
 import store.common.hash.Guid;
 import store.common.model.NodeDef;
 import store.server.service.NodesService;
@@ -52,6 +53,17 @@ public class RootResourceTest extends AbstractResourceTest {
         when(nodesService.getNodeDef()).thenReturn(nodeDef);
         try (Client client = newClient()) {
             assertThat(client.node().getDef()).isEqualTo(nodeDef);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = UnexpectedFailureException.class)
+    public void getNodeDefWithUnexpectedFailureTest() {
+        when(nodesService.getNodeDef()).thenThrow(new NullPointerException());
+        try (Client client = newClient()) {
+            client.node().getDef();
         }
     }
 }

@@ -9,6 +9,7 @@ import static java.lang.Thread.currentThread;
 import java.util.SortedSet;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
+import static store.common.metadata.Properties.Common.CONTENT_TYPE;
 import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfo.ContentInfoBuilder;
@@ -34,9 +35,10 @@ public final class Content {
      * Builds a content by loading an actual resource from the classpath.
      *
      * @param filename Resource filename.
+     * @param contentType Resource content type.
      * @return A content on this resource.
      */
-    public static Content of(String filename) {
+    public static Content of(String filename, String contentType) {
         try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
@@ -46,6 +48,7 @@ public final class Content {
                     .withLength(digest.getLength())
                     .withContent(digest.getHash())
                     .with(FILE_NAME.key(), Value.of(filename))
+                    .with(CONTENT_TYPE.key(), Value.of(contentType))
                     .computeRevisionAndBuild();
 
             return new Content(outputStream.toByteArray(),
@@ -110,6 +113,13 @@ public final class Content {
      */
     public String filename() {
         return getInfo().getMetadata().get(FILE_NAME.key()).asString();
+    }
+
+    /**
+     * @return This content's type.
+     */
+    public String contentType() {
+        return getInfo().getMetadata().get(CONTENT_TYPE.key()).asString();
     }
 
     /**

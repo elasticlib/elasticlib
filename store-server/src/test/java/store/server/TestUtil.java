@@ -30,7 +30,7 @@ public final class TestUtil {
     /**
      * A test content.
      */
-    public static final Content LOREM_IPSUM = Content.of("loremIpsum.txt");
+    public static final Content LOREM_IPSUM = Content.of("loremIpsum.txt", "text/plain");
 
     private TestUtil() {
     }

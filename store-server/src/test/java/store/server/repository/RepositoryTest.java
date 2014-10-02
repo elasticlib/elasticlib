@@ -20,6 +20,7 @@ import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.RepositoryClosedException;
 import store.common.exception.UnknownContentException;
 import store.common.hash.Hash;
+import static store.common.metadata.Properties.Common.CONTENT_TYPE;
 import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
@@ -257,7 +258,8 @@ public class RepositoryTest {
             @Override
             public void run() {
                 assertUpToDate(repository.getInfo(),
-                               new RepositoryStats(1, 0, 0, ImmutableMap.of(FILE_NAME.key(), 1L)));
+                               new RepositoryStats(1, 0, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
+                                                                            CONTENT_TYPE.key(), 1L)));
             }
         });
     }
@@ -336,6 +338,7 @@ public class RepositoryTest {
             public void run() {
                 assertUpToDate(repository.getInfo(),
                                new RepositoryStats(1, 1, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
+                                                                            CONTENT_TYPE.key(), 1L,
                                                                             DESCRIPTION, 1L)));
             }
         });

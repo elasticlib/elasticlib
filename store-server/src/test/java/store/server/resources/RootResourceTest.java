@@ -17,7 +17,7 @@ import store.common.model.NodeDef;
 import store.server.service.NodesService;
 
 /**
- * Unit tests.
+ * Integration tests on the root resource and the HTTP client. Service layer is mocked in these tests.
  */
 public class RootResourceTest extends AbstractResourceTest {
 

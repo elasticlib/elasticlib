@@ -14,7 +14,7 @@ import static store.server.TestUtil.UNKNOWN_HASH;
 import static store.server.TestUtil.recursiveDelete;
 
 /**
- * Unit tests.
+ * Index integration tests.
  */
 @Test(singleThreaded = true)
 public class IndexTest {

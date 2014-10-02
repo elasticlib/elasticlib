@@ -42,7 +42,7 @@ import store.server.repository.Repository;
 import store.server.service.RepositoriesService;
 
 /**
- * Unit tests.
+ * Integration tests on the repositories resource and the HTTP client. Service layer is mocked in these tests.
  */
 public class RepositoriesResourceTest extends AbstractResourceTest {
 

@@ -23,7 +23,7 @@ import store.common.model.NodeInfo;
 import store.server.service.NodesService;
 
 /**
- * Unit tests.
+ * Integration tests on the remotes resource and the HTTP client. Service layer is mocked in these tests.
  */
 public class RemotesResourceTest extends AbstractResourceTest {
 

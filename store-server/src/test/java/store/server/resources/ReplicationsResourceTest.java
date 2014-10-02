@@ -20,7 +20,7 @@ import store.common.model.RepositoryDef;
 import store.server.service.ReplicationsService;
 
 /**
- * Unit tests.
+ * Integration tests on the replications resource and the HTTP client. Service layer is mocked in these tests.
  */
 public class ReplicationsResourceTest extends AbstractResourceTest {
 

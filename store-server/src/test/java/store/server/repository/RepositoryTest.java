@@ -42,7 +42,7 @@ import static store.server.TestUtil.recursiveDelete;
 import store.server.manager.ManagerModule;
 
 /**
- * Unit tests.
+ * Repository integration tests.
  */
 public class RepositoryTest {
 

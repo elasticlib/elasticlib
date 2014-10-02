@@ -23,7 +23,7 @@ import store.server.manager.ManagerModule;
 import store.server.repository.Repository;
 
 /**
- * Unit tests.
+ * Repository service integration tests.
  */
 public class RepositoriesServiceTest {
 

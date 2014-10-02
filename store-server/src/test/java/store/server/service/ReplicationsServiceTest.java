@@ -32,7 +32,7 @@ import store.server.manager.ManagerModule;
 import store.server.repository.Repository;
 
 /**
- * Unit tests.
+ * Replications service integration tests.
  */
 public class ReplicationsServiceTest {
 

@@ -1,4 +1,4 @@
-package store.common.client;
+package store.client.exception;
 
 /**
  * Thrown if a requests fails for any reason.

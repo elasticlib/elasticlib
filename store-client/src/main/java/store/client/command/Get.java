@@ -9,11 +9,11 @@ import java.nio.file.Path;
 import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.parseHash;
 import store.client.util.Directories;
 import store.common.client.Content;
-import store.common.client.RequestFailedException;
 import store.common.hash.Hash;
 import static store.common.util.IoUtil.copy;
 

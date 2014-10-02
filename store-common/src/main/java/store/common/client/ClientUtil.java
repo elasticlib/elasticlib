@@ -3,6 +3,7 @@ package store.common.client;
 import java.util.List;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import store.common.exception.NodeException;
@@ -89,7 +90,7 @@ final class ClientUtil {
             if (response.hasEntity() && response.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
                 throw JsonReading.read(response.readEntity(JsonObject.class), NodeException.class);
             }
-            throw new RequestFailedException(response.getStatusInfo().getReasonPhrase());
+            throw new ProcessingException(response.getStatusInfo().getReasonPhrase());
         }
         return response;
     }

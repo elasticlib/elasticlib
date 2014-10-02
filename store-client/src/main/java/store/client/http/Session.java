@@ -5,9 +5,9 @@ import java.io.Closeable;
 import java.net.URI;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
+import store.client.exception.RequestFailedException;
 import store.common.client.Client;
 import store.common.client.RepositoryClient;
-import store.common.client.RequestFailedException;
 import store.common.hash.Guid;
 import store.common.model.RepositoryDef;
 

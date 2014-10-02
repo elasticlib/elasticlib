@@ -18,7 +18,7 @@ import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.parseHash;
 import static store.client.util.ClientUtil.revisions;
 import static store.client.util.Directories.home;
-import store.common.client.RequestFailedException;
+import store.client.exception.RequestFailedException;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;

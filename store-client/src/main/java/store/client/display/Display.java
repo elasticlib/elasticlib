@@ -15,7 +15,7 @@ import javax.ws.rs.ProcessingException;
 import jline.console.ConsoleReader;
 import store.client.config.ClientConfig;
 import static store.client.display.MappableFormatting.format;
-import store.common.client.RequestFailedException;
+import store.client.exception.RequestFailedException;
 import store.common.json.JsonWriting;
 import store.common.mappable.Mappable;
 import store.common.model.ContentInfo;

@@ -12,12 +12,12 @@ import javax.ws.rs.ProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.client.Client;
-import store.common.client.RequestFailedException;
 import store.common.config.Config;
 import store.common.config.ConfigException;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import static store.common.config.ConfigUtil.uris;
+import store.common.exception.NodeException;
 import store.common.hash.Guid;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
@@ -147,7 +147,7 @@ public class UnicastDiscoveryClient {
                     try {
                         client.remotes().add(local.getPublishUris());
 
-                    } catch (RequestFailedException e) {
+                    } catch (NodeException e) {
                         LOG.warn("Failed to add local node to {}. Remote responded: {}", target, e.getMessage());
                     }
                 }

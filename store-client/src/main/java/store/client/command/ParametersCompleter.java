@@ -23,10 +23,11 @@ import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.KEY;
 import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
-import store.common.client.RequestFailedException;
+import store.common.exception.NodeException;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
@@ -88,7 +89,7 @@ class ParametersCompleter {
                 default:
                     return emptyList();
             }
-        } catch (RequestFailedException | ProcessingException e) {
+        } catch (NodeException | RequestFailedException | ProcessingException e) {
             return emptyList();
         }
     }

@@ -3,7 +3,7 @@ package store.client.util;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import store.common.client.RequestFailedException;
+import store.client.exception.RequestFailedException;
 
 /**
  * Files utilities.

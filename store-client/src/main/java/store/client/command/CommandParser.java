@@ -12,11 +12,11 @@ import jline.console.completer.Completer;
 import store.client.config.ClientConfig;
 import store.client.discovery.DiscoveryClient;
 import store.client.display.Display;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
 import store.client.tokenizing.Tokenizing;
 import static store.client.tokenizing.Tokenizing.argList;
 import static store.client.tokenizing.Tokenizing.isComplete;
-import store.common.client.RequestFailedException;
 import store.common.exception.NodeException;
 
 /**
@@ -78,7 +78,6 @@ public final class CommandParser implements Completer {
 
         } catch (RequestFailedException e) {
             display.print(e);
-            session.disconnect();
 
         } catch (ProcessingException e) {
             display.print(e);

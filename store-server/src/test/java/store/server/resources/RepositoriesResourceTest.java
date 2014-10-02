@@ -9,6 +9,7 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.SortedSet;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -268,6 +269,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
                 InputStream expected = LOREM_IPSUM.getInputStream()) {
 
             assertThat(content.getFileName().get()).isEqualTo(LOREM_IPSUM.filename());
+            assertThat(content.getContentType()).isEqualTo(MediaType.valueOf(LOREM_IPSUM.contentType()));
             assertThat(content.getInputStream()).hasContentEqualTo(expected);
         }
     }

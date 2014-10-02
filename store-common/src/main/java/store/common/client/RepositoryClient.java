@@ -178,7 +178,7 @@ public class RepositoryClient {
                 .get();
 
         checkStatus(response);
-        return new Content(fileName(response), response.readEntity(InputStream.class));
+        return new Content(fileName(response), response.getMediaType(), response.readEntity(InputStream.class));
     }
 
     private static Optional<String> fileName(Response response) {

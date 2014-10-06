@@ -35,6 +35,12 @@ class ContentManager {
         this.root = root;
     }
 
+    /**
+     * Creates a new content manager.
+     *
+     * @param path content manager home.
+     * @return Created content manager.
+     */
     public static ContentManager create(Path path) {
         try {
             Files.createDirectory(path);
@@ -48,6 +54,12 @@ class ContentManager {
         }
     }
 
+    /**
+     * Opens an existing content manager.
+     *
+     * @param path content manager home.
+     * @param Opened content manager.
+     */
     public static ContentManager open(Path path) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
@@ -60,6 +72,9 @@ class ContentManager {
         return new ContentManager(path);
     }
 
+    /**
+     * Closes this manager.
+     */
     public void close() {
         lockManager.close();
         while (!inputStreams.isEmpty()) {
@@ -72,11 +87,17 @@ class ContentManager {
         }
     }
 
-    public void add(Hash hash, long length, InputStream source) {
+    /**
+     * Stores a new content.
+     *
+     * @param hash Content hash.
+     * @param source Content bytes.
+     */
+    public void add(Hash hash, InputStream source) {
         lockManager.writeLock(hash);
         try (OutputStream target = newOutputStream(path(hash))) {
             Digest digest = copyAndDigest(source, target);
-            if (length != digest.getLength() || !hash.equals(digest.getHash())) {
+            if (!hash.equals(digest.getHash())) {
                 throw new IntegrityCheckingFailedException();
             }
         } catch (IOException e) {
@@ -87,6 +108,11 @@ class ContentManager {
         }
     }
 
+    /**
+     * Deletes a currently stored content.
+     *
+     * @param hash Content hash.
+     */
     public void delete(Hash hash) {
         lockManager.writeLock(hash);
         try {
@@ -100,6 +126,12 @@ class ContentManager {
         }
     }
 
+    /**
+     * Provides an input-stream on a currently stored content.
+     *
+     * @param hash Content hash.
+     * @return An input-stream on this content.
+     */
     public InputStream get(Hash hash) {
         lockManager.readLock(hash);
         try {
@@ -123,11 +155,20 @@ class ContentManager {
                 .resolve(hash.asHexadecimalString());
     }
 
+    /**
+     * An input-stream wrapper that releases content read-lock when closed.
+     */
     private class ContentInputStream extends InputStream {
 
         private final InputStream delegate;
         private final Hash hash;
 
+        /**
+         * Constructor.
+         *
+         * @param delegate Actual input-stream.
+         * @param hash Content hash (for unlocking purpose).
+         */
         public ContentInputStream(InputStream delegate, Hash hash) {
             this.delegate = delegate;
             this.hash = hash;

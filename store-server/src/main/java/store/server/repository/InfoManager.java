@@ -27,11 +27,22 @@ class InfoManager {
     private final StorageManager storageManager;
     private final Database database;
 
+    /**
+     * Constructor.
+     *
+     * @param storageManager Underlying storage manager.
+     */
     public InfoManager(StorageManager storageManager) {
         this.storageManager = storageManager;
         this.database = storageManager.openDatabase(INFO);
     }
 
+    /**
+     * Adds a new Content info.
+     *
+     * @param info Content info to add.
+     * @return Actual result.
+     */
     public CommandResult put(ContentInfo info) {
         Optional<ContentInfoTree> existing = load(info.getContent(), LockMode.RMW);
         ContentInfoTree updated;
@@ -58,6 +69,12 @@ class InfoManager {
         return save(existing, updated);
     }
 
+    /**
+     * Adds a new Content info tree.
+     *
+     * @param info Content info tree to add.
+     * @return Actual result.
+     */
     public CommandResult put(ContentInfoTree tree) {
         Optional<ContentInfoTree> existing = load(tree.getContent(), LockMode.RMW);
         ContentInfoTree updated;
@@ -71,6 +88,13 @@ class InfoManager {
         return save(existing, updated);
     }
 
+    /**
+     * Marks an existing content as deleted.
+     *
+     * @param hash Content hash.
+     * @param head Expected associated head, for optimistic concurrency purpose.
+     * @return Actual result.
+     */
     public CommandResult delete(Hash hash, SortedSet<Hash> head) {
         Optional<ContentInfoTree> existing = load(hash, LockMode.RMW);
         if (!existing.isPresent()) {
@@ -93,6 +117,12 @@ class InfoManager {
         return save(existing, updated);
     }
 
+    /**
+     * Loads info tree of a content.
+     *
+     * @param hash Content hash.
+     * @return Associated content info tree, if any.
+     */
     public Optional<ContentInfoTree> get(Hash hash) {
         return load(hash, LockMode.DEFAULT);
     }

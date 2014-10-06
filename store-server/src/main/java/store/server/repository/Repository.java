@@ -85,7 +85,7 @@ public class Repository {
     }
 
     /**
-     * Create a new repository.
+     * Creates a new repository.
      *
      * @param path Repository home. Expected not to exist.
      * @param config Configuration holder.
@@ -122,7 +122,7 @@ public class Repository {
     }
 
     /**
-     * Open an existing repository.
+     * Opens an existing repository.
      *
      * @param path Repository home.
      * @param config Configuration holder.
@@ -184,7 +184,7 @@ public class Repository {
     }
 
     /**
-     * Add an content info revision. If associated content is not present, started transaction is suspended so that
+     * Adds an content info revision. If associated content is not present, started transaction is suspended so that
      * caller may latter complete this operation by adding this content.
      *
      * @param contentInfo Content info revision.
@@ -206,7 +206,7 @@ public class Repository {
     }
 
     /**
-     * Merge supplied content info revision tree with existing one, if any. If associated content is not present,
+     * Merges supplied content info revision tree with existing one, if any. If associated content is not present,
      * started transaction is suspended so that caller may latter complete this operation by creating this content.
      *
      * @param contentInfoTree Revision tree.
@@ -228,7 +228,7 @@ public class Repository {
     }
 
     /**
-     * Resume a previously suspended transaction and add content from supplied input-stream.
+     * Resumes a previously suspended transaction and add content from supplied input-stream.
      *
      * @param transactionId Identifier of the transaction to resume.
      * @param hash Content hash. Used to retrieve its associated info.
@@ -246,10 +246,10 @@ public class Repository {
                     // This is unexpected as we have a resumed transaction at this point.
                     throw new BadRequestException();
                 }
-                ContentInfoTree tree = treeOpt.get();
-                contentManager.add(hash, tree.getLength(), source);
-                historyManager.add(Operation.CREATE, hash, tree.getHead());
-                return CommandResult.of(transactionId, Operation.CREATE, hash, tree.getHead());
+                SortedSet<Hash> head = treeOpt.get().getHead();
+                contentManager.add(hash, source);
+                historyManager.add(Operation.CREATE, hash, head);
+                return CommandResult.of(transactionId, Operation.CREATE, hash, head);
             }
         });
         signalIf(true);
@@ -257,7 +257,7 @@ public class Repository {
     }
 
     /**
-     * Delete a content.
+     * Deletes a content.
      *
      * @param hash Hash of the content to delete.
      * @param head Hashes of expected head revisions of the info associated with the content.
@@ -414,7 +414,7 @@ public class Repository {
     }
 
     /**
-     * Find index entries matching supplied query.
+     * Finds index entries matching supplied query.
      *
      * @param query Search query.
      * @param first First result to return.

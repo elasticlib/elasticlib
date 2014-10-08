@@ -1,5 +1,6 @@
 package store.server.repository;
 
+import com.google.common.base.Optional;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Closeable;
@@ -24,6 +25,7 @@ import store.common.exception.IOFailureException;
 import store.common.exception.IntegrityCheckingFailedException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.PendingStagingSessionException;
+import store.common.exception.StagingCompletedException;
 import store.common.exception.StagingSessionNotFoundException;
 import store.common.exception.UnknownContentException;
 import store.common.hash.Digest;
@@ -130,12 +132,19 @@ class ContentManager {
     public StagingInfo stage(Hash hash) {
         lockManager.writeLock(hash);
         try {
-            if (sessions.containsKey(hash)) {
-                throw new PendingStagingSessionException();
+            Optional<StagingSession> session = sessions.get(hash);
+            if (session.isPresent()) {
+                if (session.get().getDigest().getHash().equals(hash)) {
+                    throw new StagingCompletedException();
+                } else {
+                    throw new PendingStagingSessionException();
+                }
             }
             Guid sessionId = Guid.random();
             DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
-
+            if (digest.getHash().equals(hash)) {
+                throw new StagingCompletedException();
+            }
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
 
@@ -190,6 +199,9 @@ class ContentManager {
         DigestBuilder digest = session.getDigest();
         boolean truncate = false;
 
+        if (digest.getHash().equals(hash)) {
+            throw new StagingCompletedException();
+        }
         if (position < 0 || position > digest.getLength()) {
             throw new BadRequestException("Requested position is invalid");
         }
@@ -207,6 +219,33 @@ class ContentManager {
             }
         }
         return digest;
+    }
+
+    /**
+     * Stores a new content. Fails if this content has not been previously staged.
+     *
+     * @param hash Content hash.
+     */
+    public void add(Hash hash) {
+        lockManager.writeLock(hash);
+        try {
+            Optional<StagingSession> session = sessions.get(hash);
+            DigestBuilder digest = session.isPresent() ? session.get().getDigest() : computeDigest(hash, Long.MAX_VALUE);
+            if (digest.getLength() == 0) {
+                throw new UnknownContentException();
+            }
+            if (!digest.getHash().equals(hash)) {
+                throw new IntegrityCheckingFailedException();
+            }
+            Files.move(stagingPath(hash), contentPath(hash));
+            sessions.clear(hash);
+
+        } catch (IOException e) {
+            throw new IOFailureException(e);
+
+        } finally {
+            lockManager.writeUnlock(hash);
+        }
     }
 
     /**
@@ -423,16 +462,6 @@ class ContentManager {
         }
 
         /**
-         * Checks existence of a given session.
-         *
-         * @param hash A content hash.
-         * @return True if this cache contains a session associated with supplied hash.
-         */
-        public boolean containsKey(Hash hash) {
-            return cache.asMap().containsKey(hash);
-        }
-
-        /**
          * Save supplied session, for latter retrieval with supplied hash.
          *
          * @param hash A content hash.
@@ -456,6 +485,25 @@ class ContentManager {
             }
             cache.invalidate(hash);
             return session;
+        }
+
+        /**
+         * Provides session associated with supplied hash, if any.
+         *
+         * @param hash A content hash.
+         * @return Associated session, if any.
+         */
+        public Optional<StagingSession> get(Hash hash) {
+            return Optional.fromNullable(cache.getIfPresent(hash));
+        }
+
+        /**
+         * Delete session associated with supplied hash, if any.
+         *
+         * @param hash A content hash.
+         */
+        public void clear(Hash hash) {
+            cache.invalidate(hash);
         }
 
         @Override

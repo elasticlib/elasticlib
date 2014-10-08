@@ -59,6 +59,7 @@ import store.common.value.Value;
  */
 class Index {
 
+    private static final String INDEX = "index";
     private static final String CONTENT = "content";
     private static final String LENGTH = "length";
     private static final String REVISION = "revision";
@@ -70,7 +71,7 @@ class Index {
 
     private Index(String name, Path path) throws IOException {
         this.name = name;
-        directory = FSDirectory.open(path.toFile(), new SingleInstanceLockFactory());
+        directory = FSDirectory.open(path.resolve(INDEX).toFile(), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer();
     }
 
@@ -91,13 +92,13 @@ class Index {
     /**
      * Create a new index.
      *
-     * @param name index name.
-     * @param path index home.
+     * @param name repository name.
+     * @param path repository path.
      * @return Created index.
      */
     public static Index create(String name, Path path) {
         try {
-            Files.createDirectory(path);
+            Files.createDirectory(path.resolve(INDEX));
             return new Index(name, path);
 
         } catch (IOException e) {
@@ -108,12 +109,12 @@ class Index {
     /**
      * Open an existing index.
      *
-     * @param name index name.
-     * @param path index home.
+     * @param name repository name.
+     * @param path repository path.
      * @return Opened index.
      */
     public static Index open(String name, Path path) {
-        if (!Files.isDirectory(path)) {
+        if (!Files.isDirectory(path.resolve(INDEX))) {
             throw new InvalidRepositoryPathException();
         }
         try {

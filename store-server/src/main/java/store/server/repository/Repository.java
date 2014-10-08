@@ -46,7 +46,6 @@ import store.server.manager.task.TaskManager;
 public class Repository {
 
     private static final String STORAGE = "storage";
-    private static final String CONTENT = "content";
     private static final String INDEX = "index";
     private static final String STATS = "stats";
     private static final String CUR_SEQS = "curSeqs";
@@ -113,8 +112,8 @@ public class Repository {
                               config,
                               taskManager,
                               messageManager,
-                              ContentManager.create(path.resolve(CONTENT)),
-                              Index.create(name, path.resolve(INDEX)));
+                              ContentManager.create(name, path, config, taskManager),
+                              Index.create(name, path));
     }
 
     private static boolean isEmptyDir(Path dir) throws IOException {
@@ -143,8 +142,8 @@ public class Repository {
                               config,
                               taskManager,
                               messageManager,
-                              ContentManager.open(path.resolve(CONTENT)),
-                              Index.open(name, path.resolve(INDEX)));
+                              ContentManager.open(name, path, config, taskManager),
+                              Index.open(name, path));
     }
 
     /**

@@ -47,7 +47,7 @@ public class IndexTest {
      */
     @Test
     public void create() {
-        index = Index.create("test-index", path.resolve("index"));
+        index = Index.create("test-index", path);
     }
 
     /**

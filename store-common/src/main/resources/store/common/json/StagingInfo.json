@@ -1,0 +1,15 @@
+{
+    "title": "stagingInfo",
+    "type": "object",
+    "properties": {
+        "sessionId": {
+            "type": "guid"
+        },
+        "hash": {
+            "type": "hash"
+        },
+        "length": {
+            "type": "integer"
+        }
+    }
+}

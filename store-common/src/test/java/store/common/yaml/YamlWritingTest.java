@@ -18,6 +18,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.STAGING_INFO;
 import store.common.mappable.Mappable;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
@@ -31,11 +32,20 @@ import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_INFOS_YAML;
+import static store.common.yaml.YamlTestData.STAGING_INFO_YAML;
 
 /**
  * Unit tests.
  */
 public class YamlWritingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeStagingInfoTest() {
+        assertThat(write(STAGING_INFO)).isEqualTo(STAGING_INFO_YAML);
+    }
 
     /**
      * Test.

@@ -19,36 +19,45 @@ public final class IoUtil {
     /**
      * Writes all bytes read from input-stream to output-stream.
      *
-     * @param inputStream Source input-stream.
-     * @param outputStream Destination output-stream.
+     * @param input Source input-stream.
+     * @param output Destination output-stream.
      * @throws IOException If an IO error happens.
      */
-    public static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int len = inputStream.read(buffer);
-        while (len != -1) {
-            outputStream.write(buffer, 0, len);
-            len = inputStream.read(buffer);
-        }
+    public static void copy(InputStream input, OutputStream output) throws IOException {
+        copyAndDigest(input, output, null);
     }
 
     /**
      * Writes all bytes read from input-stream to output-stream, and provides a digest of these bytes.
      *
-     * @param inputStream Source input-stream.
-     * @param outputStream Destination output-stream.
+     * @param input Source input-stream.
+     * @param output Destination output-stream.
      * @return A digest of copied bytes.
      * @throws IOException If an IO error happens.
      */
-    public static Digest copyAndDigest(InputStream inputStream, OutputStream outputStream) throws IOException {
+    public static Digest copyAndDigest(InputStream input, OutputStream output) throws IOException {
         DigestBuilder builder = new DigestBuilder();
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int len = inputStream.read(buffer);
-        while (len != -1) {
-            builder.add(buffer, len);
-            outputStream.write(buffer, 0, len);
-            len = inputStream.read(buffer);
-        }
+        copyAndDigest(input, output, builder);
         return builder.build();
+    }
+
+    /**
+     * Writes all bytes read from input-stream to supplied output-stream and digest.
+     *
+     * @param input Source input-stream.
+     * @param output Destination output-stream.
+     * @param digest Mutable digest to write to.
+     * @throws IOException If an IO error happens.
+     */
+    public static void copyAndDigest(InputStream input, OutputStream output, DigestBuilder digest) throws IOException {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int len = input.read(buffer);
+        while (len != -1) {
+            if (digest != null) {
+                digest.add(buffer, len);
+            }
+            output.write(buffer, 0, len);
+            len = input.read(buffer);
+        }
     }
 }

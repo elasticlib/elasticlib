@@ -17,6 +17,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.STAGING_INFO;
 import static store.common.TestUtil.assertMatches;
 import store.common.exception.NodeException;
 import store.common.mappable.Mappable;
@@ -31,6 +32,7 @@ import store.common.model.ReplicationDef;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.StagingInfo;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
 import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
@@ -43,11 +45,20 @@ import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_INFOS_YAML;
+import static store.common.yaml.YamlTestData.STAGING_INFO_YAML;
 
 /**
  * Unit tests.
  */
 public class YamlReadingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readStagingInfoTest() {
+        assertThat(read(STAGING_INFO_YAML, StagingInfo.class)).isEqualTo(STAGING_INFO);
+    }
 
     /**
      * Test.

@@ -24,6 +24,7 @@ import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
+import store.common.model.StagingInfo;
 
 /**
  * Provides schemas used to write/read/validate Mappable instances as JSON.
@@ -34,6 +35,7 @@ final class SchemaProvider {
 
     static {
         register(CommandResult.class,
+                 StagingInfo.class,
                  ContentInfo.class,
                  ContentInfoTree.class,
                  Event.class,

@@ -9,6 +9,7 @@ import static store.common.TestUtil.readJsonObject;
 
 final class JsonTestData {
 
+    public static final JsonObject STAGING_INFO_JSON;
     public static final List<JsonObject> CONTENT_INFOS_JSON = new ArrayList<>();
     public static final JsonObject CONTENT_INFO_TREE_JSON;
     public static final JsonArray EVENTS_ARRAY;
@@ -24,6 +25,8 @@ final class JsonTestData {
 
     static {
         Class<?> clazz = JsonTestData.class;
+
+        STAGING_INFO_JSON = readJsonObject(clazz, "stagingInfo.json");
 
         CONTENT_INFOS_JSON.add(readJsonObject(clazz, "contentInfo0.json"));
         CONTENT_INFOS_JSON.add(readJsonObject(clazz, "contentInfo1.json"));

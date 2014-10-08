@@ -4,7 +4,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Computes Hash and length from a given input.
+ * Hash and length of a given content.
  */
 public class Digest {
 
@@ -31,7 +31,7 @@ public class Digest {
     }
 
     /**
-     * Builder.
+     * Builder. Compute a digest from a given input.
      */
     public static class DigestBuilder {
 
@@ -66,12 +66,33 @@ public class Digest {
         }
 
         /**
-         * Build.
+         * @return the total number of previously added bytes.
+         */
+        public long getLength() {
+            return totalLength;
+        }
+
+        /**
+         * @return The Hash of previously added bytes.
+         */
+        public Hash getHash() {
+            try {
+                MessageDigest clone = (MessageDigest) messageDigest.clone();
+                return new Hash(clone.digest());
+
+            } catch (CloneNotSupportedException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        /**
+         * Create a new digest. Does not affect this builder state, so more data may be added after this operation in
+         * order to build other digests.
          *
          * @return A new Digest instance.
          */
         public Digest build() {
-            return new Digest(new Hash(messageDigest.digest()), totalLength);
+            return new Digest(getHash(), getLength());
         }
     }
 }

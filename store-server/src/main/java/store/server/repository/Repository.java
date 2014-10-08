@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import store.common.exception.BadRequestException;
+import store.common.exception.ContentAlreadyPresentException;
 import store.common.exception.IOFailureException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.RepositoryClosedException;
@@ -30,6 +31,7 @@ import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.StagingInfo;
 import store.server.manager.message.MessageManager;
 import store.server.manager.message.NewRepositoryEvent;
 import store.server.manager.storage.Command;
@@ -181,6 +183,46 @@ public class Repository {
         index.close();
         storageManager.stop();
         contentManager.close();
+    }
+
+    /**
+     * Prepares to add a new content in this repository.
+     *
+     * @param hash Hash of the content to be added latter.
+     * @return Info about the staging session created.
+     */
+    public StagingInfo stage(final Hash hash) {
+        ensureOpen();
+        log("Staging content {}", hash);
+        return storageManager.inTransaction(new Query<StagingInfo>() {
+            @Override
+            public StagingInfo apply() {
+                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
+                    throw new ContentAlreadyPresentException();
+                }
+
+                // TODO this is a stub !
+                throw new UnsupportedOperationException();
+            }
+        });
+    }
+
+    /**
+     * Writes bytes to a staged content.
+     *
+     * @param hash Hash of the staged content (when staging is completed).
+     * @param sessionId Staging session identifier.
+     * @param source Bytes to write.
+     * @param position Position in staged content at which write should begin.
+     * @return Updated info of the staging session.
+     */
+    public StagingInfo write(Hash hash, Guid sessionId, InputStream source, long position) {
+        ensureOpen();
+        log("Writing to staged content {}", hash);
+
+        // TODO this is a stub !
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -361,12 +403,7 @@ public class Repository {
     public InputStream getContent(final Hash hash) {
         ensureOpen();
         log("Returning content {}", hash);
-        return storageManager.inTransaction(new Query<InputStream>() {
-            @Override
-            public InputStream apply() {
-                return contentManager.get(hash);
-            }
-        });
+        return contentManager.get(hash);
     }
 
     /**

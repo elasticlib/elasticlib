@@ -33,6 +33,7 @@ import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
+import store.common.model.StagingInfo;
 import store.common.value.Value;
 
 /**
@@ -40,6 +41,10 @@ import store.common.value.Value;
  */
 public final class TestData {
 
+    /**
+     * A StagingInfo instance.
+     */
+    public static final StagingInfo STAGING_INFO;
     /**
      * Some ContentInfo instances.
      */
@@ -97,6 +102,12 @@ public final class TestData {
         String[] REVS = new String[]{"0d99dd9895a2a1c485e0c75f79f92cc14457bb62",
                                      "a0b87ac4b04a0bed394517d0b01792635531aa42"};
 
+        Guid[] GUIDS = new Guid[]{new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
+                                  new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
+                                  new Guid("39819150ee99549a8c0a59782169bb3b")};
+
+        STAGING_INFO = new StagingInfo(GUIDS[0], new Hash(HASHES[1]), 123456L);
+
         CONTENT_INFOS.add(new ContentInfo.ContentInfoBuilder()
                 .withContent(new Hash(HASHES[0]))
                 .withLength(10)
@@ -149,19 +160,16 @@ public final class TestData {
         INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[1]),
                                          new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
 
-        Guid primaryId = new Guid("8d5f3c77e94a0cad3a32340d342135f4");
-        Guid secondaryId = new Guid("0d99dd9895a2a1c485e0c75f79f92cc1");
-
         REPOSITORY_DEFS.add(new RepositoryDef("primary",
-                                              primaryId,
+                                              GUIDS[0],
                                               Paths.get("/repo/primary")));
 
         REPOSITORY_DEFS.add(new RepositoryDef("secondary",
-                                              secondaryId,
+                                              GUIDS[1],
                                               Paths.get("/repo/secondary")));
 
-        REPLICATION_DEFS.add(new ReplicationDef(primaryId, secondaryId));
-        REPLICATION_DEFS.add(new ReplicationDef(secondaryId, primaryId));
+        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[0], GUIDS[1]));
+        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[1], GUIDS[0]));
 
         REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(0),
                                                 new RepositoryStats(12, 3, 2, ImmutableMap.of("contentType", 9L,
@@ -179,16 +187,16 @@ public final class TestData {
                                                   REPOSITORY_DEFS.get(1)));
 
         NODE_DEFS.add(new NodeDef("alpha",
-                                  new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
+                                  GUIDS[0],
                                   singletonList(URI.create("http://192.168.0.1:8080"))));
 
         NODE_DEFS.add(new NodeDef("beta",
-                                  new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
+                                  GUIDS[1],
                                   asList(URI.create("http://192.168.0.2:8080"),
                                          URI.create("http://31.34.134.14:8080"))));
 
         NODE_DEFS.add(new NodeDef("gamma",
-                                  new Guid("39819150ee99549a8c0a59782169bb3b"),
+                                  GUIDS[2],
                                   Collections.<URI>emptyList()));
 
         NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(0),

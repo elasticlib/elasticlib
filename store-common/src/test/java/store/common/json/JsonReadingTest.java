@@ -14,6 +14,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.STAGING_INFO;
 import static store.common.TestUtil.assertMatches;
 import store.common.exception.NodeException;
 import static store.common.json.JsonReading.read;
@@ -30,6 +31,7 @@ import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
 import store.common.model.ContentInfoTree;
@@ -41,11 +43,20 @@ import store.common.model.ReplicationDef;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.StagingInfo;
 
 /**
  * Unit tests.
  */
 public class JsonReadingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readStagingInfoTest() {
+        assertThat(read(STAGING_INFO_JSON, StagingInfo.class)).isEqualTo(STAGING_INFO);
+    }
 
     /**
      * Test.

@@ -24,6 +24,7 @@ import static store.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static store.common.json.JsonTestData.NODE_INFOS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasBooleanValue;
 import static store.common.json.JsonValidation.hasStringValue;
@@ -38,6 +39,7 @@ import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryInfo;
+import store.common.model.StagingInfo;
 import store.common.value.Value;
 
 /**
@@ -127,6 +129,15 @@ public class JsonValidationTest {
                 .build();
 
         assertThat(isValid(json, schema)).as(value.type().name().toLowerCase()).isTrue();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidStagingInfoTest() {
+        assertThat(isValid(STAGING_INFO_JSON, StagingInfo.class)).isTrue();
+        assertThat(isValid(CONTENT_INFO_TREE_JSON, StagingInfo.class)).isFalse();
     }
 
     /**

@@ -14,6 +14,7 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.STAGING_INFO;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
 import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
 import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
@@ -26,6 +27,7 @@ import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import static store.common.json.JsonWriting.write;
 import static store.common.json.JsonWriting.writeAll;
 
@@ -33,6 +35,14 @@ import static store.common.json.JsonWriting.writeAll;
  * Unit tests.
  */
 public class JsonWritingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeStagingInfoTest() {
+        assertThat(write(STAGING_INFO)).isEqualTo(STAGING_INFO_JSON);
+    }
 
     /**
      * Test.

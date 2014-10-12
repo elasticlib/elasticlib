@@ -332,8 +332,8 @@ public class RevisionTree implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         List<Value> revisions = new ArrayList<>(nodes.size());
-        for (Revision info : list()) {
-            Map<String, Value> map = info.toMap();
+        for (Revision rev : list()) {
+            Map<String, Value> map = rev.toMap();
             map.remove(CONTENT);
             map.remove(LENGTH);
             revisions.add(Value.of(map));
@@ -354,11 +354,11 @@ public class RevisionTree implements Mappable {
     public static RevisionTree fromMap(Map<String, Value> map) {
         RevisionTreeBuilder builder = new RevisionTreeBuilder();
         for (Value revision : map.get(REVISIONS).asList()) {
-            Map<String, Value> infoMap = new HashMap<>();
-            infoMap.put(CONTENT, map.get(CONTENT));
-            infoMap.put(LENGTH, map.get(LENGTH));
-            infoMap.putAll(revision.asMap());
-            builder.add(Revision.fromMap(infoMap));
+            Map<String, Value> revMap = new HashMap<>();
+            revMap.put(CONTENT, map.get(CONTENT));
+            revMap.put(LENGTH, map.get(LENGTH));
+            revMap.putAll(revision.asMap());
+            builder.add(Revision.fromMap(revMap));
         }
         return builder.build();
     }

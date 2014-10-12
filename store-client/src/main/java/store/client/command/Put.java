@@ -28,8 +28,8 @@ import store.common.hash.Digest;
 import static store.common.metadata.MetadataUtil.metadata;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
 import store.common.model.Operation;
+import store.common.model.Revision;
 import static store.common.util.IoUtil.copyAndDigest;
 import static store.common.util.SinkOutputStream.sink;
 import store.common.value.Value;
@@ -101,11 +101,11 @@ class Put extends AbstractCommand {
         public CommandResult put(Path filepath, Map<String, Value> metadata) {
             try {
                 Digest digest = digest(filepath);
-                List<ContentInfo> head = client.getInfoHeadIfAny(digest.getHash());
+                List<Revision> head = client.getHeadIfAny(digest.getHash());
                 if (!isDeleted(head)) {
                     throw new RequestFailedException("This content is already stored");
                 }
-                ContentInfo info = new ContentInfo.ContentInfoBuilder()
+                Revision revision = new Revision.RevisionBuilder()
                         .withContent(digest.getHash())
                         .withLength(digest.getLength())
                         .withParents(revisions(head))
@@ -113,11 +113,11 @@ class Put extends AbstractCommand {
                         .withMetadata(metadata)
                         .computeRevisionAndBuild();
 
-                CommandResult firstStepResult = client.addInfo(info);
+                CommandResult firstStepResult = client.addRevision(revision);
                 if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
                     return firstStepResult;
                 }
-                return putContent(firstStepResult.getTransactionId(), info, filepath);
+                return putContent(firstStepResult.getTransactionId(), revision, filepath);
 
             } catch (IOException e) {
                 throw new RequestFailedException(e);
@@ -130,9 +130,9 @@ class Put extends AbstractCommand {
             }
         }
 
-        private CommandResult putContent(long transactionId, ContentInfo info, Path filepath) throws IOException {
-            try (InputStream inputStream = read("Uploading content", filepath, info.getLength())) {
-                return client.addContent(transactionId, info.getContent(), inputStream);
+        private CommandResult putContent(long transactionId, Revision revision, Path filepath) throws IOException {
+            try (InputStream inputStream = read("Uploading content", filepath, revision.getLength())) {
+                return client.addContent(transactionId, revision.getContent(), inputStream);
             }
         }
 

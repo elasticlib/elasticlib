@@ -6,7 +6,7 @@ import store.client.display.Display;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.parseHash;
 import store.common.hash.Hash;
-import store.common.model.ContentInfoTree;
+import store.common.model.RevisionTree;
 
 class Tree extends AbstractCommand {
 
@@ -16,13 +16,13 @@ class Tree extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info revisions tree of an existing content";
+        return "Print revision tree of an existing content";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
-        ContentInfoTree tree = session.getRepository().getInfoTree(hash);
+        RevisionTree tree = session.getRepository().getTree(hash);
         display.printTree(tree);
     }
 }

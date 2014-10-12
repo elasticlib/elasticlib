@@ -30,14 +30,14 @@ import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.Event.EventBuilder;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import static store.server.TestUtil.LOREM_IPSUM;
 import store.server.repository.Repository;
 import store.server.service.RepositoriesService;
@@ -185,14 +185,14 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
-    public void postInfoTest() {
-        ContentInfo contentInfo = LOREM_IPSUM.getInfo();
+    public void addRevisionTest() {
+        Revision revision = LOREM_IPSUM.getRevision();
 
         Repository repository = newRepositoryMock();
-        when(repository.addContentInfo(contentInfo)).thenReturn(result);
+        when(repository.addRevision(revision)).thenReturn(result);
 
         try (Client client = newClient()) {
-            CommandResult actual = client.repositories().get(guid).addInfo(contentInfo);
+            CommandResult actual = client.repositories().get(guid).addRevision(revision);
             assertThat(actual).isEqualTo(result);
         }
     }
@@ -261,7 +261,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void getContentTest() throws IOException {
         Repository repository = newRepositoryMock();
-        when(repository.getContentInfoHead(hash)).thenReturn(singletonList(LOREM_IPSUM.getInfo()));
+        when(repository.getHead(hash)).thenReturn(singletonList(LOREM_IPSUM.getRevision()));
         when(repository.getContent(hash)).thenReturn(LOREM_IPSUM.getInputStream());
 
         try (Client client = newClient();
@@ -278,14 +278,14 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
-    public void getInfoTreeTest() {
-        ContentInfoTree tree = LOREM_IPSUM.getTree();
+    public void getTreeTest() {
+        RevisionTree tree = LOREM_IPSUM.getTree();
 
         Repository repository = newRepositoryMock();
-        when(repository.getContentInfoTree(hash)).thenReturn(tree);
+        when(repository.getTree(hash)).thenReturn(tree);
 
         try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getInfoTree(hash)).isEqualTo(tree);
+            assertThat(client.repositories().get(guid).getTree(hash)).isEqualTo(tree);
         }
     }
 
@@ -293,14 +293,14 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
-    public void getInfoHeadTest() {
-        List<ContentInfo> head = singletonList(LOREM_IPSUM.getInfo());
+    public void getHeadTest() {
+        List<Revision> head = singletonList(LOREM_IPSUM.getRevision());
 
         Repository repository = newRepositoryMock();
-        when(repository.getContentInfoHead(hash)).thenReturn(head);
+        when(repository.getHead(hash)).thenReturn(head);
 
         try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getInfoHead(hash)).isEqualTo(head);
+            assertThat(client.repositories().get(guid).getHead(hash)).isEqualTo(head);
         }
     }
 
@@ -346,16 +346,16 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
-    public void findInfoTest() {
+    public void findRevisionsTest() {
         List<IndexEntry> entries = singletonList(new IndexEntry(hash, LOREM_IPSUM.getHead()));
-        List<ContentInfo> infos = singletonList(LOREM_IPSUM.getInfo());
+        List<Revision> revisions = singletonList(LOREM_IPSUM.getRevision());
 
         Repository repository = newRepositoryMock();
         when(repository.find(query, first, size)).thenReturn(entries);
-        when(repository.getContentInfoRevisions(hash, LOREM_IPSUM.getHead())).thenReturn(infos);
+        when(repository.getRevisions(hash, LOREM_IPSUM.getHead())).thenReturn(revisions);
 
         try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).findInfo(query, first, size)).isEqualTo(infos);
+            assertThat(client.repositories().get(guid).findRevisions(query, first, size)).isEqualTo(revisions);
         }
     }
 

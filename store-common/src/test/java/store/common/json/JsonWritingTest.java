@@ -3,8 +3,6 @@ package store.common.json;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
-import static store.common.TestData.CONTENT_INFOS;
-import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -14,10 +12,10 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.REVISIONS;
+import static store.common.TestData.REVISION_TREE;
 import static store.common.TestData.STAGING_INFO;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
-import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
-import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -27,6 +25,8 @@ import static store.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonTestData.REVISIONS_JSON;
+import static store.common.json.JsonTestData.REVISION_TREE_JSON;
 import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import static store.common.json.JsonWriting.write;
 import static store.common.json.JsonWriting.writeAll;
@@ -48,9 +48,9 @@ public class JsonWritingTest {
      * Test.
      */
     @Test
-    public void writeContentInfoTest() {
-        for (int i = 0; i < CONTENT_INFOS.size(); i++) {
-            assertThat(write(CONTENT_INFOS.get(i))).isEqualTo(CONTENT_INFOS_JSON.get(i));
+    public void writeRevisionTest() {
+        for (int i = 0; i < REVISIONS.size(); i++) {
+            assertThat(write(REVISIONS.get(i))).isEqualTo(REVISIONS_JSON.get(i));
         }
     }
 
@@ -58,8 +58,8 @@ public class JsonWritingTest {
      * Test.
      */
     @Test
-    public void writeContentInfoTreeTest() {
-        assertThat(write(CONTENT_INFO_TREE)).isEqualTo(CONTENT_INFO_TREE_JSON);
+    public void writeRevisionTreeTest() {
+        assertThat(write(REVISION_TREE)).isEqualTo(REVISION_TREE_JSON);
     }
 
     /**

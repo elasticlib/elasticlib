@@ -8,10 +8,10 @@ import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.RepositoryStats;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 
 /**
  * An agent that computes statistics about a repository.
@@ -45,7 +45,7 @@ class StatsAgent extends Agent {
                                            current.getUpdates(),
                                            current.getDeletions(),
                                            add(current.getMetadataCounts(),
-                                               counts(repository.getContentInfoHead(event.getContent()))));
+                                               counts(repository.getHead(event.getContent()))));
             case UPDATE:
                 return new RepositoryStats(current.getCreations(),
                                            current.getUpdates() + 1,
@@ -87,10 +87,10 @@ class StatsAgent extends Agent {
         return counts;
     }
 
-    private static Map<String, Long> counts(List<ContentInfo> revisions) {
+    private static Map<String, Long> counts(List<Revision> revisions) {
         Map<String, Long> counts = new TreeMap<>();
-        for (ContentInfo info : revisions) {
-            for (String key : info.getMetadata().keySet()) {
+        for (Revision rev : revisions) {
+            for (String key : rev.getMetadata().keySet()) {
                 long value = counts.containsKey(key) ? counts.get(key) + 1 : 1;
                 counts.put(key, value);
             }
@@ -99,7 +99,7 @@ class StatsAgent extends Agent {
     }
 
     private Map<String, Long> diff(Event event) {
-        ContentInfoTree tree = repository.getContentInfoTree(event.getContent());
+        RevisionTree tree = repository.getTree(event.getContent());
         return substract(counts(tree.get(tree.getHead())),
                          counts(tree.get(previousHead(event))));
     }

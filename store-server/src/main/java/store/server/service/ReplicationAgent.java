@@ -6,9 +6,9 @@ import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.Operation;
+import store.common.model.RevisionTree;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
 
@@ -30,9 +30,9 @@ class ReplicationAgent extends Agent {
 
     @Override
     protected boolean process(Event event) {
-        ContentInfoTree tree = source.getContentInfoTree(event.getContent());
+        RevisionTree tree = source.getTree(event.getContent());
         if (tree.isDeleted()) {
-            destination.mergeContentInfoTree(tree);
+            destination.mergeTree(tree);
             return true;
 
         } else {
@@ -41,7 +41,7 @@ class ReplicationAgent extends Agent {
                 return false;
             }
             try (InputStream inputStream = inputStreamOpt.get()) {
-                CommandResult result = destination.mergeContentInfoTree(tree);
+                CommandResult result = destination.mergeTree(tree);
                 if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
                     destination.addContent(result.getTransactionId(), tree.getContent(), inputStream);
                 }

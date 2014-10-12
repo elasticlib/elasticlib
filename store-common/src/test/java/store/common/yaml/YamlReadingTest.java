@@ -6,8 +6,6 @@ import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
-import static store.common.TestData.CONTENT_INFOS;
-import static store.common.TestData.CONTENT_INFO_TREE;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -17,13 +15,13 @@ import static store.common.TestData.REPLICATION_DEFS;
 import static store.common.TestData.REPLICATION_INFOS;
 import static store.common.TestData.REPOSITORY_DEFS;
 import static store.common.TestData.REPOSITORY_INFOS;
+import static store.common.TestData.REVISIONS;
+import static store.common.TestData.REVISION_TREE;
 import static store.common.TestData.STAGING_INFO;
 import static store.common.TestUtil.assertMatches;
 import store.common.exception.NodeException;
 import store.common.mappable.Mappable;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -32,10 +30,10 @@ import store.common.model.ReplicationDef;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
-import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
-import static store.common.yaml.YamlTestData.CONTENT_INFO_TREE_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -45,6 +43,8 @@ import static store.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
 import static store.common.yaml.YamlTestData.REPOSITORY_INFOS_YAML;
+import static store.common.yaml.YamlTestData.REVISIONS_YAML;
+import static store.common.yaml.YamlTestData.REVISION_TREE_YAML;
 import static store.common.yaml.YamlTestData.STAGING_INFO_YAML;
 
 /**
@@ -64,9 +64,9 @@ public class YamlReadingTest {
      * Test.
      */
     @Test
-    public void readContentInfoTest() {
-        for (int i = 0; i < CONTENT_INFOS_YAML.size(); i++) {
-            assertThat(read(CONTENT_INFOS_YAML.get(i), ContentInfo.class)).isEqualTo(CONTENT_INFOS.get(i));
+    public void readRevisionTest() {
+        for (int i = 0; i < REVISIONS_YAML.size(); i++) {
+            assertThat(read(REVISIONS_YAML.get(i), Revision.class)).isEqualTo(REVISIONS.get(i));
         }
     }
 
@@ -74,8 +74,8 @@ public class YamlReadingTest {
      * Test.
      */
     @Test
-    public void readContentInfoTreeTest() {
-        assertThat(read(CONTENT_INFO_TREE_YAML, ContentInfoTree.class)).isEqualTo(CONTENT_INFO_TREE);
+    public void readRevisionTreeTest() {
+        assertThat(read(REVISION_TREE_YAML, RevisionTree.class)).isEqualTo(REVISION_TREE);
     }
 
     /**

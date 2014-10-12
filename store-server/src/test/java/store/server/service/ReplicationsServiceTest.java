@@ -17,9 +17,9 @@ import store.common.exception.UnknownRepositoryException;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfoTree;
 import store.common.model.Operation;
 import store.common.model.ReplicationInfo;
+import store.common.model.RevisionTree;
 import store.common.value.Value;
 import store.server.TestContent;
 import static store.server.TestUtil.LOREM_IPSUM;
@@ -267,9 +267,9 @@ public class ReplicationsServiceTest {
         Repository repository = repositoriesService.getRepository(SOURCE);
         try {
             try (InputStream inputStream = content.getInputStream()) {
-                CommandResult firstStepResult = repository.addContentInfo(content.getInfo());
+                CommandResult firstStepResult = repository.addRevision(content.getRevision());
                 CommandResult secondStepResult = repository.addContent(firstStepResult.getTransactionId(),
-                                                                       content.getInfo().getContent(),
+                                                                       content.getRevision().getContent(),
                                                                        inputStream);
 
                 assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
@@ -282,7 +282,7 @@ public class ReplicationsServiceTest {
 
     private void updateSourceContent(String newValue) {
         content = content.add("test", Value.of(newValue));
-        repositoriesService.getRepository(SOURCE).addContentInfo(content.getInfo());
+        repositoriesService.getRepository(SOURCE).addRevision(content.getRevision());
     }
 
     private void assertReplicationStarted() {
@@ -315,7 +315,7 @@ public class ReplicationsServiceTest {
     }
 
     private void assertDestinationHas(TestContent content) {
-        ContentInfoTree actual = repositoriesService.getRepository(DESTINATION).getContentInfoTree(content.getHash());
+        RevisionTree actual = repositoriesService.getRepository(DESTINATION).getTree(content.getHash());
         assertThat(actual).isEqualTo(content.getTree());
     }
 }

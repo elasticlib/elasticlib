@@ -21,8 +21,8 @@ import static store.client.util.Directories.home;
 import store.client.exception.RequestFailedException;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfo.ContentInfoBuilder;
+import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import store.common.yaml.YamlReader;
@@ -46,19 +46,19 @@ class Update extends AbstractCommand {
             throw new RequestFailedException("No defined editor");
         }
         Hash hash = parseHash(params.get(0));
-        List<ContentInfo> head = session.getRepository().getInfoHead(hash);
+        List<Revision> head = session.getRepository().getHead(hash);
         if (isDeleted(head)) {
             throw new RequestFailedException("This content is deleted");
         }
-        ContentInfo updated = update(editor, head);
+        Revision updated = update(editor, head);
         if (head.size() == 1 && head.get(0).getMetadata().equals(updated.getMetadata())) {
             throw new RequestFailedException("Not modified");
         }
-        CommandResult result = session.getRepository().addInfo(updated);
+        CommandResult result = session.getRepository().addRevision(updated);
         display.print(result);
     }
 
-    private static ContentInfo update(String editor, List<ContentInfo> head) {
+    private static Revision update(String editor, List<Revision> head) {
         try {
             Files.createDirectories(home());
             Path tmp = Files.createTempFile(home(), "tmp", ".yml");
@@ -66,7 +66,7 @@ class Update extends AbstractCommand {
                 write(head, tmp);
                 new ProcessBuilder(editor, tmp.toString()).start().waitFor();
 
-                return new ContentInfoBuilder()
+                return new RevisionBuilder()
                         .withContent(head.get(0).getContent())
                         .withLength(head.get(0).getLength())
                         .withParents(revisions(head))
@@ -84,14 +84,14 @@ class Update extends AbstractCommand {
         }
     }
 
-    private static void write(List<ContentInfo> head, Path file) throws IOException {
+    private static void write(List<Revision> head, Path file) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(file, Charsets.UTF_8);
                 YamlWriter yamlWriter = new YamlWriter(writer)) {
             if (head.size() == 1) {
                 yamlWriter.writeValue(Value.of(head.get(0).getMetadata()));
 
             } else {
-                for (ContentInfo info : head) {
+                for (Revision info : head) {
                     writer.write("#revision " + info.getRevision().asHexadecimalString());
                     writer.newLine();
                     yamlWriter.writeValue(Value.of(info.getMetadata()));

@@ -25,13 +25,13 @@ import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
+import store.common.model.Revision;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.server.TestContent;
@@ -150,7 +150,7 @@ public class RepositoryTest {
           dependsOnGroups = CREATE_REPOSITORY,
           expectedExceptions = ConflictException.class)
     public void addContentWithUnknownParentTest() {
-        repository.addContentInfo(UPDATED_LOREM_IPSUM.getInfo());
+        repository.addRevision(UPDATED_LOREM_IPSUM.getRevision());
     }
 
     /**
@@ -161,9 +161,9 @@ public class RepositoryTest {
     @Test(groups = ADD_CONTENT, dependsOnGroups = CREATE_REPOSITORY_CHECKS)
     public void addContentTest() throws IOException {
         try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            CommandResult firstStepResult = repository.addContentInfo(LOREM_IPSUM.getInfo());
+            CommandResult firstStepResult = repository.addRevision(LOREM_IPSUM.getRevision());
             CommandResult secondStepResult = repository.addContent(firstStepResult.getTransactionId(),
-                                                                   LOREM_IPSUM.getInfo().getContent(),
+                                                                   LOREM_IPSUM.getRevision().getContent(),
                                                                    inputStream);
 
             assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
@@ -199,17 +199,17 @@ public class RepositoryTest {
      * Test.
      */
     @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
-    public void getContentInfoHeadTest() {
-        List<ContentInfo> head = repository.getContentInfoHead(LOREM_IPSUM.getHash());
-        assertThat(head).containsExactly(LOREM_IPSUM.getInfo());
+    public void getHeadTest() {
+        List<Revision> head = repository.getHead(LOREM_IPSUM.getHash());
+        assertThat(head).containsExactly(LOREM_IPSUM.getRevision());
     }
 
     /**
      * Test.
      */
     @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
-    public void getContentInfoTreeTest() {
-        assertThat(repository.getContentInfoTree(LOREM_IPSUM.getHash())).isEqualTo(LOREM_IPSUM.getTree());
+    public void getTreeTest() {
+        assertThat(repository.getTree(LOREM_IPSUM.getHash())).isEqualTo(LOREM_IPSUM.getTree());
     }
 
     /**
@@ -218,8 +218,8 @@ public class RepositoryTest {
     @Test(groups = ADD_CONTENT_CHECKS,
           dependsOnGroups = ADD_CONTENT,
           expectedExceptions = UnknownContentException.class)
-    public void getContentInfoTreeWithUnknownHashTest() {
-        repository.getContentInfoTree(UNKNOWN_HASH);
+    public void getTreeWithUnknownHashTest() {
+        repository.getTree(UNKNOWN_HASH);
     }
 
     /**
@@ -269,7 +269,7 @@ public class RepositoryTest {
      */
     @Test(groups = UPDATE_CONTENT, dependsOnGroups = ADD_CONTENT_CHECKS)
     public void updateTest() {
-        CommandResult result = repository.addContentInfo(UPDATED_LOREM_IPSUM.getInfo());
+        CommandResult result = repository.addRevision(UPDATED_LOREM_IPSUM.getRevision());
         assertThat(result.getOperation()).isEqualTo(Operation.UPDATE);
     }
 
@@ -280,7 +280,7 @@ public class RepositoryTest {
           dependsOnGroups = UPDATE_CONTENT,
           expectedExceptions = ConflictException.class)
     public void updateWithConflictTest() {
-        repository.addContentInfo(LOREM_IPSUM.add(DESCRIPTION, Value.of("conflict")).getInfo());
+        repository.addRevision(LOREM_IPSUM.add(DESCRIPTION, Value.of("conflict")).getRevision());
     }
 
     /**
@@ -288,7 +288,7 @@ public class RepositoryTest {
      */
     @Test(groups = UPDATE_CONTENT_CHECKS, dependsOnGroups = UPDATE_CONTENT)
     public void updateAlreadyUpdatedTest() {
-        CommandResult result = repository.addContentInfo(UPDATED_LOREM_IPSUM.getInfo());
+        CommandResult result = repository.addRevision(UPDATED_LOREM_IPSUM.getRevision());
         assertThat(result.isNoOp()).isTrue();
     }
 
@@ -296,8 +296,8 @@ public class RepositoryTest {
      * Test.
      */
     @Test(groups = UPDATE_CONTENT_CHECKS, dependsOnGroups = UPDATE_CONTENT)
-    public void getContentInfoTreeAfterUpdateTest() {
-        assertThat(repository.getContentInfoTree(LOREM_IPSUM.getHash())).isEqualTo(UPDATED_LOREM_IPSUM.getTree());
+    public void getTreeAfterUpdateTest() {
+        assertThat(repository.getTree(LOREM_IPSUM.getHash())).isEqualTo(UPDATED_LOREM_IPSUM.getTree());
     }
 
     /**
@@ -376,8 +376,8 @@ public class RepositoryTest {
      * Test.
      */
     @Test(groups = DELETE_CONTENT_CHECKS, dependsOnGroups = DELETE_CONTENT)
-    public void getContentInfoTreeAfterDeleteTest() {
-        assertThat(repository.getContentInfoTree(LOREM_IPSUM.getHash())).isEqualTo(DELETED_LOREM_IPSUM.getTree());
+    public void getTreeAfterDeleteTest() {
+        assertThat(repository.getTree(LOREM_IPSUM.getHash())).isEqualTo(DELETED_LOREM_IPSUM.getTree());
     }
 
     /**
@@ -436,8 +436,8 @@ public class RepositoryTest {
     @Test(groups = CLOSE_REPOSITORY_CHECKS,
           dependsOnGroups = CLOSE_REPOSITORY,
           expectedExceptions = RepositoryClosedException.class)
-    public void getContentInfoTreeAfterCloseTest() {
-        repository.getContentInfoTree(UNKNOWN_HASH);
+    public void getTreeAfterCloseTest() {
+        repository.getTree(UNKNOWN_HASH);
     }
 
     /**

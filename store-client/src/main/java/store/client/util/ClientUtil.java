@@ -9,7 +9,7 @@ import store.client.exception.RequestFailedException;
 import store.common.client.Client;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 
 /**
  * Client utilities.
@@ -53,14 +53,14 @@ public final class ClientUtil {
     }
 
     /**
-     * Lists revisions of supplied head info.
+     * Lists revisions hashes of supplied head.
      *
-     * @param head A list of content infos.
-     * @return Their revisions.
+     * @param head A list of revisions.
+     * @return Their revisions hashes.
      */
-    public static Set<Hash> revisions(List<ContentInfo> head) {
+    public static Set<Hash> revisions(List<Revision> head) {
         Set<Hash> revs = new HashSet<>();
-        for (ContentInfo info : head) {
+        for (Revision info : head) {
             revs.add(info.getRevision());
         }
         return revs;
@@ -69,12 +69,12 @@ public final class ClientUtil {
     /**
      * Checks if supplied head is deleted.
      *
-     * @param head A list of content infos.
-     * @return true if head does not contains any not-deleted info.
+     * @param head A list of revisions.
+     * @return true if head does not contains any not-deleted revision.
      */
-    public static boolean isDeleted(List<ContentInfo> head) {
-        for (ContentInfo info : head) {
-            if (!info.isDeleted()) {
+    public static boolean isDeleted(List<Revision> head) {
+        for (Revision rev : head) {
+            if (!rev.isDeleted()) {
                 return false;
             }
         }

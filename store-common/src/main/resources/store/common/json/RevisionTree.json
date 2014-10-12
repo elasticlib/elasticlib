@@ -1,5 +1,5 @@
 {
-    "title": "contentInfoTree",
+    "title": "revisionTree",
     "type": "object",
     "properties": {
         "content": {

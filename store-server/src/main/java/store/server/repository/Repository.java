@@ -24,13 +24,13 @@ import store.common.exception.UnknownContentException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import store.server.manager.message.MessageManager;
 import store.server.manager.message.NewRepositoryEvent;
@@ -53,7 +53,7 @@ public class Repository {
     private final RepositoryDef def;
     private final StorageManager storageManager;
     private final MessageManager messageManager;
-    private final InfoManager infoManager;
+    private final RevisionManager revisionManager;
     private final HistoryManager historyManager;
     private final StatsManager statsManager;
     private final ContentManager contentManager;
@@ -71,7 +71,7 @@ public class Repository {
         this.def = def;
         storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, taskManager);
         this.messageManager = messageManager;
-        infoManager = new InfoManager(storageManager);
+        revisionManager = new RevisionManager(storageManager);
         historyManager = new HistoryManager(storageManager);
         statsManager = new StatsManager(storageManager);
         this.contentManager = contentManager;
@@ -196,7 +196,7 @@ public class Repository {
         return storageManager.inTransaction(new Query<StagingInfo>() {
             @Override
             public StagingInfo apply() {
-                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
                 if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
                     throw new ContentAlreadyPresentException();
                 }
@@ -225,20 +225,20 @@ public class Repository {
     }
 
     /**
-     * Adds an content info revision. If associated content is not present, started transaction is suspended so that
-     * caller may latter complete this operation by adding this content.
+     * Adds a revision. If associated content is not present, started transaction is suspended so that caller may latter
+     * complete this operation by adding this content.
      *
-     * @param contentInfo Content info revision.
+     * @param revision revision.
      * @return Actual operation result.
      */
-    public CommandResult addContentInfo(final ContentInfo contentInfo) {
+    public CommandResult addRevision(final Revision revision) {
         ensureOpen();
-        log("Adding content info to {}, with head {}", contentInfo.getContent(), contentInfo.getParents());
+        log("Adding revision to {}, with head {}", revision.getContent(), revision.getParents());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfo);
-                handleCommandResult(result, contentInfo.getContent());
+                CommandResult result = revisionManager.put(revision);
+                handleCommandResult(result, revision.getContent());
                 return result;
             }
         });
@@ -247,20 +247,20 @@ public class Repository {
     }
 
     /**
-     * Merges supplied content info revision tree with existing one, if any. If associated content is not present,
-     * started transaction is suspended so that caller may latter complete this operation by creating this content.
+     * Merges supplied revision tree with existing one, if any. If associated content is not present, started
+     * transaction is suspended so that caller may latter complete this operation by creating this content.
      *
-     * @param contentInfoTree Revision tree.
+     * @param tree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult mergeContentInfoTree(final ContentInfoTree contentInfoTree) {
+    public CommandResult mergeTree(final RevisionTree tree) {
         ensureOpen();
-        log("Merging content info tree of {}", contentInfoTree.getContent());
+        log("Merging revision tree of {}", tree.getContent());
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.put(contentInfoTree);
-                handleCommandResult(result, contentInfoTree.getContent());
+                CommandResult result = revisionManager.put(tree);
+                handleCommandResult(result, tree.getContent());
                 return result;
             }
         });
@@ -282,7 +282,7 @@ public class Repository {
         CommandResult result = storageManager.inTransaction(transactionId, new Command() {
             @Override
             public CommandResult apply() {
-                Optional<ContentInfoTree> treeOpt = infoManager.get(hash);
+                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
                 if (!treeOpt.isPresent() || treeOpt.get().isDeleted()) {
                     // This is unexpected as we have a resumed transaction at this point.
                     throw new BadRequestException();
@@ -310,7 +310,7 @@ public class Repository {
         CommandResult result = storageManager.inTransaction(new Command() {
             @Override
             public CommandResult apply() {
-                CommandResult result = infoManager.delete(hash, head);
+                CommandResult result = revisionManager.delete(hash, head);
                 handleCommandResult(result, hash);
                 return result;
             }
@@ -343,48 +343,48 @@ public class Repository {
     }
 
     /**
-     * Provides content info tree associated with supplied hash.
+     * Provides revision tree associated with supplied hash.
      *
      * @param hash Hash of the content.
-     * @return Corresponding info tree.
+     * @return Corresponding revision tree.
      */
-    public ContentInfoTree getContentInfoTree(final Hash hash) {
+    public RevisionTree getTree(Hash hash) {
         ensureOpen();
-        log("Returning content info tree of {}", hash);
-        return loadContentInfoTree(hash);
+        log("Returning revision tree of {}", hash);
+        return loadRevisionTree(hash);
     }
 
     /**
-     * Provides content info head revisions associated with supplied hash.
+     * Provides head revisions associated with supplied hash.
      *
      * @param hash Hash of the content.
-     * @return Corresponding info head revisions.
+     * @return Corresponding head revisions.
      */
-    public List<ContentInfo> getContentInfoHead(final Hash hash) {
+    public List<Revision> getHead(Hash hash) {
         ensureOpen();
-        log("Returning content info head of {}", hash);
-        ContentInfoTree tree = loadContentInfoTree(hash);
+        log("Returning head revisions of {}", hash);
+        RevisionTree tree = loadRevisionTree(hash);
         return tree.get(tree.getHead());
     }
 
     /**
-     * Provides requested content info revisions associated with supplied hash.
+     * Provides requested revisions associated with supplied hash.
      *
      * @param hash Hash of the content.
-     * @param revs Hash of revisions to return.
+     * @param revs Hash of the revisions to return.
      * @return Corresponding revisions.
      */
-    public List<ContentInfo> getContentInfoRevisions(Hash hash, Collection<Hash> revs) {
+    public List<Revision> getRevisions(Hash hash, Collection<Hash> revs) {
         ensureOpen();
-        log("Returning content info revs of {} [{}]", hash, on(", ").join(revs));
-        return loadContentInfoTree(hash).get(revs);
+        log("Returning revisions of {} [{}]", hash, on(", ").join(revs));
+        return loadRevisionTree(hash).get(revs);
     }
 
-    private ContentInfoTree loadContentInfoTree(final Hash hash) {
-        return storageManager.inTransaction(new Query<ContentInfoTree>() {
+    private RevisionTree loadRevisionTree(final Hash hash) {
+        return storageManager.inTransaction(new Query<RevisionTree>() {
             @Override
-            public ContentInfoTree apply() {
-                Optional<ContentInfoTree> tree = infoManager.get(hash);
+            public RevisionTree apply() {
+                Optional<RevisionTree> tree = revisionManager.get(hash);
                 if (!tree.isPresent()) {
                     throw new UnknownContentException();
                 }
@@ -418,7 +418,7 @@ public class Repository {
         return storageManager.inTransaction(new Query<Optional<InputStream>>() {
             @Override
             public Optional<InputStream> apply() {
-                Optional<ContentInfoTree> tree = infoManager.get(hash);
+                Optional<RevisionTree> tree = revisionManager.get(hash);
                 if (!tree.isPresent()) {
                     throw new UnknownContentException();
                 }

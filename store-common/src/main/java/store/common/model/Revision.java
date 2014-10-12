@@ -28,7 +28,7 @@ import store.common.value.Value;
 /**
  * Represents a revision of metadata about a content.
  */
-public class ContentInfo implements Mappable {
+public class Revision implements Mappable {
 
     private static final String CONTENT = "content";
     private static final String LENGTH = "length";
@@ -44,7 +44,7 @@ public class ContentInfo implements Mappable {
     private final boolean deleted;
     private final Map<String, Value> metadata;
 
-    private ContentInfo(ContentInfoBuilder builder) {
+    private Revision(RevisionBuilder builder) {
         content = requireNonNull(builder.content);
         length = requireNonNull(builder.length);
         revision = requireNonNull(builder.revision);
@@ -127,8 +127,8 @@ public class ContentInfo implements Mappable {
      * @param map A map of values.
      * @return A new instance.
      */
-    public static ContentInfo fromMap(Map<String, Value> map) {
-        ContentInfoBuilder builder = new ContentInfoBuilder()
+    public static Revision fromMap(Map<String, Value> map) {
+        RevisionBuilder builder = new RevisionBuilder()
                 .withContent(map.get(CONTENT).asHash())
                 .withLength(map.get(LENGTH).asLong());
 
@@ -159,10 +159,10 @@ public class ContentInfo implements Mappable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ContentInfo)) {
+        if (!(obj instanceof Revision)) {
             return false;
         }
-        ContentInfo other = (ContentInfo) obj;
+        Revision other = (Revision) obj;
         return new EqualsBuilder()
                 .append(content, other.content)
                 .append(length, other.length)
@@ -188,7 +188,7 @@ public class ContentInfo implements Mappable {
     /**
      * Builder.
      */
-    public static class ContentInfoBuilder {
+    public static class RevisionBuilder {
 
         private Hash content;
         private Long length;
@@ -203,7 +203,7 @@ public class ContentInfo implements Mappable {
          * @param hash The associated content hash.
          * @return this
          */
-        public ContentInfoBuilder withContent(Hash hash) {
+        public RevisionBuilder withContent(Hash hash) {
             this.content = hash;
             return this;
         }
@@ -214,7 +214,7 @@ public class ContentInfo implements Mappable {
          * @param length The associated content length.
          * @return this
          */
-        public ContentInfoBuilder withLength(long length) {
+        public RevisionBuilder withLength(long length) {
             this.length = length;
             return this;
         }
@@ -225,7 +225,7 @@ public class ContentInfo implements Mappable {
          * @param parents Hashes of parents revisions to add.
          * @return this
          */
-        public ContentInfoBuilder withParents(Set<Hash> parents) {
+        public RevisionBuilder withParents(Set<Hash> parents) {
             this.parents.addAll(parents);
             return this;
         }
@@ -236,7 +236,7 @@ public class ContentInfo implements Mappable {
          * @param parent parent revision to add.
          * @return this
          */
-        public ContentInfoBuilder withParent(Hash parent) {
+        public RevisionBuilder withParent(Hash parent) {
             parents.add(parent);
             return this;
         }
@@ -247,7 +247,7 @@ public class ContentInfo implements Mappable {
          * @param deleted true if associated content has actually been deleted.
          * @return this
          */
-        public ContentInfoBuilder withDeleted(boolean deleted) {
+        public RevisionBuilder withDeleted(boolean deleted) {
             this.deleted = deleted;
             return this;
         }
@@ -258,7 +258,7 @@ public class ContentInfo implements Mappable {
          * @param metadata Metadata.
          * @return this
          */
-        public ContentInfoBuilder withMetadata(Map<String, Value> metadata) {
+        public RevisionBuilder withMetadata(Map<String, Value> metadata) {
             this.metadata.putAll(metadata);
             return this;
         }
@@ -270,7 +270,7 @@ public class ContentInfo implements Mappable {
          * @param value Associated value.
          * @return this
          */
-        public ContentInfoBuilder with(String key, Value value) {
+        public RevisionBuilder with(String key, Value value) {
             this.metadata.put(key, value);
             return this;
         }
@@ -280,7 +280,7 @@ public class ContentInfo implements Mappable {
          *
          * @return A new ContentInfo instance.
          */
-        public ContentInfo computeRevisionAndBuild() {
+        public Revision computeRevisionAndBuild() {
             BsonWriter writer = new BsonWriter()
                     .put(CONTENT, content.getBytes())
                     .put(LENGTH, content.getBytes());
@@ -296,7 +296,7 @@ public class ContentInfo implements Mappable {
             writer.put(METADATA, metadata);
             try {
                 revision = IoUtil.copyAndDigest(new ByteArrayInputStream(writer.build()), sink()).getHash();
-                return new ContentInfo(this);
+                return new Revision(this);
 
             } catch (IOException e) {
                 // Actually impossible.
@@ -308,11 +308,11 @@ public class ContentInfo implements Mappable {
          * Build.
          *
          * @param revision The hash of this revision.
-         * @return A new ContentInfo instance.
+         * @return A new Revision instance.
          */
-        public ContentInfo build(Hash revision) {
+        public Revision build(Hash revision) {
             this.revision = revision;
-            return new ContentInfo(this);
+            return new Revision(this);
         }
     }
 }

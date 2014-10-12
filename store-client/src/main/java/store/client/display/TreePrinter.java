@@ -9,10 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 
 /**
- * Draws a text-based representation of a content info tree.
+ * Draws a text-based representation of a revision tree.
  */
 class TreePrinter {
 
@@ -26,11 +26,11 @@ class TreePrinter {
     private static final String DASH = "-";
     private static final String DOT = ".";
     private final int padding;
-    private final Function<ContentInfo, String> formatter;
+    private final Function<Revision, String> formatter;
     private final StringBuilder builder = new StringBuilder();
     private final List<Hash> previousBranches = new ArrayList<>();
     private final List<Hash> nextBranches = new ArrayList<>();
-    private ContentInfo current;
+    private Revision current;
     private int cursor;
 
     /**
@@ -39,7 +39,7 @@ class TreePrinter {
      * @param padding Padding between tree and revisions.
      * @param formatter Used to format revisions.
      */
-    public TreePrinter(int padding, Function<ContentInfo, String> formatter) {
+    public TreePrinter(int padding, Function<Revision, String> formatter) {
         this.padding = padding;
         this.formatter = formatter;
     }
@@ -47,10 +47,10 @@ class TreePrinter {
     /**
      * Adds a revision to drawed tree. Revisions are expected to be supplied in topological order.
      *
-     * @param contentInfo Next revision to draw.
+     * @param revision Next revision to draw.
      */
-    public void add(ContentInfo contentInfo) {
-        updateMapping(contentInfo);
+    public void add(Revision revision) {
+        updateMapping(revision);
         printPreRevisionLines();
         printRevisionLines();
         cleanMapping();
@@ -66,8 +66,8 @@ class TreePrinter {
         return builder.toString();
     }
 
-    private void updateMapping(ContentInfo contentInfo) {
-        current = contentInfo;
+    private void updateMapping(Revision revision) {
+        current = revision;
         previousBranches.clear();
         previousBranches.addAll(nextBranches);
         nextBranches.clear();

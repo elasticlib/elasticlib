@@ -15,8 +15,6 @@ import store.common.exception.NodeException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
-import static store.common.json.JsonTestData.CONTENT_INFOS_JSON;
-import static store.common.json.JsonTestData.CONTENT_INFO_TREE_JSON;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -24,6 +22,8 @@ import static store.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static store.common.json.JsonTestData.NODE_INFOS_ARRAY;
 import static store.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static store.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
+import static store.common.json.JsonTestData.REVISIONS_JSON;
+import static store.common.json.JsonTestData.REVISION_TREE_JSON;
 import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import static store.common.json.JsonValidation.hasArrayValue;
 import static store.common.json.JsonValidation.hasBooleanValue;
@@ -31,14 +31,14 @@ import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import store.common.json.schema.Schema;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
 import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryInfo;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import store.common.value.Value;
 
@@ -137,27 +137,27 @@ public class JsonValidationTest {
     @Test
     public void isValidStagingInfoTest() {
         assertThat(isValid(STAGING_INFO_JSON, StagingInfo.class)).isTrue();
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, StagingInfo.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, StagingInfo.class)).isFalse();
     }
 
     /**
      * Test.
      */
     @Test
-    public void isValidContentInfoTest() {
-        for (JsonObject json : CONTENT_INFOS_JSON) {
-            assertThat(isValid(json, ContentInfo.class)).isTrue();
+    public void isValidRevisionTest() {
+        for (JsonObject json : REVISIONS_JSON) {
+            assertThat(isValid(json, Revision.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, ContentInfo.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, Revision.class)).isFalse();
     }
 
     /**
      * Test.
      */
     @Test
-    public void isValidContentInfoTreeTest() {
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, ContentInfoTree.class)).isTrue();
-        assertThat(isValid(CONTENT_INFOS_JSON.get(0), ContentInfoTree.class)).isFalse();
+    public void isValidRevisionTreeTest() {
+        assertThat(isValid(REVISION_TREE_JSON, RevisionTree.class)).isTrue();
+        assertThat(isValid(REVISIONS_JSON.get(0), RevisionTree.class)).isFalse();
     }
 
     /**
@@ -168,8 +168,8 @@ public class JsonValidationTest {
         for (JsonObject json : COMMAND_RESULTS_JSON) {
             assertThat(isValid(json, CommandResult.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFOS_JSON.get(0), CommandResult.class)).isFalse();
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, CommandResult.class)).isFalse();
+        assertThat(isValid(REVISIONS_JSON.get(0), CommandResult.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, CommandResult.class)).isFalse();
     }
 
     /**
@@ -180,7 +180,7 @@ public class JsonValidationTest {
         for (JsonObject json : EVENTS_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, Event.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, Event.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, Event.class)).isFalse();
     }
 
     /**
@@ -191,7 +191,7 @@ public class JsonValidationTest {
         for (JsonObject json : INDEX_ENTRIES_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, IndexEntry.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, IndexEntry.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, IndexEntry.class)).isFalse();
     }
 
     /**
@@ -202,7 +202,7 @@ public class JsonValidationTest {
         for (JsonObject json : REPOSITORY_INFOS_JSON) {
             assertThat(isValid(json, RepositoryInfo.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, RepositoryInfo.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, RepositoryInfo.class)).isFalse();
     }
 
     /**
@@ -213,7 +213,7 @@ public class JsonValidationTest {
         for (JsonObject json : REPLICATION_INFOS_JSON) {
             assertThat(isValid(json, ReplicationInfo.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, ReplicationInfo.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, ReplicationInfo.class)).isFalse();
     }
 
     /**
@@ -224,7 +224,7 @@ public class JsonValidationTest {
         for (JsonObject json : NODE_DEFS_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, NodeDef.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeDef.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, NodeDef.class)).isFalse();
     }
 
     /**
@@ -235,7 +235,7 @@ public class JsonValidationTest {
         for (JsonObject json : NODE_INFOS_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, NodeInfo.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeInfo.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, NodeInfo.class)).isFalse();
     }
 
     /**
@@ -246,6 +246,6 @@ public class JsonValidationTest {
         for (JsonObject json : NODE_EXCEPTIONS_ARRAY.getValuesAs(JsonObject.class)) {
             assertThat(isValid(json, NodeException.class)).isTrue();
         }
-        assertThat(isValid(CONTENT_INFO_TREE_JSON, NodeException.class)).isFalse();
+        assertThat(isValid(REVISION_TREE_JSON, NodeException.class)).isFalse();
     }
 }

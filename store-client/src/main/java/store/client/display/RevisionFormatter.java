@@ -2,14 +2,14 @@ package store.client.display;
 
 import com.google.common.base.Function;
 import store.common.mappable.MapBuilder;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 import store.common.value.Value;
 import store.common.yaml.YamlWriter;
 
 /**
  * Revision formatter for tree representation.
  */
-class RevisionFormatter implements Function<ContentInfo, String> {
+class RevisionFormatter implements Function<Revision, String> {
 
     private static final String REVISION = "revision";
     private static final String DELETED = "deleted";
@@ -21,15 +21,15 @@ class RevisionFormatter implements Function<ContentInfo, String> {
     }
 
     @Override
-    public String apply(ContentInfo info) {
+    public String apply(Revision rev) {
         MapBuilder builder = new MapBuilder()
-                .put(REVISION, info.getRevision());
+                .put(REVISION, rev.getRevision());
 
-        if (info.isDeleted()) {
+        if (rev.isDeleted()) {
             builder.put(DELETED, true);
         }
-        if (!info.getMetadata().isEmpty()) {
-            builder.put(METADATA, info.getMetadata());
+        if (!rev.getMetadata().isEmpty()) {
+            builder.put(METADATA, rev.getMetadata());
         }
 
         Value value = Value.of(builder.build());

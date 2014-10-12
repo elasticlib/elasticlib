@@ -25,14 +25,14 @@ import java.util.TreeSet;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
-import store.common.model.ContentInfo.ContentInfoBuilder;
+import store.common.model.Revision.RevisionBuilder;
 import store.common.value.Value;
 import store.common.value.ValueType;
 
 /**
- * Represents a content info revision tree.
+ * Represents metadata revision tree of a given content.
  */
-public class ContentInfoTree implements Mappable {
+public class RevisionTree implements Mappable {
 
     private static final String CONTENT = "content";
     private static final String LENGTH = "length";
@@ -40,9 +40,9 @@ public class ContentInfoTree implements Mappable {
     private final SortedSet<Hash> head;
     private final SortedSet<Hash> tail;
     private final SortedSet<Hash> unknownParents;
-    private final Map<Hash, ContentInfo> nodes;
+    private final Map<Hash, Revision> nodes;
 
-    private ContentInfoTree(Map<Hash, ContentInfo> nodes) {
+    private RevisionTree(Map<Hash, Revision> nodes) {
         if (nodes.isEmpty()) {
             throw new IllegalArgumentException();
         }
@@ -52,13 +52,13 @@ public class ContentInfoTree implements Mappable {
         unknownParents = unmodifiableSortedSet(buildUnknownParents(nodes));
     }
 
-    private static SortedSet<Hash> buildHead(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildHead(Map<Hash, Revision> nodes) {
         Set<Hash> nonRoots = new HashSet<>(nodes.size());
-        for (ContentInfo info : nodes.values()) {
-            nonRoots.addAll(info.getParents());
+        for (Revision rev : nodes.values()) {
+            nonRoots.addAll(rev.getParents());
         }
         SortedSet<Hash> head = new TreeSet<>();
-        for (ContentInfo info : nodes.values()) {
+        for (Revision info : nodes.values()) {
             if (!nonRoots.contains(info.getRevision())) {
                 head.add(info.getRevision());
             }
@@ -66,20 +66,20 @@ public class ContentInfoTree implements Mappable {
         return head;
     }
 
-    private static SortedSet<Hash> buildTail(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildTail(Map<Hash, Revision> nodes) {
         SortedSet<Hash> tail = new TreeSet<>();
-        for (ContentInfo info : nodes.values()) {
-            if (intersection(info.getParents(), nodes.keySet()).isEmpty()) {
-                tail.add(info.getRevision());
+        for (Revision rev : nodes.values()) {
+            if (intersection(rev.getParents(), nodes.keySet()).isEmpty()) {
+                tail.add(rev.getRevision());
             }
         }
         return tail;
     }
 
-    private static SortedSet<Hash> buildUnknownParents(Map<Hash, ContentInfo> nodes) {
+    private static SortedSet<Hash> buildUnknownParents(Map<Hash, Revision> nodes) {
         SortedSet<Hash> unknownParents = new TreeSet<>();
-        for (ContentInfo info : nodes.values()) {
-            for (Hash parent : info.getParents()) {
+        for (Revision rev : nodes.values()) {
+            for (Hash parent : rev.getParents()) {
                 if (!nodes.containsKey(parent)) {
                     unknownParents.add(parent);
                 }
@@ -155,7 +155,7 @@ public class ContentInfoTree implements Mappable {
      * @param revision A revision hash.
      * @return Associated revision.
      */
-    public ContentInfo get(Hash revision) {
+    public Revision get(Hash revision) {
         if (!nodes.containsKey(revision)) {
             throw new NoSuchElementException();
         }
@@ -168,8 +168,8 @@ public class ContentInfoTree implements Mappable {
      * @param revs A collecton of revision hashes.
      * @return Associated revisions.
      */
-    public List<ContentInfo> get(Collection<Hash> revs) {
-        List<ContentInfo> revisions = new ArrayList<>(revs.size());
+    public List<Revision> get(Collection<Hash> revs) {
+        List<Revision> revisions = new ArrayList<>(revs.size());
         for (Hash rev : revs) {
             revisions.add(get(rev));
         }
@@ -191,20 +191,20 @@ public class ContentInfoTree implements Mappable {
      *
      * @return A collection of revisions.
      */
-    public List<ContentInfo> list() {
+    public List<Revision> list() {
         return new TopologicalSort(nodes, head).sort();
     }
 
     /**
-     * Adds a new node to this tree.
+     * Adds a new revision to this tree.
      *
-     * @param info revision to add.
+     * @param revision revision to add.
      * @return The new resulting tree.
      */
-    public ContentInfoTree add(ContentInfo info) {
-        return new ContentInfoTreeBuilder()
+    public RevisionTree add(Revision revision) {
+        return new RevisionTreeBuilder()
                 .addAll(nodes.values())
-                .add(info)
+                .add(revision)
                 .build();
     }
 
@@ -214,8 +214,8 @@ public class ContentInfoTree implements Mappable {
      * @param tree A revision tree.
      * @return The new resulting tree.
      */
-    public ContentInfoTree add(ContentInfoTree tree) {
-        return new ContentInfoTreeBuilder()
+    public RevisionTree add(RevisionTree tree) {
+        return new RevisionTreeBuilder()
                 .addAll(nodes.values())
                 .addAll(tree.nodes.values())
                 .build();
@@ -227,15 +227,15 @@ public class ContentInfoTree implements Mappable {
      *
      * @return The tree resulting from merge, possibly this one.
      */
-    public ContentInfoTree merge() {
+    public RevisionTree merge() {
         if (head.size() <= 1) {
             return this;
         }
         Iterator<Hash> headIt = head.iterator();
-        ContentInfo mergeHead = get(headIt.next());
-        ContentInfoTree workTree = this;
+        Revision mergeHead = get(headIt.next());
+        RevisionTree workTree = this;
         while (headIt.hasNext()) {
-            Optional<ContentInfo> merge = workTree.merge(mergeHead, get(headIt.next()));
+            Optional<Revision> merge = workTree.merge(mergeHead, get(headIt.next()));
             if (!merge.isPresent()) {
                 return this;
             }
@@ -244,7 +244,7 @@ public class ContentInfoTree implements Mappable {
                 workTree = workTree.add(mergeHead);
             }
         }
-        return add(new ContentInfoBuilder()
+        return add(new RevisionBuilder()
                 .withContent(mergeHead.getContent())
                 .withLength(mergeHead.getLength())
                 .withParents(head)
@@ -253,7 +253,7 @@ public class ContentInfoTree implements Mappable {
                 .computeRevisionAndBuild());
     }
 
-    private Optional<ContentInfo> merge(ContentInfo left, ContentInfo right) {
+    private Optional<Revision> merge(Revision left, Revision right) {
         if (left.isDeleted() != right.isDeleted()) {
             // No automatic merge in this particular case, it is a conflict.
             return Optional.absent();
@@ -261,7 +261,7 @@ public class ContentInfoTree implements Mappable {
         if (left.getMetadata().equals(right.getMetadata())) {
             return threeWayMerge(left, right, left.getMetadata());
         }
-        Set<ContentInfo> ancestors = latestCommonAncestors(left, right);
+        Set<Revision> ancestors = latestCommonAncestors(left, right);
         if (ancestors.isEmpty()) {
             return threeWayMerge(left, right, Collections.<String, Value>emptyMap());
         }
@@ -271,12 +271,12 @@ public class ContentInfoTree implements Mappable {
         return recursiveThreeWayMerge(left, right, ancestors);
     }
 
-    private Optional<ContentInfo> recursiveThreeWayMerge(ContentInfo left, ContentInfo right, Set<ContentInfo> ancestors) {
-        Iterator<ContentInfo> ancestorsIt = ancestors.iterator();
-        ContentInfo virtualAncestor = ancestorsIt.next();
-        ContentInfoTree workTree = this;
+    private Optional<Revision> recursiveThreeWayMerge(Revision left, Revision right, Set<Revision> ancestors) {
+        Iterator<Revision> ancestorsIt = ancestors.iterator();
+        Revision virtualAncestor = ancestorsIt.next();
+        RevisionTree workTree = this;
         while (ancestorsIt.hasNext()) {
-            Optional<ContentInfo> merge = workTree.merge(virtualAncestor, ancestorsIt.next());
+            Optional<Revision> merge = workTree.merge(virtualAncestor, ancestorsIt.next());
             if (!merge.isPresent()) {
                 return Optional.absent();
             }
@@ -288,13 +288,13 @@ public class ContentInfoTree implements Mappable {
         return threeWayMerge(left, right, virtualAncestor.getMetadata());
     }
 
-    private Optional<ContentInfo> threeWayMerge(ContentInfo left, ContentInfo right, Map<String, Value> base) {
+    private Optional<Revision> threeWayMerge(Revision left, Revision right, Map<String, Value> base) {
         Optional<Diff> diff = Diff.merge(Diff.of(base, left.getMetadata()),
                                          Diff.of(base, right.getMetadata()));
         if (!diff.isPresent()) {
             return Optional.absent();
         }
-        return Optional.of(new ContentInfoBuilder()
+        return Optional.of(new RevisionBuilder()
                 .withContent(left.getContent())
                 .withLength(left.getLength())
                 .withParent(left.getRevision())
@@ -304,24 +304,24 @@ public class ContentInfoTree implements Mappable {
                 .computeRevisionAndBuild());
     }
 
-    private Set<ContentInfo> latestCommonAncestors(ContentInfo left, ContentInfo right) {
-        Set<ContentInfo> commonAncestors = intersection(ancestors(left), ancestors(right));
+    private Set<Revision> latestCommonAncestors(Revision left, Revision right) {
+        Set<Revision> commonAncestors = intersection(ancestors(left), ancestors(right));
 
-        SetMultimap<ContentInfo, ContentInfo> dependencies = HashMultimap.create();
-        for (ContentInfo info : commonAncestors) {
+        SetMultimap<Revision, Revision> dependencies = HashMultimap.create();
+        for (Revision info : commonAncestors) {
             dependencies.putAll(info, intersection(commonAncestors, ancestors(info)));
         }
         return difference(commonAncestors, new HashSet<>(dependencies.values()));
     }
 
-    private Set<ContentInfo> ancestors(ContentInfo info) {
-        return ancestors(info, new HashSet<ContentInfo>());
+    private Set<Revision> ancestors(Revision info) {
+        return ancestors(info, new HashSet<Revision>());
     }
 
-    private Set<ContentInfo> ancestors(ContentInfo info, Set<ContentInfo> seed) {
-        for (Hash rev : info.getParents()) {
+    private Set<Revision> ancestors(Revision revision, Set<Revision> seed) {
+        for (Hash rev : revision.getParents()) {
             if (contains(rev)) {
-                ContentInfo parent = get(rev);
+                Revision parent = get(rev);
                 seed.add(parent);
                 ancestors(parent, seed);
             }
@@ -332,7 +332,7 @@ public class ContentInfoTree implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         List<Value> revisions = new ArrayList<>(nodes.size());
-        for (ContentInfo info : list()) {
+        for (Revision info : list()) {
             Map<String, Value> map = info.toMap();
             map.remove(CONTENT);
             map.remove(LENGTH);
@@ -351,14 +351,14 @@ public class ContentInfoTree implements Mappable {
      * @param map A map of values.
      * @return A new instance.
      */
-    public static ContentInfoTree fromMap(Map<String, Value> map) {
-        ContentInfoTreeBuilder builder = new ContentInfoTreeBuilder();
+    public static RevisionTree fromMap(Map<String, Value> map) {
+        RevisionTreeBuilder builder = new RevisionTreeBuilder();
         for (Value revision : map.get(REVISIONS).asList()) {
             Map<String, Value> infoMap = new HashMap<>();
             infoMap.put(CONTENT, map.get(CONTENT));
             infoMap.put(LENGTH, map.get(LENGTH));
             infoMap.putAll(revision.asMap());
-            builder.add(ContentInfo.fromMap(infoMap));
+            builder.add(Revision.fromMap(infoMap));
         }
         return builder.build();
     }
@@ -370,10 +370,10 @@ public class ContentInfoTree implements Mappable {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ContentInfoTree)) {
+        if (!(obj instanceof RevisionTree)) {
             return false;
         }
-        ContentInfoTree other = (ContentInfoTree) obj;
+        RevisionTree other = (RevisionTree) obj;
         return nodes.equals(other.nodes);
     }
 
@@ -385,30 +385,30 @@ public class ContentInfoTree implements Mappable {
     /**
      * Builder.
      */
-    public static class ContentInfoTreeBuilder {
+    public static class RevisionTreeBuilder {
 
-        private final Map<Hash, ContentInfo> nodes = new HashMap<>();
+        private final Map<Hash, Revision> nodes = new HashMap<>();
 
         /**
          * Add a revision.
          *
-         * @param info Revision to add.
+         * @param rev Revision to add.
          * @return this
          */
-        public ContentInfoTreeBuilder add(ContentInfo info) {
-            nodes.put(info.getRevision(), info);
+        public RevisionTreeBuilder add(Revision rev) {
+            nodes.put(rev.getRevision(), rev);
             return this;
         }
 
         /**
          * Add some revisions.
          *
-         * @param infos Revisions to add.
+         * @param revisions Revisions to add.
          * @return this
          */
-        public ContentInfoTreeBuilder addAll(Collection<ContentInfo> infos) {
-            for (ContentInfo info : infos) {
-                nodes.put(info.getRevision(), info);
+        public RevisionTreeBuilder addAll(Collection<Revision> revisions) {
+            for (Revision rev : revisions) {
+                nodes.put(rev.getRevision(), rev);
             }
             return this;
         }
@@ -416,10 +416,10 @@ public class ContentInfoTree implements Mappable {
         /**
          * Build tree.
          *
-         * @return A new ContentInfoTree instance.
+         * @return A new RevisionTree instance.
          */
-        public ContentInfoTree build() {
-            return new ContentInfoTree(nodes);
+        public RevisionTree build() {
+            return new RevisionTree(nodes);
         }
     }
 
@@ -428,9 +428,9 @@ public class ContentInfoTree implements Mappable {
      */
     private static class TopologicalSort {
 
-        private final Map<Hash, ContentInfo> unsorted;
+        private final Map<Hash, Revision> unsorted;
         private final Collection<Hash> head;
-        private final List<ContentInfo> sorted = new ArrayList<>();
+        private final List<Revision> sorted = new ArrayList<>();
 
         /**
          * Constructor.
@@ -438,7 +438,7 @@ public class ContentInfoTree implements Mappable {
          * @param nodes Nodes to sort, mapped by their revisions hashes.
          * @param head head revisions hashes.
          */
-        public TopologicalSort(Map<Hash, ContentInfo> nodes, Collection<Hash> head) {
+        public TopologicalSort(Map<Hash, Revision> nodes, Collection<Hash> head) {
             unsorted = new HashMap<>(nodes);
             this.head = head;
         }
@@ -448,7 +448,7 @@ public class ContentInfoTree implements Mappable {
          *
          * @return A topologically ordered list.
          */
-        public List<ContentInfo> sort() {
+        public List<Revision> sort() {
             for (Hash seed : head) {
                 visit(unsorted.get(seed));
             }
@@ -457,7 +457,7 @@ public class ContentInfoTree implements Mappable {
             return sorted;
         }
 
-        private void visit(ContentInfo info) {
+        private void visit(Revision info) {
             for (Hash parent : info.getParents()) {
                 if (unsorted.containsKey(parent)) {
                     visit(unsorted.get(parent));

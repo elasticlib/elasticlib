@@ -11,10 +11,10 @@ import store.common.hash.Digest;
 import store.common.hash.Hash;
 import static store.common.metadata.Properties.Common.CONTENT_TYPE;
 import static store.common.metadata.Properties.Common.FILE_NAME;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfo.ContentInfoBuilder;
-import store.common.model.ContentInfoTree;
-import store.common.model.ContentInfoTree.ContentInfoTreeBuilder;
+import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
+import store.common.model.RevisionTree;
+import store.common.model.RevisionTree.RevisionTreeBuilder;
 import static store.common.util.IoUtil.copyAndDigest;
 import store.common.value.Value;
 
@@ -24,9 +24,9 @@ import store.common.value.Value;
 public final class TestContent {
 
     private final byte[] bytes;
-    private final ContentInfoTree tree;
+    private final RevisionTree tree;
 
-    private TestContent(byte[] bytes, ContentInfoTree tree) {
+    private TestContent(byte[] bytes, RevisionTree tree) {
         this.bytes = bytes;
         this.tree = tree;
     }
@@ -44,7 +44,7 @@ public final class TestContent {
 
             Digest digest = copyAndDigest(inputStream, outputStream);
 
-            ContentInfo info = new ContentInfoBuilder()
+            Revision revision = new RevisionBuilder()
                     .withLength(digest.getLength())
                     .withContent(digest.getHash())
                     .with(FILE_NAME.key(), Value.of(filename))
@@ -52,7 +52,7 @@ public final class TestContent {
                     .computeRevisionAndBuild();
 
             return new TestContent(outputStream.toByteArray(),
-                                   new ContentInfoTreeBuilder().add(info).build());
+                                   new RevisionTreeBuilder().add(revision).build());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -68,8 +68,8 @@ public final class TestContent {
      * @return A new TestContent instance.
      */
     public TestContent add(String key, Value value) {
-        ContentInfo head = getInfo();
-        return new TestContent(bytes, tree.add(new ContentInfoBuilder()
+        Revision head = getRevision();
+        return new TestContent(bytes, tree.add(new RevisionBuilder()
                 .withParent(head.getRevision())
                 .withLength(head.getLength())
                 .withContent(head.getContent())
@@ -85,8 +85,8 @@ public final class TestContent {
      * @return A new TestContent instance.
      */
     public TestContent delete() {
-        ContentInfo head = getInfo();
-        return new TestContent(bytes, tree.add(new ContentInfoBuilder()
+        Revision head = getRevision();
+        return new TestContent(bytes, tree.add(new RevisionBuilder()
                 .withParent(head.getRevision())
                 .withLength(head.getLength())
                 .withContent(head.getContent())
@@ -112,14 +112,14 @@ public final class TestContent {
      * @return This content's filename.
      */
     public String filename() {
-        return getInfo().getMetadata().get(FILE_NAME.key()).asString();
+        return getRevision().getMetadata().get(FILE_NAME.key()).asString();
     }
 
     /**
      * @return This content's type.
      */
     public String contentType() {
-        return getInfo().getMetadata().get(CONTENT_TYPE.key()).asString();
+        return getRevision().getMetadata().get(CONTENT_TYPE.key()).asString();
     }
 
     /**
@@ -137,16 +137,16 @@ public final class TestContent {
     }
 
     /**
-     * @return Head info on this content. Fails if head is not a singleton.
+     * @return The single head revision on this content. Fails if head is not a singleton.
      */
-    public ContentInfo getInfo() {
+    public Revision getRevision() {
         return tree.get(getOnlyElement(tree.getHead()));
     }
 
     /**
      * @return A tree containing the info revision of this content.
      */
-    public ContentInfoTree getTree() {
+    public RevisionTree getTree() {
         return tree;
     }
 }

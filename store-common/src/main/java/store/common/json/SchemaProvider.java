@@ -13,8 +13,6 @@ import store.common.exception.NodeException;
 import store.common.json.schema.Schema;
 import store.common.model.AgentInfo;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -24,6 +22,8 @@ import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 
 /**
@@ -36,8 +36,8 @@ final class SchemaProvider {
     static {
         register(CommandResult.class,
                  StagingInfo.class,
-                 ContentInfo.class,
-                 ContentInfoTree.class,
+                 Revision.class,
+                 RevisionTree.class,
                  Event.class,
                  IndexEntry.class,
                  RepositoryDef.class,

@@ -21,9 +21,8 @@ import store.common.hash.Hash;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
+import store.common.model.Event.EventBuilder;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
 import store.common.model.NodeInfo;
@@ -33,6 +32,10 @@ import store.common.model.ReplicationInfo;
 import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
+import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
+import store.common.model.RevisionTree;
+import store.common.model.RevisionTree.RevisionTreeBuilder;
 import store.common.model.StagingInfo;
 import store.common.value.Value;
 
@@ -46,13 +49,13 @@ public final class TestData {
      */
     public static final StagingInfo STAGING_INFO;
     /**
-     * Some ContentInfo instances.
+     * Some Revision instances.
      */
-    public static final List<ContentInfo> CONTENT_INFOS = new ArrayList<>();
+    public static final List<Revision> REVISIONS = new ArrayList<>();
     /**
-     * A ContentInfoTree instance.
+     * A RevisionTree instance.
      */
-    public static final ContentInfoTree CONTENT_INFO_TREE;
+    public static final RevisionTree REVISION_TREE;
     /**
      * Some Event instances.
      */
@@ -108,28 +111,28 @@ public final class TestData {
 
         STAGING_INFO = new StagingInfo(GUIDS[0], new Hash(HASHES[1]), 123456L);
 
-        CONTENT_INFOS.add(new ContentInfo.ContentInfoBuilder()
+        REVISIONS.add(new RevisionBuilder()
                 .withContent(new Hash(HASHES[0]))
                 .withLength(10)
                 .with("text", Value.of("ipsum lorem"))
                 .build(new Hash(REVS[0])));
 
-        CONTENT_INFOS.add(new ContentInfo.ContentInfoBuilder()
+        REVISIONS.add(new RevisionBuilder()
                 .withContent(new Hash(HASHES[1]))
                 .withLength(120)
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])));
 
-        CONTENT_INFO_TREE = new ContentInfoTree.ContentInfoTreeBuilder()
-                .add(CONTENT_INFOS.get(0))
-                .add(new ContentInfo.ContentInfoBuilder()
+        REVISION_TREE = new RevisionTreeBuilder()
+                .add(REVISIONS.get(0))
+                .add(new RevisionBuilder()
                 .withContent(new Hash(HASHES[0]))
                 .withLength(10)
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])))
                 .build();
 
-        EVENTS.add(new Event.EventBuilder()
+        EVENTS.add(new EventBuilder()
                 .withSeq(0)
                 .withContent(new Hash(HASHES[0]))
                 .withRevisions(new TreeSet<>(singleton(new Hash(REVS[0]))))
@@ -137,7 +140,7 @@ public final class TestData {
                 .withOperation(Operation.CREATE)
                 .build());
 
-        EVENTS.add(new Event.EventBuilder()
+        EVENTS.add(new EventBuilder()
                 .withSeq(1)
                 .withContent(new Hash(HASHES[1]))
                 .withRevisions(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))

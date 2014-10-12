@@ -40,7 +40,7 @@ final class CommandProvider {
                                                                          new Update(),
                                                                          new Delete(),
                                                                          new Get(),
-                                                                         new Info(),
+                                                                         new Revisions(),
                                                                          new Head(),
                                                                          new Tree(),
                                                                          new Find(),

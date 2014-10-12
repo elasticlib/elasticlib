@@ -4,7 +4,7 @@ import java.util.List;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 
 class Find extends AbstractCommand {
 
@@ -22,13 +22,13 @@ class Find extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         int cursor = 0;
-        List<ContentInfo> infos;
+        List<Revision> revisions;
         do {
-            infos = session.getRepository().findInfo(params.get(0), cursor, CHUNK_SIZE);
-            for (ContentInfo info : infos) {
-                cursor += infos.size();
-                display.print(info);
+            revisions = session.getRepository().findRevisions(params.get(0), cursor, CHUNK_SIZE);
+            for (Revision rev : revisions) {
+                cursor += revisions.size();
+                display.print(rev);
             }
-        } while (infos.size() >= CHUNK_SIZE);
+        } while (revisions.size() >= CHUNK_SIZE);
     }
 }

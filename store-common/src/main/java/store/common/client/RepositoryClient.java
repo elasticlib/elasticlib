@@ -23,10 +23,10 @@ import static store.common.client.ClientUtil.result;
 import store.common.hash.Hash;
 import static store.common.json.JsonWriting.write;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 
 /**
  * Client to a remote repository.
@@ -34,11 +34,11 @@ import store.common.model.IndexEntry;
 public class RepositoryClient {
 
     private static final String CONTENT = "content";
-    private static final String INFO = "info";
+    private static final String REVISION = "revision";
     private static final String INDEX = "index";
     private static final String HISTORY = "history";
     private static final String CONTENT_TEMPLATE = "content/{hash}";
-    private static final String INFO_TEMPLATE = "info/{hash}";
+    private static final String REVISION_TEMPLATE = "revision/{hash}";
     private static final String TX_ID = "txId";
     private static final String HASH = "hash";
     private static final String REV = "rev";
@@ -63,16 +63,16 @@ public class RepositoryClient {
     }
 
     /**
-     * Add info about a (possibly new) content.
+     * Add revision about a (possibly new) content.
      *
-     * @param info New head revision.
+     * @param revision New head revision.
      * @return Actual command result.
      */
-    public CommandResult addInfo(ContentInfo info) {
+    public CommandResult addRevision(Revision revision) {
         return result(resource
-                .path(INFO)
+                .path(REVISION)
                 .request()
-                .post(json(write(info))));
+                .post(json(write(revision))));
     }
 
     /**
@@ -114,51 +114,51 @@ public class RepositoryClient {
     }
 
     /**
-     * Provides content info tree for a given content.
+     * Provides revision tree of a given content.
      *
      * @param hash Content hash.
-     * @return Corresponding info tree.
+     * @return Corresponding revision tree.
      */
-    public ContentInfoTree getInfoTree(Hash hash) {
-        Response response = resource.path(INFO_TEMPLATE)
+    public RevisionTree getTree(Hash hash) {
+        Response response = resource.path(REVISION_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
 
-        return read(response, ContentInfoTree.class);
+        return read(response, RevisionTree.class);
     }
 
     /**
-     * Provides info head revisions for a given content.
+     * Provides head revisions of a given content.
      *
      * @param hash Content hash.
-     * @return Corresponding info head.
+     * @return Corresponding head revisions.
      */
-    public List<ContentInfo> getInfoHead(Hash hash) {
-        return readAll(infoHead(hash), ContentInfo.class);
+    public List<Revision> getHead(Hash hash) {
+        return readAll(head(hash), Revision.class);
     }
 
     /**
-     * Provides info head revisions for a given content, or an empty list if this content does not exist.
+     * Provides head revisions of a given content, or an empty list if this content does not exist.
      *
      * @param hash Content hash.
-     * @return Corresponding info head, if any.
+     * @return Corresponding head, if any.
      */
-    public List<ContentInfo> getInfoHeadIfAny(Hash hash) {
-        Response response = infoHead(hash);
+    public List<Revision> getHeadIfAny(Hash hash) {
+        Response response = head(hash);
         try {
             if (response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode()) {
                 return emptyList();
             }
-            return readAll(response, ContentInfo.class);
+            return readAll(response, Revision.class);
 
         } finally {
             response.close();
         }
     }
 
-    private Response infoHead(Hash hash) {
-        return resource.path(INFO_TEMPLATE)
+    private Response head(Hash hash) {
+        return resource.path(REVISION_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, HEAD)
                 .request()
@@ -222,22 +222,22 @@ public class RepositoryClient {
     }
 
     /**
-     * Find content infos matching a given query in a paginated way.
+     * Find revisions matching a given query in a paginated way.
      *
      * @param query Query.
      * @param from First item to return.
      * @param size Number of items to return.
      * @return A list of content infos.
      */
-    public List<ContentInfo> findInfo(String query, int from, int size) {
-        Response response = resource.path(INFO)
+    public List<Revision> findRevisions(String query, int from, int size) {
+        Response response = resource.path(REVISION)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)
                 .request()
                 .get();
 
-        return readAll(response, ContentInfo.class);
+        return readAll(response, Revision.class);
     }
 
     /**

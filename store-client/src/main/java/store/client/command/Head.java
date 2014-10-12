@@ -6,7 +6,7 @@ import store.client.display.Display;
 import store.client.http.Session;
 import static store.client.util.ClientUtil.parseHash;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 
 class Head extends AbstractCommand {
 
@@ -16,14 +16,14 @@ class Head extends AbstractCommand {
 
     @Override
     public String description() {
-        return "Print info head revisions of an existing content";
+        return "Print head revisions of an existing content";
     }
 
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
-        for (ContentInfo info : session.getRepository().getInfoHead(hash)) {
-            display.print(info);
+        for (Revision rev : session.getRepository().getHead(hash)) {
+            display.print(rev);
         }
     }
 }

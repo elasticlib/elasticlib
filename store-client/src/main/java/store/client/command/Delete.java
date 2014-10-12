@@ -10,7 +10,7 @@ import static store.client.util.ClientUtil.parseHash;
 import static store.client.util.ClientUtil.revisions;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
+import store.common.model.Revision;
 
 class Delete extends AbstractCommand {
 
@@ -26,7 +26,7 @@ class Delete extends AbstractCommand {
     @Override
     public void execute(Display display, Session session, ClientConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
-        List<ContentInfo> head = session.getRepository().getInfoHead(hash);
+        List<Revision> head = session.getRepository().getHead(hash);
         if (isDeleted(head)) {
             throw new RequestFailedException("This content is already deleted");
         }

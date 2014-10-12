@@ -7,8 +7,8 @@ import static store.common.TestUtil.readString;
 final class YamlTestData {
 
     public static final String STAGING_INFO_YAML;
-    public static final List<String> CONTENT_INFOS_YAML = new ArrayList<>();
-    public static final String CONTENT_INFO_TREE_YAML;
+    public static final List<String> REVISIONS_YAML = new ArrayList<>();
+    public static final String REVISION_TREE_YAML;
     public static final String EVENTS_YAML;
     public static final List<String> COMMAND_RESULTS_YAML = new ArrayList<>();
     public static final String INDEX_ENTRIES_YAML;
@@ -25,10 +25,10 @@ final class YamlTestData {
 
         STAGING_INFO_YAML = readString(clazz, "stagingInfo.yml");
 
-        CONTENT_INFOS_YAML.add(readString(clazz, "contentInfo0.yml"));
-        CONTENT_INFOS_YAML.add(readString(clazz, "contentInfo1.yml"));
+        REVISIONS_YAML.add(readString(clazz, "revision0.yml"));
+        REVISIONS_YAML.add(readString(clazz, "revision1.yml"));
 
-        CONTENT_INFO_TREE_YAML = readString(clazz, "contentInfoTree.yml");
+        REVISION_TREE_YAML = readString(clazz, "revisionTree.yml");
 
         EVENTS_YAML = readString(clazz, "events.yml");
 

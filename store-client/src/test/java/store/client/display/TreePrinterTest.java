@@ -4,8 +4,8 @@ import com.google.common.base.Function;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfo.ContentInfoBuilder;
+import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
 
 /**
  * Unit tests.
@@ -109,21 +109,21 @@ public class TreePrinterTest {
         return builder.toString();
     }
 
-    private static String tree(ContentInfo... infos) {
-        TreePrinter printer = new TreePrinter(2, new Function<ContentInfo, String>() {
+    private static String tree(Revision... revisions) {
+        TreePrinter printer = new TreePrinter(2, new Function<Revision, String>() {
             @Override
-            public String apply(ContentInfo info) {
-                return info.getRevision().asHexadecimalString();
+            public String apply(Revision rev) {
+                return rev.getRevision().asHexadecimalString();
             }
         });
-        for (ContentInfo info : infos) {
+        for (Revision info : revisions) {
             printer.add(info);
         }
         return printer.print();
     }
 
-    private static ContentInfo revision(String rev, String... parents) {
-        ContentInfoBuilder builder = new ContentInfoBuilder()
+    private static Revision revision(String rev, String... parents) {
+        RevisionBuilder builder = new RevisionBuilder()
                 .withContent(new Hash("ff"))
                 .withLength(1024);
 

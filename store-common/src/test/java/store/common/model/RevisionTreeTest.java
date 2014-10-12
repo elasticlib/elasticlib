@@ -14,24 +14,24 @@ import org.fest.assertions.api.IterableAssert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo.ContentInfoBuilder;
-import store.common.model.ContentInfoTree.ContentInfoTreeBuilder;
+import store.common.model.Revision.RevisionBuilder;
+import store.common.model.RevisionTree.RevisionTreeBuilder;
 import store.common.value.Value;
 
 /**
  * Unit tests.
  */
-public class ContentInfoTreeTest {
+public class RevisionTreeTest {
 
-    private final ContentInfo a0;
-    private final ContentInfo a1;
-    private final ContentInfo a2;
-    private final ContentInfo a3;
-    private final ContentInfo a4;
-    private final ContentInfo b2;
-    private final ContentInfo c3;
-    private final ContentInfo d4;
-    private final ContentInfo d5;
+    private final Revision a0;
+    private final Revision a1;
+    private final Revision a2;
+    private final Revision a3;
+    private final Revision a4;
+    private final Revision b2;
+    private final Revision c3;
+    private final Revision d4;
+    private final Revision d5;
 
     {
         //
@@ -88,25 +88,25 @@ public class ContentInfoTreeTest {
 
     }
 
-    private static ContentInfo revision(String rev, String... parents) {
+    private static Revision revision(String rev, String... parents) {
         return builder(parents)
                 .build(new Hash(rev));
     }
 
-    private static ContentInfo revision(String rev, Map<String, Value> metadata, String... parents) {
+    private static Revision revision(String rev, Map<String, Value> metadata, String... parents) {
         return builder(parents)
                 .withMetadata(metadata)
                 .build(new Hash(rev));
     }
 
-    private static ContentInfo deleted(String rev, String... parents) {
+    private static Revision deleted(String rev, String... parents) {
         return builder(parents)
                 .withDeleted(true)
                 .build(new Hash(rev));
     }
 
-    private static ContentInfoBuilder builder(String... parents) {
-        ContentInfoBuilder builder = new ContentInfoBuilder()
+    private static RevisionBuilder builder(String... parents) {
+        RevisionBuilder builder = new RevisionBuilder()
                 .withContent(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))
                 .withLength(1024);
 
@@ -116,17 +116,17 @@ public class ContentInfoTreeTest {
         return builder;
     }
 
-    private static Object[] treeData(ContentInfo... revisions) {
+    private static Object[] treeData(Revision... revisions) {
         return new Object[]{tree(revisions)};
     }
 
-    private static ContentInfoTree tree(ContentInfo... infos) {
-        return new ContentInfoTreeBuilder()
+    private static RevisionTree tree(Revision... infos) {
+        return new RevisionTreeBuilder()
                 .addAll(asList(infos))
                 .build();
     }
 
-    private static Hash[] revisions(ContentInfo... infos) {
+    private static Hash[] revisions(Revision... infos) {
         Hash[] revisions = new Hash[infos.length];
         for (int i = 0; i < infos.length; i++) {
             revisions[i] = infos[i].getRevision();
@@ -139,7 +139,7 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void getTest() {
-        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        RevisionTree tree = tree(a0, a1, a2, a3, b2, a4);
         Hash rev = a3.getRevision();
 
         assertThat(tree.get(rev)).isEqualTo(a3);
@@ -150,7 +150,7 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void getBulkTest() {
-        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        RevisionTree tree = tree(a0, a1, a2, a3, b2, a4);
         Collection<Hash> revs = Arrays.asList(b2.getRevision(), a4.getRevision());
 
         assertThat(tree.get(revs)).containsExactly(b2, a4);
@@ -161,7 +161,7 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void containsTest() {
-        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        RevisionTree tree = tree(a0, a1, a2, a3, b2, a4);
 
         assertThat(tree.contains(a3.getRevision())).isTrue();
         assertThat(tree.contains(d5.getRevision())).isFalse();
@@ -180,7 +180,7 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void hashcodeTest() {
-        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        RevisionTree tree = tree(a0, a1, a2, a3, b2, a4);
 
         assertThat(tree.hashCode()).isEqualTo(tree(a0, a1, a2, a3, b2, a4).hashCode());
         assertThat(tree.hashCode()).isNotEqualTo(tree(a0, a1, a2, a3).hashCode());
@@ -192,7 +192,7 @@ public class ContentInfoTreeTest {
     @Test
     @SuppressWarnings({"IncompatibleEquals", "ObjectEqualsNull"})
     public void equalsTest() {
-        ContentInfoTree tree = tree(a0, a1, a2, a3, b2, a4);
+        RevisionTree tree = tree(a0, a1, a2, a3, b2, a4);
 
         assertThat(tree.equals(tree(a0, a1, a2, a3, b2, a4))).isTrue();
         assertThat(tree.equals(tree(a0, a1, a2, a3))).isFalse();
@@ -223,25 +223,25 @@ public class ContentInfoTreeTest {
      * @param tree Input tree
      */
     @Test(dataProvider = "listTestDataProvider")
-    public void listTest(ContentInfoTree tree) {
-        List<ContentInfo> list = tree.list();
-        for (ContentInfo info : list) {
+    public void listTest(RevisionTree tree) {
+        List<Revision> list = tree.list();
+        for (Revision info : list) {
             for (Hash parent : info.getParents()) {
                 assertOrder(list, info, tree.get(parent));
             }
         }
     }
 
-    private static void assertOrder(List<ContentInfo> list, ContentInfo first, ContentInfo second) {
+    private static void assertOrder(List<Revision> list, Revision first, Revision second) {
         assertThat(list.indexOf(first))
                 .as(format(list) + ": " + first.getRevision() + " < " + second.getRevision())
                 .isLessThan(list.indexOf(second));
     }
 
-    private static String format(List<ContentInfo> list) {
-        return Lists.transform(list, new Function<ContentInfo, Hash>() {
+    private static String format(List<Revision> list) {
+        return Lists.transform(list, new Function<Revision, Hash>() {
             @Override
-            public Hash apply(ContentInfo info) {
+            public Hash apply(Revision info) {
                 return info.getRevision();
             }
         }).toString();
@@ -271,7 +271,7 @@ public class ContentInfoTreeTest {
      * @param expected Expected output
      */
     @Test(dataProvider = "getHeadTestDataProvider")
-    public void getHeadTest(ContentInfoTree tree, Hash[] expected) {
+    public void getHeadTest(RevisionTree tree, Hash[] expected) {
         assertThat(tree.getHead()).containsExactly(expected);
     }
 
@@ -299,7 +299,7 @@ public class ContentInfoTreeTest {
      * @param expected Expected output
      */
     @Test(dataProvider = "getTailTestDataProvider")
-    public void getTailTest(ContentInfoTree tree, Hash[] expected) {
+    public void getTailTest(RevisionTree tree, Hash[] expected) {
         assertThat(tree.getTail()).containsExactly(expected);
     }
 
@@ -327,7 +327,7 @@ public class ContentInfoTreeTest {
      * @param expected Expected output
      */
     @Test(dataProvider = "getUnknownParentsTestDataProvider")
-    public void getUnknownParentsTest(ContentInfoTree tree, Hash[] expected) {
+    public void getUnknownParentsTest(RevisionTree tree, Hash[] expected) {
         IterableAssert<Hash> assertion = assertThat(tree.getUnknownParents());
         if (expected.length == 0) {
             assertion.isEmpty();
@@ -380,7 +380,7 @@ public class ContentInfoTreeTest {
      * @param tree Input tree
      */
     @Test(dataProvider = "noMergeTestDataProvider")
-    public void noMergeTest(ContentInfoTree tree) {
+    public void noMergeTest(RevisionTree tree) {
         assertThat(tree.merge()).isEqualTo(tree);
     }
 
@@ -389,8 +389,8 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void simpleThreeWayMergeTest() {
-        ContentInfoTree merge = tree(a0, a1, a2, a3, b2).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(a0, a1, a2, a3, b2).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(a4.getMetadata());
@@ -401,12 +401,12 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void sameMetadataMergeTest() {
-        ContentInfo a1Bis = revision("b1",
+        Revision a1Bis = revision("b1",
                                      ImmutableMap.of("msg", Value.of("hello")),
                                      "a0");
 
-        ContentInfoTree merge = tree(a0, a1, a1Bis).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(a0, a1, a1Bis).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("msg", Value.of("hello")));
@@ -417,8 +417,8 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void deletedMergeTest() {
-        ContentInfoTree merge = tree(a0, a1, a2, a3, a4, b2, c3, d4, d5).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(a0, a1, a2, a3, a4, b2, c3, d4, d5).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.isDeleted()).isTrue();
@@ -429,11 +429,11 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void noAncestorMergeTest() {
-        ContentInfo rev1a = revision("1a", ImmutableMap.of("msg", Value.of("hello")));
-        ContentInfo rev1b = revision("1b", ImmutableMap.of("int", Value.of(10)));
+        Revision rev1a = revision("1a", ImmutableMap.of("msg", Value.of("hello")));
+        Revision rev1b = revision("1b", ImmutableMap.of("int", Value.of(10)));
 
-        ContentInfoTree merge = tree(rev1a, rev1b).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(rev1a, rev1b).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(10),
@@ -445,32 +445,32 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void crissCrossMergeTest() {
-        ContentInfo rev0 = revision("00",
+        Revision rev0 = revision("00",
                                     ImmutableMap.of("int", Value.of(5),
                                                     "msg", Value.of("good morning")));
 
-        ContentInfo rev1a = revision("1a",
+        Revision rev1a = revision("1a",
                                      ImmutableMap.of("int", Value.of(5),
                                                      "msg", Value.of("hello")),
                                      "00");
 
-        ContentInfo rev1b = revision("1b",
+        Revision rev1b = revision("1b",
                                      ImmutableMap.of("int", Value.of(10),
                                                      "msg", Value.of("good morning")),
                                      "00");
 
-        ContentInfo rev2a = revision("2a",
+        Revision rev2a = revision("2a",
                                      ImmutableMap.of("int", Value.of(10),
                                                      "msg", Value.of("hello world")),
                                      "1a", "1b");
 
-        ContentInfo rev2b = revision("2b",
+        Revision rev2b = revision("2b",
                                      ImmutableMap.of("int", Value.of(20),
                                                      "msg", Value.of("hello")),
                                      "1a", "1b");
 
-        ContentInfoTree merge = tree(rev0, rev1a, rev1b, rev2a, rev2b).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(rev0, rev1a, rev1b, rev2a, rev2b).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),
@@ -482,50 +482,50 @@ public class ContentInfoTreeTest {
      */
     @Test
     public void tripleCrissCrossMergeTest() {
-        ContentInfo rev0 = revision("00",
+        Revision rev0 = revision("00",
                                     ImmutableMap.of("int", Value.of(5),
                                                     "msg", Value.of("good morning"),
                                                     "out", Value.of("good evening")));
 
-        ContentInfo rev1b = revision("1a",
+        Revision rev1b = revision("1a",
                                      ImmutableMap.of("int", Value.of(10),
                                                      "msg", Value.of("good morning"),
                                                      "out", Value.of("good evening")),
                                      "00");
 
-        ContentInfo rev1a = revision("1b",
+        Revision rev1a = revision("1b",
                                      ImmutableMap.of("int", Value.of(5),
                                                      "msg", Value.of("hello"),
                                                      "out", Value.of("good evening")),
                                      "00");
 
-        ContentInfo rev1c = revision("1c",
+        Revision rev1c = revision("1c",
                                      ImmutableMap.of("int", Value.of(5),
                                                      "msg", Value.of("good morning"),
                                                      "out", Value.of("good bye")),
                                      "00");
 
 
-        ContentInfo rev2a = revision("2a",
+        Revision rev2a = revision("2a",
                                      ImmutableMap.of("int", Value.of(20),
                                                      "msg", Value.of("hello"),
                                                      "out", Value.of("good bye")),
                                      "1a", "1b", "1c");
 
-        ContentInfo rev2b = revision("2b",
+        Revision rev2b = revision("2b",
                                      ImmutableMap.of("int", Value.of(10),
                                                      "msg", Value.of("hello world"),
                                                      "out", Value.of("good bye")),
                                      "1a", "1b");
 
-        ContentInfo rev2c = revision("2c",
+        Revision rev2c = revision("2c",
                                      ImmutableMap.of("int", Value.of(10),
                                                      "msg", Value.of("hello"),
                                                      "out", Value.of("bye bye")),
                                      "1a", "1b", "1c");
 
-        ContentInfoTree merge = tree(rev0, rev1a, rev2a, rev1c, rev1b, rev2b, rev2c).merge();
-        ContentInfo head = merge.get(merge.getHead().first());
+        RevisionTree merge = tree(rev0, rev1a, rev2a, rev1c, rev1b, rev2b, rev2c).merge();
+        Revision head = merge.get(merge.getHead().first());
 
         assertThat(merge.getHead()).hasSize(1);
         assertThat(head.getMetadata()).isEqualTo(ImmutableMap.of("int", Value.of(20),

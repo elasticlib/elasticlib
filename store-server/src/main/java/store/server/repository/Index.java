@@ -49,9 +49,9 @@ import store.common.exception.IOFailureException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.RepositoryClosedException;
 import store.common.hash.Hash;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.IndexEntry;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.value.Value;
 
 /**
@@ -128,20 +128,20 @@ class Index {
     /**
      * Index supplied content.
      *
-     * @param contentInfo Info associated with content to index.
+     * @param revisionTree Revision tree associated with content to index.
      * @param inputStream Input stream of the content to index.
      */
-    public void index(ContentInfoTree contentInfoTree, InputStream inputStream) {
-        LOG.info("[{}] Indexing {}, at revision {}", name, contentInfoTree.getContent(), contentInfoTree.getHead());
-        Optional<IndexEntry> existing = getEntry(contentInfoTree.getContent());
-        if (existing.isPresent() && existing.get().getRevisions().equals(contentInfoTree.getHead())) {
+    public void index(RevisionTree revisionTree, InputStream inputStream) {
+        LOG.info("[{}] Indexing {}, at revision {}", name, revisionTree.getContent(), revisionTree.getHead());
+        Optional<IndexEntry> existing = getEntry(revisionTree.getContent());
+        if (existing.isPresent() && existing.get().getRevisions().equals(revisionTree.getHead())) {
             // already indexed !
             return;
         }
         try {
-            if (!indexInfoAndContent(contentInfoTree, inputStream)) {
+            if (!indexInfoAndContent(revisionTree, inputStream)) {
                 // Fallback if Tika fails to extract content.
-                indexInfo(contentInfoTree);
+                indexInfo(revisionTree);
             }
         } catch (AlreadyClosedException e) {
             throw new RepositoryClosedException(e);
@@ -151,14 +151,14 @@ class Index {
         }
     }
 
-    private boolean indexInfoAndContent(ContentInfoTree contentInfoTree, InputStream inputStream) throws IOException {
+    private boolean indexInfoAndContent(RevisionTree revisionTree, InputStream inputStream) throws IOException {
         try (IndexWriter writer = newIndexWriter()) {
             // First delete any existing document.
-            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
+            writer.deleteDocuments(new Term(CONTENT, revisionTree.getContent().asHexadecimalString()));
 
             // Then (re)create the document.
             try (Reader reader = new Tika().parse(inputStream)) {
-                Document document = newDocument(contentInfoTree);
+                Document document = newDocument(revisionTree);
                 document.add(new TextField(BODY, reader));
                 writer.addDocument(document, analyzer);
                 return true;
@@ -167,32 +167,32 @@ class Index {
                 if (!(e.getCause() instanceof TikaException)) {
                     throw e;
                 }
-                LOG.error("Failed to index content from " + contentInfoTree.getContent(), e);
+                LOG.error("Failed to index content from " + revisionTree.getContent(), e);
                 writer.rollback();
                 return false;
             }
         }
     }
 
-    private void indexInfo(ContentInfoTree contentInfoTree) throws IOException {
+    private void indexInfo(RevisionTree revisionTree) throws IOException {
         try (IndexWriter writer = newIndexWriter()) {
             // First delete any existing document.
-            writer.deleteDocuments(new Term(CONTENT, contentInfoTree.getContent().asHexadecimalString()));
+            writer.deleteDocuments(new Term(CONTENT, revisionTree.getContent().asHexadecimalString()));
 
             // Here we do not extract and index content.
-            Document document = newDocument(contentInfoTree);
+            Document document = newDocument(revisionTree);
             writer.addDocument(document, analyzer);
         }
     }
 
-    private static Document newDocument(ContentInfoTree contentInfoTree) {
+    private static Document newDocument(RevisionTree revisionTree) {
         Document document = new Document();
-        document.add(new TextField(CONTENT, contentInfoTree.getContent().asHexadecimalString(), Store.YES));
-        for (Hash rev : contentInfoTree.getHead()) {
+        document.add(new TextField(CONTENT, revisionTree.getContent().asHexadecimalString(), Store.YES));
+        for (Hash rev : revisionTree.getHead()) {
             document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
         }
-        document.add(new LongField(LENGTH, contentInfoTree.getLength(), Store.NO));
-        for (Entry<String, Collection<Value>> entry : headMetadata(contentInfoTree).asMap().entrySet()) {
+        document.add(new LongField(LENGTH, revisionTree.getLength(), Store.NO));
+        for (Entry<String, Collection<Value>> entry : headMetadata(revisionTree).asMap().entrySet()) {
             String key = entry.getKey();
             for (Value value : entry.getValue()) {
                 add(document, key, value);
@@ -201,10 +201,10 @@ class Index {
         return document;
     }
 
-    private static Multimap<String, Value> headMetadata(ContentInfoTree contentInfoTree) {
+    private static Multimap<String, Value> headMetadata(RevisionTree revisionTree) {
         Multimap<String, Value> metadata = HashMultimap.create();
-        for (Hash rev : contentInfoTree.getHead()) {
-            ContentInfo contentInfo = contentInfoTree.get(rev);
+        for (Hash rev : revisionTree.getHead()) {
+            Revision contentInfo = revisionTree.get(rev);
             for (Entry<String, Value> entry : contentInfo.getMetadata().entrySet()) {
                 metadata.put(entry.getKey(), entry.getValue());
             }

@@ -5,8 +5,8 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
+import store.common.model.RevisionTree;
 
 /**
  * An agent that performs indexing from a repository to its internal index.
@@ -25,7 +25,7 @@ class IndexingAgent extends Agent {
 
     @Override
     protected boolean process(Event event) {
-        ContentInfoTree tree = repository.getContentInfoTree(event.getContent());
+        RevisionTree tree = repository.getTree(event.getContent());
         if (tree.isDeleted()) {
             index.delete(tree.getContent());
             return true;

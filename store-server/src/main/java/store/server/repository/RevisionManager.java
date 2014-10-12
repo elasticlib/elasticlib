@@ -11,19 +11,21 @@ import store.common.exception.UnknownContentException;
 import store.common.exception.UnknownRevisionException;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Operation;
+import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
+import store.common.model.RevisionTree;
+import store.common.model.RevisionTree.RevisionTreeBuilder;
 import static store.server.manager.storage.DatabaseEntries.asMappable;
 import static store.server.manager.storage.DatabaseEntries.entry;
 import store.server.manager.storage.StorageManager;
 
 /**
- * Stores and retrieves content info inside a repository.
+ * Stores and retrieves revisions inside a repository.
  */
-class InfoManager {
+class RevisionManager {
 
-    private static final String INFO = "info";
+    private static final String REVISION = "revision";
     private final StorageManager storageManager;
     private final Database database;
 
@@ -32,37 +34,37 @@ class InfoManager {
      *
      * @param storageManager Underlying storage manager.
      */
-    public InfoManager(StorageManager storageManager) {
+    public RevisionManager(StorageManager storageManager) {
         this.storageManager = storageManager;
-        this.database = storageManager.openDatabase(INFO);
+        this.database = storageManager.openDatabase(REVISION);
     }
 
     /**
-     * Adds a new Content info.
+     * Adds a new revision.
      *
-     * @param info Content info to add.
+     * @param revision Revision to add.
      * @return Actual result.
      */
-    public CommandResult put(ContentInfo info) {
-        Optional<ContentInfoTree> existing = load(info.getContent(), LockMode.RMW);
-        ContentInfoTree updated;
+    public CommandResult put(Revision revision) {
+        Optional<RevisionTree> existing = load(revision.getContent(), LockMode.RMW);
+        RevisionTree updated;
         if (!existing.isPresent()) {
-            if (!info.getParents().isEmpty()) {
+            if (!revision.getParents().isEmpty()) {
                 throw new ConflictException();
             }
-            updated = new ContentInfoTree.ContentInfoTreeBuilder()
-                    .add(info)
+            updated = new RevisionTreeBuilder()
+                    .add(revision)
                     .build();
         } else {
-            if (existing.get().contains(info.getRevision())) {
+            if (existing.get().contains(revision.getRevision())) {
                 updated = existing.get();
 
-            } else if (!existing.get().getHead().equals(info.getParents())) {
+            } else if (!existing.get().getHead().equals(revision.getParents())) {
                 throw new ConflictException();
 
             } else {
                 updated = existing.get()
-                        .add(info)
+                        .add(revision)
                         .merge();
             }
         }
@@ -70,14 +72,14 @@ class InfoManager {
     }
 
     /**
-     * Adds a new Content info tree.
+     * Adds a new revision tree.
      *
-     * @param info Content info tree to add.
+     * @param info Revision tree to add.
      * @return Actual result.
      */
-    public CommandResult put(ContentInfoTree tree) {
-        Optional<ContentInfoTree> existing = load(tree.getContent(), LockMode.RMW);
-        ContentInfoTree updated;
+    public CommandResult put(RevisionTree tree) {
+        Optional<RevisionTree> existing = load(tree.getContent(), LockMode.RMW);
+        RevisionTree updated;
         if (!existing.isPresent()) {
             updated = tree;
         } else {
@@ -96,18 +98,18 @@ class InfoManager {
      * @return Actual result.
      */
     public CommandResult delete(Hash hash, SortedSet<Hash> head) {
-        Optional<ContentInfoTree> existing = load(hash, LockMode.RMW);
+        Optional<RevisionTree> existing = load(hash, LockMode.RMW);
         if (!existing.isPresent()) {
             throw new UnknownContentException();
         }
         if (!existing.get().getHead().equals(head)) {
             throw new ConflictException();
         }
-        ContentInfoTree updated;
+        RevisionTree updated;
         if (existing.get().isDeleted()) {
             updated = existing.get();
         } else {
-            updated = existing.get().add(new ContentInfo.ContentInfoBuilder()
+            updated = existing.get().add(new RevisionBuilder()
                     .withContent(hash)
                     .withLength(existing.get().getLength())
                     .withParents(existing.get().getHead())
@@ -118,16 +120,16 @@ class InfoManager {
     }
 
     /**
-     * Loads info tree of a content.
+     * Loads revision tree of a content.
      *
      * @param hash Content hash.
-     * @return Associated content info tree, if any.
+     * @return Associated revision tree, if any.
      */
-    public Optional<ContentInfoTree> get(Hash hash) {
+    public Optional<RevisionTree> get(Hash hash) {
         return load(hash, LockMode.DEFAULT);
     }
 
-    private Optional<ContentInfoTree> load(Hash hash, LockMode lockMode) {
+    private Optional<RevisionTree> load(Hash hash, LockMode lockMode) {
         DatabaseEntry data = new DatabaseEntry();
         OperationStatus status = database.get(storageManager.currentTransaction(),
                                               entry(hash),
@@ -137,10 +139,10 @@ class InfoManager {
         if (status == OperationStatus.NOTFOUND) {
             return Optional.absent();
         }
-        return Optional.of(asMappable(data, ContentInfoTree.class));
+        return Optional.of(asMappable(data, RevisionTree.class));
     }
 
-    private CommandResult save(Optional<ContentInfoTree> before, ContentInfoTree after) {
+    private CommandResult save(Optional<RevisionTree> before, RevisionTree after) {
         long id = storageManager.currentTransaction().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
@@ -153,7 +155,7 @@ class InfoManager {
         return CommandResult.of(id, operation.get(), after.getContent(), after.getHead());
     }
 
-    private static Optional<Operation> operation(Optional<ContentInfoTree> before, ContentInfoTree after) {
+    private static Optional<Operation> operation(Optional<RevisionTree> before, RevisionTree after) {
         boolean beforeIsDeleted = !before.isPresent() || before.get().isDeleted();
         boolean afterIsDeleted = after.isDeleted();
 

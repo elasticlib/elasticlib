@@ -18,8 +18,8 @@ import static store.client.display.MappableFormatting.format;
 import store.client.exception.RequestFailedException;
 import store.common.json.JsonWriting;
 import store.common.mappable.Mappable;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import store.common.value.Value;
 import store.common.yaml.YamlWriter;
 
@@ -106,12 +106,12 @@ public class Display {
     /**
      * Print a text-based representation of supplied tree.
      *
-     * @param tree A content info tree.
+     * @param tree A revision tree.
      */
-    public void printTree(ContentInfoTree tree) {
+    public void printTree(RevisionTree tree) {
         TreePrinter printer = new TreePrinter(2, new RevisionFormatter(config.isDisplayPretty()));
-        for (ContentInfo info : tree.list()) {
-            printer.add(info);
+        for (Revision rev : tree.list()) {
+            printer.add(rev);
         }
         println(printer.print());
     }

@@ -37,12 +37,12 @@ import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
-import store.common.model.ContentInfo;
-import store.common.model.ContentInfoTree;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryInfo;
+import store.common.model.Revision;
+import store.common.model.RevisionTree;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -232,8 +232,8 @@ public class RepositoriesResource {
     }
 
     /**
-     * Add content info. If associated content is not present, started transaction is suspended so that client may
-     * create this content in a latter request.
+     * Add a revision or a revision tree. If associated content is not present, started transaction is suspended so that
+     * client may create this content in a latter request.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -248,14 +248,14 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @POST
-    @Path("{repository}/info")
+    @Path("{repository}/revision")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response postInfo(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
-        if (isValid(json, ContentInfo.class)) {
-            return response(repository(repositoryKey).addContentInfo(read(json, ContentInfo.class)));
+    public Response postRevision(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
+        if (isValid(json, Revision.class)) {
+            return response(repository(repositoryKey).addRevision(read(json, Revision.class)));
         }
-        if (isValid(json, ContentInfoTree.class)) {
-            return response(repository(repositoryKey).mergeContentInfoTree(read(json, ContentInfoTree.class)));
+        if (isValid(json, RevisionTree.class)) {
+            return response(repository(repositoryKey).mergeTree(read(json, RevisionTree.class)));
         }
         throw newInvalidJsonException();
     }
@@ -382,9 +382,9 @@ public class RepositoriesResource {
     }
 
     private static Map<String, Value> metadata(Repository repository, Hash hash) {
-        for (ContentInfo info : repository.getContentInfoHead(hash)) {
-            if (!info.isDeleted()) {
-                return info.getMetadata();
+        for (Revision rev : repository.getHead(hash)) {
+            if (!rev.isDeleted()) {
+                return rev.getMetadata();
             }
         }
         return emptyMap();
@@ -399,7 +399,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get info about a content.
+     * Get revision(s) about a content.
      * <p>
      * Query param:<br>
      * - rev: specify revisions to returns. May be set to "head" to return current head revisions or to a dash-separated
@@ -417,20 +417,20 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @GET
-    @Path("{repository}/info/{hash}")
-    public Response getInfo(@PathParam(REPOSITORY) String repositoryKey,
-                            @PathParam(HASH) Hash hash,
-                            @QueryParam(REV) @DefaultValue("") String rev) {
+    @Path("{repository}/revision/{hash}")
+    public Response getRevision(@PathParam(REPOSITORY) String repositoryKey,
+                                @PathParam(HASH) Hash hash,
+                                @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
             return Response.ok()
-                    .entity(repository(repositoryKey).getContentInfoTree(hash))
+                    .entity(repository(repositoryKey).getTree(hash))
                     .build();
         }
         if (rev.equals(HEAD)) {
-            return response(repository(repositoryKey).getContentInfoHead(hash));
+            return response(repository(repositoryKey).getHead(hash));
         }
-        return response(repository(repositoryKey).getContentInfoRevisions(hash, parseRevisions(rev)));
+        return response(repository(repositoryKey).getRevisions(hash, parseRevisions(rev)));
     }
 
     private static List<Hash> parseRevisions(String arg) {
@@ -441,8 +441,8 @@ public class RepositoriesResource {
         return revisions;
     }
 
-    private static Response response(List<ContentInfo> contentInfos) {
-        GenericEntity<List<ContentInfo>> entity = new GenericEntity<List<ContentInfo>>(contentInfos) {
+    private static Response response(List<Revision> contentInfos) {
+        GenericEntity<List<Revision>> entity = new GenericEntity<List<Revision>>(contentInfos) {
         };
         return Response.ok()
                 .entity(entity)
@@ -482,7 +482,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Find indexed hashes matching supplied query.
+     * Find index entries matching supplied query.
      * <p>
      * Output:<br>
      * - Array of content hashes.
@@ -510,10 +510,10 @@ public class RepositoriesResource {
     }
 
     /**
-     * Find indexed content infos matching supplied query.
+     * Find indexed revisions matching supplied query.
      * <p>
      * Output:<br>
-     * - Array of content infos.
+     * - Array of revisions.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -526,17 +526,17 @@ public class RepositoriesResource {
      * @return output data
      */
     @GET
-    @Path("{repository}/info")
-    public GenericEntity<List<ContentInfo>> findInfo(@PathParam(REPOSITORY) String repositoryKey,
-                                                     @QueryParam(QUERY) String query,
-                                                     @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
-                                                     @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
-        List<ContentInfo> infos = new ArrayList<>(size);
+    @Path("{repository}/revision")
+    public GenericEntity<List<Revision>> findRevisions(@PathParam(REPOSITORY) String repositoryKey,
+                                                       @QueryParam(QUERY) String query,
+                                                       @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
+                                                       @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
+        List<Revision> infos = new ArrayList<>(size);
         Repository repository = repository(repositoryKey);
         for (IndexEntry entry : repository.find(query, from, size)) {
-            infos.addAll(repository.getContentInfoRevisions(entry.getHash(), entry.getRevisions()));
+            infos.addAll(repository.getRevisions(entry.getHash(), entry.getRevisions()));
         }
-        return new GenericEntity<List<ContentInfo>>(infos) {
+        return new GenericEntity<List<Revision>>(infos) {
         };
     }
 

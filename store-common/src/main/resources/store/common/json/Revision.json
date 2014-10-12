@@ -1,5 +1,5 @@
 {
-    "title": "contentInfo",
+    "title": "revision",
     "type": "object",
     "properties": {
         "content": {

@@ -78,10 +78,7 @@ public class RepositoriesResource {
     private UriInfo uriInfo;
 
     /**
-     * Create a new repository.
-     * <p>
-     * Input:<br>
-     * - path (String): Repository path on file system. Repository name is the last part of this path.
+     * Alters state of a repository.
      * <p>
      * Response:<br>
      * - 201 CREATED: Operation succeeded.<br>
@@ -248,9 +245,9 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @POST
-    @Path("{repository}/revision")
+    @Path("{repository}/revisions")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response postRevision(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
+    public Response addRevision(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (isValid(json, Revision.class)) {
             return response(repository(repositoryKey).addRevision(read(json, Revision.class)));
         }
@@ -283,7 +280,7 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @PUT
-    @Path("{repository}/content/{hash}")
+    @Path("{repository}/contents/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response addContent(@PathParam(REPOSITORY) String repositoryKey,
                                @PathParam(HASH) Hash hash,
@@ -318,7 +315,7 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @DELETE
-    @Path("{repository}/content/{hash}")
+    @Path("{repository}/contents/{hash}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response deleteContent(@PathParam(REPOSITORY) String repositoryKey,
                                   @QueryParam(REV) @DefaultValue("") String rev,
@@ -356,7 +353,7 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @GET
-    @Path("{repository}/content/{hash}")
+    @Path("{repository}/contents/{hash}")
     public Response getContent(@PathParam(REPOSITORY) final String repositoryKey, @PathParam(HASH) final Hash hash) {
         while (true) {
             final Repository repository = repository(repositoryKey);
@@ -399,7 +396,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get revision(s) about a content.
+     * Get revisions about a content.
      * <p>
      * Query param:<br>
      * - rev: specify revisions to returns. May be set to "head" to return current head revisions or to a dash-separated
@@ -417,10 +414,10 @@ public class RepositoriesResource {
      * @return HTTP response
      */
     @GET
-    @Path("{repository}/revision/{hash}")
-    public Response getRevision(@PathParam(REPOSITORY) String repositoryKey,
-                                @PathParam(HASH) Hash hash,
-                                @QueryParam(REV) @DefaultValue("") String rev) {
+    @Path("{repository}/revisions/{hash}")
+    public Response getRevisions(@PathParam(REPOSITORY) String repositoryKey,
+                                 @PathParam(HASH) Hash hash,
+                                 @QueryParam(REV) @DefaultValue("") String rev) {
 
         if (rev.isEmpty()) {
             return Response.ok()
@@ -526,7 +523,7 @@ public class RepositoriesResource {
      * @return output data
      */
     @GET
-    @Path("{repository}/revision")
+    @Path("{repository}/revisions")
     public GenericEntity<List<Revision>> findRevisions(@PathParam(REPOSITORY) String repositoryKey,
                                                        @QueryParam(QUERY) String query,
                                                        @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,

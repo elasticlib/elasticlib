@@ -34,11 +34,11 @@ import store.common.model.RevisionTree;
 public class RepositoryClient {
 
     private static final String CONTENT = "content";
-    private static final String REVISION = "revision";
+    private static final String REVISIONS = "revisions";
     private static final String INDEX = "index";
     private static final String HISTORY = "history";
-    private static final String CONTENT_TEMPLATE = "content/{hash}";
-    private static final String REVISION_TEMPLATE = "revision/{hash}";
+    private static final String CONTENTS_TEMPLATE = "contents/{hash}";
+    private static final String REVISIONS_TEMPLATE = "revisions/{hash}";
     private static final String TX_ID = "txId";
     private static final String HASH = "hash";
     private static final String REV = "rev";
@@ -70,7 +70,7 @@ public class RepositoryClient {
      */
     public CommandResult addRevision(Revision revision) {
         return result(resource
-                .path(REVISION)
+                .path(REVISIONS)
                 .request()
                 .post(json(write(revision))));
     }
@@ -90,7 +90,7 @@ public class RepositoryClient {
                                                  CONTENT,
                                                  MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
-        return result(resource.path(CONTENT_TEMPLATE)
+        return result(resource.path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(TX_ID, transactionId)
                 .request()
@@ -106,7 +106,7 @@ public class RepositoryClient {
      */
     public CommandResult deleteContent(Hash hash, Set<Hash> head) {
         return result(resource
-                .path(CONTENT_TEMPLATE)
+                .path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, Joiner.on('-').join(head))
                 .request()
@@ -120,7 +120,7 @@ public class RepositoryClient {
      * @return Corresponding revision tree.
      */
     public RevisionTree getTree(Hash hash) {
-        Response response = resource.path(REVISION_TEMPLATE)
+        Response response = resource.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -158,7 +158,7 @@ public class RepositoryClient {
     }
 
     private Response head(Hash hash) {
-        return resource.path(REVISION_TEMPLATE)
+        return resource.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, HEAD)
                 .request()
@@ -172,7 +172,7 @@ public class RepositoryClient {
      * @return Corresponding content.
      */
     public Content getContent(Hash hash) {
-        Response response = resource.path(CONTENT_TEMPLATE)
+        Response response = resource.path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -230,7 +230,7 @@ public class RepositoryClient {
      * @return A list of content infos.
      */
     public List<Revision> findRevisions(String query, int from, int size) {
-        Response response = resource.path(REVISION)
+        Response response = resource.path(REVISIONS)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)

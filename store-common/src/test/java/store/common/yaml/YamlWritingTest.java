@@ -7,6 +7,7 @@ import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
+import static store.common.TestData.CONTENT_INFOS;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -21,6 +22,7 @@ import static store.common.TestData.REVISION_TREE;
 import static store.common.TestData.STAGING_INFO;
 import store.common.mappable.Mappable;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
+import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -63,6 +65,14 @@ public class YamlWritingTest {
     @Test
     public void writeRevisionTreeTest() {
         assertThat(write(REVISION_TREE)).isEqualTo(REVISION_TREE_YAML);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllContentInfoTest() {
+        assertThat(writeAll(CONTENT_INFOS)).isEqualTo(CONTENT_INFOS_YAML);
     }
 
     /**

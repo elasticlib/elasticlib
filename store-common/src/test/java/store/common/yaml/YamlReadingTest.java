@@ -6,6 +6,7 @@ import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
+import static store.common.TestData.CONTENT_INFOS;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -22,6 +23,7 @@ import static store.common.TestUtil.assertMatches;
 import store.common.exception.NodeException;
 import store.common.mappable.Mappable;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -34,6 +36,7 @@ import store.common.model.Revision;
 import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
+import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -76,6 +79,14 @@ public class YamlReadingTest {
     @Test
     public void readRevisionTreeTest() {
         assertThat(read(REVISION_TREE_YAML, RevisionTree.class)).isEqualTo(REVISION_TREE);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllContentInfoTest() {
+        assertThat(readAll(CONTENT_INFOS_YAML, ContentInfo.class)).isEqualTo(CONTENT_INFOS);
     }
 
     /**

@@ -13,6 +13,7 @@ import store.common.exception.NodeException;
 import store.common.json.schema.Schema;
 import store.common.model.AgentInfo;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -36,6 +37,7 @@ final class SchemaProvider {
     static {
         register(CommandResult.class,
                  StagingInfo.class,
+                 ContentInfo.class,
                  Revision.class,
                  RevisionTree.class,
                  Event.class,

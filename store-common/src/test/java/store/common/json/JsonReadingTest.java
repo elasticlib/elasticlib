@@ -3,6 +3,7 @@ package store.common.json;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
+import static store.common.TestData.CONTENT_INFOS;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -20,6 +21,7 @@ import store.common.exception.NodeException;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonReading.readAll;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFOS_ARRAY;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -33,6 +35,7 @@ import static store.common.json.JsonTestData.REVISIONS_JSON;
 import static store.common.json.JsonTestData.REVISION_TREE_JSON;
 import static store.common.json.JsonTestData.STAGING_INFO_JSON;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -74,6 +77,14 @@ public class JsonReadingTest {
     @Test
     public void readRevisionTreeTest() {
         assertThat(read(REVISION_TREE_JSON, RevisionTree.class)).isEqualTo(REVISION_TREE);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllContentInfoTest() {
+        assertThat(readAll(CONTENT_INFOS_ARRAY, ContentInfo.class)).isEqualTo(CONTENT_INFOS);
     }
 
     /**

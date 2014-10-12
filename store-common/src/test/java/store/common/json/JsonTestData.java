@@ -12,6 +12,7 @@ final class JsonTestData {
     public static final JsonObject STAGING_INFO_JSON;
     public static final List<JsonObject> REVISIONS_JSON = new ArrayList<>();
     public static final JsonObject REVISION_TREE_JSON;
+    public static final JsonArray CONTENT_INFOS_ARRAY;
     public static final JsonArray EVENTS_ARRAY;
     public static final List<JsonObject> COMMAND_RESULTS_JSON = new ArrayList<>();
     public static final JsonArray INDEX_ENTRIES_ARRAY;
@@ -32,6 +33,8 @@ final class JsonTestData {
         REVISIONS_JSON.add(readJsonObject(clazz, "revision1.json"));
 
         REVISION_TREE_JSON = readJsonObject(clazz, "revisionTree.json");
+
+        CONTENT_INFOS_ARRAY = readJsonArray(clazz, "contentInfos.json");
 
         EVENTS_ARRAY = readJsonArray(clazz, "events.json");
 

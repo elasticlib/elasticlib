@@ -3,6 +3,7 @@ package store.common.json;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
+import static store.common.TestData.CONTENT_INFOS;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -16,6 +17,7 @@ import static store.common.TestData.REVISIONS;
 import static store.common.TestData.REVISION_TREE;
 import static store.common.TestData.STAGING_INFO;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFOS_ARRAY;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -60,6 +62,14 @@ public class JsonWritingTest {
     @Test
     public void writeRevisionTreeTest() {
         assertThat(write(REVISION_TREE)).isEqualTo(REVISION_TREE_JSON);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllContentInfoTest() {
+        assertThat(writeAll(CONTENT_INFOS)).isEqualTo(CONTENT_INFOS_ARRAY);
     }
 
     /**

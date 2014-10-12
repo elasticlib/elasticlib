@@ -1,0 +1,48 @@
+{
+    "title": "contentInfo",
+    "type": "object",
+    "properties": {
+        "state": {
+            "type": "string"
+        },
+        "hash": {
+            "type": "hash",
+            "optional": true
+        },
+        "length": {
+            "type": "integer",
+            "optional": true
+        },
+        "head": {
+            "type": "array",
+            "optional": true,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "revision": {
+                        "type": "hash"
+                    },
+                    "parent": {
+                        "type": "hash",
+                        "optional": true
+                    },
+                    "parents": {
+                        "type": "array",
+                        "optional": true,
+                        "items": {
+                            "type": "hash"
+                        }
+                    },
+                    "deleted": {
+                        "type": "boolean",
+                        "optional": true
+                    },
+                    "metadata": {
+                        "definition": "schema",
+                        "optional": true
+                    }
+                }
+            }
+        }
+    }
+}

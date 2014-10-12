@@ -21,6 +21,8 @@ import store.common.hash.Hash;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.Event.EventBuilder;
 import store.common.model.IndexEntry;
@@ -56,6 +58,10 @@ public final class TestData {
      * A RevisionTree instance.
      */
     public static final RevisionTree REVISION_TREE;
+    /**
+     * Some ContentInfo instances.
+     */
+    public static final List<ContentInfo> CONTENT_INFOS = new ArrayList<>();
     /**
      * Some Event instances.
      */
@@ -131,6 +137,10 @@ public final class TestData {
                 .withParent(new Hash(REVS[0]))
                 .build(new Hash(REVS[1])))
                 .build();
+
+        CONTENT_INFOS.add(ContentInfo.absent());
+        CONTENT_INFOS.add(ContentInfo.of(ContentState.STAGED, new Hash(HASHES[0]), 10L));
+        CONTENT_INFOS.add(ContentInfo.of(singletonList(REVISIONS.get(1))));
 
         EVENTS.add(new EventBuilder()
                 .withSeq(0)

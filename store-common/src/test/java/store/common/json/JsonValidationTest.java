@@ -15,6 +15,7 @@ import store.common.exception.NodeException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonTestData.COMMAND_RESULTS_JSON;
+import static store.common.json.JsonTestData.CONTENT_INFOS_ARRAY;
 import static store.common.json.JsonTestData.EVENTS_ARRAY;
 import static store.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static store.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -31,6 +32,7 @@ import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import store.common.json.schema.Schema;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
@@ -158,6 +160,17 @@ public class JsonValidationTest {
     public void isValidRevisionTreeTest() {
         assertThat(isValid(REVISION_TREE_JSON, RevisionTree.class)).isTrue();
         assertThat(isValid(REVISIONS_JSON.get(0), RevisionTree.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidContentInfoTest() {
+        for (JsonObject json : CONTENT_INFOS_ARRAY.getValuesAs(JsonObject.class)) {
+            assertThat(isValid(json, ContentInfo.class)).isTrue();
+        }
+        assertThat(isValid(REVISIONS_JSON.get(0), ContentInfo.class)).isFalse();
     }
 
     /**

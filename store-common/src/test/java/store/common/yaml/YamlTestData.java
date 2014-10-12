@@ -9,6 +9,7 @@ final class YamlTestData {
     public static final String STAGING_INFO_YAML;
     public static final List<String> REVISIONS_YAML = new ArrayList<>();
     public static final String REVISION_TREE_YAML;
+    public static final String CONTENT_INFOS_YAML;
     public static final String EVENTS_YAML;
     public static final List<String> COMMAND_RESULTS_YAML = new ArrayList<>();
     public static final String INDEX_ENTRIES_YAML;
@@ -29,6 +30,8 @@ final class YamlTestData {
         REVISIONS_YAML.add(readString(clazz, "revision1.yml"));
 
         REVISION_TREE_YAML = readString(clazz, "revisionTree.yml");
+
+        CONTENT_INFOS_YAML = readString(clazz, "contentInfos.yml");
 
         EVENTS_YAML = readString(clazz, "events.yml");
 

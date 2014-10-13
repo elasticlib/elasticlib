@@ -24,6 +24,8 @@ import store.common.exception.UnknownContentException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
@@ -200,9 +202,7 @@ public class Repository {
                 if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
                     throw new ContentAlreadyPresentException();
                 }
-
-                // TODO this is a stub !
-                throw new UnsupportedOperationException();
+                return contentManager.stage(hash);
             }
         });
     }
@@ -219,9 +219,7 @@ public class Repository {
     public StagingInfo write(Hash hash, Guid sessionId, InputStream source, long position) {
         ensureOpen();
         log("Writing to staged content {}", hash);
-
-        // TODO this is a stub !
-        throw new UnsupportedOperationException();
+        return contentManager.write(hash, sessionId, source, position);
     }
 
     /**
@@ -340,6 +338,44 @@ public class Repository {
             statsAgent.signal();
             messageManager.post(new NewRepositoryEvent(def.getGuid()));
         }
+    }
+
+    /**
+     * Provides info about a given content.
+     *
+     * @param hash Hash of the content.
+     * @return Corresponding content info.
+     */
+    public ContentInfo getContentInfo(final Hash hash) {
+        ensureOpen();
+        log("Returning content info of {}", hash);
+        return storageManager.inTransaction(new Query<ContentInfo>() {
+            @Override
+            public ContentInfo apply() {
+                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
+                if (treeOpt.isPresent()) {
+                    RevisionTree tree = treeOpt.get();
+                    return ContentInfo.of(tree.get(tree.getHead()));
+                }
+                StagingInfo stagingInfo = contentManager.getStagingInfo(hash);
+                if (stagingInfo.getLength() == 0) {
+                    return ContentInfo.absent();
+                }
+                return ContentInfo.of(contentState(hash, stagingInfo),
+                                      stagingInfo.getHash(),
+                                      stagingInfo.getLength());
+            }
+        });
+    }
+
+    private static ContentState contentState(Hash hash, StagingInfo stagingInfo) {
+        if (stagingInfo.getHash().equals(hash)) {
+            return ContentState.STAGED;
+        }
+        if (stagingInfo.getSessionId() != null) {
+            return ContentState.STAGING;
+        }
+        return ContentState.PARTIAL;
     }
 
     /**

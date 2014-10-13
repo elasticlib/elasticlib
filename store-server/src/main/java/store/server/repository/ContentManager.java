@@ -194,8 +194,10 @@ class ContentManager {
         }
     }
 
-    private DigestBuilder write(Hash hash, StagingSession session, InputStream source, long position) throws
-            IOException {
+    private DigestBuilder write(Hash hash,
+                                StagingSession session,
+                                InputStream source,
+                                long position) throws IOException {
         DigestBuilder digest = session.getDigest();
         boolean truncate = false;
 
@@ -284,6 +286,33 @@ class ContentManager {
 
         } finally {
             lockManager.writeUnlock(hash);
+        }
+    }
+
+    /**
+     * Provides staging info of a given content. If there is no current staging session for this content, returned info
+     * guid is null. Additionally, if content does not even exists, returned info length is zero.
+     *
+     * @param hash Content hash.
+     * @return Corresponding staging info.
+     */
+    public StagingInfo getStagingInfo(Hash hash) {
+        lockManager.readLock(hash);
+        try {
+            Optional<StagingSession> sessionOpt = sessions.get(hash);
+            if (sessionOpt.isPresent()) {
+                StagingSession session = sessionOpt.get();
+                DigestBuilder digest = session.getDigest();
+                return new StagingInfo(session.getSessionId(), digest.getHash(), digest.getLength());
+            }
+            DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
+            return new StagingInfo(null, digest.getHash(), digest.getLength());
+
+        } catch (IOException e) {
+            throw new IOFailureException(e);
+
+        } finally {
+            lockManager.readUnlock(hash);
         }
     }
 

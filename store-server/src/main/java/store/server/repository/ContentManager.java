@@ -129,7 +129,7 @@ class ContentManager {
      * @param hash Hash of the content to be added latter.
      * @return Info about the session process created.
      */
-    public StagingInfo stage(Hash hash) {
+    public StagingInfo stageContent(Hash hash) {
         lockManager.writeLock(hash);
         try {
             Optional<StagingSession> session = sessions.get(hash);
@@ -165,7 +165,7 @@ class ContentManager {
      * @param position Position in staged content at which write should begin.
      * @return Updated info of the staging session.
      */
-    public StagingInfo write(Hash hash, Guid sessionId, InputStream source, long position) {
+    public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position) {
         lockManager.writeLock(hash);
         try {
             StagingSession session = sessions.load(hash, sessionId);

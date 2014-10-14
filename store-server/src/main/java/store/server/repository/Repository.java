@@ -192,7 +192,7 @@ public class Repository {
      * @param hash Hash of the content to be added latter.
      * @return Info about the staging session created.
      */
-    public StagingInfo stage(final Hash hash) {
+    public StagingInfo stageContent(final Hash hash) {
         ensureOpen();
         log("Staging content {}", hash);
         return storageManager.inTransaction(new Query<StagingInfo>() {
@@ -202,7 +202,7 @@ public class Repository {
                 if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
                     throw new ContentAlreadyPresentException();
                 }
-                return contentManager.stage(hash);
+                return contentManager.stageContent(hash);
             }
         });
     }
@@ -216,10 +216,10 @@ public class Repository {
      * @param position Position in staged content at which write should begin.
      * @return Updated info of the staging session.
      */
-    public StagingInfo write(Hash hash, Guid sessionId, InputStream source, long position) {
+    public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position) {
         ensureOpen();
         log("Writing to staged content {}", hash);
-        return contentManager.write(hash, sessionId, source, position);
+        return contentManager.writeContent(hash, sessionId, source, position);
     }
 
     /**

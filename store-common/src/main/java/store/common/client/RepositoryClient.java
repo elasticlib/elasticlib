@@ -20,13 +20,16 @@ import static store.common.client.ClientUtil.checkStatus;
 import static store.common.client.ClientUtil.read;
 import static store.common.client.ClientUtil.readAll;
 import static store.common.client.ClientUtil.result;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonWriting.write;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Revision;
 import store.common.model.RevisionTree;
+import store.common.model.StagingInfo;
 
 /**
  * Client to a remote repository.
@@ -37,8 +40,13 @@ public class RepositoryClient {
     private static final String REVISIONS = "revisions";
     private static final String INDEX = "index";
     private static final String HISTORY = "history";
+    private static final String INFO_TEMPLATE = "info/{hash}";
+    private static final String STAGE_TEMPLATE = "stage/{hash}";
+    private static final String WRITE_TEMPLATE = "stage/{hash}/{sessionId}";
     private static final String CONTENTS_TEMPLATE = "contents/{hash}";
     private static final String REVISIONS_TEMPLATE = "revisions/{hash}";
+    private static final String SESSION_ID = "sessionId";
+    private static final String POSITION = "position";
     private static final String TX_ID = "txId";
     private static final String HASH = "hash";
     private static final String REV = "rev";
@@ -73,6 +81,47 @@ public class RepositoryClient {
                 .path(REVISIONS)
                 .request()
                 .post(json(write(revision))));
+    }
+
+    /**
+     * Prepares to add a new content.
+     *
+     * @param hash Hash of the content to be added latter.
+     * @return Info about the staging session created.
+     */
+    public StagingInfo stageContent(Hash hash) {
+        Response response = resource.path(STAGE_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .request()
+                .post(null);
+
+        return read(response, StagingInfo.class);
+    }
+
+    /**
+     * Writes bytes to a staged content.
+     *
+     * @param hash Hash of the staged content (when staging is completed).
+     * @param sessionId Staging session identifier.
+     * @param inputStream Bytes to write.
+     * @param position Position in staged content at which write should begin.
+     * @return Updated info of the staging session.
+     */
+    public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream inputStream, long position) {
+        MultiPart multipart = new FormDataMultiPart()
+                .bodyPart(new StreamDataBodyPart(CONTENT,
+                                                 inputStream,
+                                                 CONTENT,
+                                                 MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+        Response response = resource.path(WRITE_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .resolveTemplate(SESSION_ID, sessionId)
+                .queryParam(POSITION, position)
+                .request()
+                .post(entity(multipart, addBoundary(multipart.getMediaType())));
+
+        return read(response, StagingInfo.class);
     }
 
     /**
@@ -111,6 +160,21 @@ public class RepositoryClient {
                 .queryParam(REV, Joiner.on('-').join(head))
                 .request()
                 .delete());
+    }
+
+    /**
+     * Provides info about a given content.
+     *
+     * @param hash Content hash.
+     * @return Corresponding content info.
+     */
+    public ContentInfo getContentInfo(Hash hash) {
+        Response response = resource.path(INFO_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .request()
+                .get();
+
+        return read(response, ContentInfo.class);
     }
 
     /**

@@ -30,6 +30,7 @@ import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.Event.EventBuilder;
 import store.common.model.IndexEntry;
@@ -38,6 +39,7 @@ import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.Revision;
 import store.common.model.RevisionTree;
+import store.common.model.StagingInfo;
 import static store.server.TestUtil.LOREM_IPSUM;
 import store.server.repository.Repository;
 import store.server.service.RepositoriesService;
@@ -51,9 +53,11 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     private final RepositoriesService repositoriesService = mock(RepositoriesService.class);
     private final Guid guid = Guid.random();
     private final Path path = Paths.get("/tmp/test");
+    private final Hash hash = LOREM_IPSUM.getHash();
+    private final long position = 0;
+    private final StagingInfo stagingInfo = new StagingInfo(guid, hash, position);
     private final CommandResult result = CommandResult.noOp(1, LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
     private final RepositoryInfo repositoryInfo = new RepositoryInfo(new RepositoryDef("test", guid, path));
-    private final Hash hash = LOREM_IPSUM.getHash();
     private final int first = 0;
     private final int size = 20;
     private final String query = "lorem ipsum";
@@ -185,6 +189,57 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
+    public void stageContentTest() {
+        Repository repository = newRepositoryMock();
+        when(repository.stageContent(hash)).thenReturn(stagingInfo);
+
+        try (Client client = newClient()) {
+            StagingInfo actual = client.repositories().get(guid).stageContent(hash);
+            assertThat(actual).isEqualTo(stagingInfo);
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException Actually unexpected.
+     */
+    @Test
+    public void writeContentTest() throws IOException {
+        Repository repository = newRepositoryMock();
+        when(repository.writeContent(eq(hash), eq(guid), matches(LOREM_IPSUM.getBytes()), eq(position)))
+                .thenReturn(stagingInfo);
+
+        try (Client client = newClient();
+                InputStream input = LOREM_IPSUM.getInputStream()) {
+
+            StagingInfo actual = client.repositories().get(guid).writeContent(hash, guid, input, position);
+            assertThat(actual).isEqualTo(stagingInfo);
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException Actually unexpected.
+     */
+    @Test(expectedExceptions = IOFailureException.class)
+    public void writeContentWithIOFailureTest() throws IOException {
+        Repository repository = newRepositoryMock();
+        when(repository.writeContent(eq(hash), eq(guid), matches(LOREM_IPSUM.getBytes()), eq(position)))
+                .thenThrow(new IOFailureException("test"));
+
+        try (Client client = newClient();
+                InputStream input = LOREM_IPSUM.getInputStream()) {
+
+            client.repositories().get(guid).writeContent(hash, guid, input, position);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void addRevisionTest() {
         Revision revision = LOREM_IPSUM.getRevision();
 
@@ -271,6 +326,22 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
             assertThat(content.getFileName().get()).isEqualTo(LOREM_IPSUM.filename());
             assertThat(content.getContentType()).isEqualTo(MediaType.valueOf(LOREM_IPSUM.contentType()));
             assertThat(content.getInputStream()).hasContentEqualTo(expected);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getContentInfoTest() {
+        ContentInfo contentInfo = ContentInfo.of(singletonList(LOREM_IPSUM.getRevision()));
+
+        Repository repository = newRepositoryMock();
+        when(repository.getContentInfo(hash)).thenReturn(contentInfo);
+
+        try (Client client = newClient()) {
+            ContentInfo actual = client.repositories().get(guid).getContentInfo(hash);
+            assertThat(actual).isEqualTo(contentInfo);
         }
     }
 

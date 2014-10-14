@@ -31,18 +31,21 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import store.common.exception.BadRequestException;
 import store.common.exception.IOFailureException;
+import store.common.hash.Guid;
 import store.common.hash.Hash;
 import static store.common.json.JsonReading.read;
 import static store.common.json.JsonValidation.hasStringValue;
 import static store.common.json.JsonValidation.isValid;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
 import store.common.model.RepositoryInfo;
 import store.common.model.Revision;
 import store.common.model.RevisionTree;
+import store.common.model.StagingInfo;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -61,6 +64,8 @@ public class RepositoriesResource {
     private static final String REPOSITORY = "repository";
     private static final String HASH = "hash";
     private static final String REV = "rev";
+    private static final String SESSION_ID = "sessionId";
+    private static final String POSITION = "position";
     private static final String TX_ID = "txId";
     private static final String HEAD = "head";
     private static final String CONTENT = "content";
@@ -229,6 +234,46 @@ public class RepositoriesResource {
     }
 
     /**
+     * Prepares to add a new content in a repository.
+     *
+     * @param repositoryKey repository name or encoded GUID
+     * @param hash content hash
+     * @return Info about the staging session created.
+     */
+    @POST
+    @Path("{repository}/stage/{hash}")
+    public StagingInfo stageContent(@PathParam(REPOSITORY) String repositoryKey, @PathParam(HASH) Hash hash) {
+        return repository(repositoryKey).stageContent(hash);
+    }
+
+    /**
+     * Writes bytes to a staged content.
+     *
+     * @param repositoryKey repository name or encoded GUID
+     * @param hash content hash
+     * @param sessionId Staging session identifier
+     * @param position Position in staged content at which write should begin
+     * @param formData entity form data
+     * @return Updated info of the staging session.
+     */
+    @POST
+    @Path("{repository}/stage/{hash}/{sessionId}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public StagingInfo writeContent(@PathParam(REPOSITORY) String repositoryKey,
+                                    @PathParam(HASH) Hash hash,
+                                    @PathParam(SESSION_ID) Guid sessionId,
+                                    @QueryParam(POSITION) long position,
+                                    FormDataMultipart formData) {
+
+        try (InputStream inputStream = formData.next(CONTENT).getAsInputStream()) {
+            return repository(repositoryKey).writeContent(hash, sessionId, inputStream, position);
+
+        } catch (IOException e) {
+            throw new IOFailureException(e);
+        }
+    }
+
+    /**
      * Add a revision or a revision tree. If associated content is not present, started transaction is suspended so that
      * client may create this content in a latter request.
      * <p>
@@ -338,6 +383,24 @@ public class RepositoriesResource {
             builder = Response.ok();
         }
         return builder.entity(result).build();
+    }
+
+    /**
+     * Get info about a content.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
+     *
+     * @param repositoryKey repository name or encoded GUID
+     * @param hash content hash
+     * @return Corresponding content info.
+     */
+    @GET
+    @Path("{repository}/info/{hash}")
+    public ContentInfo getContentInfo(@PathParam(REPOSITORY) String repositoryKey, @PathParam(HASH) Hash hash) {
+        return repository(repositoryKey).getContentInfo(hash);
     }
 
     /**

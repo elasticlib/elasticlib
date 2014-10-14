@@ -27,10 +27,12 @@ import store.common.client.Client;
 import store.common.client.Content;
 import store.common.exception.IOFailureException;
 import store.common.exception.UnknownRepositoryException;
+import store.common.hash.Digest.DigestBuilder;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
+import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.Event.EventBuilder;
 import store.common.model.IndexEntry;
@@ -334,7 +336,10 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void getContentInfoTest() {
-        ContentInfo contentInfo = ContentInfo.of(singletonList(LOREM_IPSUM.getRevision()));
+        ContentInfo contentInfo = new ContentInfo(ContentState.PRESENT,
+                                                  new DigestBuilder().getHash(),
+                                                  0,
+                                                  singletonList(LOREM_IPSUM.getRevision()));
 
         Repository repository = newRepositoryMock();
         when(repository.getContentInfo(hash)).thenReturn(contentInfo);

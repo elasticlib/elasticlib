@@ -1,0 +1,10 @@
+state: present
+staging:
+  hash: !hash 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+  length: 0
+head:
+- content: !hash '8d5f3c77e94a0cad3a32340d342135f43dbb7cbb'
+  length: 10
+  revision: !hash '0d99dd9895a2a1c485e0c75f79f92cc14457bb62'
+  metadata:
+    text: ipsum lorem

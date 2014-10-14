@@ -5,20 +5,28 @@
         "state": {
             "type": "string"
         },
-        "hash": {
-            "type": "hash",
-            "optional": true
-        },
-        "length": {
-            "type": "integer",
-            "optional": true
+        "staging": {
+            "type": "object",
+            "properties": {
+                "hash": {
+                    "type": "hash"
+                },
+                "length": {
+                    "type": "integer"
+                }
+            }
         },
         "head": {
             "type": "array",
-            "optional": true,
             "items": {
                 "type": "object",
                 "properties": {
+                    "content": {
+                        "type": "hash"
+                    },
+                    "length": {
+                        "type": "integer"
+                    },
                     "revision": {
                         "type": "hash"
                     },

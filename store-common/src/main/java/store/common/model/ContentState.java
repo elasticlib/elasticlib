@@ -6,7 +6,7 @@ package store.common.model;
 public enum ContentState {
 
     /**
-     * Content does not exist.
+     * Content does not exist or has been deleted.
      */
     ABSENT,
     /**
@@ -24,11 +24,7 @@ public enum ContentState {
     /**
      * Content is present.
      */
-    PRESENT,
-    /**
-     * Content used to be present but has been deleted.
-     */
-    DELETED;
+    PRESENT;
 
     /**
      * Provides state matching with supplied string argument. Fails if supplied string is unknown.

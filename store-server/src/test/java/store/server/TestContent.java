@@ -130,6 +130,13 @@ public final class TestContent {
     }
 
     /**
+     * @return This content's length.
+     */
+    public long getLength() {
+        return tree.getLength();
+    }
+
+    /**
      * @return Head of a the tree associated with this content.
      */
     public SortedSet<Hash> getHead() {

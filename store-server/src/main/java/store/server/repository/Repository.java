@@ -9,6 +9,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -352,30 +353,48 @@ public class Repository {
         return storageManager.inTransaction(new Query<ContentInfo>() {
             @Override
             public ContentInfo apply() {
-                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
-                if (treeOpt.isPresent()) {
-                    RevisionTree tree = treeOpt.get();
-                    return ContentInfo.of(tree.get(tree.getHead()));
-                }
+                List<Revision> head = head(hash);
                 StagingInfo stagingInfo = contentManager.getStagingInfo(hash);
-                if (stagingInfo.getLength() == 0) {
-                    return ContentInfo.absent();
-                }
-                return ContentInfo.of(contentState(hash, stagingInfo),
-                                      stagingInfo.getHash(),
-                                      stagingInfo.getLength());
+                return new ContentInfo(contentState(hash, head, stagingInfo),
+                                       stagingInfo.getHash(),
+                                       stagingInfo.getLength(),
+                                       head);
             }
         });
     }
 
-    private static ContentState contentState(Hash hash, StagingInfo stagingInfo) {
+    private List<Revision> head(Hash hash) {
+        Optional<RevisionTree> treeOpt = revisionManager.get(hash);
+        if (treeOpt.isPresent()) {
+            RevisionTree tree = treeOpt.get();
+            return tree.get(tree.getHead());
+        }
+        return emptyList();
+    }
+
+    private static ContentState contentState(Hash hash, List<Revision> head, StagingInfo stagingInfo) {
+        if (isPresent(head)) {
+            return ContentState.PRESENT;
+        }
         if (stagingInfo.getHash().equals(hash)) {
             return ContentState.STAGED;
         }
         if (stagingInfo.getSessionId() != null) {
             return ContentState.STAGING;
         }
+        if (stagingInfo.getLength() == 0) {
+            return ContentState.ABSENT;
+        }
         return ContentState.PARTIAL;
+    }
+
+    private static boolean isPresent(List<Revision> head) {
+        for (Revision rev : head) {
+            if (!rev.isDeleted()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -6,7 +6,7 @@ import java.util.List;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import static store.common.TestData.COMMAND_RESULTS;
-import static store.common.TestData.CONTENT_INFOS;
+import static store.common.TestData.CONTENT_INFO;
 import static store.common.TestData.EVENTS;
 import static store.common.TestData.INDEX_ENTRIES;
 import static store.common.TestData.NODE_DEFS;
@@ -36,7 +36,7 @@ import store.common.model.Revision;
 import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import static store.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
-import static store.common.yaml.YamlTestData.CONTENT_INFOS_YAML;
+import static store.common.yaml.YamlTestData.CONTENT_INFO_YAML;
 import static store.common.yaml.YamlTestData.EVENTS_YAML;
 import static store.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static store.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -85,8 +85,8 @@ public class YamlReadingTest {
      * Test.
      */
     @Test
-    public void readAllContentInfoTest() {
-        assertThat(readAll(CONTENT_INFOS_YAML, ContentInfo.class)).isEqualTo(CONTENT_INFOS);
+    public void readContentInfoTest() {
+        assertThat(read(CONTENT_INFO_YAML, ContentInfo.class)).isEqualTo(CONTENT_INFO);
     }
 
     /**

@@ -125,28 +125,6 @@ public class RepositoryClient {
     }
 
     /**
-     * Add a new content. Caller is responsible for closing supplied input-stream.
-     *
-     * @param transactionId Identifier of the transaction used to previously add content associated info.
-     * @param hash Content hash.
-     * @param inputStream Content input-stream
-     * @return Actual command result.
-     */
-    public CommandResult addContent(long transactionId, Hash hash, InputStream inputStream) {
-        MultiPart multipart = new FormDataMultiPart()
-                .bodyPart(new StreamDataBodyPart(CONTENT,
-                                                 inputStream,
-                                                 CONTENT,
-                                                 MediaType.APPLICATION_OCTET_STREAM_TYPE));
-
-        return result(resource.path(CONTENTS_TEMPLATE)
-                .resolveTemplate(HASH, hash)
-                .queryParam(TX_ID, transactionId)
-                .request()
-                .put(entity(multipart, addBoundary(multipart.getMediaType()))));
-    }
-
-    /**
      * Delete an exising content.
      *
      * @param hash Content hash.

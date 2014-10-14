@@ -25,6 +25,8 @@ import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
 import store.common.model.Operation;
@@ -32,6 +34,7 @@ import store.common.model.RepositoryDef;
 import store.common.model.RepositoryInfo;
 import store.common.model.RepositoryStats;
 import store.common.model.Revision;
+import store.common.model.StagingInfo;
 import static store.common.util.IoUtil.copy;
 import store.common.value.Value;
 import store.server.TestContent;
@@ -160,15 +163,19 @@ public class RepositoryTest {
      */
     @Test(groups = ADD_CONTENT, dependsOnGroups = CREATE_REPOSITORY_CHECKS)
     public void addContentTest() throws IOException {
-        try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
-            CommandResult firstStepResult = repository.addRevision(LOREM_IPSUM.getRevision());
-            CommandResult secondStepResult = repository.addContent(firstStepResult.getTransactionId(),
-                                                                   LOREM_IPSUM.getRevision().getContent(),
-                                                                   inputStream);
+        ContentInfo contentInfo = repository.getContentInfo(LOREM_IPSUM.getHash());
+        assertThat(contentInfo.getState()).isEqualTo(ContentState.ABSENT);
 
-            assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
-            assertThat(secondStepResult).isEqualTo(firstStepResult);
+        try (InputStream inputStream = LOREM_IPSUM.getInputStream()) {
+            StagingInfo stagingInfo = repository.stageContent(LOREM_IPSUM.getHash());
+            assertThat(stagingInfo.getLength()).isZero();
+
+            stagingInfo = repository.writeContent(LOREM_IPSUM.getHash(), stagingInfo.getSessionId(), inputStream, 0);
+            assertThat(stagingInfo.getHash()).isEqualTo(LOREM_IPSUM.getHash());
         }
+
+        CommandResult result = repository.addRevision(LOREM_IPSUM.getRevision());
+        assertThat(result.getOperation()).isEqualTo(Operation.CREATE);
     }
 
     /**

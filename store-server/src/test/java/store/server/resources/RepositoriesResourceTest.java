@@ -256,46 +256,6 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
 
     /**
      * Test.
-     *
-     * @throws IOException Actually unexpected.
-     */
-    @Test
-    public void addContentTest() throws IOException {
-        long txId = 1;
-
-        Repository repository = newRepositoryMock();
-        when(repository.addContent(eq(txId), eq(hash), matches(LOREM_IPSUM.getBytes()))).thenReturn(result);
-
-        try (Client client = newClient();
-                InputStream input = LOREM_IPSUM.getInputStream()) {
-
-            CommandResult actual = client.repositories().get(guid).addContent(txId, hash, input);
-            assertThat(actual).isEqualTo(result);
-        }
-    }
-
-    /**
-     * Test.
-     *
-     * @throws IOException Actually unexpected.
-     */
-    @Test(expectedExceptions = IOFailureException.class)
-    public void addContentWithIOFailureTest() throws IOException {
-        long txId = 1;
-
-        Repository repository = newRepositoryMock();
-        when(repository.addContent(eq(txId), eq(hash), matches(LOREM_IPSUM.getBytes())))
-                .thenThrow(new IOFailureException("test"));
-
-        try (Client client = newClient();
-                InputStream input = LOREM_IPSUM.getInputStream()) {
-
-            client.repositories().get(guid).addContent(txId, hash, input);
-        }
-    }
-
-    /**
-     * Test.
      */
     @Test
     public void deleteContentTest() {

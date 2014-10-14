@@ -20,6 +20,7 @@ import store.common.model.CommandResult;
 import store.common.model.Operation;
 import store.common.model.ReplicationInfo;
 import store.common.model.RevisionTree;
+import store.common.model.StagingInfo;
 import store.common.value.Value;
 import store.server.TestContent;
 import static store.server.TestUtil.LOREM_IPSUM;
@@ -265,19 +266,16 @@ public class ReplicationsServiceTest {
 
     private void addSourceContent() {
         Repository repository = repositoriesService.getRepository(SOURCE);
-        try {
-            try (InputStream inputStream = content.getInputStream()) {
-                CommandResult firstStepResult = repository.addRevision(content.getRevision());
-                CommandResult secondStepResult = repository.addContent(firstStepResult.getTransactionId(),
-                                                                       content.getRevision().getContent(),
-                                                                       inputStream);
 
-                assertThat(firstStepResult.getOperation()).isEqualTo(Operation.CREATE);
-                assertThat(secondStepResult).isEqualTo(firstStepResult);
-            }
+        try (InputStream inputStream = content.getInputStream()) {
+            StagingInfo stagingInfo = repository.stageContent(content.getHash());
+            repository.writeContent(content.getHash(), stagingInfo.getSessionId(), inputStream, 0);
+
         } catch (IOException e) {
             throw new AssertionError(e);
         }
+        CommandResult result = repository.addRevision(content.getRevision());
+        assertThat(result.getOperation()).isEqualTo(Operation.CREATE);
     }
 
     private void updateSourceContent(String newValue) {

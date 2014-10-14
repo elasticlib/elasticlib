@@ -9,6 +9,7 @@ import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -57,6 +58,15 @@ public abstract class Agent {
      * @return True if supplied event was succesfully processed, false otherwise.
      */
     protected abstract boolean process(Event event);
+
+    /**
+     * Cause processing thread to wait.
+     *
+     * @param seconds The time to wait in seconds.
+     */
+    protected void pause(long seconds) {
+        agentThread.pause(seconds);
+    }
 
     /**
      * Start this agent.
@@ -209,6 +219,22 @@ public abstract class Agent {
 
         private void updateInfo(AgentState state) {
             info.set(new AgentInfo(curSeq, maxSeq, state));
+        }
+
+        /**
+         * Pause execution.
+         *
+         * @param seconds The time to wait in seconds.
+         */
+        public void pause(long seconds) {
+            try {
+                updateInfo(AgentState.WAITING);
+                condition.await(seconds, TimeUnit.SECONDS);
+                updateInfo(AgentState.RUNNING);
+
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
+            }
         }
     }
 }

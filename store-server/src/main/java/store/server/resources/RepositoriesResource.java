@@ -4,7 +4,6 @@ import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Collections.emptyMap;
@@ -18,7 +17,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -41,7 +39,6 @@ import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
 import store.common.model.Event;
 import store.common.model.IndexEntry;
-import store.common.model.Operation;
 import store.common.model.RepositoryInfo;
 import store.common.model.Revision;
 import store.common.model.RevisionTree;
@@ -279,7 +276,6 @@ public class RepositoriesResource {
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
-     * - 202 ACCEPTED: Requester is expected to supply content in a latter request<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
      * - 404 NOT FOUND: Repository or content was not found.<br>
      * - 409 CONFLICT: Supplied rev spec did not match existing one.<br>
@@ -292,53 +288,14 @@ public class RepositoriesResource {
     @POST
     @Path("{repository}/revisions")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response addRevision(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
+    public CommandResult addRevision(@PathParam(REPOSITORY) String repositoryKey, JsonObject json) {
         if (isValid(json, Revision.class)) {
-            return response(repository(repositoryKey).addRevision(read(json, Revision.class)));
+            return repository(repositoryKey).addRevision(read(json, Revision.class));
         }
         if (isValid(json, RevisionTree.class)) {
-            return response(repository(repositoryKey).mergeTree(read(json, RevisionTree.class)));
+            return repository(repositoryKey).mergeTree(read(json, RevisionTree.class));
         }
         throw newInvalidJsonException();
-    }
-
-    /**
-     * Resume a previously suspended transaction and create a content.
-     * <p>
-     * Query param:<br>
-     * -txId: identifier of a previously suspended transaction.
-     * <p>
-     * Input:<br>
-     * - content (Raw): Content data.
-     * <p>
-     * Response:<br>
-     * - 201 CREATED: Operation succeeded.<br>
-     * - 400 BAD REQUEST: Invalid form data.<br>
-     * - 404 NOT FOUND: Repository was not found.<br>
-     * - 412 PRECONDITION FAILED: Integrity checking failed.<br>
-     * - 503 SERVICE UNAVAILABLE: Repository is not started.
-     *
-     * @param repositoryKey repository name or encoded GUID
-     * @param hash content hash
-     * @param transactionId transaction identifier
-     * @param formData entity form data
-     * @return HTTP response
-     */
-    @PUT
-    @Path("{repository}/contents/{hash}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response addContent(@PathParam(REPOSITORY) String repositoryKey,
-                               @PathParam(HASH) Hash hash,
-                               @QueryParam(TX_ID) long transactionId,
-                               FormDataMultipart formData) {
-
-        try (InputStream inputStream = formData.next(CONTENT).getAsInputStream()) {
-            return response(uriInfo.getAbsolutePath(),
-                            repository(repositoryKey).addContent(transactionId, hash, inputStream));
-
-        } catch (IOException e) {
-            throw new IOFailureException(e);
-        }
     }
 
     /**
@@ -361,27 +318,11 @@ public class RepositoriesResource {
      */
     @DELETE
     @Path("{repository}/contents/{hash}")
-    public Response deleteContent(@PathParam(REPOSITORY) String repositoryKey,
-                                  @QueryParam(REV) @DefaultValue("") String rev,
-                                  @PathParam(HASH) Hash hash) {
+    public CommandResult deleteContent(@PathParam(REPOSITORY) String repositoryKey,
+                                       @QueryParam(REV) @DefaultValue("") String rev,
+                                       @PathParam(HASH) Hash hash) {
 
-        return response(repository(repositoryKey).deleteContent(hash, new TreeSet<>(parseRevisions(rev))));
-    }
-
-    private static Response response(CommandResult result) {
-        return Response.ok()
-                .entity(result)
-                .build();
-    }
-
-    private static Response response(URI uri, CommandResult result) {
-        ResponseBuilder builder;
-        if (!result.isNoOp() && result.getOperation() == Operation.CREATE) {
-            builder = Response.created(uri);
-        } else {
-            builder = Response.ok();
-        }
-        return builder.entity(result).build();
+        return repository(repositoryKey).deleteContent(hash, new TreeSet<>(parseRevisions(rev)));
     }
 
     /**

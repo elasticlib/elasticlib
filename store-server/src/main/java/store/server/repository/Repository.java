@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
-import store.common.exception.BadRequestException;
 import store.common.exception.ContentAlreadyPresentException;
 import store.common.exception.IOFailureException;
 import store.common.exception.InvalidRepositoryPathException;
@@ -241,7 +240,7 @@ public class Repository {
                 return result;
             }
         });
-        signalIf(!result.isNoOp() && result.getOperation() != Operation.CREATE);
+        propagate(result);
         return result;
     }
 
@@ -263,36 +262,7 @@ public class Repository {
                 return result;
             }
         });
-        signalIf(!result.isNoOp() && result.getOperation() != Operation.CREATE);
-        return result;
-    }
-
-    /**
-     * Resumes a previously suspended transaction and add content from supplied input-stream.
-     *
-     * @param transactionId Identifier of the transaction to resume.
-     * @param hash Content hash. Used to retrieve its associated info.
-     * @param source Content.
-     * @return Operation result.
-     */
-    public CommandResult addContent(final long transactionId, final Hash hash, final InputStream source) {
-        ensureOpen();
-        log("Adding content {}", hash);
-        CommandResult result = storageManager.inTransaction(transactionId, new Command() {
-            @Override
-            public CommandResult apply() {
-                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
-                if (!treeOpt.isPresent() || treeOpt.get().isDeleted()) {
-                    // This is unexpected as we have a resumed transaction at this point.
-                    throw new BadRequestException();
-                }
-                SortedSet<Hash> head = treeOpt.get().getHead();
-                contentManager.add(hash, source);
-                historyManager.add(Operation.CREATE, hash, head);
-                return CommandResult.of(transactionId, Operation.CREATE, hash, head);
-            }
-        });
-        signalIf(true);
+        propagate(result);
         return result;
     }
 
@@ -314,7 +284,7 @@ public class Repository {
                 return result;
             }
         });
-        signalIf(!result.isNoOp());
+        propagate(result);
         return result;
     }
 
@@ -323,22 +293,22 @@ public class Repository {
             return;
         }
         Operation operation = result.getOperation();
+        historyManager.add(operation, hash, result.getRevisions());
         if (operation == Operation.CREATE) {
-            storageManager.suspendCurrentTransaction();
-            return;
+            contentManager.add(hash);
         }
         if (operation == Operation.DELETE) {
             contentManager.delete(hash);
         }
-        historyManager.add(operation, hash, result.getRevisions());
     }
 
-    private void signalIf(boolean condition) {
-        if (condition) {
-            indexingAgent.signal();
-            statsAgent.signal();
-            messageManager.post(new NewRepositoryEvent(def.getGuid()));
+    private void propagate(CommandResult result) {
+        if (result.isNoOp()) {
+            return;
         }
+        indexingAgent.signal();
+        statsAgent.signal();
+        messageManager.post(new NewRepositoryEvent(def.getGuid()));
     }
 
     /**

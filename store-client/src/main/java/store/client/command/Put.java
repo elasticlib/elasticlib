@@ -19,7 +19,6 @@ import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.exception.RequestFailedException;
 import store.client.http.Session;
-import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.revisions;
 import store.client.util.Directories;
 import store.common.client.RepositoryClient;
@@ -28,8 +27,13 @@ import store.common.hash.Digest;
 import static store.common.metadata.MetadataUtil.metadata;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
-import store.common.model.Operation;
+import store.common.model.ContentInfo;
+import store.common.model.ContentState;
+import static store.common.model.ContentState.PRESENT;
+import static store.common.model.ContentState.STAGING;
 import store.common.model.Revision;
+import store.common.model.Revision.RevisionBuilder;
+import store.common.model.StagingInfo;
 import static store.common.util.IoUtil.copyAndDigest;
 import static store.common.util.SinkOutputStream.sink;
 import store.common.value.Value;
@@ -101,26 +105,38 @@ class Put extends AbstractCommand {
         public CommandResult put(Path filepath, Map<String, Value> metadata) {
             try {
                 Digest digest = digest(filepath);
-                List<Revision> head = client.getHeadIfAny(digest.getHash());
-                if (!isDeleted(head)) {
-                    throw new RequestFailedException("This content is already stored");
-                }
-                Revision revision = new Revision.RevisionBuilder()
+                ContentInfo contentInfo = client.getContentInfo(digest.getHash());
+                checkState(contentInfo);
+
+                Revision revision = new RevisionBuilder()
                         .withContent(digest.getHash())
                         .withLength(digest.getLength())
-                        .withParents(revisions(head))
+                        .withParents(revisions(contentInfo.getHead()))
                         .withMetadata(metadata(filepath))
                         .withMetadata(metadata)
                         .computeRevisionAndBuild();
 
-                CommandResult firstStepResult = client.addRevision(revision);
-                if (firstStepResult.isNoOp() || firstStepResult.getOperation() != Operation.CREATE) {
-                    return firstStepResult;
+                if (contentInfo.getState() != ContentState.STAGED) {
+                    addContent(filepath, digest);
                 }
-                return putContent(firstStepResult.getTransactionId(), revision, filepath);
+                return client.addRevision(revision);
 
             } catch (IOException e) {
                 throw new RequestFailedException(e);
+            }
+        }
+
+        private static void checkState(ContentInfo contentInfo) {
+            switch (contentInfo.getState()) {
+                case STAGING:
+                    throw new RequestFailedException(
+                            "There is already another staging session in progress for this content");
+
+                case PRESENT:
+                    throw new RequestFailedException("This content is already stored");
+
+                default:
+                // Others cases are fine.
             }
         }
 
@@ -130,9 +146,10 @@ class Put extends AbstractCommand {
             }
         }
 
-        private CommandResult putContent(long transactionId, Revision revision, Path filepath) throws IOException {
-            try (InputStream inputStream = read("Uploading content", filepath, revision.getLength())) {
-                return client.addContent(transactionId, revision.getContent(), inputStream);
+        private void addContent(Path filepath, Digest digest) throws IOException {
+            try (InputStream inputStream = read("Uploading content", filepath, digest.getLength())) {
+                StagingInfo stagingInfo = client.stageContent(digest.getHash());
+                client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, 0);
             }
         }
 

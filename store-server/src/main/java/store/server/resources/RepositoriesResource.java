@@ -361,7 +361,6 @@ public class RepositoriesResource {
      */
     @DELETE
     @Path("{repository}/contents/{hash}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response deleteContent(@PathParam(REPOSITORY) String repositoryKey,
                                   @QueryParam(REV) @DefaultValue("") String rev,
                                   @PathParam(HASH) Hash hash) {
@@ -417,7 +416,7 @@ public class RepositoriesResource {
      */
     @GET
     @Path("{repository}/contents/{hash}")
-    public Response getContent(@PathParam(REPOSITORY) final String repositoryKey, @PathParam(HASH) final Hash hash) {
+    public Response getContent(@PathParam(REPOSITORY) String repositoryKey, @PathParam(HASH) final Hash hash) {
         while (true) {
             final Repository repository = repository(repositoryKey);
             ResponseBuilder response = Response.ok(new StreamingOutput() {

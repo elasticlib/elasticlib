@@ -27,7 +27,7 @@ public class RandomAccessFileOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte b[], int off, int len) throws IOException {
+    public void write(byte[] b, int off, int len) throws IOException {
         file.write(b, off, len);
     }
 

@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.io.InputStream;
-import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.Set;
 import static javax.ws.rs.client.Entity.entity;
@@ -177,34 +176,13 @@ public class RepositoryClient {
      * @return Corresponding head revisions.
      */
     public List<Revision> getHead(Hash hash) {
-        return readAll(head(hash), Revision.class);
-    }
-
-    /**
-     * Provides head revisions of a given content, or an empty list if this content does not exist.
-     *
-     * @param hash Content hash.
-     * @return Corresponding head, if any.
-     */
-    public List<Revision> getHeadIfAny(Hash hash) {
-        Response response = head(hash);
-        try {
-            if (response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode()) {
-                return emptyList();
-            }
-            return readAll(response, Revision.class);
-
-        } finally {
-            response.close();
-        }
-    }
-
-    private Response head(Hash hash) {
-        return resource.path(REVISIONS_TEMPLATE)
+        Response response = resource.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, HEAD)
                 .request()
                 .get();
+
+        return readAll(response, Revision.class);
     }
 
     /**

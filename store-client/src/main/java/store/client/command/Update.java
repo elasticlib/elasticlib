@@ -13,14 +13,15 @@ import java.util.Map;
 import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
+import store.client.exception.RequestFailedException;
 import store.client.http.Session;
-import static store.client.util.ClientUtil.isDeleted;
 import static store.client.util.ClientUtil.parseHash;
 import static store.client.util.ClientUtil.revisions;
 import static store.client.util.Directories.home;
-import store.client.exception.RequestFailedException;
 import store.common.hash.Hash;
 import store.common.model.CommandResult;
+import store.common.model.ContentInfo;
+import store.common.model.ContentState;
 import store.common.model.Revision;
 import store.common.model.Revision.RevisionBuilder;
 import store.common.value.Value;
@@ -46,16 +47,26 @@ class Update extends AbstractCommand {
             throw new RequestFailedException("No defined editor");
         }
         Hash hash = parseHash(params.get(0));
-        List<Revision> head = session.getRepository().getHead(hash);
-        if (isDeleted(head)) {
-            throw new RequestFailedException("This content is deleted");
-        }
+        ContentInfo contentInfo = session.getRepository().getContentInfo(hash);
+        check(contentInfo);
+
+        List<Revision> head = contentInfo.getHead();
         Revision updated = update(editor, head);
         if (head.size() == 1 && head.get(0).getMetadata().equals(updated.getMetadata())) {
             throw new RequestFailedException("Not modified");
         }
+
         CommandResult result = session.getRepository().addRevision(updated);
         display.print(result);
+    }
+
+    private static void check(ContentInfo contentInfo) {
+        if (contentInfo.getHead().isEmpty()) {
+            throw new RequestFailedException("This content is unknown");
+        }
+        if (contentInfo.getState() != ContentState.PRESENT) {
+            throw new RequestFailedException("This content is deleted");
+        }
     }
 
     private static Revision update(String editor, List<Revision> head) {

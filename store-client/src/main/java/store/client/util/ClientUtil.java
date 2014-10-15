@@ -67,21 +67,6 @@ public final class ClientUtil {
     }
 
     /**
-     * Checks if supplied head is deleted.
-     *
-     * @param head A list of revisions.
-     * @return true if head does not contains any not-deleted revision.
-     */
-    public static boolean isDeleted(List<Revision> head) {
-        for (Revision rev : head) {
-            if (!rev.isDeleted()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Resolves the GUID of a repository, using supplied client.
      *
      * @param client Node client.

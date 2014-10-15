@@ -143,16 +143,15 @@ class RevisionManager {
     }
 
     private CommandResult save(Optional<RevisionTree> before, RevisionTree after) {
-        long id = storageManager.currentTransaction().getId();
         Optional<Operation> operation = operation(before, after);
         if (!operation.isPresent()) {
-            return CommandResult.noOp(id, after.getContent(), after.getHead());
+            return CommandResult.noOp(after.getContent(), after.getHead());
         }
         if (!after.getUnknownParents().isEmpty()) {
             throw new UnknownRevisionException();
         }
         database.put(storageManager.currentTransaction(), entry(after.getContent()), entry(after));
-        return CommandResult.of(id, operation.get(), after.getContent(), after.getHead());
+        return CommandResult.of(operation.get(), after.getContent(), after.getHead());
     }
 
     private static Optional<Operation> operation(Optional<RevisionTree> before, RevisionTree after) {

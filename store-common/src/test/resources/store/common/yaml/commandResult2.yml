@@ -1,4 +1,3 @@
-transactionId: 2
 operation: noOp
 content: !hash '0827c43f0aad546501f99b11f0bd44be42d68870'
 revisions:

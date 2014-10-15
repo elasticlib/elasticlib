@@ -20,18 +20,15 @@ import store.common.value.Value;
  */
 public final class CommandResult implements Mappable {
 
-    private static final String TRANSACTION_ID = "transactionId";
     private static final String OPERATION = "operation";
     private static final String NO_OP = "noOp";
     private static final String CONTENT = "content";
     private static final String REVISIONS = "revisions";
-    private long transactionId;
     private final Operation operation;
     private final Hash content;
     private final SortedSet<Hash> revisions;
 
-    private CommandResult(long transactionId, Operation operation, Hash content, SortedSet<Hash> revisions) {
-        this.transactionId = transactionId;
+    private CommandResult(Operation operation, Hash content, SortedSet<Hash> revisions) {
         this.operation = operation;
         this.content = content;
         this.revisions = unmodifiableSortedSet(new TreeSet<>(revisions));
@@ -40,35 +37,24 @@ public final class CommandResult implements Mappable {
     /**
      * Static factory method.
      *
-     * @param transactionId Associated transaction identifier.
      * @param operation Operation executed.
      * @param content Associated content hash.
      * @param revisions New head revisions after command execution.
      * @return A new instance.
      */
-    public static CommandResult of(long transactionId, Operation operation, Hash content, SortedSet<Hash> revisions) {
-        return new CommandResult(transactionId, requireNonNull(operation), content, revisions);
+    public static CommandResult of(Operation operation, Hash content, SortedSet<Hash> revisions) {
+        return new CommandResult(requireNonNull(operation), content, revisions);
     }
 
     /**
      * Specific static factory method for no-op command result.
      *
-     * @param transactionId Associated transaction identifier.
      * @param content Associated content hash.
      * @param revisions Head revisions after (and before) command execution.
      * @return A new instance.
      */
-    public static CommandResult noOp(long transactionId, Hash content, SortedSet<Hash> revisions) {
-        return new CommandResult(transactionId, null, content, revisions);
-    }
-
-    /**
-     * Provides this command associated transaction identifier.
-     *
-     * @return A transaction identifier.
-     */
-    public long getTransactionId() {
-        return transactionId;
+    public static CommandResult noOp(Hash content, SortedSet<Hash> revisions) {
+        return new CommandResult(null, content, revisions);
     }
 
     /**
@@ -113,7 +99,6 @@ public final class CommandResult implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
-                .put(TRANSACTION_ID, transactionId)
                 .put(OPERATION, isNoOp() ? NO_OP : operation.toString())
                 .put(CONTENT, content);
 
@@ -127,20 +112,19 @@ public final class CommandResult implements Mappable {
      * @return A new instance.
      */
     public static CommandResult fromMap(Map<String, Value> map) {
-        long transactionId = map.get(TRANSACTION_ID).asLong();
         Hash content = map.get(CONTENT).asHash();
         SortedSet<Hash> revisions = revisions(map);
         String opCode = map.get(OPERATION).asString();
         if (opCode.equals(NO_OP)) {
-            return CommandResult.noOp(transactionId, content, revisions);
+            return CommandResult.noOp(content, revisions);
         } else {
-            return CommandResult.of(transactionId, Operation.fromString(opCode), content, revisions);
+            return CommandResult.of(Operation.fromString(opCode), content, revisions);
         }
     }
 
     @Override
     public int hashCode() {
-        return hash(transactionId, operation, content, revisions);
+        return hash(operation, content, revisions);
     }
 
     @Override
@@ -150,7 +134,6 @@ public final class CommandResult implements Mappable {
         }
         CommandResult other = (CommandResult) obj;
         return new EqualsBuilder()
-                .append(transactionId, other.transactionId)
                 .append(operation, other.operation)
                 .append(content, other.content)
                 .append(revisions, other.revisions)
@@ -160,7 +143,6 @@ public final class CommandResult implements Mappable {
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add(TRANSACTION_ID, transactionId)
                 .add(OPERATION, operation == null ? NO_OP : operation)
                 .add(CONTENT, content)
                 .add(REVISIONS, revisions)

@@ -160,13 +160,11 @@ public final class TestData {
                 .withOperation(Operation.DELETE)
                 .build());
 
-        COMMAND_RESULTS.add(CommandResult.of(1,
-                                             Operation.CREATE,
+        COMMAND_RESULTS.add(CommandResult.of(Operation.CREATE,
                                              new Hash(HASHES[0]),
                                              new TreeSet<>(singleton(new Hash(REVS[0])))));
 
-        COMMAND_RESULTS.add(CommandResult.noOp(2,
-                                               new Hash(HASHES[1]),
+        COMMAND_RESULTS.add(CommandResult.noOp(new Hash(HASHES[1]),
                                                new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1])))));
 
         INDEX_ENTRIES.add(new IndexEntry(new Hash(HASHES[0]),

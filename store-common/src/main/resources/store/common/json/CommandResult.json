@@ -2,9 +2,6 @@
     "title": "commandResult",
     "type": "object",
     "properties": {
-        "transactionId": {
-            "type": "integer"
-        },
         "operation": {
             "type": "string"
         },

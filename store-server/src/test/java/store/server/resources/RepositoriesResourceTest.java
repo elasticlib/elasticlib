@@ -58,7 +58,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     private final Hash hash = LOREM_IPSUM.getHash();
     private final long position = 0;
     private final StagingInfo stagingInfo = new StagingInfo(guid, hash, position);
-    private final CommandResult result = CommandResult.noOp(1, LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
+    private final CommandResult result = CommandResult.noOp(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
     private final RepositoryInfo repositoryInfo = new RepositoryInfo(new RepositoryDef("test", guid, path));
     private final int first = 0;
     private final int size = 20;

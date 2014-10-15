@@ -105,22 +105,6 @@ public final class ServerConfig {
      */
     public static final String STORAGE_SYNC_INTERVAL = "storage.sync.interval";
     /**
-     * Maximum number of suspended transactions. Default to 20.
-     */
-    public static final String STORAGE_SUSPENDED_TXN_MAX_SIZE = "storage.suspendedTransactions.maxSize";
-    /**
-     * Suspended transactions timeout. Default to '60 seconds'.
-     */
-    public static final String STORAGE_SUSPENDED_TXN_TIMEOUT = "storage.suspendedTransactions.timeout";
-    /**
-     * Whether suspended transactions are periodically cleaned. Default to '30 seconds'.
-     */
-    public static final String STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED = "storage.suspendedTransactions.cleanup.enabled";
-    /**
-     * Periodicity at which suspended transactions cleanup is performed. Default to '30 seconds'.
-     */
-    public static final String STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL = "storage.suspendedTransactions.cleanup.interval";
-    /**
      * The lock timeout for all Berkeley DB operations. Default to '0', meaning that locking never times out.
      */
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
@@ -144,10 +128,6 @@ public final class ServerConfig {
             .set(TASKS_POOL_SIZE, getRuntime().availableProcessors())
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")
-            .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
-            .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "60 seconds")
-            .set(STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED, true)
-            .set(STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL, "30 seconds")
             .set(JE_LOCK_TIMEOUT, "0");
 
     private ServerConfig() {

@@ -52,7 +52,6 @@ public class StorageManager {
     private final Config config;
     private final TaskManager taskManager;
     private final Environment environment;
-    private final TransactionCache cache;
     private final Deque<Task> tasks = new ArrayDeque<>();
     private final Deque<Database> databases = new ArrayDeque<>();
     private final Deque<Sequence> sequences = new ArrayDeque<>();
@@ -92,7 +91,6 @@ public class StorageManager {
         this.config = config;
         this.taskManager = taskManager;
         this.environment = new Environment(path.toFile(), envConfig);
-        this.cache = new TransactionCache(envName, config, taskManager);
     }
 
     /**
@@ -106,7 +104,6 @@ public class StorageManager {
         while (!tasks.isEmpty()) {
             tasks.remove().cancel();
         }
-        safeClose(cache);
         while (!txContexts.isEmpty()) {
             safeAbort(txContexts.remove());
         }
@@ -215,32 +212,28 @@ public class StorageManager {
     }
 
     /**
-     * Executes supplied command in a transaction. Transaction is guaranteed to have been committed or aborted when
-     * command returns, unless it is suspended during command execution.
+     * Executes supplied procedure in a transaction.
      *
-     * @param command Command to execute.
-     * @return Supplied command invocation result.
+     * @param procedure Procedure to execute.
      */
-    public CommandResult inTransaction(final Command command) {
-        return inTransaction(beginTransaction(), new Query<CommandResult>() {
+    public void inTransaction(final Procedure procedure) {
+        inTransaction(new Query<Void>() {
             @Override
-            public CommandResult apply() {
-                return command.apply();
+            public Void apply() {
+                procedure.apply();
+                return null;
             }
         });
     }
 
     /**
-     * Retrieves and resumes suspended transaction associated to supplied identifier. Then executes supplied command
-     * within this transaction. Fails if there is no suspended transaction associated to this identifier, or if such
-     * transaction has expired.
+     * Executes supplied command in a transaction.
      *
-     * @param id Previously suspended transaction identifier.
      * @param command Command to execute.
      * @return Supplied command invocation result.
      */
-    public CommandResult inTransaction(long id, final Command command) {
-        return inTransaction(resumeTransaction(id), new Query<CommandResult>() {
+    public CommandResult inTransaction(final Command command) {
+        return inTransaction(new Query<CommandResult>() {
             @Override
             public CommandResult apply() {
                 return command.apply();
@@ -256,30 +249,12 @@ public class StorageManager {
      * @return Query result.
      */
     public <T> T inTransaction(Query<T> query) {
-        return inTransaction(beginTransaction(), query);
-    }
-
-    /**
-     * Executes supplied procedure in a transaction.
-     *
-     * @param procedure Procedure to execute.
-     */
-    public void inTransaction(final Procedure procedure) {
-        inTransaction(beginTransaction(), new Query<Void>() {
-            @Override
-            public Void apply() {
-                procedure.apply();
-                return null;
-            }
-        });
-    }
-
-    private <T> T inTransaction(TransactionContext ctx, Query<T> query) {
+        TransactionContext ctx = beginTransaction();
         try {
             T result = query.apply();
             synchronized (this) {
                 if (started) {
-                    ctx.commitIfRunning();
+                    ctx.commit();
                 }
             }
             return result;
@@ -292,11 +267,7 @@ public class StorageManager {
             }
         } finally {
             synchronized (this) {
-                if (started) {
-                    ctx.abortIfRunning();
-                    txContexts.remove(ctx);
-                    currentTxContext.remove();
-                }
+                endTransaction(ctx);
             }
         }
     }
@@ -309,28 +280,12 @@ public class StorageManager {
         return ctx;
     }
 
-    private synchronized TransactionContext resumeTransaction(long id) {
-        ensureStarted();
-        TransactionContext ctx = cache.resume(id);
-        txContexts.add(ctx);
-        currentTxContext.set(ctx);
-        return ctx;
-    }
-
-    /**
-     * Suspends the transaction attached to current thread. Fails if no pending transaction is attached to current
-     * thread.
-     * <p>
-     * Note that any further attempt to get current transaction will fail. Caller is expected to resume this transaction
-     * in a new transactional block if he wants to performs other operations and to commit all pending changes.
-     */
-    public synchronized void suspendCurrentTransaction() {
-        ensureStarted();
-        cache.suspend(currentTxContext.get());
-
-        // This is redundant, because current context is removed when leaving the current transaction block.
-        // However, it ensures that current transaction is no longer available. And ThreadLocal.remove() is indempotent.
-        currentTxContext.remove();
+    private synchronized void endTransaction(TransactionContext ctx) {
+        if (started) {
+            ctx.abort();
+            txContexts.remove(ctx);
+            currentTxContext.remove();
+        }
     }
 
     /**

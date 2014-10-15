@@ -10,10 +10,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import store.common.config.Config;
 import store.common.hash.Hash;
 import static store.server.config.ServerConfig.JE_LOCK_TIMEOUT;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_MAX_SIZE;
-import static store.server.config.ServerConfig.STORAGE_SUSPENDED_TXN_TIMEOUT;
 import static store.server.config.ServerConfig.STORAGE_SYNC_ENABLED;
 import static store.server.config.ServerConfig.STORAGE_SYNC_INTERVAL;
 import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
@@ -43,10 +39,6 @@ public final class TestUtil {
                 .set(TASKS_POOL_SIZE, 1)
                 .set(STORAGE_SYNC_ENABLED, true)
                 .set(STORAGE_SYNC_INTERVAL, "10 s")
-                .set(STORAGE_SUSPENDED_TXN_MAX_SIZE, 10)
-                .set(STORAGE_SUSPENDED_TXN_TIMEOUT, "10 s")
-                .set(STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED, true)
-                .set(STORAGE_SUSPENDED_TXN_CLEANUP_INTERVAL, "10 s")
                 .set(JE_LOCK_TIMEOUT, "1 min");
     }
 

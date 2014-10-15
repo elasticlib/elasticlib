@@ -15,14 +15,27 @@ class TransactionContext {
     private final Deque<Cursor> cursors = new ConcurrentLinkedDeque<>();
     private boolean closed;
 
+    /**
+     * Constructor.
+     *
+     * @param transaction Underlying JE transaction.
+     */
     public TransactionContext(Transaction transaction) {
         this.transaction = transaction;
     }
 
+    /**
+     * @return The underlying JE transaction.
+     */
     public Transaction getTransaction() {
         return transaction;
     }
 
+    /**
+     * Associates a cursor to this context.
+     *
+     * @param cursor A JE cursor.
+     */
     public synchronized void add(Cursor cursor) {
         if (closed) {
             throw new IllegalStateException();
@@ -30,12 +43,18 @@ class TransactionContext {
         cursors.add(cursor);
     }
 
+    /**
+     * Commit underlying transaction and close all previously associated cursors, unless this context is already closed.
+     */
     public synchronized void commit() {
         if (close()) {
             transaction.commit();
         }
     }
 
+    /**
+     * Abort underlying transaction and close all previously associated cursors, unless this context is already closed.
+     */
     public synchronized void abort() {
         if (close()) {
             transaction.abort();

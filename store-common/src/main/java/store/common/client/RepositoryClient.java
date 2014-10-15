@@ -46,7 +46,6 @@ public class RepositoryClient {
     private static final String REVISIONS_TEMPLATE = "revisions/{hash}";
     private static final String SESSION_ID = "sessionId";
     private static final String POSITION = "position";
-    private static final String TX_ID = "txId";
     private static final String HASH = "hash";
     private static final String REV = "rev";
     private static final String HEAD = "head";

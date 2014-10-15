@@ -63,7 +63,6 @@ public class RepositoriesResource {
     private static final String REV = "rev";
     private static final String SESSION_ID = "sessionId";
     private static final String POSITION = "position";
-    private static final String TX_ID = "txId";
     private static final String HEAD = "head";
     private static final String CONTENT = "content";
     private static final String QUERY = "query";

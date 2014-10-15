@@ -184,7 +184,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Delete a repository.
+     * Deletes a repository.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -201,7 +201,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * List info about existing repositoryies.
+     * Lists info about existing repositoryies.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -215,7 +215,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get info about a repository.
+     * Provides info about a repository.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -232,10 +232,17 @@ public class RepositoriesResource {
 
     /**
      * Prepares to add a new content in a repository.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 409 CONFLICT: Another staging session is already in progress.<br>
+     * - 412 PRECONDITION FAILED: Content is already completely staged or present<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
      *
      * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
-     * @return Info about the staging session created.
+     * @return Info about the staging session created
      */
     @POST
     @Path("{repository}/stage/{hash}")
@@ -245,13 +252,18 @@ public class RepositoriesResource {
 
     /**
      * Writes bytes to a staged content.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started or staging session has expired.
      *
      * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
      * @param sessionId Staging session identifier
      * @param position Position in staged content at which write should begin
      * @param formData entity form data
-     * @return Updated info of the staging session.
+     * @return Updated info of the staging session
      */
     @POST
     @Path("{repository}/stage/{hash}/{sessionId}")
@@ -271,8 +283,8 @@ public class RepositoriesResource {
     }
 
     /**
-     * Add a revision or a revision tree. If associated content is not present, started transaction is suspended so that
-     * client may create this content in a latter request.
+     * Adds a revision or a revision tree. If associated content is not present, started transaction is suspended so
+     * that client may create this content in a latter request.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -299,7 +311,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Delete a content.
+     * Deletes a content.
      * <p>
      * Query param:<br>
      * - rev: specify expected head to apply request on. May be set to "any" if requester makes to expectation about
@@ -326,7 +338,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get info about a content.
+     * Provides info about a content.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -344,7 +356,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get a content.
+     * Provides a given content.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -399,7 +411,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get revisions about a content.
+     * Provides revisions about a content.
      * <p>
      * Query param:<br>
      * - rev: specify revisions to returns. May be set to "head" to return current head revisions or to a dash-separated
@@ -450,7 +462,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Get repository history.
+     * Provides repository history.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -482,7 +494,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Find index entries matching supplied query.
+     * Finds index entries matching supplied query.
      * <p>
      * Output:<br>
      * - Array of content hashes.
@@ -510,7 +522,7 @@ public class RepositoriesResource {
     }
 
     /**
-     * Find indexed revisions matching supplied query.
+     * Finds indexed revisions matching supplied query.
      * <p>
      * Output:<br>
      * - Array of revisions.

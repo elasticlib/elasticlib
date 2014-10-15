@@ -26,7 +26,7 @@ class History extends AbstractCommand {
         do {
             events = session.getRepository().history(false, cursor, CHUNK_SIZE);
             for (Event event : events) {
-                cursor = event.getSeq();
+                cursor = event.getSeq() - 1;
                 display.print(event);
             }
         } while (events.size() >= CHUNK_SIZE && cursor > 1);

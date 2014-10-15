@@ -37,7 +37,6 @@ import store.common.util.BoundedInputStream;
 import static store.common.util.IoUtil.copyAndDigest;
 import store.common.util.RandomAccessFileOutputStream;
 import static store.common.util.SinkOutputStream.sink;
-import store.server.config.ServerConfig;
 import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
 
@@ -456,6 +455,7 @@ class ContentManager {
     private static class StagingSessionsCache implements Closeable {
 
         // TODO put in config !
+        private static final boolean STAGING_CLEANUP_ENABLED = true;
         private static final int STAGING_MAX_SIZE = 100;
         private static final int STAGING_TIMEOUT = 60;
         private static final int STAGING_CLEANUP_INTERVAL = 30;
@@ -475,7 +475,7 @@ class ContentManager {
                     .expireAfterWrite(STAGING_TIMEOUT, TimeUnit.SECONDS)
                     .build();
 
-            if (config.getBoolean(ServerConfig.STORAGE_SUSPENDED_TXN_CLEANUP_ENABLED)) {
+            if (STAGING_CLEANUP_ENABLED) {
                 cleanUpTask = taskManager
                         .schedule(STAGING_CLEANUP_INTERVAL, TimeUnit.SECONDS,
                                   "[" + name + "] Evicting expired staging sessions",

@@ -10,6 +10,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import store.common.config.Config;
 import store.common.hash.Hash;
 import static store.server.config.ServerConfig.JE_LOCK_TIMEOUT;
+import static store.server.config.ServerConfig.STAGING_SESSIONS_CLEANUP_ENABLED;
+import static store.server.config.ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL;
+import static store.server.config.ServerConfig.STAGING_SESSIONS_MAX_SIZE;
+import static store.server.config.ServerConfig.STAGING_SESSIONS_TIMEOUT;
 import static store.server.config.ServerConfig.STORAGE_SYNC_ENABLED;
 import static store.server.config.ServerConfig.STORAGE_SYNC_INTERVAL;
 import static store.server.config.ServerConfig.TASKS_POOL_SIZE;
@@ -37,6 +41,10 @@ public final class TestUtil {
     public static Config config() {
         return new Config()
                 .set(TASKS_POOL_SIZE, 1)
+                .set(STAGING_SESSIONS_MAX_SIZE, 10)
+                .set(STAGING_SESSIONS_TIMEOUT, "10 s")
+                .set(STAGING_SESSIONS_CLEANUP_ENABLED, true)
+                .set(STAGING_SESSIONS_CLEANUP_INTERVAL, "10 s")
                 .set(STORAGE_SYNC_ENABLED, true)
                 .set(STORAGE_SYNC_INTERVAL, "10 s")
                 .set(JE_LOCK_TIMEOUT, "1 min");

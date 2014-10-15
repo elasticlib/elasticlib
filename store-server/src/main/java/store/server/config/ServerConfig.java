@@ -97,6 +97,22 @@ public final class ServerConfig {
      */
     public static final String TASKS_POOL_SIZE = "tasks.poolSize";
     /**
+     * Maximum number of suspended content staging sessions. Default to 20.
+     */
+    public static final String STAGING_SESSIONS_MAX_SIZE = "staging.maxSize";
+    /**
+     * Suspended content staging sessions timeout. Default to '60 seconds'.
+     */
+    public static final String STAGING_SESSIONS_TIMEOUT = "staging.timeout";
+    /**
+     * Whether suspended content staging sessions are periodically cleaned. Default to true.
+     */
+    public static final String STAGING_SESSIONS_CLEANUP_ENABLED = "staging.cleanup.enabled";
+    /**
+     * Periodicity at which suspended content staging sessions cleanup is performed. Default to '30 seconds'.
+     */
+    public static final String STAGING_SESSIONS_CLEANUP_INTERVAL = "staging.cleanup.interval";
+    /**
      * Whether deffered databases are periodically flushed. Default to true.
      */
     public static final String STORAGE_SYNC_ENABLED = "storage.sync.enabled";
@@ -126,6 +142,10 @@ public final class ServerConfig {
             .set(REMOTES_CLEANUP_ENABLED, true)
             .set(REMOTES_CLEANUP_INTERVAL, "60 seconds")
             .set(TASKS_POOL_SIZE, getRuntime().availableProcessors())
+            .set(STAGING_SESSIONS_MAX_SIZE, 20)
+            .set(STAGING_SESSIONS_TIMEOUT, "60 seconds")
+            .set(STAGING_SESSIONS_CLEANUP_ENABLED, true)
+            .set(STAGING_SESSIONS_CLEANUP_INTERVAL, "30 seconds")
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")
             .set(JE_LOCK_TIMEOUT, "0");

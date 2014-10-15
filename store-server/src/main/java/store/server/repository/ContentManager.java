@@ -16,10 +16,11 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
+import static store.common.config.ConfigUtil.duration;
+import static store.common.config.ConfigUtil.unit;
 import store.common.exception.BadRequestException;
 import store.common.exception.IOFailureException;
 import store.common.exception.IntegrityCheckingFailedException;
@@ -37,6 +38,7 @@ import store.common.util.BoundedInputStream;
 import static store.common.util.IoUtil.copyAndDigest;
 import store.common.util.RandomAccessFileOutputStream;
 import static store.common.util.SinkOutputStream.sink;
+import store.server.config.ServerConfig;
 import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
 
@@ -454,11 +456,6 @@ class ContentManager {
      */
     private static class StagingSessionsCache implements Closeable {
 
-        // TODO put in config !
-        private static final boolean STAGING_CLEANUP_ENABLED = true;
-        private static final int STAGING_MAX_SIZE = 100;
-        private static final int STAGING_TIMEOUT = 60;
-        private static final int STAGING_CLEANUP_INTERVAL = 30;
         private final Cache<Hash, StagingSession> cache;
         private final Task cleanUpTask;
 
@@ -471,13 +468,15 @@ class ContentManager {
          */
         public StagingSessionsCache(String name, Config config, TaskManager taskManager) {
             cache = CacheBuilder.newBuilder()
-                    .maximumSize(STAGING_MAX_SIZE)
-                    .expireAfterWrite(STAGING_TIMEOUT, TimeUnit.SECONDS)
+                    .maximumSize(config.getInt(ServerConfig.STAGING_SESSIONS_MAX_SIZE))
+                    .expireAfterWrite(duration(config, ServerConfig.STAGING_SESSIONS_TIMEOUT),
+                                      unit(config, ServerConfig.STAGING_SESSIONS_TIMEOUT))
                     .build();
 
-            if (STAGING_CLEANUP_ENABLED) {
+            if (config.getBoolean(ServerConfig.STAGING_SESSIONS_CLEANUP_ENABLED)) {
                 cleanUpTask = taskManager
-                        .schedule(STAGING_CLEANUP_INTERVAL, TimeUnit.SECONDS,
+                        .schedule(duration(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
+                                  unit(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
                                   "[" + name + "] Evicting expired staging sessions",
                                   new Runnable() {
                     @Override

@@ -39,7 +39,7 @@ class ReplicationAgent extends Agent {
             pause(10);
             return false;
         }
-        try (InputStream inputStream = source.getContent(srcTree.getContent())) {
+        try (InputStream inputStream = source.getContent(srcTree.getContent(), 0, Long.MAX_VALUE)) {
             StagingInfo stagingInfo = destination.stageContent(srcTree.getContent());
             destination.writeContent(srcTree.getContent(), stagingInfo.getSessionId(), inputStream, 0);
             destination.mergeTree(srcTree);

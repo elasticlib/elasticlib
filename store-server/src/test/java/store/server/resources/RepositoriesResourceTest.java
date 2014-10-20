@@ -279,7 +279,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     public void getContentTest() throws IOException {
         Repository repository = newRepositoryMock();
         when(repository.getHead(hash)).thenReturn(singletonList(LOREM_IPSUM.getRevision()));
-        when(repository.getContent(hash)).thenReturn(LOREM_IPSUM.getInputStream());
+        when(repository.getContent(hash, 0, Long.MAX_VALUE)).thenReturn(LOREM_IPSUM.getInputStream());
 
         try (Client client = newClient();
                 Content content = client.repositories().get(guid).getContent(hash);

@@ -4,15 +4,14 @@ import com.google.common.base.Optional;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -321,16 +320,18 @@ class ContentManager {
      * Provides an input-stream on a currently stored content.
      *
      * @param hash Content hash.
+     * @param offset The position of first byte to return, inclusive.
+     * @param length The amount of bytes to returns.
      * @return An input-stream on this content.
      */
-    public InputStream get(Hash hash) {
+    public InputStream get(Hash hash, long offset, long length) {
         lockManager.readLock(hash);
         try {
-            InputStream inputStream = new ContentInputStream(newInputStream(contentPath(hash)), hash);
+            InputStream inputStream = new ContentInputStream(hash, offset, length);
             inputStreams.add(inputStream);
             return inputStream;
 
-        } catch (NoSuchFileException e) {
+        } catch (FileNotFoundException e) {
             lockManager.readUnlock(hash);
             throw new UnknownContentException(e);
 
@@ -354,28 +355,44 @@ class ContentManager {
     }
 
     /**
-     * An input-stream wrapper that releases content read-lock when closed.
+     * An input-stream that supports range-reading and releases content read-lock when closed.
      */
     private class ContentInputStream extends InputStream {
 
-        private final InputStream delegate;
+        private final RandomAccessFile file;
         private final Hash hash;
+        private long remaining;
 
         /**
          * Constructor.
          *
-         * @param delegate Actual input-stream.
-         * @param hash Content hash (for unlocking purpose).
+         * @param hash Content hash.
+         * @param offset The position of first byte to return, inclusive.
+         * @param length The amount of bytes to returns.
          */
-        public ContentInputStream(InputStream delegate, Hash hash) {
-            this.delegate = delegate;
+        public ContentInputStream(Hash hash, long offset, long length) throws IOException {
+            file = new RandomAccessFile(contentPath(hash).toFile(), "r");
             this.hash = hash;
+            remaining = length >= 0 ? length : Long.MAX_VALUE;
+
+            if (offset < 0) {
+                long total = file.length();
+                if (length < total) {
+                    file.seek(total - length);
+                }
+            } else {
+                file.seek(offset);
+            }
         }
 
         @Override
         public int read() {
+            if (remaining <= 0) {
+                return -1;
+            }
             try {
-                return delegate.read();
+                --remaining;
+                return file.read();
 
             } catch (IOException e) {
                 throw new IOFailureException(e);
@@ -384,18 +401,16 @@ class ContentManager {
 
         @Override
         public int read(byte[] b, int off, int len) {
-            try {
-                return delegate.read(b, off, len);
-
-            } catch (IOException e) {
-                throw new IOFailureException(e);
+            if (remaining <= 0) {
+                return -1;
             }
-        }
-
-        @Override
-        public int available() {
             try {
-                return delegate.available();
+                int maxLen = len <= remaining ? len : (int) remaining;
+                int readLen = file.read(b, off, maxLen);
+                if (readLen >= 0) {
+                    remaining -= readLen;
+                }
+                return readLen;
 
             } catch (IOException e) {
                 throw new IOFailureException(e);
@@ -405,7 +420,7 @@ class ContentManager {
         @Override
         public void close() {
             try {
-                delegate.close();
+                file.close();
 
             } catch (IOException e) {
                 throw new IOFailureException(e);

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.util.Arrays.copyOfRange;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
@@ -186,9 +187,73 @@ public class RepositoryTest {
     @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
     public void getContentTest() throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                InputStream inputStream = repository.getContent(LOREM_IPSUM.getHash())) {
+                InputStream inputStream = repository.getContent(LOREM_IPSUM.getHash(), 0, Long.MAX_VALUE)) {
             copy(inputStream, outputStream);
             assertThat(outputStream.toByteArray()).isEqualTo(LOREM_IPSUM.getBytes());
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getContentStartingRangeTest() throws IOException {
+        getContentRangeTest(0, 100);
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getContentMiddleRangeTest() throws IOException {
+        getContentRangeTest(100, 100);
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getContentPastEndRangeTest() throws IOException {
+        getContentRangeTest(LOREM_IPSUM.getLength() + 1, 100, new byte[0]);
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getContentAbsentEndRangeTest() throws IOException {
+        getContentRangeTest(100, -1, copyOfRange(LOREM_IPSUM.getBytes(), 100, (int) LOREM_IPSUM.getLength()));
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException If an IO error occurs.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getContentAbsentOffsetRangeTest() throws IOException {
+        getContentRangeTest(-1, 100, copyOfRange(LOREM_IPSUM.getBytes(),
+                                                 (int) LOREM_IPSUM.getLength() - 100,
+                                                 (int) LOREM_IPSUM.getLength()));
+    }
+
+    private void getContentRangeTest(long offset, long length) throws IOException {
+        getContentRangeTest(offset, length, copyOfRange(LOREM_IPSUM.getBytes(), (int) offset, (int) (offset + length)));
+    }
+
+    private void getContentRangeTest(long offset, long length, byte[] expected) throws IOException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                InputStream inputStream = repository.getContent(LOREM_IPSUM.getHash(), offset, length)) {
+            copy(inputStream, outputStream);
+            assertThat(outputStream.toByteArray()).isEqualTo(expected);
         }
     }
 
@@ -199,7 +264,7 @@ public class RepositoryTest {
           dependsOnGroups = ADD_CONTENT,
           expectedExceptions = UnknownContentException.class)
     public void getContentWithUnknownHashTest() {
-        repository.getContent(UNKNOWN_HASH);
+        repository.getContent(UNKNOWN_HASH, 0, Long.MAX_VALUE);
     }
 
     /**

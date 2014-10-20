@@ -374,7 +374,7 @@ public class RepositoriesResource {
             ResponseBuilder response = Response.ok(new StreamingOutput() {
                 @Override
                 public void write(OutputStream outputStream) throws IOException {
-                    try (InputStream inputStream = repository.getContent(hash)) {
+                    try (InputStream inputStream = repository.getContent(hash, 0, Long.MAX_VALUE)) {
                         copy(inputStream, outputStream);
                     }
                 }

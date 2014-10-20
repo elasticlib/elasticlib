@@ -30,7 +30,7 @@ class IndexingAgent extends Agent {
             return true;
 
         } else {
-            try (InputStream inputStream = repository.getContent(tree.getContent())) {
+            try (InputStream inputStream = repository.getContent(tree.getContent(), 0, Long.MAX_VALUE)) {
                 index.index(tree, inputStream);
                 return true;
 

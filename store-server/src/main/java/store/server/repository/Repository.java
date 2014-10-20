@@ -419,15 +419,19 @@ public class Repository {
     }
 
     /**
-     * Provides an input stream on a content in this repository.
+     * Provides an input stream on a content in this repository. If supplied offset is stricly negative, the "length"
+     * last bytes of the content are returned. If supplied length is stricly negative, all bytes from supplied offset to
+     * the end of the content are returned.
      *
      * @param hash Hash of the content.
+     * @param offset The position of first byte to return, inclusive.
+     * @param length The maximum amount of bytes to returns.
      * @return An input stream on this content.
      */
-    public InputStream getContent(final Hash hash) {
+    public InputStream getContent(Hash hash, long offset, long length) {
         ensureOpen();
-        log("Returning content {}", hash);
-        return contentManager.get(hash);
+        log("Returning content {}, offset {}, length {}", hash, offset, length);
+        return contentManager.get(hash, offset, length);
     }
 
     /**

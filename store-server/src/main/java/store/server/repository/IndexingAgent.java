@@ -1,6 +1,5 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
@@ -31,11 +30,7 @@ class IndexingAgent extends Agent {
             return true;
 
         } else {
-            Optional<InputStream> inputStreamOpt = repository.getContent(tree.getContent(), tree.getHead());
-            if (!inputStreamOpt.isPresent()) {
-                return false;
-            }
-            try (InputStream inputStream = inputStreamOpt.get()) {
+            try (InputStream inputStream = repository.getContent(tree.getContent())) {
                 index.index(tree, inputStream);
                 return true;
 

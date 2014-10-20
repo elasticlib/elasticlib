@@ -16,8 +16,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import store.common.exception.IOFailureException;
 import store.common.exception.NodeException;
 import store.common.exception.RepositoryClosedException;
+import store.common.exception.UnexpectedFailureException;
 import store.common.model.AgentInfo;
 import store.common.model.AgentState;
 import store.common.model.Event;
@@ -154,7 +156,7 @@ public abstract class Agent {
                 Optional<Event> nextEvent = next();
                 while (nextEvent.isPresent()) {
                     Event event = nextEvent.get();
-                    if (!process(event)) {
+                    if (!tryProcess(event)) {
                         events.addFirst(event);
                     } else {
                         updateCurSeq(event.getSeq());
@@ -168,6 +170,19 @@ public abstract class Agent {
             } catch (NodeException e) {
                 LOG.error("Unexpected error, stopping", e);
                 updateInfo(AgentState.ERROR);
+            }
+        }
+
+        private boolean tryProcess(Event event) {
+            try {
+                return process(event);
+
+            } catch (IOFailureException | UnexpectedFailureException | RepositoryClosedException e) {
+                throw e;
+
+            } catch (NodeException e) {
+                LOG.warn("Failed to process event " + event.getSeq(), e);
+                return false;
             }
         }
 

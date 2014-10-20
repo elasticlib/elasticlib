@@ -431,31 +431,6 @@ public class Repository {
     }
 
     /**
-     * Provides an input stream on a content if its info head matches supplied one.
-     *
-     * @param hash Hash of the content.
-     * @param head Hashes of expected head revisions of the info associated with the content.
-     * @return An input stream on this content, or nothing if supplied head has been superseded.
-     */
-    public Optional<InputStream> getContent(final Hash hash, final SortedSet<Hash> head) {
-        ensureOpen();
-        log("Returning content {} with head {}", hash, head);
-        return storageManager.inTransaction(new Query<Optional<InputStream>>() {
-            @Override
-            public Optional<InputStream> apply() {
-                Optional<RevisionTree> tree = revisionManager.get(hash);
-                if (!tree.isPresent()) {
-                    throw new UnknownContentException();
-                }
-                if (!tree.get().getHead().equals(head)) {
-                    return Optional.absent();
-                }
-                return Optional.of(contentManager.get(hash));
-            }
-        });
-    }
-
-    /**
      * Provides a paginated view of the history of this repository.
      *
      * @param chronological If true, returned list of events will sorted chronologically.

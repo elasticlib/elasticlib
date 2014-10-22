@@ -44,7 +44,7 @@ class Range {
         if (parts.size() != 2) {
             throw new BadRequestException(INVALID_RANGE + requestRange);
         }
-        if (!parts.get(0).toLowerCase().equals(BYTES)) {
+        if (!parts.get(0).equalsIgnoreCase(BYTES)) {
             return Arrays.asList(null, null);
         }
         List<String> byteRangeSet = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(parts.get(1));
@@ -62,8 +62,7 @@ class Range {
         try {
             Long start = parseLongIfAny(bounds.get(0));
             Long end = parseLongIfAny(bounds.get(1));
-            if ((start == null && end == null) ||
-                    (start != null && end != null && start > end)) {
+            if (areBothNull(start, end) || areInReverseOrder(start, end)) {
                 throw new BadRequestException(INVALID_RANGE + requestRange);
             }
             return Arrays.asList(start, end);
@@ -78,6 +77,14 @@ class Range {
             return null;
         }
         return Long.parseLong(arg);
+    }
+
+    private static boolean areBothNull(Long start, Long end) {
+        return start == null && end == null;
+    }
+
+    private static boolean areInReverseOrder(Long start, Long end) {
+        return start != null && end != null && start > end;
     }
 
     private static long extractOffset(List<Long> bounds, long totalLength) {

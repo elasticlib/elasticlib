@@ -129,6 +129,7 @@ public class RangeTest {
             {"bytes"},
             {"bytes=10=10"},
             {"bytes=-"},
+            {"bytes=10-trash"},
             {"bytes=100-0"},
             {"bytes=0-10-100"}
         };
@@ -154,6 +155,7 @@ public class RangeTest {
         return new Object[][]{
             {"bytes=0-0,10-100"},
             {"bytes=500-1200"},
+            {"bytes=1-1000"},
             {"bytes=0-1000"},
             {"bytes=0-1200"},
             {"bytes=-1200"},

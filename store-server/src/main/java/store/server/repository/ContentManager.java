@@ -1,6 +1,7 @@
 package store.server.repository;
 
 import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Closeable;
@@ -325,6 +326,8 @@ class ContentManager {
      * @return An input-stream on this content.
      */
     public InputStream get(Hash hash, long offset, long length) {
+        checkArgument(offset >= 0, "Negative offset");
+        checkArgument(length >= 0, "Negative length");
         lockManager.readLock(hash);
         try {
             InputStream inputStream = new ContentInputStream(hash, offset, length);
@@ -372,17 +375,10 @@ class ContentManager {
          */
         public ContentInputStream(Hash hash, long offset, long length) throws IOException {
             file = new RandomAccessFile(contentPath(hash).toFile(), "r");
-            this.hash = hash;
-            remaining = length >= 0 ? length : Long.MAX_VALUE;
+            file.seek(offset);
 
-            if (offset < 0) {
-                long total = file.length();
-                if (length < total) {
-                    file.seek(total - length);
-                }
-            } else {
-                file.seek(offset);
-            }
+            this.hash = hash;
+            remaining = length;
         }
 
         @Override

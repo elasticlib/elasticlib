@@ -223,28 +223,6 @@ public class RepositoryTest {
         getContentRangeTest(LOREM_IPSUM.getLength() + 1, 100, new byte[0]);
     }
 
-    /**
-     * Test.
-     *
-     * @throws IOException If an IO error occurs.
-     */
-    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
-    public void getContentAbsentEndRangeTest() throws IOException {
-        getContentRangeTest(100, -1, copyOfRange(LOREM_IPSUM.getBytes(), 100, (int) LOREM_IPSUM.getLength()));
-    }
-
-    /**
-     * Test.
-     *
-     * @throws IOException If an IO error occurs.
-     */
-    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
-    public void getContentAbsentOffsetRangeTest() throws IOException {
-        getContentRangeTest(-1, 100, copyOfRange(LOREM_IPSUM.getBytes(),
-                                                 (int) LOREM_IPSUM.getLength() - 100,
-                                                 (int) LOREM_IPSUM.getLength()));
-    }
-
     private void getContentRangeTest(long offset, long length) throws IOException {
         getContentRangeTest(offset, length, copyOfRange(LOREM_IPSUM.getBytes(), (int) offset, (int) (offset + length)));
     }

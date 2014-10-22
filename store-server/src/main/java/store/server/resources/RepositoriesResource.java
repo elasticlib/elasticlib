@@ -1,6 +1,7 @@
 package store.server.resources;
 
 import com.google.common.base.Splitter;
+import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import static java.util.Collections.emptyMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.json.JsonObject;
@@ -16,6 +18,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -364,36 +367,50 @@ public class RepositoriesResource {
      *
      * @param repositoryKey repository name or encoded GUID
      * @param hash content hash
+     * @param rangeParam Requested range, if any.
      * @return HTTP response
      */
     @GET
     @Path("{repository}/contents/{hash}")
-    public Response getContent(@PathParam(REPOSITORY) String repositoryKey, @PathParam(HASH) final Hash hash) {
-        while (true) {
-            final Repository repository = repository(repositoryKey);
-            ResponseBuilder response = Response.ok(new StreamingOutput() {
-                @Override
-                public void write(OutputStream outputStream) throws IOException {
-                    try (InputStream inputStream = repository.getContent(hash, 0, Long.MAX_VALUE)) {
-                        copy(inputStream, outputStream);
-                    }
+    public Response getContent(@PathParam(REPOSITORY) String repositoryKey,
+                               @PathParam(HASH) Hash hash,
+                               @HeaderParam(HttpHeaders.RANGE) String rangeParam) {
+
+        final Repository repository = repository(repositoryKey);
+        final RevisionTree tree = repository.getTree(hash);
+        final Range range = new Range(rangeParam, tree.getLength());
+
+        ResponseBuilder response = Response
+                .status(range.getStatus())
+                .entity(new StreamingOutput() {
+            @Override
+            public void write(OutputStream outputStream) throws IOException {
+                try (InputStream inputStream = repository.getContent(tree.getContent(),
+                                                                     range.getOffset(),
+                                                                     range.getLength())) {
+                    copy(inputStream, outputStream);
                 }
-            });
-            Map<String, Value> metadata = metadata(repository, hash);
-            String contentType = value(metadata, Common.CONTENT_TYPE.key());
-            if (!contentType.isEmpty()) {
-                response.type(contentType);
             }
-            String fileName = value(metadata, Common.FILE_NAME.key());
-            if (!fileName.isEmpty()) {
-                response.header("Content-Disposition", "attachment; filename=" + fileName);
-            }
-            return response.build();
+        });
+
+        for (Entry<String, String> param : range.getHttpResponseHeaders().entrySet()) {
+            response.header(param.getKey(), param.getValue());
         }
+
+        Map<String, Value> metadata = metadata(tree);
+        String contentType = value(metadata, Common.CONTENT_TYPE.key());
+        if (!contentType.isEmpty()) {
+            response.type(contentType);
+        }
+        String fileName = value(metadata, Common.FILE_NAME.key());
+        if (!fileName.isEmpty()) {
+            response.header("Content-Disposition", "attachment; filename=" + fileName);
+        }
+        return response.build();
     }
 
-    private static Map<String, Value> metadata(Repository repository, Hash hash) {
-        for (Revision rev : repository.getHead(hash)) {
+    private static Map<String, Value> metadata(RevisionTree tree) {
+        for (Revision rev : tree.get(tree.getHead())) {
             if (!rev.isDeleted()) {
                 return rev.getMetadata();
             }

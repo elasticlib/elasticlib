@@ -34,6 +34,16 @@ public final class BadRequestException extends NodeException {
         super(message(cause), cause);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param message Detail message explaining the error.
+     * @param cause Cause exception.
+     */
+    public BadRequestException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     @Override
     public StatusType getStatus() {
         return BAD_REQUEST;

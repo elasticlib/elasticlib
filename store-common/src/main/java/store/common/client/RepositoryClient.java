@@ -2,12 +2,15 @@ package store.common.client;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Splitter;
+import com.google.common.net.HttpHeaders;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.client.Entity.json;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -201,19 +204,45 @@ public class RepositoryClient {
     }
 
     /**
-     * Download a content from this repository.
+     * Downloads a content from this repository.
      *
      * @param hash Content hash.
      * @return Corresponding content.
      */
     public Content getContent(Hash hash) {
-        Response response = resource.path(CONTENTS_TEMPLATE)
+        return getContent(resource.path(CONTENTS_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .request());
+    }
+
+    /**
+     * Partially downloads a content from this repository. Supplied range [offset, offset + length[ is expected to be a
+     * included in [0, totalContentLength].
+     *
+     * @param hash Content hash.
+     * @param offset The position of first byte to return, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to returns. Expected to be positive or zero.
+     * @return Corresponding content.
+     */
+    public Content getContent(Hash hash, long offset, long length) {
+        checkArgument(offset >= 0, "Offset is negative");
+        checkArgument(length >= 0, "Length is negative");
+
+        return getContent(resource.path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
-                .get();
+                .header(HttpHeaders.RANGE, range(offset, length)));
+    }
+
+    private static Content getContent(Invocation.Builder invocation) {
+        Response response = invocation.get();
 
         checkStatus(response);
         return new Content(fileName(response), response.getMediaType(), response.readEntity(InputStream.class));
+    }
+
+    private static String range(long offset, long length) {
+        return String.format("bytes=%d-%d", offset, offset + length - 1);
     }
 
     private static Optional<String> fileName(Response response) {

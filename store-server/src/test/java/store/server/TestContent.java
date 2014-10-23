@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Thread.currentThread;
+import static java.util.Arrays.copyOfRange;
 import java.util.SortedSet;
 import store.common.hash.Digest;
 import store.common.hash.Hash;
@@ -95,10 +96,23 @@ public final class TestContent {
     }
 
     /**
-     * @return An input stream on this content.
+     * Provides an input-stream on this content.
+     *
+     * @return An input-stream.
      */
     public InputStream getInputStream() {
         return new ByteArrayInputStream(bytes);
+    }
+
+    /**
+     * Provides an input-stream on a range of this content.
+     *
+     * @return An input-stream.
+     * @param offset The position of first byte to return, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to returns. Expected to be positive or zero.
+     */
+    public InputStream getInputStream(long offset, long length) {
+        return new ByteArrayInputStream(copyOfRange(bytes, (int) offset, (int) (offset + length)));
     }
 
     /**

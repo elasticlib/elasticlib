@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import store.common.client.Client;
 import store.common.client.Content;
 import store.common.exception.IOFailureException;
+import store.common.exception.RangeNotSatisfiableException;
 import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Digest.DigestBuilder;
 import store.common.hash.Guid;
@@ -300,6 +301,41 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
             assertThat(content.getFileName().get()).isEqualTo(LOREM_IPSUM.filename());
             assertThat(content.getContentType()).isEqualTo(MediaType.valueOf(LOREM_IPSUM.contentType()));
             assertThat(content.getInputStream()).hasContentEqualTo(expected);
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @throws IOException Actually unexpected.
+     */
+    @Test
+    public void getPartialContentTest() throws IOException {
+        long offset = 100;
+        long length = 200;
+
+        Repository repository = newRepositoryMock();
+        when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
+        when(repository.getContent(hash, offset, length)).thenReturn(LOREM_IPSUM.getInputStream(offset, length));
+
+        try (Client client = newClient();
+                Content content = client.repositories().get(guid).getContent(hash, offset, length);
+                InputStream expected = LOREM_IPSUM.getInputStream(offset, length)) {
+
+            assertThat(content.getInputStream()).hasContentEqualTo(expected);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = RangeNotSatisfiableException.class)
+    public void getContentWithUnsatisfiableRangeTest() {
+        Repository repository = newRepositoryMock();
+        when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
+
+        try (Client client = newClient()) {
+            client.repositories().get(guid).getContent(hash, 0, LOREM_IPSUM.getLength() + 1);
         }
     }
 

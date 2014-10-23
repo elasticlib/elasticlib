@@ -125,19 +125,11 @@ class ContentManager {
     public StagingInfo stageContent(Hash hash) {
         lockManager.writeLock(hash);
         try {
-            Optional<StagingSession> session = sessions.get(hash);
-            if (session.isPresent()) {
-                if (session.get().getDigest().getHash().equals(hash)) {
-                    throw new StagingCompletedException();
-                } else {
-                    throw new PendingStagingSessionException();
-                }
-            }
-            Guid sessionId = Guid.random();
-            DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
+            DigestBuilder digest = loadDigest(hash);
             if (digest.getHash().equals(hash)) {
                 throw new StagingCompletedException();
             }
+            Guid sessionId = Guid.random();
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
 
@@ -147,6 +139,21 @@ class ContentManager {
         } finally {
             lockManager.writeUnlock(hash);
         }
+    }
+
+    private DigestBuilder loadDigest(Hash hash) throws IOException {
+        Optional<StagingSession> sessionOpt = sessions.get(hash);
+        if (!sessionOpt.isPresent()) {
+            return computeDigest(hash, Long.MAX_VALUE);
+        }
+        StagingSession session = sessionOpt.get();
+        if (session.getDigest().getHash().equals(hash)) {
+            throw new StagingCompletedException();
+        }
+        if (session.getSessionId() != null) {
+            throw new PendingStagingSessionException();
+        }
+        return session.getDigest();
     }
 
     /**
@@ -184,7 +191,7 @@ class ContentManager {
     public void unstageContent(Hash hash, Guid sessionId) {
         lockManager.writeLock(hash);
         try {
-            sessions.clear(hash, sessionId);
+            sessions.release(hash, sessionId);
 
         } finally {
             lockManager.writeUnlock(hash);
@@ -240,14 +247,7 @@ class ContentManager {
     public void add(Hash hash) {
         lockManager.writeLock(hash);
         try {
-            Optional<StagingSession> session = sessions.get(hash);
-            DigestBuilder digest = session.isPresent() ? session.get().getDigest() : computeDigest(hash, Long.MAX_VALUE);
-            if (digest.getLength() == 0) {
-                throw new UnknownContentException();
-            }
-            if (!digest.getHash().equals(hash)) {
-                throw new IntegrityCheckingFailedException();
-            }
+            ensureStaged(hash);
             Files.move(stagingPath(hash), contentPath(hash));
             sessions.clear(hash);
 
@@ -256,6 +256,17 @@ class ContentManager {
 
         } finally {
             lockManager.writeUnlock(hash);
+        }
+    }
+
+    private void ensureStaged(Hash hash) throws IOException {
+        Optional<StagingSession> session = sessions.get(hash);
+        DigestBuilder digest = session.isPresent() ? session.get().getDigest() : computeDigest(hash, Long.MAX_VALUE);
+        if (digest.getLength() == 0) {
+            throw new UnknownContentException();
+        }
+        if (!digest.getHash().equals(hash)) {
+            throw new IntegrityCheckingFailedException();
         }
     }
 

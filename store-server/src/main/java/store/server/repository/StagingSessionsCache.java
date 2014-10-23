@@ -72,11 +72,11 @@ class StagingSessionsCache implements Closeable {
      */
     public StagingSession load(Hash hash, Guid sessionId) {
         StagingSession session = cache.getIfPresent(hash);
-        if (session == null || !session.getSessionId().equals(sessionId)) {
-            throw new StagingSessionNotFoundException();
+        if (session != null && session.getSessionId() != null && session.getSessionId().equals(sessionId)) {
+            cache.invalidate(hash);
+            return session;
         }
-        cache.invalidate(hash);
-        return session;
+        throw new StagingSessionNotFoundException();
     }
 
     /**
@@ -99,15 +99,16 @@ class StagingSessionsCache implements Closeable {
     }
 
     /**
-     * Deletes session associated with supplied hash, if it exists and matches supplied session identifier.
+     * Releases session associated with supplied hash, if it exists and matches supplied session identifier. Associated
+     * digest is temporary kept in cache.
      *
      * @param hash A content hash.
      * @param sessionId Expected session identifier.
      */
-    public void clear(Hash hash, Guid sessionId) {
+    public void release(Hash hash, Guid sessionId) {
         StagingSession session = cache.getIfPresent(hash);
-        if (session != null && session.getSessionId().equals(sessionId)) {
-            clear(hash);
+        if (session != null && session.getSessionId() != null && session.getSessionId().equals(sessionId)) {
+            cache.put(hash, new StagingSession(null, session.getDigest()));
         }
     }
 

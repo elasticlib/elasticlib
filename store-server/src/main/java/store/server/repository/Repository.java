@@ -223,6 +223,18 @@ public class Repository {
     }
 
     /**
+     * Forcibly ends a content staging session. Does nothing if such a session does not exist or has expired.
+     *
+     * @param hash Hash of the staged content (when staging is completed).
+     * @param sessionId Staging session identifier.
+     */
+    public void unstageContent(Hash hash, Guid sessionId) {
+        ensureOpen();
+        log("Ending staging staging session {}", sessionId);
+        contentManager.unstageContent(hash, sessionId);
+    }
+
+    /**
      * Adds a revision. If associated content is not present, started transaction is suspended so that caller may latter
      * complete this operation by adding this content.
      *

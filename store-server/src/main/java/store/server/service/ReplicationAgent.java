@@ -48,22 +48,28 @@ class ReplicationAgent extends Agent {
 
     private boolean writeContent(Hash content, long length) {
         StagingInfo stagingInfo = destination.stageContent(content);
-        while (stagingInfo.getLength() < length) {
-            if (isStopped()) {
-                return false;
-            }
-            try (InputStream inputStream = source.getContent(content,
-                                                             stagingInfo.getLength(),
-                                                             stagingInfo.getLength() + CHUNK_SIZE)) {
+        try {
+            while (stagingInfo.getLength() < length) {
+                if (isStopped()) {
+                    return false;
+                }
+                try (InputStream inputStream = source.getContent(content,
+                                                                 stagingInfo.getLength(),
+                                                                 stagingInfo.getLength() + CHUNK_SIZE)) {
 
-                stagingInfo = destination.writeContent(content,
-                                                       stagingInfo.getSessionId(),
-                                                       inputStream,
-                                                       stagingInfo.getLength());
-            } catch (IOException e) {
-                throw new AssertionError(e);
+                    stagingInfo = destination.writeContent(content,
+                                                           stagingInfo.getSessionId(),
+                                                           inputStream,
+                                                           stagingInfo.getLength());
+                }
             }
+            return true;
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+
+        } finally {
+            destination.unstageContent(content, stagingInfo.getSessionId());
         }
-        return true;
     }
 }

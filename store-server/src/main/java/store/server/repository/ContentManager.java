@@ -183,6 +183,22 @@ class ContentManager {
         }
     }
 
+    /**
+     * Forcibly ends a content staging session. Does nothing if such a session does not exist or has expired.
+     *
+     * @param hash Hash of the staged content (when staging is completed).
+     * @param sessionId Staging session identifier.
+     */
+    public void unstageContent(Hash hash, Guid sessionId) {
+        lockManager.writeLock(hash);
+        try {
+            sessions.clear(hash, sessionId);
+
+        } finally {
+            lockManager.writeUnlock(hash);
+        }
+    }
+
     private DigestBuilder computeDigest(Hash hash, long limit) throws IOException {
         Path path = stagingPath(hash);
         if (!Files.exists(path)) {
@@ -543,6 +559,16 @@ class ContentManager {
          */
         public void clear(Hash hash) {
             cache.invalidate(hash);
+        }
+
+        /**
+         * Delete session associated with supplied hash, if it exists and matches supplied session identifier.
+         */
+        public void clear(Hash hash, Guid sessionId) {
+            StagingSession session = cache.getIfPresent(hash);
+            if (session != null && session.getSessionId().equals(sessionId)) {
+                clear(hash);
+            }
         }
 
         @Override

@@ -24,7 +24,7 @@ import store.client.util.Directories;
 import store.common.client.RepositoryClient;
 import store.common.exception.NodeException;
 import store.common.hash.Digest;
-import static store.common.metadata.MetadataUtil.metadata;
+import store.common.metadata.MetadataUtil;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
 import store.common.model.ContentInfo;
@@ -143,6 +143,12 @@ class Put extends AbstractCommand {
         private Digest digest(Path filepath) throws IOException {
             try (InputStream inputStream = read("Computing content digest", filepath, size(filepath))) {
                 return copyAndDigest(inputStream, sink());
+            }
+        }
+
+        private Map<String, Value> metadata(Path filepath) throws IOException {
+            try (InputStream inputStream = read("Extracting content metadata", filepath, size(filepath))) {
+                return MetadataUtil.metadata(filepath, inputStream);
             }
         }
 

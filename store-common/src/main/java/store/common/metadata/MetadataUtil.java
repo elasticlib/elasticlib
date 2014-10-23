@@ -4,7 +4,6 @@ import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,14 +40,15 @@ public final class MetadataUtil {
      * Extracts metadata from file the located at supplied path.
      *
      * @param filepath File path.
+     * @param inputStream Input-stream on the file.
      * @return Extracted metadata as a map of Values.
      * @throws IOException If an I/O error occurs.
      */
-    public static Map<String, Value> metadata(Path filepath) throws IOException {
+    public static Map<String, Value> metadata(Path filepath, InputStream inputStream) throws IOException {
         Metadata metadata = new Metadata();
         metadata.set(Metadata.RESOURCE_NAME_KEY, filepath.getFileName().toString());
 
-        try (InputStream inputStream = Files.newInputStream(filepath)) {
+        try {
             new AutoDetectParser().parse(inputStream, new DefaultHandler(), metadata, new ParseContext());
 
         } catch (SAXException | TikaException e) {

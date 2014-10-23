@@ -223,7 +223,8 @@ public class Repository {
     }
 
     /**
-     * Forcibly ends a content staging session. Does nothing if such a session does not exist or has expired.
+     * Terminates a content staging session. Actually, this only releases the session, but leaves staged content as it.
+     * Does nothing if such a session does not exist or has expired.
      *
      * @param hash Hash of the staged content (when staging is completed).
      * @param sessionId Staging session identifier.

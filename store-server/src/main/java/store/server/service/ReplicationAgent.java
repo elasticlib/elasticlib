@@ -10,7 +10,7 @@ import store.common.model.Event;
 import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import static store.common.util.IoUtil.copyAndDigest;
-import store.common.util.SinkOutputStream;
+import static store.common.util.SinkOutputStream.sink;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
 
@@ -74,21 +74,16 @@ class ReplicationAgent extends Agent {
         }
         try (InputStream inputStream = source.getContent(content, 0, stagingInfo.getLength())) {
             Hash expected = stagingInfo.getHash();
-            Hash actual = copyAndDigest(inputStream, SinkOutputStream.sink()).getHash();
+            Hash actual = copyAndDigest(inputStream, sink()).getHash();
 
             return expected.equals(actual) ? stagingInfo : new StagingInfo(stagingInfo.getSessionId(), null, 0L);
         }
     }
 
     private StagingInfo writeChunk(Hash content, StagingInfo stagingInfo) throws IOException {
-        try (InputStream inputStream = source.getContent(content,
-                                                         stagingInfo.getLength(),
-                                                         stagingInfo.getLength() + CHUNK_SIZE)) {
-
-            return destination.writeContent(content,
-                                            stagingInfo.getSessionId(),
-                                            inputStream,
-                                            stagingInfo.getLength());
+        long offset = stagingInfo.getLength();
+        try (InputStream inputStream = source.getContent(content, offset, offset + CHUNK_SIZE)) {
+            return destination.writeContent(content, stagingInfo.getSessionId(), inputStream, offset);
         }
     }
 }

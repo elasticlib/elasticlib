@@ -24,6 +24,7 @@ import store.client.util.Directories;
 import store.common.client.RepositoryClient;
 import store.common.exception.NodeException;
 import store.common.hash.Digest;
+import store.common.hash.Hash;
 import store.common.metadata.MetadataUtil;
 import store.common.metadata.Properties.Common;
 import store.common.model.CommandResult;
@@ -34,6 +35,7 @@ import static store.common.model.ContentState.STAGING;
 import store.common.model.Revision;
 import store.common.model.Revision.RevisionBuilder;
 import store.common.model.StagingInfo;
+import store.common.util.BoundedInputStream;
 import static store.common.util.IoUtil.copyAndDigest;
 import static store.common.util.SinkOutputStream.sink;
 import store.common.value.Value;
@@ -141,26 +143,45 @@ class Put extends AbstractCommand {
         }
 
         private Digest digest(Path filepath) throws IOException {
-            try (InputStream inputStream = read("Computing content digest", filepath, size(filepath))) {
+            try (InputStream inputStream = read("Computing content digest", filepath)) {
                 return copyAndDigest(inputStream, sink());
             }
         }
 
         private Map<String, Value> metadata(Path filepath) throws IOException {
-            try (InputStream inputStream = read("Extracting content metadata", filepath, size(filepath))) {
+            try (InputStream inputStream = read("Extracting content metadata", filepath)) {
                 return MetadataUtil.metadata(filepath, inputStream);
             }
         }
 
         private void addContent(Path filepath, Digest digest) throws IOException {
             StagingInfo stagingInfo = client.stageContent(digest.getHash());
-            try (InputStream inputStream = read("Uploading content", filepath, digest.getLength())) {
-                inputStream.skip(stagingInfo.getLength());
-                client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, stagingInfo.getLength());
-
+            try {
+                long offset = offset(filepath, stagingInfo);
+                try (InputStream inputStream = read("Uploading content", filepath)) {
+                    inputStream.skip(offset);
+                    client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, offset);
+                }
             } finally {
                 client.unstageContent(digest.getHash(), stagingInfo.getSessionId());
             }
+        }
+
+        private long offset(Path filepath, StagingInfo stagingInfo) throws IOException {
+            long length = stagingInfo.getLength();
+            if (length == 0) {
+                return 0;
+            }
+            try (InputStream inputStream = read("Checking content digest", filepath, length)) {
+                Hash expected = stagingInfo.getHash();
+                Hash actual = copyAndDigest(new BoundedInputStream(inputStream, length), sink()).getHash();
+
+                return expected.equals(actual) ? length : 0;
+            }
+        }
+
+        private InputStream read(String task, Path filepath) throws IOException {
+            return read(task, filepath, size(filepath));
         }
 
         private InputStream read(String task, Path filepath, long length) throws IOException {

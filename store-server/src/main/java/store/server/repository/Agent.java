@@ -62,7 +62,7 @@ public abstract class Agent {
     protected abstract boolean process(Event event);
 
     /**
-     * Cause processing thread to wait.
+     * Causes processing thread to wait.
      *
      * @param seconds The time to wait in seconds.
      */
@@ -71,14 +71,14 @@ public abstract class Agent {
     }
 
     /**
-     * Start this agent.
+     * Starts this agent.
      */
     public final void start() {
         agentThread.start();
     }
 
     /**
-     * Stop this agent. Waits for the underlying processing thread to terminates before returning. This allows any
+     * Stops this agent. Waits for the underlying processing thread to terminates before returning. This allows any
      * indexing agent to properly close its underlying writer on target index (and to complete any related merge task).
      * In the case of a replication deletion, it also avoids to have agent trying to override the cursor database after
      * this latter has been reset.
@@ -101,7 +101,7 @@ public abstract class Agent {
     }
 
     /**
-     * Signal this agent that a change may have happen on its source.
+     * Signals this agent that a change may have happen on its source.
      */
     public final void signal() {
         lock.lock();
@@ -115,6 +115,8 @@ public abstract class Agent {
     }
 
     /**
+     * Provides info about this agent.
+     *
      * @return A snapshot of current info about this agent.
      */
     public final AgentInfo info() {
@@ -237,7 +239,7 @@ public abstract class Agent {
         }
 
         /**
-         * Pause execution.
+         * Pauses execution.
          *
          * @param seconds The time to wait in seconds.
          */

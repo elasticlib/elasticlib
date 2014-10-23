@@ -126,9 +126,6 @@ class ContentManager {
         lockManager.writeLock(hash);
         try {
             DigestBuilder digest = loadDigest(hash);
-            if (digest.getHash().equals(hash)) {
-                throw new StagingCompletedException();
-            }
             Guid sessionId = Guid.random();
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
@@ -142,11 +139,18 @@ class ContentManager {
     }
 
     private DigestBuilder loadDigest(Hash hash) throws IOException {
-        Optional<StagingSession> sessionOpt = sessions.get(hash);
-        if (!sessionOpt.isPresent()) {
-            return computeDigest(hash, Long.MAX_VALUE);
+        Optional<StagingSession> session = sessions.get(hash);
+        if (session.isPresent()) {
+            return reuseDigest(session.get(), hash);
         }
-        StagingSession session = sessionOpt.get();
+        DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
+        if (digest.getHash().equals(hash)) {
+            throw new StagingCompletedException();
+        }
+        return digest;
+    }
+
+    private static DigestBuilder reuseDigest(StagingSession session, Hash hash) {
         if (session.getDigest().getHash().equals(hash)) {
             throw new StagingCompletedException();
         }

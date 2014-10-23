@@ -4,6 +4,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
+import store.common.hash.Hash;
 import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.RevisionTree;
@@ -16,6 +17,7 @@ import store.server.repository.Repository;
  */
 class ReplicationAgent extends Agent {
 
+    private static final long CHUNK_SIZE = 1024 * 1024;
     private final Repository source;
     private final Repository destination;
 
@@ -39,14 +41,29 @@ class ReplicationAgent extends Agent {
             pause(10);
             return false;
         }
-        try (InputStream inputStream = source.getContent(srcTree.getContent(), 0, Long.MAX_VALUE)) {
-            StagingInfo stagingInfo = destination.stageContent(srcTree.getContent());
-            destination.writeContent(srcTree.getContent(), stagingInfo.getSessionId(), inputStream, 0);
-            destination.mergeTree(srcTree);
-            return true;
+        writeContent(srcTree.getContent(), srcTree.getLength());
+        destination.mergeTree(srcTree);
+        return true;
+    }
 
-        } catch (IOException e) {
-            throw new AssertionError(e);
+    private boolean writeContent(Hash content, long length) {
+        StagingInfo stagingInfo = destination.stageContent(content);
+        while (stagingInfo.getLength() < length) {
+            if (isStopped()) {
+                return false;
+            }
+            try (InputStream inputStream = source.getContent(content,
+                                                             stagingInfo.getLength(),
+                                                             stagingInfo.getLength() + CHUNK_SIZE)) {
+
+                stagingInfo = destination.writeContent(content,
+                                                       stagingInfo.getSessionId(),
+                                                       inputStream,
+                                                       stagingInfo.getLength());
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
         }
+        return true;
     }
 }

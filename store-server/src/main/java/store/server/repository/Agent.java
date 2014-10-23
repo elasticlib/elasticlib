@@ -62,6 +62,21 @@ public abstract class Agent {
     protected abstract boolean process(Event event);
 
     /**
+     * Checks whether this agent has been stopped.
+     *
+     * @return True if this the case.
+     */
+    protected boolean isStopped() {
+        lock.lock();
+        try {
+            return stopped;
+
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Causes processing thread to wait.
      *
      * @param seconds The time to wait in seconds.

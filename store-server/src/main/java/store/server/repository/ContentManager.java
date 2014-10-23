@@ -2,9 +2,6 @@ package store.server.repository;
 
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkArgument;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,15 +16,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
-import static store.common.config.ConfigUtil.duration;
-import static store.common.config.ConfigUtil.unit;
 import store.common.exception.BadRequestException;
 import store.common.exception.IOFailureException;
 import store.common.exception.IntegrityCheckingFailedException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.PendingStagingSessionException;
 import store.common.exception.StagingCompletedException;
-import store.common.exception.StagingSessionNotFoundException;
 import store.common.exception.UnknownContentException;
 import store.common.hash.Digest;
 import store.common.hash.Digest.DigestBuilder;
@@ -38,8 +32,6 @@ import store.common.util.BoundedInputStream;
 import static store.common.util.IoUtil.copyAndDigest;
 import store.common.util.RandomAccessFileOutputStream;
 import static store.common.util.SinkOutputStream.sink;
-import store.server.config.ServerConfig;
-import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
 
 /**
@@ -441,142 +433,6 @@ class ContentManager {
                 inputStreams.remove(this);
                 lockManager.readUnlock(hash);
             }
-        }
-    }
-
-    /**
-     * Staging session.
-     */
-    private static class StagingSession {
-
-        private final Guid sessionId;
-        private final DigestBuilder digest;
-
-        /**
-         * Constructor.
-         *
-         * @param sessionId Staging session identifier.
-         * @param digest Current digest.
-         */
-        public StagingSession(Guid sessionId, DigestBuilder digest) {
-            this.sessionId = sessionId;
-            this.digest = digest;
-        }
-
-        /**
-         * @return The identifier of the session this context is associated with.
-         */
-        public Guid getSessionId() {
-            return sessionId;
-        }
-
-        /**
-         * @return Current digest of this context.
-         */
-        public DigestBuilder getDigest() {
-            return digest;
-        }
-    }
-
-    /**
-     * Memory cache of the pending staging sessions.
-     */
-    private static class StagingSessionsCache implements Closeable {
-
-        private final Cache<Hash, StagingSession> cache;
-        private final Task cleanUpTask;
-
-        /**
-         * Constructor.
-         *
-         * @param name repository name.
-         * @param config Configuration holder.
-         * @param taskManager Asynchronous tasks manager.
-         */
-        public StagingSessionsCache(String name, Config config, TaskManager taskManager) {
-            cache = CacheBuilder.newBuilder()
-                    .maximumSize(config.getInt(ServerConfig.STAGING_SESSIONS_MAX_SIZE))
-                    .expireAfterWrite(duration(config, ServerConfig.STAGING_SESSIONS_TIMEOUT),
-                                      unit(config, ServerConfig.STAGING_SESSIONS_TIMEOUT))
-                    .build();
-
-            if (config.getBoolean(ServerConfig.STAGING_SESSIONS_CLEANUP_ENABLED)) {
-                cleanUpTask = taskManager
-                        .schedule(duration(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
-                                  unit(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
-                                  "[" + name + "] Evicting expired staging sessions",
-                                  new Runnable() {
-                    @Override
-                    public void run() {
-                        cache.cleanUp();
-                    }
-                });
-            } else {
-                cleanUpTask = null;
-            }
-        }
-
-        /**
-         * Save supplied session, for latter retrieval with supplied hash.
-         *
-         * @param hash A content hash.
-         * @param session Session to save.
-         */
-        public void save(Hash hash, StagingSession session) {
-            cache.put(hash, session);
-        }
-
-        /**
-         * Loads session associated with supplied hash. Fails if it does not exist or does not match supplied ID.
-         *
-         * @param hash A content hash.
-         * @param sessionId Expected session identifier.
-         * @return Associated session.
-         */
-        public StagingSession load(Hash hash, Guid sessionId) {
-            StagingSession session = cache.getIfPresent(hash);
-            if (session == null || !session.getSessionId().equals(sessionId)) {
-                throw new StagingSessionNotFoundException();
-            }
-            cache.invalidate(hash);
-            return session;
-        }
-
-        /**
-         * Provides session associated with supplied hash, if any.
-         *
-         * @param hash A content hash.
-         * @return Associated session, if any.
-         */
-        public Optional<StagingSession> get(Hash hash) {
-            return Optional.fromNullable(cache.getIfPresent(hash));
-        }
-
-        /**
-         * Delete session associated with supplied hash, if any.
-         *
-         * @param hash A content hash.
-         */
-        public void clear(Hash hash) {
-            cache.invalidate(hash);
-        }
-
-        /**
-         * Delete session associated with supplied hash, if it exists and matches supplied session identifier.
-         */
-        public void clear(Hash hash, Guid sessionId) {
-            StagingSession session = cache.getIfPresent(hash);
-            if (session != null && session.getSessionId().equals(sessionId)) {
-                clear(hash);
-            }
-        }
-
-        @Override
-        public void close() {
-            if (cleanUpTask != null) {
-                cleanUpTask.cancel();
-            }
-            cache.invalidateAll();
         }
     }
 }

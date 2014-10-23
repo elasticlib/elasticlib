@@ -16,6 +16,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import static store.common.client.ClientUtil.checkStatus;
+import static store.common.client.ClientUtil.ensureSuccess;
 import static store.common.client.ClientUtil.read;
 import static store.common.client.ClientUtil.readAll;
 import static store.common.client.ClientUtil.result;
@@ -120,6 +121,21 @@ public class RepositoryClient {
                 .post(entity(multipart, addBoundary(multipart.getMediaType())));
 
         return read(response, StagingInfo.class);
+    }
+
+    /**
+     * Terminates a content staging session. Actually, this only releases the session, but leaves staged content as it.
+     * Does nothing if such a session does not exist or has expired.
+     *
+     * @param hash Hash of the content to be added latter.
+     * @param sessionId Staging session identifier.
+     */
+    public void unstageContent(Hash hash, Guid sessionId) {
+        ensureSuccess(resource.path(WRITE_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .resolveTemplate(SESSION_ID, sessionId)
+                .request()
+                .delete());
     }
 
     /**

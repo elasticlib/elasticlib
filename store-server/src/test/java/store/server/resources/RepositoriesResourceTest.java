@@ -242,6 +242,18 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
+    public void unstageContentTest() {
+        Repository repository = newRepositoryMock();
+        try (Client client = newClient()) {
+            client.repositories().get(guid).unstageContent(hash, guid);
+        }
+        verify(repository).unstageContent(hash, guid);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void addRevisionTest() {
         Revision revision = LOREM_IPSUM.getRevision();
 

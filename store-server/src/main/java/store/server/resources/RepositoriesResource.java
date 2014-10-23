@@ -285,6 +285,28 @@ public class RepositoriesResource {
     }
 
     /**
+     * Terminates a content staging session. Actually, this only releases the session, but leaves staged content as it.
+     * Does nothing if such a session does not exist or has expired.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started or staging session has expired.
+     *
+     * @param repositoryKey repository name or encoded GUID
+     * @param hash Hash of the staged content (when staging is completed).
+     * @param sessionId Staging session identifier.
+     */
+    @DELETE
+    @Path("{repository}/stage/{hash}/{sessionId}")
+    public void unstageContent(@PathParam(REPOSITORY) String repositoryKey,
+                               @PathParam(HASH) Hash hash,
+                               @PathParam(SESSION_ID) Guid sessionId) {
+
+        repository(repositoryKey).unstageContent(hash, sessionId);
+    }
+
+    /**
      * Adds a revision or a revision tree. If associated content is not present, started transaction is suspended so
      * that client may create this content in a latter request.
      * <p>

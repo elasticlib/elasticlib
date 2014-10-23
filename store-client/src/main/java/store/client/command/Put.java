@@ -147,9 +147,13 @@ class Put extends AbstractCommand {
         }
 
         private void addContent(Path filepath, Digest digest) throws IOException {
+            StagingInfo stagingInfo = client.stageContent(digest.getHash());
             try (InputStream inputStream = read("Uploading content", filepath, digest.getLength())) {
-                StagingInfo stagingInfo = client.stageContent(digest.getHash());
-                client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, 0);
+                inputStream.skip(stagingInfo.getLength());
+                client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, stagingInfo.getLength());
+
+            } finally {
+                client.unstageContent(digest.getHash(), stagingInfo.getSessionId());
             }
         }
 

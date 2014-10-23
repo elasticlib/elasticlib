@@ -9,6 +9,8 @@ import store.common.model.ContentState;
 import store.common.model.Event;
 import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
+import static store.common.util.IoUtil.copyAndDigest;
+import store.common.util.SinkOutputStream;
 import store.server.repository.Agent;
 import store.server.repository.Repository;
 
@@ -33,15 +35,15 @@ class ReplicationAgent extends Agent {
     protected boolean process(Event event) {
         RevisionTree srcTree = source.getTree(event.getContent());
         ContentState destState = destination.getContentInfo(event.getContent()).getState();
-        if (srcTree.isDeleted() || destState == ContentState.STAGED || destState == ContentState.PRESENT) {
-            destination.mergeTree(srcTree);
-            return true;
+        if (!srcTree.isDeleted() && destState != ContentState.STAGED & destState != ContentState.PRESENT) {
+            if (destState == ContentState.STAGING) {
+                pause(10);
+                return false;
+            }
+            if (!writeContent(srcTree.getContent(), srcTree.getLength())) {
+                return false;
+            }
         }
-        if (destState == ContentState.STAGING) {
-            pause(10);
-            return false;
-        }
-        writeContent(srcTree.getContent(), srcTree.getLength());
         destination.mergeTree(srcTree);
         return true;
     }
@@ -49,19 +51,12 @@ class ReplicationAgent extends Agent {
     private boolean writeContent(Hash content, long length) {
         StagingInfo stagingInfo = destination.stageContent(content);
         try {
+            stagingInfo = checkDigest(content, stagingInfo);
             while (stagingInfo.getLength() < length) {
                 if (isStopped()) {
                     return false;
                 }
-                try (InputStream inputStream = source.getContent(content,
-                                                                 stagingInfo.getLength(),
-                                                                 stagingInfo.getLength() + CHUNK_SIZE)) {
-
-                    stagingInfo = destination.writeContent(content,
-                                                           stagingInfo.getSessionId(),
-                                                           inputStream,
-                                                           stagingInfo.getLength());
-                }
+                stagingInfo = writeChunk(content, stagingInfo);
             }
             return true;
 
@@ -70,6 +65,30 @@ class ReplicationAgent extends Agent {
 
         } finally {
             destination.unstageContent(content, stagingInfo.getSessionId());
+        }
+    }
+
+    private StagingInfo checkDigest(Hash content, StagingInfo stagingInfo) throws IOException {
+        if (stagingInfo.getLength() == 0) {
+            return stagingInfo;
+        }
+        try (InputStream inputStream = source.getContent(content, 0, stagingInfo.getLength())) {
+            Hash expected = stagingInfo.getHash();
+            Hash actual = copyAndDigest(inputStream, SinkOutputStream.sink()).getHash();
+
+            return expected.equals(actual) ? stagingInfo : new StagingInfo(stagingInfo.getSessionId(), null, 0L);
+        }
+    }
+
+    private StagingInfo writeChunk(Hash content, StagingInfo stagingInfo) throws IOException {
+        try (InputStream inputStream = source.getContent(content,
+                                                         stagingInfo.getLength(),
+                                                         stagingInfo.getLength() + CHUNK_SIZE)) {
+
+            return destination.writeContent(content,
+                                            stagingInfo.getSessionId(),
+                                            inputStream,
+                                            stagingInfo.getLength());
         }
     }
 }

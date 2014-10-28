@@ -12,6 +12,7 @@ public class Content implements AutoCloseable {
 
     private final Optional<String> fileName;
     private final MediaType mediaType;
+    private final long length;
     private final InputStream inputStream;
 
     /**
@@ -19,11 +20,13 @@ public class Content implements AutoCloseable {
      *
      * @param fileName Optional content file name.
      * @param mediaType Content media type.
+     * @param length Content length in bytes.
      * @param inputStream Content input-stream.
      */
-    public Content(Optional<String> fileName, MediaType mediaType, InputStream inputStream) {
+    public Content(Optional<String> fileName, MediaType mediaType, long length, InputStream inputStream) {
         this.fileName = fileName;
         this.mediaType = mediaType;
+        this.length = length;
         this.inputStream = inputStream;
     }
 
@@ -39,6 +42,13 @@ public class Content implements AutoCloseable {
      */
     public MediaType getContentType() {
         return mediaType;
+    }
+
+    /**
+     * @return Content length in bytes.
+     */
+    public long getLength() {
+        return length;
     }
 
     /**

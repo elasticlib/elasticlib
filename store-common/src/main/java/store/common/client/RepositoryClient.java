@@ -238,7 +238,10 @@ public class RepositoryClient {
         Response response = invocation.get();
 
         checkStatus(response);
-        return new Content(fileName(response), response.getMediaType(), response.readEntity(InputStream.class));
+        return new Content(fileName(response),
+                           response.getMediaType(),
+                           response.getLength(),
+                           response.readEntity(InputStream.class));
     }
 
     private static String range(long offset, long length) {

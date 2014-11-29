@@ -76,7 +76,7 @@ class Index {
     }
 
     private IndexWriter newIndexWriter() throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_0, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_2, analyzer);
         return new IndexWriter(directory, config);
     }
 

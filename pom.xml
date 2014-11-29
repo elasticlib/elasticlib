@@ -20,8 +20,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
-        <jersey.version>2.12</jersey.version>
-        <lucene.version>4.10.0</lucene.version>
+        <jersey.version>2.13</jersey.version>
+        <lucene.version>4.10.2</lucene.version>
     </properties>
 
     <build>
@@ -70,11 +70,6 @@
 
     <repositories>
         <repository>
-            <id>Sonatype-public</id>
-            <name>Sonatype public repository</name>
-            <url>http://oss.sonatype.org/content/groups/public/</url>
-        </repository>
-        <repository>
             <id>oracleReleases</id>
             <name>Oracle Released Java Packages</name>
             <url>http://download.oracle.com/maven</url>
@@ -93,7 +88,7 @@
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.4</version>
+                <version>2.5</version>
             </dependency>
 
             <dependency>
@@ -213,7 +208,7 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>1.9.5</version>
+                <version>1.10.8</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.test-framework</groupId>

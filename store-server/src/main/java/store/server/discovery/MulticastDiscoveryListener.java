@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.json.Json;
 import javax.json.JsonWriter;
 import org.slf4j.Logger;
@@ -24,7 +23,7 @@ public class MulticastDiscoveryListener {
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryListener.class);
     private final Config config;
     private final NodesService nodesService;
-    private final AtomicBoolean started = new AtomicBoolean(false);
+    private boolean started;
     private DiscoveryThread thread;
 
     /**
@@ -41,23 +40,22 @@ public class MulticastDiscoveryListener {
     /**
      * Starts the listener.
      */
-    public void start() {
+    public synchronized void start() {
         if (!config.getBoolean(ServerConfig.DISCOVERY_MULTICAST_LISTEN)) {
             LOG.info("Multicast discovery listening is disabled");
             return;
         }
-        if (!started.compareAndSet(false, true)) {
+        if (started) {
             return;
         }
-        synchronized (this) {
-            thread = new DiscoveryThread();
-            thread.start();
-            try {
+        thread = new DiscoveryThread();
+        thread.start();
+        try {
+            while (!started) {
                 wait();
-
-            } catch (InterruptedException e) {
-                throw new AssertionError(e);
             }
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
         }
     }
 
@@ -65,10 +63,12 @@ public class MulticastDiscoveryListener {
      * Properly stops the listener and release underlying ressources.
      */
     public void stop() {
-        if (!started.compareAndSet(true, false)) {
-            return;
+        synchronized (this) {
+            if (!started) {
+                return;
+            }
+            thread.close();
         }
-        thread.close();
         try {
             thread.join();
 
@@ -90,15 +90,21 @@ public class MulticastDiscoveryListener {
         @Override
         public void run() {
             buildSocket();
-            while (started.get()) {
+            while (isStarted()) {
                 try {
                     processRequest();
 
                 } catch (IOException e) {
-                    if (started.get()) {
+                    if (isStarted()) {
                         LOG.error("Unexpected IO error", e);
                     }
                 }
+            }
+        }
+
+        private boolean isStarted() {
+            synchronized (MulticastDiscoveryListener.this) {
+                return started;
             }
         }
 
@@ -116,6 +122,8 @@ public class MulticastDiscoveryListener {
                     socket.setLoopbackMode(false);
 
                     LOG.info("Multicast discovery listener bound to [{}:{}]", address, port);
+
+                    started = true;
                     MulticastDiscoveryListener.this.notifyAll();
 
                 } catch (IOException e) {
@@ -165,7 +173,7 @@ public class MulticastDiscoveryListener {
         /**
          * Leave the multicast group and close the socket.
          */
-        public synchronized void close() {
+        public void close() {
             try {
                 socket.leaveGroup(group);
 
@@ -173,6 +181,7 @@ public class MulticastDiscoveryListener {
                 LOG.warn("Failed to leave group " + group.getHostAddress(), e);
 
             } finally {
+                started = false;
                 socket.close();
             }
         }

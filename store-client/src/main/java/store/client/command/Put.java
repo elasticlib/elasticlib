@@ -160,7 +160,7 @@ class Put extends AbstractCommand {
             try {
                 long offset = offset(filepath, stagingInfo);
                 try (InputStream inputStream = read("Uploading content", filepath)) {
-                    inputStream.skip(offset);
+                    skip(inputStream, offset);
                     client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, offset);
                 }
             } finally {
@@ -178,6 +178,13 @@ class Put extends AbstractCommand {
                 Hash actual = copyAndDigest(new BoundedInputStream(inputStream, length), sink()).getHash();
 
                 return expected.equals(actual) ? length : 0;
+            }
+        }
+
+        private static void skip(InputStream inputStream, long offset) throws IOException {
+            long remaining = offset;
+            while (remaining > 0) {
+                remaining -= inputStream.skip(remaining);
             }
         }
 

@@ -5,7 +5,7 @@ import static java.lang.Float.floatToIntBits;
 import java.util.Arrays;
 
 /**
- * Support class for implementing equals(). Inspired by same class in Apache commons-lang.
+ * Support class for implementing equals().
  */
 public class EqualsBuilder {
 

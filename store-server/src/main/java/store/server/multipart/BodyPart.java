@@ -21,7 +21,7 @@ public class BodyPart {
 
     BodyPart(MIMEPart mimePart, ContentDisposition contentDisposition) {
         this.mimePart = mimePart;
-        this.contentDisposition = Optional.of(contentDisposition);
+        this.contentDisposition = Optional.fromNullable(contentDisposition);
     }
 
     /**

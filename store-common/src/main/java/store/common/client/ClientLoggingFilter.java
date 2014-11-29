@@ -28,11 +28,11 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
     private static final String RESPONSE_PREFIX = "< ";
     private static final Comparator<Entry<String, List<String>>> COMPARATOR =
             new Comparator<Entry<String, List<String>>>() {
-        @Override
-        public int compare(Entry<String, List<String>> o1, Entry<String, List<String>> o2) {
-            return StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey());
-        }
-    };
+                @Override
+                public int compare(Entry<String, List<String>> o1, Entry<String, List<String>> o2) {
+                    return StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey());
+                }
+            };
     private final LoggingHandler handler;
 
     /**
@@ -80,7 +80,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
             String header = headerEntry.getKey();
             String value;
             if (headerEntry.getValue().size() == 1) {
-                value = headerEntry.getValue().get(0).toString();
+                value = headerEntry.getValue().get(0);
             } else {
                 value = Joiner.on(',').join(headerEntry.getValue());
             }

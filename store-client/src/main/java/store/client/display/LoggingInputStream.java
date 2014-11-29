@@ -13,7 +13,7 @@ public class LoggingInputStream extends InputStream {
     private final Display display;
     private final ClientConfig config;
     private final String task;
-    private InputStream inputStream;
+    private final InputStream inputStream;
     private final long length;
     private long read;
     private int currentProgress;
@@ -102,14 +102,18 @@ public class LoggingInputStream extends InputStream {
 
     @Override
     public void close() throws IOException {
-        if (!closed) {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < task.length() + " 100%".length(); i++) {
-                builder.append(" ");
-            }
-            builder.append('\r');
-            log(builder.toString());
-            inputStream.close();
+        if (closed) {
+            return;
         }
+        closed = true;
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < task.length() + " 100%".length(); i++) {
+            builder.append(" ");
+        }
+        builder.append('\r');
+        log(builder.toString());
+
+        inputStream.close();
     }
 }

@@ -20,7 +20,7 @@ public class Session implements Closeable {
     private static final String NO_REPOSITORY = "No repository selected";
     private final Display display;
     private final ClientConfig config;
-    private PrintingHandler printingHandler;
+    private final PrintingHandler printingHandler;
     private Client client;
     private String node;
     private Guid repository;
@@ -91,6 +91,9 @@ public class Session implements Closeable {
      * @param repositoryName Repository name.
      */
     public void use(String repositoryName) {
+        if (client == null) {
+            throw new RequestFailedException(NOT_CONNECTED);
+        }
         printingHandler.setEnabled(true);
         try {
             RepositoryDef def = client.repositories()

@@ -35,7 +35,7 @@ class ReplicationAgent extends Agent {
     protected boolean process(Event event) {
         RevisionTree srcTree = source.getTree(event.getContent());
         ContentState destState = destination.getContentInfo(event.getContent()).getState();
-        if (!srcTree.isDeleted() && destState != ContentState.STAGED & destState != ContentState.PRESENT) {
+        if (!srcTree.isDeleted() && destState != ContentState.STAGED && destState != ContentState.PRESENT) {
             if (destState == ContentState.STAGING) {
                 pause(10);
                 return false;

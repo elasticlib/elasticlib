@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Thread.currentThread;
+import java.util.Arrays;
 import static java.util.Arrays.copyOfRange;
 import java.util.SortedSet;
 import store.common.hash.Digest;
@@ -71,12 +72,12 @@ public final class TestContent {
     public TestContent add(String key, Value value) {
         Revision head = getRevision();
         return new TestContent(bytes, tree.add(new RevisionBuilder()
-                .withParent(head.getRevision())
-                .withLength(head.getLength())
-                .withContent(head.getContent())
-                .withMetadata(head.getMetadata())
-                .with(key, value)
-                .computeRevisionAndBuild()));
+                               .withParent(head.getRevision())
+                               .withLength(head.getLength())
+                               .withContent(head.getContent())
+                               .withMetadata(head.getMetadata())
+                               .with(key, value)
+                               .computeRevisionAndBuild()));
     }
 
     /**
@@ -88,11 +89,11 @@ public final class TestContent {
     public TestContent delete() {
         Revision head = getRevision();
         return new TestContent(bytes, tree.add(new RevisionBuilder()
-                .withParent(head.getRevision())
-                .withLength(head.getLength())
-                .withContent(head.getContent())
-                .withDeleted(true)
-                .computeRevisionAndBuild()));
+                               .withParent(head.getRevision())
+                               .withLength(head.getLength())
+                               .withContent(head.getContent())
+                               .withDeleted(true)
+                               .computeRevisionAndBuild()));
     }
 
     /**
@@ -119,7 +120,7 @@ public final class TestContent {
      * @return This content as a byte array.
      */
     public byte[] getBytes() {
-        return bytes;
+        return Arrays.copyOf(bytes, bytes.length);
     }
 
     /**

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.joda.time.Instant;
-import static store.common.bson.BinaryConstants.*;
+import static store.common.bson.BinaryConstants.writeType;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;
 import store.common.hash.Guid;

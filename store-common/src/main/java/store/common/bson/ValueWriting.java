@@ -5,7 +5,6 @@ import com.google.common.base.Function;
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.NULL_BYTE;
 import static store.common.bson.BinaryConstants.TRUE;
@@ -30,82 +29,31 @@ final class ValueWriting {
     private static final Map<ValueType, Function<Value, byte[]>> WRITERS = new EnumMap<>(ValueType.class);
 
     static {
-        WRITERS.put(NULL, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return EMPTY_BYTE_ARRAY;
-            }
+        WRITERS.put(NULL, value -> EMPTY_BYTE_ARRAY);
+        WRITERS.put(HASH, value -> value.asHash().getBytes());
+        WRITERS.put(GUID, value -> value.asGuid().getBytes());
+        WRITERS.put(BINARY, value -> writeByteArray(value.asByteArray()));
+        WRITERS.put(BOOLEAN, value -> new byte[]{value.asBoolean() ? TRUE : FALSE});
+        WRITERS.put(INTEGER, value -> writeLong(value.asLong()));
+        WRITERS.put(DECIMAL, value -> writeString(value.toString()));
+        WRITERS.put(STRING, value -> writeString(value.asString()));
+        WRITERS.put(DATE, value -> writeLong(value.asInstant().getMillis()));
+        WRITERS.put(OBJECT, value -> {
+            ByteArrayBuilder builder = new ByteArrayBuilder();
+            value.asMap().entrySet().stream().forEach(entry -> {
+                builder.append(writeType(entry.getValue().type()))
+                        .append(writeKey(entry.getKey()))
+                        .append(writeValue(entry.getValue()));
+            });
+            return builder.prependSizeAndBuild();
         });
-        WRITERS.put(HASH, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return value.asHash().getBytes();
-            }
-        });
-        WRITERS.put(GUID, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return value.asGuid().getBytes();
-            }
-        });
-        WRITERS.put(BINARY, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeByteArray(value.asByteArray());
-            }
-        });
-        WRITERS.put(BOOLEAN, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return new byte[]{value.asBoolean() ? TRUE : FALSE};
-            }
-        });
-        WRITERS.put(INTEGER, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeLong(value.asLong());
-            }
-        });
-        WRITERS.put(DECIMAL, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeString(value.toString());
-            }
-        });
-        WRITERS.put(STRING, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeString(value.asString());
-            }
-        });
-        WRITERS.put(DATE, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                return writeLong(value.asInstant().getMillis());
-            }
-        });
-        WRITERS.put(OBJECT, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                ByteArrayBuilder builder = new ByteArrayBuilder();
-                for (Entry<String, Value> entry : value.asMap().entrySet()) {
-                    builder.append(writeType(entry.getValue().type()))
-                            .append(writeKey(entry.getKey()))
-                            .append(writeValue(entry.getValue()));
-                }
-                return builder.prependSizeAndBuild();
-            }
-        });
-        WRITERS.put(ARRAY, new Function<Value, byte[]>() {
-            @Override
-            public byte[] apply(Value value) {
-                ByteArrayBuilder builder = new ByteArrayBuilder();
-                for (Value item : value.asList()) {
-                    builder.append(writeType(item.type()))
-                            .append(writeValue(item));
-                }
-                return builder.prependSizeAndBuild();
-            }
+        WRITERS.put(ARRAY, value -> {
+            ByteArrayBuilder builder = new ByteArrayBuilder();
+            value.asList().stream().forEach(item -> {
+                builder.append(writeType(item.type()))
+                        .append(writeValue(item));
+            });
+            return builder.prependSizeAndBuild();
         });
     }
 

@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonArrayBuilder;
@@ -33,74 +32,20 @@ final class ValueWriting {
     private static final Map<ValueType, Writer> WRITERS = new EnumMap<>(ValueType.class);
 
     static {
-        WRITERS.put(NULL, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return JsonValue.NULL;
-            }
-        });
-        WRITERS.put(HASH, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonString(value.asHash().asHexadecimalString());
-            }
-        });
-        WRITERS.put(GUID, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonString(value.asGuid().asHexadecimalString());
-            }
-        });
-        WRITERS.put(BINARY, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonString(base64().encode(value.asByteArray()));
-            }
-        });
-        WRITERS.put(BOOLEAN, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE;
-            }
-        });
-        WRITERS.put(INTEGER, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonNumber(value.asLong());
-            }
-        });
-        WRITERS.put(DECIMAL, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonNumber(value.asBigDecimal());
-            }
-        });
-        WRITERS.put(STRING, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonString(value.asString());
-            }
-        });
-        WRITERS.put(DATE, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return jsonNumber(value.asInstant().getMillis());
-            }
-        });
-        WRITERS.put(OBJECT, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return writeMap(value.asMap(), schema).build();
-            }
-        });
-        WRITERS.put(ARRAY, new Writer() {
-            @Override
-            public JsonValue apply(Value value, Schema schema) {
-                return writeList(value.asList(), schema).build();
-            }
-        });
+        WRITERS.put(NULL, (value, schema) -> JsonValue.NULL);
+        WRITERS.put(HASH, (value, schema) -> jsonString(value.asHash().asHexadecimalString()));
+        WRITERS.put(GUID, (value, schema) -> jsonString(value.asGuid().asHexadecimalString()));
+        WRITERS.put(BINARY, (value, schema) -> jsonString(base64().encode(value.asByteArray())));
+        WRITERS.put(BOOLEAN, (value, schema) -> value.asBoolean() ? JsonValue.TRUE : JsonValue.FALSE);
+        WRITERS.put(INTEGER, (value, schema) -> jsonNumber(value.asLong()));
+        WRITERS.put(DECIMAL, (value, schema) -> jsonNumber(value.asBigDecimal()));
+        WRITERS.put(STRING, (value, schema) -> jsonString(value.asString()));
+        WRITERS.put(DATE, (value, schema) -> jsonNumber(value.asInstant().getMillis()));
+        WRITERS.put(OBJECT, (value, schema) -> writeMap(value.asMap(), schema).build());
+        WRITERS.put(ARRAY, (value, schema) -> writeList(value.asList(), schema).build());
     }
 
+    @FunctionalInterface
     private interface Writer {
 
         JsonValue apply(Value value, Schema schema);
@@ -133,7 +78,7 @@ final class ValueWriting {
 
     public static JsonObjectBuilder writeMap(Map<String, Value> map, Schema schema) {
         JsonObjectBuilder json = createObjectBuilder();
-        for (Entry<String, Value> entry : map.entrySet()) {
+        map.entrySet().stream().forEach(entry -> {
             String key = entry.getKey();
             Value value = entry.getValue();
             Schema subSchema = schema.properties().get(key);
@@ -144,7 +89,7 @@ final class ValueWriting {
             } else {
                 json.add(key, writeValue(value, subSchema));
             }
-        }
+        });
         return json;
     }
 
@@ -152,9 +97,8 @@ final class ValueWriting {
         JsonArrayBuilder array = createArrayBuilder();
         List<Schema> itemsSchemas = schema.items();
         if (itemsSchemas.size() == 1) {
-            for (Value value : list) {
-                array.add(writeValue(value, itemsSchemas.get(0)));
-            }
+            list.stream().forEach(value -> array.add(writeValue(value, itemsSchemas.get(0))));
+
         } else {
             for (int i = 0; i < list.size(); i++) {
                 array.add(writeValue(list.get(i), itemsSchemas.get(i)));

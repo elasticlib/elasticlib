@@ -1,8 +1,6 @@
 package store.common.yaml;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import static com.google.common.collect.Lists.transform;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,6 +9,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import static java.util.Collections.singletonList;
 import java.util.List;
+import static java.util.stream.Collectors.toList;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.emitter.Emitable;
 import org.yaml.snakeyaml.emitter.Emitter;
@@ -63,12 +62,9 @@ public class YamlWriter implements AutoCloseable {
      * @throws IOException If an IO error happens on the underlying stream.
      */
     public void writeAll(List<? extends Mappable> mappables) throws IOException {
-        writeValues(transform(mappables, new Function<Mappable, Value>() {
-            @Override
-            public Value apply(Mappable mappable) {
-                return Value.of(mappable.toMap());
-            }
-        }));
+        writeValues(mappables.stream()
+                .map(mappable -> Value.of(mappable.toMap()))
+                .collect(toList()));
     }
 
     /**
@@ -88,12 +84,9 @@ public class YamlWriter implements AutoCloseable {
      * @throws IOException If an IO error happens on the underlying stream.
      */
     public void writeValues(List<Value> values) throws IOException {
-        write(transform(values, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return ValueWriting.writeValue(value);
-            }
-        }));
+        write(values.stream()
+                .map(value -> ValueWriting.writeValue(value))
+                .collect(toList()));
     }
 
     /**

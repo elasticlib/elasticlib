@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 import static com.google.common.collect.Maps.transformValues;
 import static java.util.Collections.unmodifiableMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -29,10 +28,10 @@ final class MapSchema extends Schema {
     @Override
     JsonObject write(JsonObjectBuilder builder) {
         JsonObjectBuilder propertiesBuilder = createObjectBuilder();
-        for (Entry<String, Schema> entry : properties.entrySet()) {
-            propertiesBuilder.add(entry.getKey(),
-                                  entry.getValue().write());
-        }
+        properties.entrySet()
+                .stream()
+                .forEach(entry -> propertiesBuilder.add(entry.getKey(), entry.getValue().write()));
+
         return builder
                 .add(PROPERTIES, propertiesBuilder)
                 .build();

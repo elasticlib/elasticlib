@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import static java.util.stream.Collectors.toList;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
 import store.common.mappable.Mappable;
@@ -63,11 +64,10 @@ public class YamlReader implements AutoCloseable {
      * @return A list of mappable instances.
      */
     public <T extends Mappable> List<T> readAll(Class<T> clazz) {
-        List<T> list = new ArrayList<>();
-        for (Value value : readValues()) {
-            list.add(MappableUtil.fromMap(value.asMap(), clazz));
-        }
-        return list;
+        return readValues()
+                .stream()
+                .map(value -> MappableUtil.fromMap(value.asMap(), clazz))
+                .collect(toList());
     }
 
     /**

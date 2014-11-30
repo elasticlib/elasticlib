@@ -1,14 +1,13 @@
 package store.common.model;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import static java.util.stream.Collectors.toList;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.fest.assertions.api.IterableAssert;
 import org.testng.annotations.DataProvider;
@@ -239,12 +238,10 @@ public class RevisionTreeTest {
     }
 
     private static String format(List<Revision> list) {
-        return Lists.transform(list, new Function<Revision, Hash>() {
-            @Override
-            public Hash apply(Revision info) {
-                return info.getRevision();
-            }
-        }).toString();
+        return list.stream()
+                .map(info -> info.getRevision())
+                .collect(toList())
+                .toString();
     }
 
     /**
@@ -402,8 +399,8 @@ public class RevisionTreeTest {
     @Test
     public void sameMetadataMergeTest() {
         Revision a1Bis = revision("b1",
-                                     ImmutableMap.of("msg", Value.of("hello")),
-                                     "a0");
+                                  ImmutableMap.of("msg", Value.of("hello")),
+                                  "a0");
 
         RevisionTree merge = tree(a0, a1, a1Bis).merge();
         Revision head = merge.get(merge.getHead().first());
@@ -446,28 +443,28 @@ public class RevisionTreeTest {
     @Test
     public void crissCrossMergeTest() {
         Revision rev0 = revision("00",
-                                    ImmutableMap.of("int", Value.of(5),
-                                                    "msg", Value.of("good morning")));
+                                 ImmutableMap.of("int", Value.of(5),
+                                                 "msg", Value.of("good morning")));
 
         Revision rev1a = revision("1a",
-                                     ImmutableMap.of("int", Value.of(5),
-                                                     "msg", Value.of("hello")),
-                                     "00");
+                                  ImmutableMap.of("int", Value.of(5),
+                                                  "msg", Value.of("hello")),
+                                  "00");
 
         Revision rev1b = revision("1b",
-                                     ImmutableMap.of("int", Value.of(10),
-                                                     "msg", Value.of("good morning")),
-                                     "00");
+                                  ImmutableMap.of("int", Value.of(10),
+                                                  "msg", Value.of("good morning")),
+                                  "00");
 
         Revision rev2a = revision("2a",
-                                     ImmutableMap.of("int", Value.of(10),
-                                                     "msg", Value.of("hello world")),
-                                     "1a", "1b");
+                                  ImmutableMap.of("int", Value.of(10),
+                                                  "msg", Value.of("hello world")),
+                                  "1a", "1b");
 
         Revision rev2b = revision("2b",
-                                     ImmutableMap.of("int", Value.of(20),
-                                                     "msg", Value.of("hello")),
-                                     "1a", "1b");
+                                  ImmutableMap.of("int", Value.of(20),
+                                                  "msg", Value.of("hello")),
+                                  "1a", "1b");
 
         RevisionTree merge = tree(rev0, rev1a, rev1b, rev2a, rev2b).merge();
         Revision head = merge.get(merge.getHead().first());
@@ -483,46 +480,45 @@ public class RevisionTreeTest {
     @Test
     public void tripleCrissCrossMergeTest() {
         Revision rev0 = revision("00",
-                                    ImmutableMap.of("int", Value.of(5),
-                                                    "msg", Value.of("good morning"),
-                                                    "out", Value.of("good evening")));
+                                 ImmutableMap.of("int", Value.of(5),
+                                                 "msg", Value.of("good morning"),
+                                                 "out", Value.of("good evening")));
 
         Revision rev1b = revision("1a",
-                                     ImmutableMap.of("int", Value.of(10),
-                                                     "msg", Value.of("good morning"),
-                                                     "out", Value.of("good evening")),
-                                     "00");
+                                  ImmutableMap.of("int", Value.of(10),
+                                                  "msg", Value.of("good morning"),
+                                                  "out", Value.of("good evening")),
+                                  "00");
 
         Revision rev1a = revision("1b",
-                                     ImmutableMap.of("int", Value.of(5),
-                                                     "msg", Value.of("hello"),
-                                                     "out", Value.of("good evening")),
-                                     "00");
+                                  ImmutableMap.of("int", Value.of(5),
+                                                  "msg", Value.of("hello"),
+                                                  "out", Value.of("good evening")),
+                                  "00");
 
         Revision rev1c = revision("1c",
-                                     ImmutableMap.of("int", Value.of(5),
-                                                     "msg", Value.of("good morning"),
-                                                     "out", Value.of("good bye")),
-                                     "00");
-
+                                  ImmutableMap.of("int", Value.of(5),
+                                                  "msg", Value.of("good morning"),
+                                                  "out", Value.of("good bye")),
+                                  "00");
 
         Revision rev2a = revision("2a",
-                                     ImmutableMap.of("int", Value.of(20),
-                                                     "msg", Value.of("hello"),
-                                                     "out", Value.of("good bye")),
-                                     "1a", "1b", "1c");
+                                  ImmutableMap.of("int", Value.of(20),
+                                                  "msg", Value.of("hello"),
+                                                  "out", Value.of("good bye")),
+                                  "1a", "1b", "1c");
 
         Revision rev2b = revision("2b",
-                                     ImmutableMap.of("int", Value.of(10),
-                                                     "msg", Value.of("hello world"),
-                                                     "out", Value.of("good bye")),
-                                     "1a", "1b");
+                                  ImmutableMap.of("int", Value.of(10),
+                                                  "msg", Value.of("hello world"),
+                                                  "out", Value.of("good bye")),
+                                  "1a", "1b");
 
         Revision rev2c = revision("2c",
-                                     ImmutableMap.of("int", Value.of(10),
-                                                     "msg", Value.of("hello"),
-                                                     "out", Value.of("bye bye")),
-                                     "1a", "1b", "1c");
+                                  ImmutableMap.of("int", Value.of(10),
+                                                  "msg", Value.of("hello"),
+                                                  "out", Value.of("bye bye")),
+                                  "1a", "1b", "1c");
 
         RevisionTree merge = tree(rev0, rev1a, rev2a, rev1c, rev1b, rev2b, rev2c).merge();
         Revision head = merge.get(merge.getHead().first());

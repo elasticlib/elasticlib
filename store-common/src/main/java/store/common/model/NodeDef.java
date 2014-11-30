@@ -2,13 +2,13 @@ package store.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import java.net.URI;
-import java.util.ArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import store.common.hash.Guid;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
@@ -72,10 +72,10 @@ public class NodeDef implements Mappable {
             builder.put(PUBLISH_URI, publishUris.get(0).toString());
 
         } else if (!publishUris.isEmpty()) {
-            List<Value> values = new ArrayList<>();
-            for (URI host : publishUris) {
-                values.add(Value.of(host.toString()));
-            }
+            List<Value> values = publishUris.stream()
+                    .map(host -> Value.of(host.toString()))
+                    .collect(toList());
+
             builder.put(PUBLISH_URIS, values);
         }
         return builder.build();
@@ -98,11 +98,11 @@ public class NodeDef implements Mappable {
             return singletonList(asUri(values.get(PUBLISH_URI)));
         }
         if (values.containsKey(PUBLISH_URIS)) {
-            List<URI> uris = new ArrayList<>();
-            for (Value value : values.get(PUBLISH_URIS).asList()) {
-                uris.add(asUri(value));
-            }
-            return uris;
+            return values.get(PUBLISH_URIS)
+                    .asList()
+                    .stream()
+                    .map(value -> asUri(value))
+                    .collect(toList());
         }
         return emptyList();
     }

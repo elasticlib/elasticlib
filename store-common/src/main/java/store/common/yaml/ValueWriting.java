@@ -1,12 +1,11 @@
 package store.common.yaml;
 
-import com.google.common.base.Function;
 import static com.google.common.io.BaseEncoding.base64;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.function.Function;
+import static java.util.stream.Collectors.toList;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.yaml.snakeyaml.nodes.MappingNode;
@@ -35,81 +34,34 @@ final class ValueWriting {
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     static {
-        WRITERS.put(NULL, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tag.NULL, "null");
-            }
+        WRITERS.put(NULL, value -> newScalarNode(Tag.NULL, "null"));
+        WRITERS.put(HASH, value -> newScalarNode(Tags.HASH, value.asHash().asHexadecimalString()));
+        WRITERS.put(GUID, value -> newScalarNode(Tags.GUID, value.asGuid().asHexadecimalString()));
+        WRITERS.put(BINARY, value -> newScalarNode(Tag.BINARY, base64().encode(value.asByteArray())));
+        WRITERS.put(BOOLEAN, value -> newScalarNode(Tag.BOOL, Boolean.toString(value.asBoolean())));
+        WRITERS.put(INTEGER, value -> newScalarNode(Tag.INT, Long.toString(value.asLong())));
+        WRITERS.put(DECIMAL, value -> newScalarNode(Tag.FLOAT, value.asBigDecimal().toString()));
+        WRITERS.put(STRING, value -> writeString(value.asString()));
+        WRITERS.put(DATE, value -> {
+            DateTimeFormatter formatter = DateTimeFormat.forPattern(DATE_FORMAT);
+            return newScalarNode(Tag.TIMESTAMP, formatter.print(value.asInstant()));
         });
-        WRITERS.put(HASH, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tags.HASH, value.asHash().asHexadecimalString());
-            }
+        WRITERS.put(OBJECT, value -> {
+            List<NodeTuple> tuples = value.asMap()
+                    .entrySet()
+                    .stream()
+                    .map(entry -> new NodeTuple(writeString(entry.getKey()), writeValue(entry.getValue())))
+                    .collect(toList());
+
+            return new MappingNode(Tag.MAP, tuples, false);
         });
-        WRITERS.put(GUID, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tags.GUID, value.asGuid().asHexadecimalString());
-            }
-        });
-        WRITERS.put(BINARY, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tag.BINARY, base64().encode(value.asByteArray()));
-            }
-        });
-        WRITERS.put(BOOLEAN, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tag.BOOL, Boolean.toString(value.asBoolean()));
-            }
-        });
-        WRITERS.put(INTEGER, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tag.INT, Long.toString(value.asLong()));
-            }
-        });
-        WRITERS.put(DECIMAL, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return newScalarNode(Tag.FLOAT, value.asBigDecimal().toString());
-            }
-        });
-        WRITERS.put(STRING, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                return writeString(value.asString());
-            }
-        });
-        WRITERS.put(DATE, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                DateTimeFormatter formatter = DateTimeFormat.forPattern(DATE_FORMAT);
-                return newScalarNode(Tag.TIMESTAMP, formatter.print(value.asInstant()));
-            }
-        });
-        WRITERS.put(OBJECT, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                List<NodeTuple> tuples = new ArrayList<>();
-                for (Entry<String, Value> entry : value.asMap().entrySet()) {
-                    tuples.add(new NodeTuple(writeString(entry.getKey()),
-                                             writeValue(entry.getValue())));
-                }
-                return new MappingNode(Tag.MAP, tuples, false);
-            }
-        });
-        WRITERS.put(ARRAY, new Function<Value, Node>() {
-            @Override
-            public Node apply(Value value) {
-                List<Node> nodes = new ArrayList<>();
-                for (Value item : value.asList()) {
-                    nodes.add(writeValue(item));
-                }
-                return new SequenceNode(Tag.SEQ, nodes, false);
-            }
+        WRITERS.put(ARRAY, value -> {
+            List<Node> nodes = value.asList()
+                    .stream()
+                    .map(item -> writeValue(item))
+                    .collect(toList());
+
+            return new SequenceNode(Tag.SEQ, nodes, false);
         });
     }
 

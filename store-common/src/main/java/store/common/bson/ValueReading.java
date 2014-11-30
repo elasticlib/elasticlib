@@ -1,12 +1,12 @@
 package store.common.bson;
 
-import com.google.common.base.Function;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.TRUE;
@@ -34,80 +34,28 @@ final class ValueReading {
     private static final int GUID_LENGTH = 16;
 
     static {
-        READERS.put(NULL, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.ofNull();
+        READERS.put(NULL, reader -> Value.ofNull());
+        READERS.put(HASH, reader -> Value.of(new Hash(reader.readByteArray(HASH_LENGTH))));
+        READERS.put(HASH, reader -> Value.of(new Hash(reader.readByteArray(HASH_LENGTH))));
+        READERS.put(GUID, reader -> Value.of(new Guid(reader.readByteArray(GUID_LENGTH))));
+        READERS.put(BINARY, reader -> Value.of(reader.readByteArray(reader.readInt())));
+        READERS.put(BOOLEAN, reader -> {
+            byte b = reader.readByte();
+            switch (b) {
+                case FALSE:
+                    return Value.of(false);
+                case TRUE:
+                    return Value.of(true);
+                default:
+                    throw new IllegalArgumentException(String.format("0x%02x", b));
             }
         });
-        READERS.put(HASH, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(new Hash(reader.readByteArray(HASH_LENGTH)));
-            }
-        });
-        READERS.put(GUID, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(new Guid(reader.readByteArray(GUID_LENGTH)));
-            }
-        });
-        READERS.put(BINARY, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(reader.readByteArray(reader.readInt()));
-            }
-        });
-        READERS.put(BOOLEAN, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                byte b = reader.readByte();
-                switch (b) {
-                    case FALSE:
-                        return Value.of(false);
-                    case TRUE:
-                        return Value.of(true);
-                    default:
-                        throw new IllegalArgumentException(String.format("0x%02x", b));
-                }
-            }
-        });
-        READERS.put(INTEGER, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(reader.readLong());
-            }
-        });
-        READERS.put(DECIMAL, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(new BigDecimal(reader.readString(reader.readInt())));
-            }
-        });
-        READERS.put(STRING, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(reader.readString(reader.readInt()));
-            }
-        });
-        READERS.put(DATE, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(new Instant(reader.readLong()));
-            }
-        });
-        READERS.put(OBJECT, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(readMap(reader, reader.readInt()));
-            }
-        });
-        READERS.put(ARRAY, new Function<ByteArrayReader, Value>() {
-            @Override
-            public Value apply(ByteArrayReader reader) {
-                return Value.of(readList(reader, reader.readInt()));
-            }
-        });
+        READERS.put(INTEGER, reader -> Value.of(reader.readLong()));
+        READERS.put(DECIMAL, reader -> Value.of(new BigDecimal(reader.readString(reader.readInt()))));
+        READERS.put(STRING, reader -> Value.of(reader.readString(reader.readInt())));
+        READERS.put(DATE, reader -> Value.of(new Instant(reader.readLong())));
+        READERS.put(OBJECT, reader -> Value.of(readMap(reader, reader.readInt())));
+        READERS.put(ARRAY, reader -> Value.of(readList(reader, reader.readInt())));
     }
 
     private ValueReading() {

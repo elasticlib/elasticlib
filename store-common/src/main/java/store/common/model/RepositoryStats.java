@@ -1,12 +1,10 @@
 package store.common.model;
 
-import com.google.common.base.Function;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import static java.util.Objects.hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
@@ -73,16 +71,11 @@ public final class RepositoryStats implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
+        Map<String, Value> metadata = Maps.transformValues(metadataCounts, input -> Value.of(input));
         Map<String, Value> operations = ImmutableMap.of(Operation.CREATE.toString(), Value.of(creations),
                                                         Operation.UPDATE.toString(), Value.of(updates),
                                                         Operation.DELETE.toString(), Value.of(deletions));
 
-        Map<String, Value> metadata = Maps.transformValues(metadataCounts, new Function<Long, Value>() {
-            @Override
-            public Value apply(Long input) {
-                return Value.of(input);
-            }
-        });
         return new MapBuilder()
                 .put(OPERATIONS, operations)
                 .put(METADATA, metadata)
@@ -96,16 +89,14 @@ public final class RepositoryStats implements Mappable {
      * @return A new instance.
      */
     public static RepositoryStats fromMap(Map<String, Value> map) {
+        Map<String, Long> metadata = Maps.transformValues(map.get(METADATA).asMap(), input -> input.asLong());
         Map<Operation, Long> operations = new EnumMap<>(Operation.class);
-        for (Entry<String, Value> entry : map.get(OPERATIONS).asMap().entrySet()) {
-            operations.put(Operation.fromString(entry.getKey()), entry.getValue().asLong());
-        }
-        Map<String, Long> metadata = Maps.transformValues(map.get(METADATA).asMap(), new Function< Value, Long>() {
-            @Override
-            public Long apply(Value input) {
-                return input.asLong();
-            }
-        });
+        map.get(OPERATIONS)
+                .asMap()
+                .entrySet()
+                .stream()
+                .forEach(entry -> operations.put(Operation.fromString(entry.getKey()), entry.getValue().asLong()));
+
         return new RepositoryStats(operations.get(Operation.CREATE),
                                    operations.get(Operation.UPDATE),
                                    operations.get(Operation.DELETE),

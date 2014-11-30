@@ -4,12 +4,12 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import static java.util.stream.Collectors.toList;
 import store.common.value.Value;
 import store.common.value.ValueType;
 
@@ -122,11 +122,10 @@ public final class ConfigUtil {
             return singletonList(parseUri(key, configVal));
         }
         if (configVal.type() == ValueType.ARRAY) {
-            List<URI> uris = new ArrayList<>();
-            for (Value value : configVal.asList()) {
-                uris.add(parseUri(key, value));
-            }
-            return uris;
+            return configVal.asList()
+                    .stream()
+                    .map(value -> parseUri(key, value))
+                    .collect(toList());
         }
         throw new ConfigException("Key " + key + " is expected to be associated with a string or a list of strings");
     }

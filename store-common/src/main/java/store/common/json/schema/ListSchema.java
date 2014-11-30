@@ -1,7 +1,6 @@
 package store.common.json.schema;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import static com.google.common.collect.Lists.transform;
 import static java.util.Collections.singletonList;
@@ -25,12 +24,7 @@ final class ListSchema extends Schema {
     ListSchema(String title, List<Value> list) {
         super(title, ValueType.ARRAY, false);
         final List<Schema> tmp = transform(list, SCHEMA_BUILDER);
-        if (!tmp.isEmpty() && Iterables.all(tmp, new Predicate<Schema>() {
-            @Override
-            public boolean apply(Schema schema) {
-                return schema.equals(tmp.get(0));
-            }
-        })) {
+        if (!tmp.isEmpty() && Iterables.all(tmp, schema -> schema.equals(tmp.get(0)))) {
             items = singletonList(tmp.get(0));
 
         } else {
@@ -55,9 +49,7 @@ final class ListSchema extends Schema {
                     .build();
         }
         JsonArrayBuilder itemsBuilder = createArrayBuilder();
-        for (Schema item : items) {
-            itemsBuilder.add(item.write());
-        }
+        items.stream().forEach(item -> itemsBuilder.add(item.write()));
         return builder
                 .add(ITEMS, itemsBuilder)
                 .build();

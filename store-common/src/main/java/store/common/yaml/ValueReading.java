@@ -1,21 +1,20 @@
 package store.common.yaml;
 
-import com.google.common.base.Function;
 import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import static java.util.stream.Collectors.toList;
 import org.joda.time.Instant;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor.ConstructYamlTimestamp;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -28,94 +27,51 @@ final class ValueReading {
     private static final Map<Tag, Function<Node, Value>> READERS = new HashMap<>();
 
     static {
-        READERS.put(Tags.HASH, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.of(new Hash(value(node)));
-            }
+        READERS.put(Tag.NULL, node -> Value.ofNull());
+        READERS.put(Tags.HASH, node -> Value.of(new Hash(value(node))));
+        READERS.put(Tags.GUID, node -> Value.of(new Guid(value(node))));
+        READERS.put(Tag.BINARY, node -> Value.of(base64().decode(value(node))));
+        READERS.put(Tag.BOOL, node -> {
+            boolean bool = (boolean) new SafeConstructor().new ConstructYamlBool().construct(node);
+            return Value.of(bool);
         });
-        READERS.put(Tags.GUID, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.of(new Guid(value(node)));
+        READERS.put(Tag.INT, node -> {
+            Number number = (Number) new SafeConstructor().new ConstructYamlInt().construct(node);
+            long lg;
+            if (number instanceof BigInteger) {
+                lg = new BigDecimal((BigInteger) number).longValueExact();
+            } else {
+                lg = number.longValue();
             }
+            return Value.of(lg);
         });
-        READERS.put(Tag.NULL, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.ofNull();
-            }
-        });
-        READERS.put(Tag.BINARY, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.of(base64().decode(value(node)));
-            }
-        });
-        READERS.put(Tag.BOOL, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                boolean bool = (boolean) new SafeConstructor().new ConstructYamlBool().construct(node);
-                return Value.of(bool);
-            }
-        });
-        READERS.put(Tag.INT, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                Number number = (Number) new SafeConstructor().new ConstructYamlInt().construct(node);
-                long lg;
-                if (number instanceof BigInteger) {
-                    lg = new BigDecimal((BigInteger) number).longValueExact();
-                } else {
-                    lg = number.longValue();
-                }
-                return Value.of(lg);
-            }
-        });
-        READERS.put(Tag.FLOAT, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.of(new BigDecimal(value(node)));
-            }
-        });
-        READERS.put(Tag.STR, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                return Value.of(value(node));
-            }
-        });
-        READERS.put(Tag.TIMESTAMP, new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                Date date = (Date) new ConstructYamlTimestamp().construct(node);
-                return Value.of(new Instant(date));
-            }
+        READERS.put(Tag.FLOAT, node -> Value.of(new BigDecimal(value(node))));
+        READERS.put(Tag.STR, node -> Value.of(value(node)));
+        READERS.put(Tag.TIMESTAMP, node -> {
+            Date date = (Date) new ConstructYamlTimestamp().construct(node);
+            return Value.of(new Instant(date));
         });
 
-        Function<Node, Value> mapReader = new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                Map<String, Value> map = new LinkedHashMap<>();
-                for (NodeTuple tuple : MappingNode.class.cast(node).getValue()) {
-                    String key = value(tuple.getKeyNode());
-                    Value value = read(tuple.getValueNode());
-                    map.put(key, value);
-                }
-                return Value.of(map);
-            }
+        Function<Node, Value> mapReader = node -> {
+            Map<String, Value> map = new LinkedHashMap<>();
+            MappingNode.class.cast(node).getValue().stream().forEach(tuple -> {
+                String key = value(tuple.getKeyNode());
+                Value value = read(tuple.getValueNode());
+                map.put(key, value);
+            });
+            return Value.of(map);
         };
         READERS.put(Tag.MAP, mapReader);
         READERS.put(Tag.OMAP, mapReader);
 
-        Function<Node, Value> seqReader = new Function<Node, Value>() {
-            @Override
-            public Value apply(Node node) {
-                List<Value> list = new ArrayList<>();
-                for (Node item : SequenceNode.class.cast(node).getValue()) {
-                    list.add(read(item));
-                }
-                return Value.of(list);
-            }
+        Function<Node, Value> seqReader = node -> {
+            List<Value> list = SequenceNode.class.cast(node)
+                    .getValue()
+                    .stream()
+                    .map(item -> read(item))
+                    .collect(toList());
+
+            return Value.of(list);
         };
         READERS.put(Tag.SEQ, seqReader);
         READERS.put(Tag.SET, seqReader);

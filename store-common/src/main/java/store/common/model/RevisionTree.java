@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
@@ -53,39 +56,32 @@ public class RevisionTree implements Mappable {
     }
 
     private static SortedSet<Hash> buildHead(Map<Hash, Revision> nodes) {
-        Set<Hash> nonRoots = new HashSet<>(nodes.size());
-        for (Revision rev : nodes.values()) {
-            nonRoots.addAll(rev.getParents());
-        }
-        SortedSet<Hash> head = new TreeSet<>();
-        for (Revision info : nodes.values()) {
-            if (!nonRoots.contains(info.getRevision())) {
-                head.add(info.getRevision());
-            }
-        }
-        return head;
+        Set<Hash> nonRoots = nodes.values()
+                .stream()
+                .flatMap(rev -> rev.getParents().stream())
+                .collect(toSet());
+
+        return nodes.values()
+                .stream()
+                .filter(info -> !nonRoots.contains(info.getRevision()))
+                .map(info -> info.getRevision())
+                .collect(toCollection(TreeSet::new));
     }
 
     private static SortedSet<Hash> buildTail(Map<Hash, Revision> nodes) {
-        SortedSet<Hash> tail = new TreeSet<>();
-        for (Revision rev : nodes.values()) {
-            if (intersection(rev.getParents(), nodes.keySet()).isEmpty()) {
-                tail.add(rev.getRevision());
-            }
-        }
-        return tail;
+        return nodes.values()
+                .stream()
+                .filter(rev -> intersection(rev.getParents(), nodes.keySet()).isEmpty())
+                .map(rev -> rev.getRevision())
+                .collect(toCollection(TreeSet::new));
     }
 
     private static SortedSet<Hash> buildUnknownParents(Map<Hash, Revision> nodes) {
-        SortedSet<Hash> unknownParents = new TreeSet<>();
-        for (Revision rev : nodes.values()) {
-            for (Hash parent : rev.getParents()) {
-                if (!nodes.containsKey(parent)) {
-                    unknownParents.add(parent);
-                }
-            }
-        }
-        return unknownParents;
+        return nodes.values()
+                .stream()
+                .flatMap(rev -> rev.getParents().stream())
+                .filter(parent -> !nodes.containsKey(parent))
+                .collect(toCollection(TreeSet::new));
     }
 
     /**
@@ -112,12 +108,7 @@ public class RevisionTree implements Mappable {
      * @return true if all revisions at head are deleted.
      */
     public boolean isDeleted() {
-        for (Hash rev : head) {
-            if (!nodes.get(rev).isDeleted()) {
-                return false;
-            }
-        }
-        return true;
+        return head.stream().allMatch(rev -> nodes.get(rev).isDeleted());
     }
 
     /**
@@ -169,11 +160,9 @@ public class RevisionTree implements Mappable {
      * @return Associated revisions.
      */
     public List<Revision> get(Collection<Hash> revs) {
-        List<Revision> revisions = new ArrayList<>(revs.size());
-        for (Hash rev : revs) {
-            revisions.add(get(rev));
-        }
-        return revisions;
+        return revs.stream()
+                .map(rev -> get(rev))
+                .collect(toList());
     }
 
     /**
@@ -306,38 +295,41 @@ public class RevisionTree implements Mappable {
 
     private Set<Revision> latestCommonAncestors(Revision left, Revision right) {
         Set<Revision> commonAncestors = intersection(ancestors(left), ancestors(right));
-
         SetMultimap<Revision, Revision> dependencies = HashMultimap.create();
-        for (Revision info : commonAncestors) {
+        commonAncestors.stream().forEach(info -> {
             dependencies.putAll(info, intersection(commonAncestors, ancestors(info)));
-        }
+        });
         return difference(commonAncestors, new HashSet<>(dependencies.values()));
     }
 
     private Set<Revision> ancestors(Revision info) {
-        return ancestors(info, new HashSet<Revision>());
+        return ancestors(info, new HashSet<>());
     }
 
     private Set<Revision> ancestors(Revision revision, Set<Revision> seed) {
-        for (Hash rev : revision.getParents()) {
-            if (contains(rev)) {
-                Revision parent = get(rev);
-                seed.add(parent);
-                ancestors(parent, seed);
-            }
-        }
+        revision.getParents()
+                .stream()
+                .filter(rev -> contains(rev))
+                .forEach(rev -> {
+                    Revision parent = get(rev);
+                    seed.add(parent);
+                    ancestors(parent, seed);
+                });
         return seed;
     }
 
     @Override
     public Map<String, Value> toMap() {
-        List<Value> revisions = new ArrayList<>(nodes.size());
-        for (Revision rev : list()) {
-            Map<String, Value> map = rev.toMap();
-            map.remove(CONTENT);
-            map.remove(LENGTH);
-            revisions.add(Value.of(map));
-        }
+        List<Value> revisions = list()
+                .stream()
+                .map(rev -> {
+                    Map<String, Value> map = rev.toMap();
+                    map.remove(CONTENT);
+                    map.remove(LENGTH);
+                    return Value.of(map);
+                })
+                .collect(toList());
+
         return new MapBuilder()
                 .put(CONTENT, getContent())
                 .put(LENGTH, getLength())
@@ -353,13 +345,16 @@ public class RevisionTree implements Mappable {
      */
     public static RevisionTree fromMap(Map<String, Value> map) {
         RevisionTreeBuilder builder = new RevisionTreeBuilder();
-        for (Value revision : map.get(REVISIONS).asList()) {
-            Map<String, Value> revMap = new HashMap<>();
-            revMap.put(CONTENT, map.get(CONTENT));
-            revMap.put(LENGTH, map.get(LENGTH));
-            revMap.putAll(revision.asMap());
-            builder.add(Revision.fromMap(revMap));
-        }
+        map.get(REVISIONS)
+                .asList()
+                .stream()
+                .forEach((revision) -> {
+                    Map<String, Value> revMap = new HashMap<>();
+                    revMap.put(CONTENT, map.get(CONTENT));
+                    revMap.put(LENGTH, map.get(LENGTH));
+                    revMap.putAll(revision.asMap());
+                    builder.add(Revision.fromMap(revMap));
+                });
         return builder.build();
     }
 
@@ -407,9 +402,7 @@ public class RevisionTree implements Mappable {
          * @return this
          */
         public RevisionTreeBuilder addAll(Collection<Revision> revisions) {
-            for (Revision rev : revisions) {
-                nodes.put(rev.getRevision(), rev);
-            }
+            revisions.stream().forEach(rev -> nodes.put(rev.getRevision(), rev));
             return this;
         }
 
@@ -449,20 +442,19 @@ public class RevisionTree implements Mappable {
          * @return A topologically ordered list.
          */
         public List<Revision> sort() {
-            for (Hash seed : head) {
-                visit(unsorted.get(seed));
-            }
+            head.stream().forEach(seed -> visit(unsorted.get(seed)));
+
             // Nodes are actually sorted in reverse order at this point.
             Collections.reverse(sorted);
             return sorted;
         }
 
         private void visit(Revision info) {
-            for (Hash parent : info.getParents()) {
-                if (unsorted.containsKey(parent)) {
-                    visit(unsorted.get(parent));
-                }
-            }
+            info.getParents()
+                    .stream()
+                    .filter(parent -> unsorted.containsKey(parent))
+                    .forEach(parent -> visit(unsorted.get(parent)));
+
             sorted.add(info);
             unsorted.remove(info.getRevision());
         }
@@ -488,18 +480,16 @@ public class RevisionTree implements Mappable {
          */
         public static Diff of(Map<String, Value> from, Map<String, Value> to) {
             Map<String, Value> diff = new HashMap<>();
-            for (Entry<String, Value> entry : to.entrySet()) {
-                String key = entry.getKey();
-                Value value = entry.getValue();
-                if (!Objects.equals(from.get(key), value)) {
-                    diff.put(key, value);
-                }
-            }
-            for (String key : from.keySet()) {
-                if (!to.keySet().contains(key)) {
-                    diff.put(key, Value.ofNull());
-                }
-            }
+            to.entrySet()
+                    .stream()
+                    .filter(entry -> !Objects.equals(from.get(entry.getKey()), entry.getValue()))
+                    .forEach(entry -> diff.put(entry.getKey(), entry.getValue()));
+
+            from.keySet()
+                    .stream()
+                    .filter(key -> !to.keySet().contains(key))
+                    .forEach(key -> diff.put(key, Value.ofNull()));
+
             return new Diff(diff);
         }
 
@@ -533,7 +523,7 @@ public class RevisionTree implements Mappable {
          */
         public Map<String, Value> apply(Map<String, Value> source) {
             Map<String, Value> result = new TreeMap<>(source);
-            for (Entry<String, Value> entry : diff.entrySet()) {
+            diff.entrySet().stream().forEach(entry -> {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (value.type() == ValueType.NULL) {
@@ -541,7 +531,7 @@ public class RevisionTree implements Mappable {
                 } else {
                     result.put(key, value);
                 }
-            }
+            });
             return result;
         }
     }

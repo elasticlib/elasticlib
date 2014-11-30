@@ -32,18 +32,8 @@ public class Schema {
     static final String ITEMS = "items";
     static final String DEFINITION = "definition";
     static final String OPTIONAL = "optional";
-    static final Function<Value, Schema> SCHEMA_BUILDER = new Function<Value, Schema>() {
-        @Override
-        public Schema apply(Value value) {
-            return Schema.of("", value);
-        }
-    };
-    static final Function<JsonValue, Schema> SCHEMA_READER = new Function<JsonValue, Schema>() {
-        @Override
-        public Schema apply(JsonValue value) {
-            return Schema.read((JsonObject) value);
-        }
-    };
+    static final Function<Value, Schema> SCHEMA_BUILDER = value -> Schema.of("", value);
+    static final Function<JsonValue, Schema> SCHEMA_READER = value -> Schema.read((JsonObject) value);
     private final String title;
     private final String definition;
     private final ValueType type;

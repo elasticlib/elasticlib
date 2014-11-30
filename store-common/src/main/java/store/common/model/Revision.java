@@ -3,10 +3,8 @@ package store.common.model;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSortedSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import static java.util.Objects.requireNonNull;
@@ -14,6 +12,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import static java.util.stream.Collectors.toList;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
@@ -285,11 +284,10 @@ public class Revision implements Mappable {
                     .put(CONTENT, content.getBytes())
                     .put(LENGTH, content.getBytes());
 
-            List<Value> list = new ArrayList<>();
-            for (Hash parent : parents) {
-                list.add(Value.of(parent.getBytes()));
-            }
-            writer.put(PARENTS, list);
+            writer.put(PARENTS, parents.stream()
+                       .map(parent -> Value.of(parent.getBytes()))
+                       .collect(toList()));
+
             if (deleted) {
                 writer.put(DELETED, deleted);
             }

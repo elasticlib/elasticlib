@@ -2,10 +2,8 @@ package store.common.client;
 
 import com.google.common.base.Joiner;
 import static java.lang.System.lineSeparator;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.TreeSet;
 import javax.annotation.Priority;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -26,13 +24,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
     private static final String DASH = " - ";
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
-    private static final Comparator<Entry<String, List<String>>> COMPARATOR =
-            new Comparator<Entry<String, List<String>>>() {
-                @Override
-                public int compare(Entry<String, List<String>> o1, Entry<String, List<String>> o2) {
-                    return StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey());
-                }
-            };
+
     private final LoggingHandler handler;
 
     /**
@@ -73,22 +65,22 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
     }
 
     private void printPrefixedHeaders(StringBuilder builder, String prefix, MultivaluedMap<String, String> headers) {
-        TreeSet<Entry<String, List<String>>> sortedHeaders = new TreeSet<>(COMPARATOR);
-        sortedHeaders.addAll(headers.entrySet());
-
-        for (Entry<String, List<String>> headerEntry : sortedHeaders) {
-            String header = headerEntry.getKey();
-            String value;
-            if (headerEntry.getValue().size() == 1) {
-                value = headerEntry.getValue().get(0);
-            } else {
-                value = Joiner.on(',').join(headerEntry.getValue());
-            }
-            builder.append(prefix)
-                    .append(header)
+        headers.entrySet()
+                .stream()
+                .sorted((o1, o2) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey()))
+                .forEach(header -> {
+                    builder.append(prefix)
+                    .append(header.getKey())
                     .append(": ")
-                    .append(value)
+                    .append(value(header))
                     .append(lineSeparator());
+                });
+    }
+
+    private static String value(Entry<String, List<String>> header) {
+        if (header.getValue().size() == 1) {
+            return header.getValue().get(0);
         }
+        return Joiner.on(',').join(header.getValue());
     }
 }

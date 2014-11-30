@@ -1,11 +1,12 @@
 package store.common.mappable;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toCollection;
 import store.common.hash.Hash;
 import store.common.value.Value;
 
@@ -27,11 +28,9 @@ public final class MappableUtil {
      * @return Corresponding list of values.
      */
     public static List<Value> toList(SortedSet<Hash> hashes) {
-        List<Value> values = new ArrayList<>();
-        for (Hash hash : hashes) {
-            values.add(Value.of(hash));
-        }
-        return values;
+        return hashes.stream()
+                .map(hash -> Value.of(hash))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -41,11 +40,9 @@ public final class MappableUtil {
      * @return Corresponding set of hashes
      */
     public static SortedSet<Hash> fromList(List<Value> values) {
-        SortedSet<Hash> hashes = new TreeSet<>();
-        for (Value value : values) {
-            hashes.add(value.asHash());
-        }
-        return hashes;
+        return values.stream()
+                .map(value -> value.asHash())
+                .collect(toCollection(TreeSet::new));
     }
 
     /**

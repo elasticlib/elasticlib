@@ -34,74 +34,20 @@ final class ValueReading {
     private static final Map<ValueType, Reader> READERS = new EnumMap<>(ValueType.class);
 
     static {
-        READERS.put(NULL, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.ofNull();
-            }
-        });
-        READERS.put(HASH, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(new Hash(asString(json)));
-            }
-        });
-        READERS.put(GUID, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(new Guid(asString(json)));
-            }
-        });
-        READERS.put(BINARY, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(base64().decode(asString(json)));
-            }
-        });
-        READERS.put(BOOLEAN, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(json.getValueType() == JsonValue.ValueType.TRUE);
-            }
-        });
-        READERS.put(INTEGER, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(jsonNumber(json).longValueExact());
-            }
-        });
-        READERS.put(DECIMAL, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(jsonNumber(json).bigDecimalValue());
-            }
-        });
-        READERS.put(STRING, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(asString(json));
-            }
-        });
-        READERS.put(DATE, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(new Instant(jsonNumber(json).longValueExact()));
-            }
-        });
-        READERS.put(OBJECT, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(readMap((JsonObject) json, schema));
-            }
-        });
-        READERS.put(ARRAY, new Reader() {
-            @Override
-            public Value apply(JsonValue json, Schema schema) {
-                return Value.of(readList((JsonArray) json, schema));
-            }
-        });
+        READERS.put(NULL, (json, schema) -> Value.ofNull());
+        READERS.put(HASH, (json, schema) -> Value.of(new Hash(asString(json))));
+        READERS.put(GUID, (json, schema) -> Value.of(new Guid(asString(json))));
+        READERS.put(BINARY, (json, schema) -> Value.of(base64().decode(asString(json))));
+        READERS.put(BOOLEAN, (json, schema) -> Value.of(json.getValueType() == JsonValue.ValueType.TRUE));
+        READERS.put(INTEGER, (json, schema) -> Value.of(jsonNumber(json).longValueExact()));
+        READERS.put(DECIMAL, (json, schema) -> Value.of(jsonNumber(json).bigDecimalValue()));
+        READERS.put(STRING, (json, schema) -> Value.of(asString(json)));
+        READERS.put(DATE, (json, schema) -> Value.of(new Instant(jsonNumber(json).longValueExact())));
+        READERS.put(OBJECT, (json, schema) -> Value.of(readMap((JsonObject) json, schema)));
+        READERS.put(ARRAY, (json, schema) -> Value.of(readList((JsonArray) json, schema)));
     }
 
+    @FunctionalInterface
     private interface Reader {
 
         Value apply(JsonValue value, Schema schema);
@@ -124,15 +70,15 @@ final class ValueReading {
 
     public static Map<String, Value> readMap(JsonObject json, Schema schema) {
         Map<String, Value> map = new LinkedHashMap<>();
-        for (String key : json.keySet()) {
-            if (schema.properties().containsKey(key)) {
-                Schema subSchema = schema.properties().get(key);
-                if (!subSchema.definition().isEmpty()) {
-                    subSchema = Schema.read(json.getJsonObject(subSchema.definition()));
-                }
-                map.put(key, readValue(json.get(key), subSchema));
-            }
-        }
+        json.keySet().stream()
+                .filter(key -> schema.properties().containsKey(key))
+                .forEach(key -> {
+                    Schema subSchema = schema.properties().get(key);
+                    if (!subSchema.definition().isEmpty()) {
+                        subSchema = Schema.read(json.getJsonObject(subSchema.definition()));
+                    }
+                    map.put(key, readValue(json.get(key), subSchema));
+                });
         return map;
     }
 
@@ -140,9 +86,9 @@ final class ValueReading {
         List<Value> list = new ArrayList<>(array.size());
         List<Schema> itemsSchemas = schema.items();
         if (itemsSchemas.size() == 1) {
-            for (JsonValue json : array.getValuesAs(JsonValue.class)) {
-                list.add(readValue(json, itemsSchemas.get(0)));
-            }
+            array.getValuesAs(JsonValue.class)
+                    .stream()
+                    .forEach(json -> list.add(readValue(json, itemsSchemas.get(0))));
         } else {
             for (int i = 0; i < array.size(); i++) {
                 list.add(readValue(array.get(i), itemsSchemas.get(i)));

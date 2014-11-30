@@ -1,11 +1,11 @@
 package store.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import java.util.ArrayList;
 import static java.util.Collections.unmodifiableList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import static java.util.stream.Collectors.toList;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;
@@ -80,10 +80,10 @@ public final class ContentInfo implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        List<Value> values = new ArrayList<>();
-        for (Revision rev : head) {
-            values.add(Value.of(rev.toMap()));
-        }
+        List<Value> values = head.stream()
+                .map(rev -> Value.of(rev.toMap()))
+                .collect(toList());
+
         Map<String, Value> staging = new MapBuilder()
                 .put(HASH, hash)
                 .put(LENGTH, length)
@@ -102,11 +102,13 @@ public final class ContentInfo implements Mappable {
      * @return A new instance.
      */
     public static ContentInfo fromMap(Map<String, Value> map) {
-        List<Revision> head = new ArrayList<>();
-        for (Value value : map.get(HEAD).asList()) {
-            head.add(Revision.fromMap(value.asMap()));
-        }
         Map<String, Value> staging = map.get(STAGING).asMap();
+        List<Revision> head = map.get(HEAD)
+                .asList()
+                .stream()
+                .map(value -> Revision.fromMap(value.asMap()))
+                .collect(toList());
+
         return new ContentInfo(ContentState.fromString(map.get(STATE).asString()),
                                staging.get(HASH).asHash(),
                                staging.get(LENGTH).asLong(),

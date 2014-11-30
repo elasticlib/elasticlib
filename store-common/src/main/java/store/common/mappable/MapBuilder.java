@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import org.joda.time.Instant;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
@@ -154,9 +153,7 @@ public class MapBuilder {
      * @return This builder.
      */
     public MapBuilder putAll(Map<String, Value> entries) {
-        for (Entry<String, Value> entry : entries.entrySet()) {
-            map.put(entry.getKey(), entry.getValue());
-        }
+        entries.entrySet().stream().forEach(entry -> map.put(entry.getKey(), entry.getValue()));
         return this;
     }
 

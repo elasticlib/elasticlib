@@ -35,9 +35,7 @@ public final class JsonWriting {
      */
     public static JsonArray writeAll(List<? extends Mappable> mappables) {
         JsonArrayBuilder array = createArrayBuilder();
-        for (Mappable mappable : mappables) {
-            array.add(write(mappable));
-        }
+        mappables.stream().forEach(mappable -> array.add(write(mappable)));
         return array.build();
     }
 }

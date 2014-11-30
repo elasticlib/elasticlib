@@ -1,7 +1,6 @@
 package store.common.json;
 
 import java.util.List;
-import java.util.Map.Entry;
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
@@ -87,14 +86,10 @@ public final class JsonValidation {
         if (schema.type() != ValueType.OBJECT) {
             return false;
         }
-        for (Entry<String, Schema> property : schema.properties().entrySet()) {
-            String key = property.getKey();
-            Schema propertySchema = property.getValue();
-            if (!isPropertyValid(json, key, propertySchema)) {
-                return false;
-            }
-        }
-        return true;
+        return schema.properties()
+                .entrySet()
+                .stream()
+                .allMatch(entry -> isPropertyValid(json, entry.getKey(), entry.getValue()));
     }
 
     private static boolean isPropertyValid(JsonObject json, String key, Schema propertySchema) {
@@ -115,18 +110,9 @@ public final class JsonValidation {
             return false;
         }
         if (schema.items().size() == 1) {
-            return areItemsValid(array, schema.items().get(0));
+            return array.stream().allMatch(value -> isValid(value, schema.items().get(0)));
         }
         return areItemsValid(array, schema.items());
-    }
-
-    private static boolean areItemsValid(JsonArray array, Schema itemSchema) {
-        for (JsonValue value : array) {
-            if (!isValid(value, itemSchema)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static boolean areItemsValid(JsonArray array, List<Schema> itemSchemas) {

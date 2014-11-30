@@ -1,8 +1,8 @@
 package store.common.json;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import static java.util.stream.Collectors.toList;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import store.common.json.schema.Schema;
@@ -41,10 +41,9 @@ public final class JsonReading {
      * @return A list of new instances of supplied class.
      */
     public static <T extends Mappable> List<T> readAll(JsonArray array, Class<T> clazz) {
-        List<T> list = new ArrayList<>(array.size());
-        for (JsonObject json : array.getValuesAs(JsonObject.class)) {
-            list.add(read(json, clazz));
-        }
-        return list;
+        return array.getValuesAs(JsonObject.class)
+                .stream()
+                .map(json -> read(json, clazz))
+                .collect(toList());
     }
 }

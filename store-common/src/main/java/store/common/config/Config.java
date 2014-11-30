@@ -11,7 +11,6 @@ import static java.util.Collections.emptyList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import store.common.value.Value;
@@ -61,18 +60,18 @@ public class Config {
         Map<String, Value> baseMap = base.asMap();
         Map<String, Value> extensionMap = extension.asMap();
         Map<String, Value> result = new LinkedHashMap<>();
-        for (Entry<String, Value> entry : baseMap.entrySet()) {
+        baseMap.entrySet().stream().forEach(entry -> {
             if (extensionMap.containsKey(entry.getKey())) {
                 result.put(entry.getKey(), extend(entry.getValue(), extensionMap.get(entry.getKey())));
             } else {
                 result.put(entry.getKey(), entry.getValue());
             }
-        }
-        for (Entry<String, Value> entry : extensionMap.entrySet()) {
-            if (!baseMap.containsKey(entry.getKey())) {
-                result.put(entry.getKey(), entry.getValue());
-            }
-        }
+        });
+        extensionMap.entrySet()
+                .stream()
+                .filter(entry -> !baseMap.containsKey(entry.getKey()))
+                .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
+
         return Value.of(result);
     }
 
@@ -108,7 +107,7 @@ public class Config {
             return Collections.emptyList();
         }
         List<String> keys = new ArrayList<>();
-        for (Entry<String, Value> entry : node.asMap().entrySet()) {
+        node.asMap().entrySet().stream().forEach(entry -> {
             String key = path.isEmpty() ? entry.getKey() : key(path, entry.getKey());
             List<String> subKeys = listKeys(key, entry.getValue());
             if (subKeys.isEmpty()) {
@@ -116,7 +115,7 @@ public class Config {
             } else {
                 keys.addAll(subKeys);
             }
-        }
+        });
         return keys;
     }
 
@@ -158,17 +157,18 @@ public class Config {
 
     private static Map<String, Value> flatMap(String key, Map<String, Value> map) {
         Map<String, Value> flatMap = new LinkedHashMap<>();
-        for (Entry<String, Value> entry : map.entrySet()) {
+        map.entrySet().stream().forEach(entry -> {
             String flatKey = key(key, entry.getKey());
             Value value = entry.getValue();
             if (value.type() != ValueType.OBJECT) {
                 flatMap.put(flatKey, value);
             } else {
-                for (Entry<String, Value> subEntry : flatMap(flatKey, value.asMap()).entrySet()) {
-                    flatMap.put(subEntry.getKey(), subEntry.getValue());
-                }
+                flatMap(flatKey, value.asMap())
+                        .entrySet()
+                        .stream()
+                        .forEach(subEntry -> flatMap.put(subEntry.getKey(), subEntry.getValue()));
             }
-        }
+        });
         return flatMap;
     }
 

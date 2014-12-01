@@ -1,13 +1,11 @@
 package store.server.discovery;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import java.net.URI;
-import static java.util.Collections.unmodifiableSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import static java.util.stream.Collectors.toSet;
 import javax.ws.rs.ProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +39,7 @@ public class UnicastDiscoveryClient {
     private static final Logger LOG = LoggerFactory.getLogger(UnicastDiscoveryClient.class);
     private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
+
     private final Config config;
     private final TaskManager taskManager;
     private final NodesService nodesService;
@@ -88,11 +87,9 @@ public class UnicastDiscoveryClient {
     }
 
     private static Set<Guid> guids(List<NodeInfo> infos) {
-        Set<Guid> guids = new HashSet<>();
-        for (NodeInfo info : infos) {
-            guids.add(info.getDef().getGuid());
-        }
-        return unmodifiableSet(guids);
+        return infos.stream()
+                .map(info -> info.getDef().getGuid())
+                .collect(toSet());
     }
 
     /**
@@ -126,23 +123,16 @@ public class UnicastDiscoveryClient {
                     LOG.warn("Config error, using default value", e);
                 }
             }
-            return Lists.transform(remotes, new Function<NodeInfo, URI>() {
-                @Override
-                public URI apply(NodeInfo info) {
-                    return info.getTransportUri();
-                }
-            });
+            return Lists.transform(remotes, NodeInfo::getTransportUri);
         }
 
         private void process(URI target) {
             try (Client client = new Client(target, LOGGING_HANDLER)) {
                 List<NodeInfo> targetRemotes = client.remotes().listInfos();
-                for (NodeInfo remote : targetRemotes) {
-                    NodeDef def = remote.getDef();
-                    if (!knownNodes.contains(def.getGuid())) {
-                        nodesService.saveRemote(def);
-                    }
-                }
+                targetRemotes.stream()
+                        .filter(remote -> !knownNodes.contains(remote.getDef().getGuid()))
+                        .forEach(remote -> nodesService.saveRemote(remote.getDef()));
+
                 if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
                     try {
                         client.remotes().add(local.getPublishUris());

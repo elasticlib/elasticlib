@@ -1,7 +1,5 @@
 package store.server.service;
 
-import com.google.common.base.Function;
-import static com.google.common.collect.Lists.transform;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -13,6 +11,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.sort;
 import java.util.Enumeration;
 import java.util.List;
+import static java.util.stream.Collectors.toList;
 import javax.ws.rs.core.UriBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +27,7 @@ public class PublishUrisProvider {
     private static final String ANY_LOCAL_HOST = "0.0.0.0";
     private static final String LOCALHOST = "localhost";
     private static final Logger LOG = LoggerFactory.getLogger(PublishUrisProvider.class);
+
     private final Config config;
 
     /**
@@ -51,7 +51,15 @@ public class PublishUrisProvider {
         if (config.containsKey(ServerConfig.NODE_URIS)) {
             return ConfigUtil.uris(config, ServerConfig.NODE_URIS);
         }
-        return uris(hosts());
+        return hosts().stream().map(this::uri).collect(toList());
+    }
+
+    private URI uri(String host) {
+        return UriBuilder.fromUri("http:/")
+                .host(host)
+                .port(config.getInt(ServerConfig.HTTP_PORT))
+                .path(config.getString(ServerConfig.HTTP_CONTEXT))
+                .build();
     }
 
     private List<String> hosts() {
@@ -87,16 +95,4 @@ public class PublishUrisProvider {
         return hosts;
     }
 
-    private List<URI> uris(List<String> hosts) {
-        return transform(hosts, new Function<String, URI>() {
-            @Override
-            public URI apply(String host) {
-                return UriBuilder.fromUri("http:/")
-                        .host(host)
-                        .port(config.getInt(ServerConfig.HTTP_PORT))
-                        .path(config.getString(ServerConfig.HTTP_CONTEXT))
-                        .build();
-            }
-        });
-    }
 }

@@ -27,6 +27,7 @@ import store.common.client.Client;
 import store.common.client.Content;
 import store.common.exception.IOFailureException;
 import store.common.exception.RangeNotSatisfiableException;
+import store.common.exception.UnknownContentException;
 import store.common.exception.UnknownRepositoryException;
 import store.common.hash.Digest.DigestBuilder;
 import store.common.hash.Guid;
@@ -53,6 +54,7 @@ import store.server.service.RepositoriesService;
 public class RepositoriesResourceTest extends AbstractResourceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesResourceTest.class);
+
     private final RepositoriesService repositoriesService = mock(RepositoriesService.class);
     private final Guid guid = Guid.random();
     private final Path path = Paths.get("/tmp/test");
@@ -78,11 +80,11 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         return new ResourceConfig()
                 .register(RepositoriesResource.class)
                 .register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(repositoriesService).to(RepositoriesService.class);
-            }
-        });
+                    @Override
+                    protected void configure() {
+                        bind(repositoriesService).to(RepositoriesService.class);
+                    }
+                });
     }
 
     /**
@@ -440,6 +442,22 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
 
         try (Client client = newClient()) {
             assertThat(client.repositories().get(guid).findRevisions(query, first, size)).isEqualTo(revisions);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test(expectedExceptions = UnknownContentException.class)
+    public void findUnknownRevisionsTest() {
+        List<IndexEntry> entries = singletonList(new IndexEntry(hash, LOREM_IPSUM.getHead()));
+
+        Repository repository = newRepositoryMock();
+        when(repository.find(query, first, size)).thenReturn(entries);
+        when(repository.getRevisions(hash, LOREM_IPSUM.getHead())).thenThrow(new UnknownContentException());
+
+        try (Client client = newClient()) {
+            client.repositories().get(guid).findRevisions(query, first, size);
         }
     }
 

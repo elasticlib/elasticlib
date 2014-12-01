@@ -20,6 +20,7 @@ public class TaskManager {
     private static final String SUCCESS = " - Success";
     private static final String FAILURE = " - Failure";
     private static final Logger LOG = LoggerFactory.getLogger(TaskManager.class);
+
     private final ScheduledExecutorService executor;
 
     /**
@@ -47,18 +48,15 @@ public class TaskManager {
      * @param description Task short description, intended for logging purposes.
      * @param task The task to executes
      */
-    public void execute(final String description, final Runnable task) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                LOG.info(description);
-                try {
-                    task.run();
-                    LOG.debug(description + SUCCESS);
+    public void execute(String description, Runnable task) {
+        executor.execute(() -> {
+            LOG.info(description);
+            try {
+                task.run();
+                LOG.debug(description + SUCCESS);
 
-                } catch (Exception e) {
-                    LOG.error(description + FAILURE, e);
-                }
+            } catch (Exception e) {
+                LOG.error(description + FAILURE, e);
             }
         });
     }

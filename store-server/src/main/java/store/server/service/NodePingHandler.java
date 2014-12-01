@@ -1,9 +1,8 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import java.net.URI;
+import java.util.function.Predicate;
 import javax.ws.rs.ProcessingException;
 import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ public class NodePingHandler {
      * @return Info about the first reachable node.
      */
     public Optional<NodeInfo> ping(Iterable<URI> uris) {
-        return ping(uris, Predicates.<NodeDef>alwaysTrue());
+        return ping(uris, x -> true);
     }
 
     /**
@@ -39,19 +38,14 @@ public class NodePingHandler {
      * @param expected Expected node GUID.
      * @return Info about the first reachable node which requested GUID.
      */
-    public Optional<NodeInfo> ping(Iterable<URI> uris, final Guid expected) {
-        return ping(uris, new Predicate<NodeDef>() {
-            @Override
-            public boolean apply(NodeDef def) {
-                return def.getGuid().equals(expected);
-            }
-        });
+    public Optional<NodeInfo> ping(Iterable<URI> uris, Guid expected) {
+        return ping(uris, def -> def.getGuid().equals(expected));
     }
 
     private static Optional<NodeInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
         for (URI address : uris) {
             Optional<NodeInfo> info = ping(address);
-            if (info.isPresent() && predicate.apply(info.get().getDef())) {
+            if (info.isPresent() && predicate.test(info.get().getDef())) {
                 return info;
             }
         }

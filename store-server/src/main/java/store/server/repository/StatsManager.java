@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import store.common.model.RepositoryStats;
 import static store.server.manager.storage.DatabaseEntries.asMappable;
 import static store.server.manager.storage.DatabaseEntries.entry;
-import store.server.manager.storage.Procedure;
 import store.server.manager.storage.StorageManager;
 
 /**
@@ -18,6 +17,7 @@ import store.server.manager.storage.StorageManager;
 class StatsManager {
 
     private static final String STATS = "stats";
+
     private final StorageManager storageManager;
     private final Database statsDb;
     private final DatabaseEntry statsKey;
@@ -33,12 +33,7 @@ class StatsManager {
         statsDb = storageManager.openDatabase(STATS);
         statsKey = entry(STATS);
         latestSnapshot = new AtomicReference<>();
-        storageManager.inTransaction(new Procedure() {
-            @Override
-            public void apply() {
-                latestSnapshot.set(loadPersistedStats());
-            }
-        });
+        storageManager.inTransaction(() -> latestSnapshot.set(loadPersistedStats()));
     }
 
     private RepositoryStats loadPersistedStats() {
@@ -66,12 +61,7 @@ class StatsManager {
      * @param stats A RepositoryStats instance.
      */
     public void update(final RepositoryStats stats) {
-        storageManager.inTransaction(new Procedure() {
-            @Override
-            public void apply() {
-                statsDb.put(storageManager.currentTransaction(), statsKey, entry(stats));
-            }
-        });
+        storageManager.inTransaction(() -> statsDb.put(storageManager.currentTransaction(), statsKey, entry(stats)));
         latestSnapshot.set(stats);
     }
 }

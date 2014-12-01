@@ -26,6 +26,7 @@ import store.server.manager.task.TaskManager;
 public class MessageManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageManager.class);
+
     private final TaskManager taskManager;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<Class<?>, Set<Action<?>>> actions = new HashMap<>();
@@ -53,7 +54,7 @@ public class MessageManager {
         lock.writeLock().lock();
         try {
             if (!actions.containsKey(messageType)) {
-                actions.put(messageType, new CopyOnWriteArraySet<Action<?>>());
+                actions.put(messageType, new CopyOnWriteArraySet<>());
             }
             actions.get(messageType).add(action);
         } finally {
@@ -68,16 +69,11 @@ public class MessageManager {
      * @param message The message to post.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public void post(final Object message) {
+    public void post(Object message) {
         LOG.info("Receiving [{}]", format(message.getClass()));
-        for (final Action action : actions(message.getClass())) {
-            taskManager.execute(action.description(), new Runnable() {
-                @Override
-                public void run() {
-                    action.apply(message);
-                }
-            });
-        }
+        actions(message.getClass()).stream().forEach((Action action) -> {
+            taskManager.execute(action.description(), () -> action.apply(message));
+        });
     }
 
     private <T> Set<Action<?>> actions(Class<T> messageType) {

@@ -6,8 +6,6 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
-import static java.util.Collections.sort;
-import java.util.Comparator;
 import java.util.List;
 import store.common.exception.RepositoryAlreadyExistsException;
 import store.common.exception.UnknownRepositoryException;
@@ -23,6 +21,7 @@ import store.server.manager.storage.StorageManager;
 public class RepositoriesDao {
 
     private static final String REPOSITORIES = "repositories";
+
     private final StorageManager storageManager;
     private final Database repositoryDefs;
 
@@ -109,12 +108,7 @@ public class RepositoriesDao {
                 list.add(asMappable(data, RepositoryDef.class));
             }
         }
-        sort(list, new Comparator<RepositoryDef>() {
-            @Override
-            public int compare(RepositoryDef def1, RepositoryDef def2) {
-                return def1.getName().compareTo(def2.getName());
-            }
-        });
+        list.sort((a, b) -> a.getName().compareTo(b.getName()));
         return list;
     }
 }

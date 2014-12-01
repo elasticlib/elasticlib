@@ -40,6 +40,7 @@ public class ReplicationsServiceTest {
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
     private static final String OTHER = "other";
+
     private Path path;
     private ManagerModule managerModule;
     private RepositoriesService repositoriesService;
@@ -179,12 +180,7 @@ public class ReplicationsServiceTest {
     @Test(dependsOnMethods = "startReplicationTest")
     public void closeRepositoryTest() {
         repositoriesService.closeRepository(DESTINATION);
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertReplicationStopped();
-            }
-        });
+        async(this::assertReplicationStopped);
     }
 
     /**
@@ -225,12 +221,7 @@ public class ReplicationsServiceTest {
 
     private void removeRepositoryTest(String repositoryName) {
         repositoriesService.removeRepository(repositoryName);
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertThat(replicationsService.listReplicationInfos()).isEmpty();
-            }
-        });
+        async(assertThat(replicationsService.listReplicationInfos())::isEmpty);
 
         // Restore previous state.
         repositoriesService.addRepository(path.resolve(repositoryName));
@@ -300,15 +291,12 @@ public class ReplicationsServiceTest {
     }
 
     private void assertDestinationUpToDate() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                AgentInfo info = replicationInfo().getAgentInfo();
-                assertThat(info.getState()).isEqualTo(AgentState.WAITING);
-                assertThat(info.getCurSeq()).isEqualTo(info.getMaxSeq());
+        async(() -> {
+            AgentInfo info = replicationInfo().getAgentInfo();
+            assertThat(info.getState()).isEqualTo(AgentState.WAITING);
+            assertThat(info.getCurSeq()).isEqualTo(info.getMaxSeq());
 
-                assertDestinationHas(content);
-            }
+            assertDestinationHas(content);
         });
     }
 

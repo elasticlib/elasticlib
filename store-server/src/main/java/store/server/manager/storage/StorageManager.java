@@ -6,8 +6,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.ExceptionEvent;
-import com.sleepycat.je.ExceptionListener;
 import com.sleepycat.je.Sequence;
 import com.sleepycat.je.SequenceConfig;
 import com.sleepycat.je.Transaction;
@@ -17,13 +15,13 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
 import store.common.exception.RepositoryClosedException;
-import store.common.model.CommandResult;
 import store.common.value.Value;
 import store.server.config.ServerConfig;
 import static store.server.manager.storage.DatabaseEntries.entry;
@@ -48,6 +46,7 @@ public class StorageManager {
     private static final String JE = "je";
     private static final String SEQUENCE = "sequence";
     private static final Logger LOG = LoggerFactory.getLogger(StorageManager.class);
+
     private final String envName;
     private final Config config;
     private final TaskManager taskManager;
@@ -80,12 +79,7 @@ public class StorageManager {
                 envConfig.setConfigParam(entry.getKey(), entry.getValue().toString());
             }
         }
-        envConfig.setExceptionListener(new ExceptionListener() {
-            @Override
-            public void exceptionThrown(ExceptionEvent event) {
-                LOG.error("error", event.getException());
-            }
-        });
+        envConfig.setExceptionListener(event -> LOG.error("error", event.getException()));
 
         envName = name;
         this.config = config;
@@ -142,9 +136,9 @@ public class StorageManager {
      */
     public synchronized Database openDatabase(String name) {
         return openDatabase(name, new DatabaseConfig()
-                .setAllowCreate(true)
-                .setKeyPrefixing(true)
-                .setTransactional(true));
+                            .setAllowCreate(true)
+                            .setKeyPrefixing(true)
+                            .setTransactional(true));
     }
 
     /**
@@ -155,23 +149,18 @@ public class StorageManager {
      * @param name Database name.
      * @return Corresponding database handle.
      */
-    public synchronized Database openDeferredWriteDatabase(final String name) {
-        final Database database = openDatabase(name, new DatabaseConfig()
-                .setAllowCreate(true)
-                .setKeyPrefixing(false)
-                .setTransactional(false)
-                .setDeferredWrite(true));
+    public synchronized Database openDeferredWriteDatabase(String name) {
+        Database database = openDatabase(name, new DatabaseConfig()
+                                         .setAllowCreate(true)
+                                         .setKeyPrefixing(false)
+                                         .setTransactional(false)
+                                         .setDeferredWrite(true));
 
         if (config.getBoolean(ServerConfig.STORAGE_SYNC_ENABLED)) {
             tasks.add(taskManager.schedule(duration(config, ServerConfig.STORAGE_SYNC_INTERVAL),
                                            unit(config, ServerConfig.STORAGE_SYNC_INTERVAL),
                                            "[" + envName + "] Syncing database '" + name + "'",
-                                           new Runnable() {
-                @Override
-                public void run() {
-                    database.sync();
-                }
-            }));
+                                           database::sync));
         }
         return database;
     }
@@ -216,28 +205,10 @@ public class StorageManager {
      *
      * @param procedure Procedure to execute.
      */
-    public void inTransaction(final Procedure procedure) {
-        inTransaction(new Query<Void>() {
-            @Override
-            public Void apply() {
-                procedure.apply();
-                return null;
-            }
-        });
-    }
-
-    /**
-     * Executes supplied command in a transaction.
-     *
-     * @param command Command to execute.
-     * @return Supplied command invocation result.
-     */
-    public CommandResult inTransaction(final Command command) {
-        return inTransaction(new Query<CommandResult>() {
-            @Override
-            public CommandResult apply() {
-                return command.apply();
-            }
+    public void inTransaction(Procedure procedure) {
+        inTransaction(() -> {
+            procedure.apply();
+            return null;
         });
     }
 
@@ -248,10 +219,10 @@ public class StorageManager {
      * @param query Query to execute.
      * @return Query result.
      */
-    public <T> T inTransaction(Query<T> query) {
+    public <T> T inTransaction(Supplier<T> query) {
         TransactionContext ctx = beginTransaction();
         try {
-            T result = query.apply();
+            T result = query.get();
             synchronized (this) {
                 if (started) {
                     ctx.commit();

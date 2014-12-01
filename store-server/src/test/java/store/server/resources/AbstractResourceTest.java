@@ -7,7 +7,7 @@ import javax.ws.rs.core.Application;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTestNg.ContainerPerClassTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
-import static org.mockito.Mockito.reset;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.testng.annotations.BeforeMethod;
@@ -59,9 +59,7 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
      */
     @BeforeMethod
     public final void resetMocks() {
-        for (Object mock : mocks) {
-            reset(mock);
-        }
+        mocks.stream().forEach(Mockito::reset);
     }
 
     /**

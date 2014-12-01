@@ -1,15 +1,13 @@
 package store.server.dao;
 
-import com.google.common.base.Predicate;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
-import static java.util.Collections.sort;
-import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import store.common.exception.NodeAlreadyTrackedException;
 import store.common.exception.UnknownNodeException;
 import store.common.hash.Guid;
@@ -24,6 +22,7 @@ import store.server.manager.storage.StorageManager;
 public class NodesDao {
 
     private static final String NODES = "nodes";
+
     private final StorageManager storageManager;
     private final Database nodeInfos;
 
@@ -131,17 +130,12 @@ public class NodesDao {
         try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
                 NodeInfo info = asMappable(data, NodeInfo.class);
-                if (predicate.apply(info)) {
+                if (predicate.test(info)) {
                     list.add(asMappable(data, NodeInfo.class));
                 }
             }
         }
-        sort(list, new Comparator<NodeInfo>() {
-            @Override
-            public int compare(NodeInfo info1, NodeInfo info2) {
-                return info1.getDef().getName().compareTo(info2.getDef().getName());
-            }
-        });
+        list.sort((a, b) -> a.getDef().getName().compareTo(b.getDef().getName()));
         return list;
     }
 }

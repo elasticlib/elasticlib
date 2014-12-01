@@ -1,8 +1,6 @@
 package store.server.service;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
@@ -23,8 +21,6 @@ import store.common.model.NodeInfo;
 import store.server.config.ServerConfig;
 import store.server.dao.AttributesDao;
 import store.server.dao.NodesDao;
-import store.server.manager.storage.Procedure;
-import store.server.manager.storage.Query;
 import store.server.manager.storage.StorageManager;
 import store.server.manager.task.Task;
 import store.server.manager.task.TaskManager;
@@ -35,6 +31,7 @@ import store.server.manager.task.TaskManager;
 public class NodesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
+
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
@@ -86,12 +83,8 @@ public class NodesService {
         if (!started.compareAndSet(false, true)) {
             return;
         }
-        guid = storageManager.inTransaction(new Query<Guid>() {
-            @Override
-            public Guid apply() {
-                return attributesDao.guid();
-            }
-        });
+        guid = storageManager.inTransaction(attributesDao::guid);
+
         if (config.getBoolean(ServerConfig.REMOTES_PING_ENABLED)) {
             pingTask = taskManager.schedule(duration(config, ServerConfig.REMOTES_PING_INTERVAL),
                                             unit(config, ServerConfig.REMOTES_PING_INTERVAL),
@@ -142,25 +135,15 @@ public class NodesService {
         if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
             return;
         }
-        final Optional<NodeInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
+        Optional<NodeInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
         if (info.isPresent()) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    nodesDao.saveNodeInfo(info.get());
-                }
-            });
+            storageManager.inTransaction(() -> nodesDao.saveNodeInfo(info.get()));
         }
     }
 
-    private boolean isAlreadyStored(final NodeDef def) {
-        return storageManager.inTransaction(new Query<Boolean>() {
-            @Override
-            public Boolean apply() {
-                return nodesDao.containsNodeInfo(def.getGuid());
-            }
-        });
+    private boolean isAlreadyStored(NodeDef def) {
+        return storageManager.inTransaction(() -> nodesDao.containsNodeInfo(def.getGuid()));
     }
 
     /**
@@ -170,18 +153,13 @@ public class NodesService {
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        final Optional<NodeInfo> info = nodePingHandler.ping(uris);
+        Optional<NodeInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
             if (info.get().getDef().getGuid().equals(guid)) {
                 throw new SelfTrackingException();
             }
             LOG.info("Adding remote node {}", info.get().getDef().getName());
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    nodesDao.createNodeInfo(info.get());
-                }
-            });
+            storageManager.inTransaction(() -> nodesDao.createNodeInfo(info.get()));
             return;
         }
         throw new UnreachableNodeException();
@@ -192,14 +170,9 @@ public class NodesService {
      *
      * @param key Node name or encoded GUID.
      */
-    public void removeRemote(final String key) {
+    public void removeRemote(String key) {
         LOG.info("Removing remote node {}", key);
-        storageManager.inTransaction(new Procedure() {
-            @Override
-            public void apply() {
-                nodesDao.deleteNodeInfo(key);
-            }
-        });
+        storageManager.inTransaction(() -> nodesDao.deleteNodeInfo(key));
     }
 
     /**
@@ -208,12 +181,7 @@ public class NodesService {
      * @return A list of NodeInfo instances.
      */
     public List<NodeInfo> listRemotes() {
-        return storageManager.inTransaction(new Query<List<NodeInfo>>() {
-            @Override
-            public List<NodeInfo> apply() {
-                return nodesDao.listNodeInfos(Predicates.<NodeInfo>alwaysTrue());
-            }
-        });
+        return storageManager.inTransaction(() -> nodesDao.listNodeInfos(x -> true));
     }
 
     /**
@@ -222,17 +190,7 @@ public class NodesService {
      * @return A list of NodeInfo instances.
      */
     public List<NodeInfo> listReachableRemotes() {
-        return storageManager.inTransaction(new Query<List<NodeInfo>>() {
-            @Override
-            public List<NodeInfo> apply() {
-                return nodesDao.listNodeInfos(new Predicate<NodeInfo>() {
-                    @Override
-                    public boolean apply(NodeInfo info) {
-                        return info.isReachable();
-                    }
-                });
-            }
-        });
+        return storageManager.inTransaction(() -> nodesDao.listNodeInfos(NodeInfo::isReachable));
     }
 
     /**
@@ -242,35 +200,27 @@ public class NodesService {
 
         @Override
         public void run() {
-            for (final NodeInfo current : listRemotes()) {
+            for (NodeInfo current : listRemotes()) {
                 if (!started.get()) {
                     return;
                 }
-                final Optional<NodeInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
-                storageManager.inTransaction(new Procedure() {
-                    @Override
-                    public void apply() {
-                        if (updated.isPresent()) {
-                            nodesDao.saveNodeInfo(updated.get());
-                        } else {
-                            nodesDao.saveNodeInfo(new NodeInfo(current.getDef(), Instant.now()));
-                        }
+                Optional<NodeInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
+                storageManager.inTransaction(() -> {
+                    if (updated.isPresent()) {
+                        nodesDao.saveNodeInfo(updated.get());
+                    } else {
+                        nodesDao.saveNodeInfo(new NodeInfo(current.getDef(), Instant.now()));
                     }
                 });
             }
         }
 
-        private Iterable<URI> uris(final NodeInfo info) {
+        private Iterable<URI> uris(NodeInfo info) {
             if (!info.isReachable()) {
                 return info.getDef().getPublishUris();
             }
             return concat(singleton(info.getTransportUri()),
-                          filter(info.getDef().getPublishUris(), new Predicate<URI>() {
-                @Override
-                public boolean apply(URI uri) {
-                    return !uri.equals(info.getTransportUri());
-                }
-            }));
+                          filter(info.getDef().getPublishUris(), uri -> !uri.equals(info.getTransportUri())));
         }
     }
 
@@ -281,12 +231,7 @@ public class NodesService {
 
         @Override
         public void run() {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    nodesDao.deleteUnreachableNodeInfos();
-                }
-            });
+            storageManager.inTransaction(nodesDao::deleteUnreachableNodeInfos);
         }
     }
 }

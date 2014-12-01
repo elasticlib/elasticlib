@@ -11,11 +11,9 @@ import static java.lang.Math.min;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import static java.util.Collections.emptyList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -50,7 +48,6 @@ import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.RepositoryClosedException;
 import store.common.hash.Hash;
 import store.common.model.IndexEntry;
-import store.common.model.Revision;
 import store.common.model.RevisionTree;
 import store.common.value.Value;
 
@@ -65,6 +62,7 @@ class Index {
     private static final String REVISION = "revision";
     private static final String BODY = "body";
     private static final Logger LOG = LoggerFactory.getLogger(Index.class);
+
     private final String name;
     private final Directory directory;
     private final Analyzer analyzer;
@@ -188,27 +186,26 @@ class Index {
     private static Document newDocument(RevisionTree revisionTree) {
         Document document = new Document();
         document.add(new TextField(CONTENT, revisionTree.getContent().asHexadecimalString(), Store.YES));
-        for (Hash rev : revisionTree.getHead()) {
+        revisionTree.getHead().stream().forEach(rev -> {
             document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
-        }
+        });
         document.add(new LongField(LENGTH, revisionTree.getLength(), Store.NO));
-        for (Entry<String, Collection<Value>> entry : headMetadata(revisionTree).asMap().entrySet()) {
-            String key = entry.getKey();
-            for (Value value : entry.getValue()) {
-                add(document, key, value);
-            }
-        }
+        headMetadata(revisionTree)
+                .asMap()
+                .entrySet()
+                .stream()
+                .forEach(entry -> entry.getValue().stream().forEach(value -> add(document, entry.getKey(), value)));
+
         return document;
     }
 
     private static Multimap<String, Value> headMetadata(RevisionTree revisionTree) {
         Multimap<String, Value> metadata = HashMultimap.create();
-        for (Hash rev : revisionTree.getHead()) {
-            Revision contentInfo = revisionTree.get(rev);
-            for (Entry<String, Value> entry : contentInfo.getMetadata().entrySet()) {
-                metadata.put(entry.getKey(), entry.getValue());
-            }
-        }
+        revisionTree.getHead()
+                .stream()
+                .flatMap(rev -> revisionTree.get(rev).getMetadata().entrySet().stream())
+                .forEach(entry -> metadata.put(entry.getKey(), entry.getValue()));
+
         return metadata;
     }
 
@@ -240,15 +237,13 @@ class Index {
                 return;
 
             case ARRAY:
-                for (Value item : value.asList()) {
-                    add(document, key, item);
-                }
+                value.asList().stream().forEach(item -> add(document, key, item));
                 return;
 
             case OBJECT:
-                for (Entry<String, Value> entry : value.asMap().entrySet()) {
+                value.asMap().entrySet().stream().forEach(entry -> {
                     add(document, key + "." + entry.getKey(), entry.getValue());
-                }
+                });
                 return;
 
             case NULL:

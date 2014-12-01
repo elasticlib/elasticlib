@@ -36,9 +36,7 @@ import store.common.model.RevisionTree;
 import store.common.model.StagingInfo;
 import store.server.manager.message.MessageManager;
 import store.server.manager.message.NewRepositoryEvent;
-import store.server.manager.storage.Command;
 import static store.server.manager.storage.DatabaseEntries.entry;
-import store.server.manager.storage.Query;
 import store.server.manager.storage.StorageManager;
 import store.server.manager.task.TaskManager;
 
@@ -52,6 +50,7 @@ public class Repository {
     private static final String STATS = "stats";
     private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(Repository.class);
+
     private final RepositoryDef def;
     private final StorageManager storageManager;
     private final MessageManager messageManager;
@@ -192,18 +191,15 @@ public class Repository {
      * @param hash Hash of the content to be added latter.
      * @return Info about the staging session created.
      */
-    public StagingInfo stageContent(final Hash hash) {
+    public StagingInfo stageContent(Hash hash) {
         ensureOpen();
         log("Staging content {}", hash);
-        return storageManager.inTransaction(new Query<StagingInfo>() {
-            @Override
-            public StagingInfo apply() {
-                Optional<RevisionTree> treeOpt = revisionManager.get(hash);
-                if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
-                    throw new ContentAlreadyPresentException();
-                }
-                return contentManager.stageContent(hash);
+        return storageManager.inTransaction(() -> {
+            Optional<RevisionTree> treeOpt = revisionManager.get(hash);
+            if (treeOpt.isPresent() && !treeOpt.get().isDeleted()) {
+                throw new ContentAlreadyPresentException();
             }
+            return contentManager.stageContent(hash);
         });
     }
 
@@ -242,16 +238,13 @@ public class Repository {
      * @param revision revision.
      * @return Actual operation result.
      */
-    public CommandResult addRevision(final Revision revision) {
+    public CommandResult addRevision(Revision revision) {
         ensureOpen();
         log("Adding revision to {}, with head {}", revision.getContent(), revision.getParents());
-        CommandResult result = storageManager.inTransaction(new Command() {
-            @Override
-            public CommandResult apply() {
-                CommandResult result = revisionManager.put(revision);
-                handleCommandResult(result, revision.getContent());
-                return result;
-            }
+        CommandResult result = storageManager.inTransaction(() -> {
+            CommandResult res = revisionManager.put(revision);
+            handleCommandResult(res, revision.getContent());
+            return res;
         });
         propagate(result);
         return result;
@@ -264,16 +257,13 @@ public class Repository {
      * @param tree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult mergeTree(final RevisionTree tree) {
+    public CommandResult mergeTree(RevisionTree tree) {
         ensureOpen();
         log("Merging revision tree of {}", tree.getContent());
-        CommandResult result = storageManager.inTransaction(new Command() {
-            @Override
-            public CommandResult apply() {
-                CommandResult result = revisionManager.put(tree);
-                handleCommandResult(result, tree.getContent());
-                return result;
-            }
+        CommandResult result = storageManager.inTransaction(() -> {
+            CommandResult res = revisionManager.put(tree);
+            handleCommandResult(res, tree.getContent());
+            return res;
         });
         propagate(result);
         return result;
@@ -286,16 +276,13 @@ public class Repository {
      * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult deleteContent(final Hash hash, final SortedSet<Hash> head) {
+    public CommandResult deleteContent(Hash hash, SortedSet<Hash> head) {
         ensureOpen();
         log("Deleting content {}, with head {}", hash, head);
-        CommandResult result = storageManager.inTransaction(new Command() {
-            @Override
-            public CommandResult apply() {
-                CommandResult result = revisionManager.delete(hash, head);
-                handleCommandResult(result, hash);
-                return result;
-            }
+        CommandResult result = storageManager.inTransaction(() -> {
+            CommandResult res = revisionManager.delete(hash, head);
+            handleCommandResult(res, hash);
+            return res;
         });
         propagate(result);
         return result;
@@ -330,19 +317,16 @@ public class Repository {
      * @param hash Hash of the content.
      * @return Corresponding content info.
      */
-    public ContentInfo getContentInfo(final Hash hash) {
+    public ContentInfo getContentInfo(Hash hash) {
         ensureOpen();
         log("Returning content info of {}", hash);
-        return storageManager.inTransaction(new Query<ContentInfo>() {
-            @Override
-            public ContentInfo apply() {
-                List<Revision> head = head(hash);
-                StagingInfo stagingInfo = contentManager.getStagingInfo(hash);
-                return new ContentInfo(contentState(hash, head, stagingInfo),
-                                       stagingInfo.getHash(),
-                                       stagingInfo.getLength(),
-                                       head);
-            }
+        return storageManager.inTransaction(() -> {
+            List<Revision> head = head(hash);
+            StagingInfo stagingInfo = contentManager.getStagingInfo(hash);
+            return new ContentInfo(contentState(hash, head, stagingInfo),
+                                   stagingInfo.getHash(),
+                                   stagingInfo.getLength(),
+                                   head);
         });
     }
 
@@ -356,7 +340,7 @@ public class Repository {
     }
 
     private static ContentState contentState(Hash hash, List<Revision> head, StagingInfo stagingInfo) {
-        if (isPresent(head)) {
+        if (head.stream().anyMatch(rev -> !rev.isDeleted())) {
             return ContentState.PRESENT;
         }
         if (stagingInfo.getHash().equals(hash)) {
@@ -369,15 +353,6 @@ public class Repository {
             return ContentState.ABSENT;
         }
         return ContentState.PARTIAL;
-    }
-
-    private static boolean isPresent(List<Revision> head) {
-        for (Revision rev : head) {
-            if (!rev.isDeleted()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -418,16 +393,13 @@ public class Repository {
         return loadRevisionTree(hash).get(revs);
     }
 
-    private RevisionTree loadRevisionTree(final Hash hash) {
-        return storageManager.inTransaction(new Query<RevisionTree>() {
-            @Override
-            public RevisionTree apply() {
-                Optional<RevisionTree> tree = revisionManager.get(hash);
-                if (!tree.isPresent()) {
-                    throw new UnknownContentException();
-                }
-                return tree.get();
+    private RevisionTree loadRevisionTree(Hash hash) {
+        return storageManager.inTransaction(() -> {
+            Optional<RevisionTree> tree = revisionManager.get(hash);
+            if (!tree.isPresent()) {
+                throw new UnknownContentException();
             }
+            return tree.get();
         });
     }
 
@@ -453,15 +425,10 @@ public class Repository {
      * @param number Number of events to return.
      * @return A list of events.
      */
-    public List<Event> history(final boolean chronological, final long first, final int number) {
+    public List<Event> history(boolean chronological, long first, int number) {
         ensureOpen();
         log("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
-        return storageManager.inTransaction(new Query<List<Event>>() {
-            @Override
-            public List<Event> apply() {
-                return historyManager.history(chronological, first, number);
-            }
-        });
+        return storageManager.inTransaction(() -> historyManager.history(chronological, first, number));
     }
 
     /**

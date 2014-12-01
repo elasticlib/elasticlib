@@ -1,20 +1,19 @@
 package store.server.service;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import static com.google.common.collect.Lists.transform;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import static java.util.Collections.unmodifiableList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import static java.util.stream.Collectors.toList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;
@@ -29,8 +28,6 @@ import store.server.manager.message.MessageManager;
 import store.server.manager.message.RepositoryClosed;
 import store.server.manager.message.RepositoryOpened;
 import store.server.manager.message.RepositoryRemoved;
-import store.server.manager.storage.Procedure;
-import store.server.manager.storage.Query;
 import store.server.manager.storage.StorageManager;
 import store.server.manager.task.TaskManager;
 import store.server.repository.Repository;
@@ -41,6 +38,7 @@ import store.server.repository.Repository;
 public class RepositoriesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoriesService.class);
+
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
@@ -76,18 +74,15 @@ public class RepositoriesService {
     public void start() {
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    for (RepositoryDef def : repositoriesDao.listRepositoryDefs()) {
-                        try {
-                            openRepository(def);
+            storageManager.inTransaction(() -> {
+                repositoriesDao.listRepositoryDefs().stream().forEach(def -> {
+                    try {
+                        openRepository(def);
 
-                        } catch (NodeException e) {
-                            LOG.error("Failed to open repository at '" + def.getPath() + "'", e);
-                        }
+                    } catch (NodeException e) {
+                        LOG.error("Failed to open repository at '" + def.getPath() + "'", e);
                     }
-                }
+                });
             });
         } finally {
             lock.writeLock().unlock();
@@ -108,9 +103,7 @@ public class RepositoriesService {
     public void stop() {
         lock.writeLock().lock();
         try {
-            for (Repository repository : repositories.values()) {
-                repository.close();
-            }
+            repositories.values().stream().forEach(Repository::close);
             repositories.clear();
 
         } finally {
@@ -123,21 +116,18 @@ public class RepositoriesService {
      *
      * @param path Repository home.
      */
-    public void createRepository(final Path path) {
+    public void createRepository(Path path) {
         LOG.info("Creating repository at {}", path);
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    if (hasRepositoryAt(path)) {
-                        throw new RepositoryAlreadyExistsException();
-                    }
-                    Repository repository = Repository.create(path, config, taskManager, messageManager);
-                    RepositoryDef def = repository.getDef();
-                    repositoriesDao.createRepositoryDef(def);
-                    repositories.put(def.getGuid(), repository);
+            storageManager.inTransaction(() -> {
+                if (hasRepositoryAt(path)) {
+                    throw new RepositoryAlreadyExistsException();
                 }
+                Repository repository = Repository.create(path, config, taskManager, messageManager);
+                RepositoryDef def = repository.getDef();
+                repositoriesDao.createRepositoryDef(def);
+                repositories.put(def.getGuid(), repository);
             });
         } finally {
             lock.writeLock().unlock();
@@ -149,21 +139,18 @@ public class RepositoriesService {
      *
      * @param path Repository home.
      */
-    public void addRepository(final Path path) {
+    public void addRepository(Path path) {
         LOG.info("Adding repository at {}", path);
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    if (hasRepositoryAt(path)) {
-                        throw new RepositoryAlreadyExistsException();
-                    }
-                    Repository repository = Repository.open(path, config, taskManager, messageManager);
-                    RepositoryDef def = repository.getDef();
-                    repositoriesDao.createRepositoryDef(def);
-                    repositories.put(def.getGuid(), repository);
+            storageManager.inTransaction(() -> {
+                if (hasRepositoryAt(path)) {
+                    throw new RepositoryAlreadyExistsException();
                 }
+                Repository repository = Repository.open(path, config, taskManager, messageManager);
+                RepositoryDef def = repository.getDef();
+                repositoriesDao.createRepositoryDef(def);
+                repositories.put(def.getGuid(), repository);
             });
         } finally {
             lock.writeLock().unlock();
@@ -175,20 +162,17 @@ public class RepositoriesService {
      *
      * @param key Repository name or encoded GUID.
      */
-    public void openRepository(final String key) {
+    public void openRepository(String key) {
         LOG.info("Opening repository {}", key);
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
-                    if (repositories.containsKey(def.getGuid())) {
-                        return;
-                    }
-                    openRepository(def);
-                    messageManager.post(new RepositoryOpened(def.getGuid()));
+            storageManager.inTransaction(() -> {
+                RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+                if (repositories.containsKey(def.getGuid())) {
+                    return;
                 }
+                openRepository(def);
+                messageManager.post(new RepositoryOpened(def.getGuid()));
             });
         } finally {
             lock.writeLock().unlock();
@@ -200,20 +184,17 @@ public class RepositoriesService {
      *
      * @param key Repository name or encoded GUID.
      */
-    public void closeRepository(final String key) {
+    public void closeRepository(String key) {
         LOG.info("Closing repository {}", key);
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
-                    if (!repositories.containsKey(def.getGuid())) {
-                        return;
-                    }
-                    repositories.remove(def.getGuid()).close();
-                    messageManager.post(new RepositoryClosed(def.getGuid()));
+            storageManager.inTransaction(() -> {
+                RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+                if (!repositories.containsKey(def.getGuid())) {
+                    return;
                 }
+                repositories.remove(def.getGuid()).close();
+                messageManager.post(new RepositoryClosed(def.getGuid()));
             });
         } finally {
             lock.writeLock().unlock();
@@ -225,7 +206,7 @@ public class RepositoriesService {
      *
      * @param key Repository name or encoded GUID.
      */
-    public void removeRepository(final String key) {
+    public void removeRepository(String key) {
         LOG.info("Removing repository {}", key);
         removeRepository(key, false);
     }
@@ -240,26 +221,23 @@ public class RepositoriesService {
         removeRepository(key, true);
     }
 
-    private void removeRepository(final String key, final boolean delete) {
+    private void removeRepository(String key, boolean delete) {
         lock.writeLock().lock();
         try {
-            storageManager.inTransaction(new Procedure() {
-                @Override
-                public void apply() {
-                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
-                    Guid guid = def.getGuid();
-                    Path path = def.getPath();
+            storageManager.inTransaction(() -> {
+                RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+                Guid guid = def.getGuid();
+                Path path = def.getPath();
 
-                    if (repositories.containsKey(guid)) {
-                        repositories.remove(guid).close();
-                    }
-                    repositoriesDao.deleteRepositoryDef(guid);
-
-                    if (delete && !hasRepositoryAt(path)) {
-                        recursiveDelete(path);
-                    }
-                    messageManager.post(new RepositoryRemoved(def.getGuid()));
+                if (repositories.containsKey(guid)) {
+                    repositories.remove(guid).close();
                 }
+                repositoriesDao.deleteRepositoryDef(guid);
+
+                if (delete && !hasRepositoryAt(path)) {
+                    recursiveDelete(path);
+                }
+                messageManager.post(new RepositoryRemoved(def.getGuid()));
             });
         } finally {
             lock.writeLock().unlock();
@@ -267,12 +245,7 @@ public class RepositoriesService {
     }
 
     private boolean hasRepositoryAt(Path path) {
-        for (RepositoryDef def : repositoriesDao.listRepositoryDefs()) {
-            if (def.getPath().equals(path)) {
-                return true;
-            }
-        }
-        return false;
+        return repositoriesDao.listRepositoryDefs().stream().anyMatch(def -> def.getPath().equals(path));
     }
 
     private static void recursiveDelete(Path path) {
@@ -313,17 +286,11 @@ public class RepositoriesService {
         LOG.info("Returning repository infos");
         lock.readLock().lock();
         try {
-            return storageManager.inTransaction(new Query<List<RepositoryInfo>>() {
-                @Override
-                public List<RepositoryInfo> apply() {
-                    return ImmutableList.copyOf(transform(repositoriesDao.listRepositoryDefs(),
-                                                          new Function<RepositoryDef, RepositoryInfo>() {
-                        @Override
-                        public RepositoryInfo apply(RepositoryDef def) {
-                            return repositoryInfoOf(def);
-                        }
-                    }));
-                }
+            return storageManager.inTransaction(() -> {
+                return unmodifiableList(repositoriesDao.listRepositoryDefs()
+                        .stream()
+                        .map(this::repositoryInfoOf)
+                        .collect(toList()));
             });
         } finally {
             lock.readLock().unlock();
@@ -336,16 +303,11 @@ public class RepositoriesService {
      * @param key Repository name or encoded GUID.
      * @return Corresponding repository info.
      */
-    public RepositoryInfo getRepositoryInfo(final String key) {
+    public RepositoryInfo getRepositoryInfo(String key) {
         LOG.info("Returning repository info of {}", key);
         lock.readLock().lock();
         try {
-            return storageManager.inTransaction(new Query<RepositoryInfo>() {
-                @Override
-                public RepositoryInfo apply() {
-                    return repositoryInfoOf(repositoriesDao.getRepositoryDef(key));
-                }
-            });
+            return storageManager.inTransaction(() -> repositoryInfoOf(repositoriesDao.getRepositoryDef(key)));
         } finally {
             lock.readLock().unlock();
         }
@@ -364,18 +326,15 @@ public class RepositoriesService {
      * @param key Repository name or encoded GUID.
      * @return Corresponding repository
      */
-    public Repository getRepository(final String key) {
+    public Repository getRepository(String key) {
         lock.readLock().lock();
         try {
-            return storageManager.inTransaction(new Query<Repository>() {
-                @Override
-                public Repository apply() {
-                    RepositoryDef def = repositoriesDao.getRepositoryDef(key);
-                    if (!repositories.containsKey(def.getGuid())) {
-                        throw new RepositoryClosedException();
-                    }
-                    return repositories.get(def.getGuid());
+            return storageManager.inTransaction(() -> {
+                RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+                if (!repositories.containsKey(def.getGuid())) {
+                    throw new RepositoryClosedException();
                 }
+                return repositories.get(def.getGuid());
             });
         } finally {
             lock.readLock().unlock();

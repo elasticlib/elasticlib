@@ -1,7 +1,5 @@
 package store.server.dao;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
@@ -9,6 +7,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import store.common.exception.UnknownReplicationException;
 import store.common.hash.Guid;
 import store.common.model.ReplicationDef;
@@ -22,6 +21,7 @@ import store.server.manager.storage.StorageManager;
 public class ReplicationsDao {
 
     private static final String REPLICATIONS = "replications";
+
     private final StorageManager storageManager;
     private final Database replicationDefs;
 
@@ -66,9 +66,9 @@ public class ReplicationsDao {
      * @param guid Repository GUID.
      */
     public void deleteAllReplicationDefs(Guid guid) {
-        for (ReplicationDef def : listReplicationDefs(guid)) {
-            deleteReplicationDef(def.getSource(), def.getDestination());
-        }
+        listReplicationDefs(guid)
+                .stream()
+                .forEach(def -> deleteReplicationDef(def.getSource(), def.getDestination()));
     }
 
     /**
@@ -96,7 +96,7 @@ public class ReplicationsDao {
      * @return All stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs() {
-        return listReplicationDefs(Predicates.<ReplicationDef>alwaysTrue());
+        return listReplicationDefs(x -> true);
     }
 
     /**
@@ -105,13 +105,8 @@ public class ReplicationsDao {
      * @param guid Repository GUID.
      * @return All matching stored replication definitions.
      */
-    public List<ReplicationDef> listReplicationDefs(final Guid guid) {
-        return listReplicationDefs(new Predicate<ReplicationDef>() {
-            @Override
-            public boolean apply(ReplicationDef def) {
-                return def.getSource().equals(guid) || def.getDestination().equals(guid);
-            }
-        });
+    public List<ReplicationDef> listReplicationDefs(Guid guid) {
+        return listReplicationDefs(def -> def.getSource().equals(guid) || def.getDestination().equals(guid));
     }
 
     private List<ReplicationDef> listReplicationDefs(Predicate<ReplicationDef> predicate) {
@@ -121,7 +116,7 @@ public class ReplicationsDao {
         try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
                 ReplicationDef def = asMappable(data, ReplicationDef.class);
-                if (predicate.apply(def)) {
+                if (predicate.test(def)) {
                     list.add(def);
                 }
             }

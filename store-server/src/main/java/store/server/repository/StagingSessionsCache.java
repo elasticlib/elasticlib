@@ -41,12 +41,7 @@ class StagingSessionsCache implements Closeable {
                     .schedule(duration(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
                               unit(config, ServerConfig.STAGING_SESSIONS_CLEANUP_INTERVAL),
                               "[" + name + "] Evicting expired staging sessions",
-                              new Runnable() {
-                @Override
-                public void run() {
-                    cache.cleanUp();
-                }
-            });
+                              () -> cache.cleanUp());
         } else {
             cleanUpTask = null;
         }

@@ -4,7 +4,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import store.common.hash.Hash;
@@ -73,7 +72,7 @@ class StatsAgent extends Agent {
     private static Map<String, Long> reduce(Map<String, Long> base, Map<String, Long> diff, boolean add) {
         Map<String, Long> counts = new TreeMap<>();
         counts.putAll(base);
-        for (Entry<String, Long> entry : diff.entrySet()) {
+        diff.entrySet().stream().forEach(entry -> {
             String key = entry.getKey();
             long baseValue = counts.containsKey(key) ? counts.get(key) : 0;
             long diffValue = (add ? 1 : -1) * entry.getValue();
@@ -83,18 +82,19 @@ class StatsAgent extends Agent {
             } else {
                 counts.put(key, value);
             }
-        }
+        });
         return counts;
     }
 
     private static Map<String, Long> counts(List<Revision> revisions) {
         Map<String, Long> counts = new TreeMap<>();
-        for (Revision rev : revisions) {
-            for (String key : rev.getMetadata().keySet()) {
-                long value = counts.containsKey(key) ? counts.get(key) + 1 : 1;
-                counts.put(key, value);
-            }
-        }
+        revisions.stream()
+                .flatMap(rev -> rev.getMetadata().keySet().stream())
+                .forEach(key -> {
+                    long value = counts.containsKey(key) ? counts.get(key) + 1 : 1;
+                    counts.put(key, value);
+                });
+
         return counts;
     }
 

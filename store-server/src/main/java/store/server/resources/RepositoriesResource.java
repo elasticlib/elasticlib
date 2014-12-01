@@ -4,14 +4,13 @@ import com.google.common.base.Splitter;
 import com.google.common.net.HttpHeaders;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Collections.emptyMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeSet;
+import static java.util.stream.Collectors.toList;
 import javax.inject.Inject;
 import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
@@ -76,6 +75,7 @@ public class RepositoriesResource {
     private static final String DESC = "desc";
     private static final String DEFAULT_FROM = "0";
     private static final String DEFAULT_SIZE = "20";
+
     @Inject
     private RepositoriesService repositoriesService;
     @Context
@@ -398,26 +398,24 @@ public class RepositoriesResource {
                                @PathParam(HASH) Hash hash,
                                @HeaderParam(HttpHeaders.RANGE) String rangeParam) {
 
-        final Repository repository = repository(repositoryKey);
-        final RevisionTree tree = repository.getTree(hash);
-        final Range range = new Range(rangeParam, tree.getLength());
+        Repository repository = repository(repositoryKey);
+        RevisionTree tree = repository.getTree(hash);
+        Range range = new Range(rangeParam, tree.getLength());
 
         ResponseBuilder response = Response
                 .status(range.getStatus())
-                .entity(new StreamingOutput() {
-            @Override
-            public void write(OutputStream outputStream) throws IOException {
-                try (InputStream inputStream = repository.getContent(tree.getContent(),
-                                                                     range.getOffset(),
-                                                                     range.getLength())) {
-                    copy(inputStream, outputStream);
-                }
-            }
-        });
+                .entity((StreamingOutput) outputStream -> {
+                    try (InputStream inputStream = repository.getContent(tree.getContent(),
+                                                                         range.getOffset(),
+                                                                         range.getLength())) {
+                        copy(inputStream, outputStream);
+                    }
+                });
 
-        for (Entry<String, String> param : range.getHttpResponseHeaders().entrySet()) {
-            response.header(param.getKey(), param.getValue());
-        }
+        range.getHttpResponseHeaders()
+                .entrySet()
+                .stream()
+                .forEach(param -> response.header(param.getKey(), param.getValue()));
 
         Map<String, Value> metadata = metadata(tree);
         String contentType = value(metadata, Common.CONTENT_TYPE.key());
@@ -581,11 +579,12 @@ public class RepositoriesResource {
                                                        @QueryParam(QUERY) String query,
                                                        @QueryParam(FROM) @DefaultValue(DEFAULT_FROM) int from,
                                                        @QueryParam(SIZE) @DefaultValue(DEFAULT_SIZE) int size) {
-        List<Revision> infos = new ArrayList<>(size);
         Repository repository = repository(repositoryKey);
-        for (IndexEntry entry : repository.find(query, from, size)) {
-            infos.addAll(repository.getRevisions(entry.getHash(), entry.getRevisions()));
-        }
+        List<Revision> infos = repository.find(query, from, size)
+                .stream()
+                .flatMap(entry -> repository.getRevisions(entry.getHash(), entry.getRevisions()).stream())
+                .collect(toList());
+
         return new GenericEntity<List<Revision>>(infos) {
         };
     }

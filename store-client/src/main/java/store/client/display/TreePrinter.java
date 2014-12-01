@@ -1,6 +1,5 @@
 package store.client.display;
 
-import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -8,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import store.common.hash.Hash;
 import store.common.model.Revision;
 
@@ -25,6 +25,7 @@ class TreePrinter {
     private static final String REVISION = "*";
     private static final String DASH = "-";
     private static final String DOT = ".";
+
     private final int padding;
     private final Function<Revision, String> formatter;
     private final StringBuilder builder = new StringBuilder();
@@ -71,7 +72,7 @@ class TreePrinter {
         previousBranches.clear();
         previousBranches.addAll(nextBranches);
         nextBranches.clear();
-        for (Hash rev : previousBranches) {
+        previousBranches.stream().forEach(rev -> {
             if (rev.equals(current.getRevision())) {
                 if (current.getParents().isEmpty()) {
                     nextBranches.add(null);
@@ -81,7 +82,7 @@ class TreePrinter {
             } else {
                 nextBranches.add(rev);
             }
-        }
+        });
         if (!previousBranches.contains(current.getRevision())) {
             addCurrentParents();
         }
@@ -179,9 +180,9 @@ class TreePrinter {
     }
 
     private void printPaddingLine(int width) {
-        for (Hash rev : nextBranches) {
+        nextBranches.stream().forEach(rev -> {
             append(rev != null ? STRAIGHT_EDGE : DOUBLE_SPACE);
-        }
+        });
         pad(SPACE, width - cursor);
     }
 
@@ -212,11 +213,9 @@ class TreePrinter {
         previousBranches.clear();
         previousBranches.addAll(nextBranches);
         nextBranches.clear();
-        for (Hash rev : previousBranches) {
-            if (rev != null && !nextBranches.contains(rev)) {
-                nextBranches.add(rev);
-            }
-        }
+        previousBranches.stream()
+                .filter(rev -> rev != null && !nextBranches.contains(rev))
+                .forEach(nextBranches::add);
     }
 
     private void printPostRevisionLines() {
@@ -227,10 +226,11 @@ class TreePrinter {
         PrintGrid grid = new PrintGrid(previousBranches.size() * 2, height);
         printStraightEdges(grid);
         printSkewEdges(grid);
-        for (String line : grid.render()) {
+
+        grid.render().stream().forEach(line -> {
             append(line);
             newLine();
-        }
+        });
     }
 
     private int postRevisionLines() {

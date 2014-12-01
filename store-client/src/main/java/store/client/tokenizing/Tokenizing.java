@@ -1,9 +1,8 @@
 package store.client.tokenizing;
 
-import com.google.common.base.Function;
 import static com.google.common.collect.Iterables.getLast;
-import static com.google.common.collect.Lists.transform;
 import java.util.List;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Command line tokenizing utils.
@@ -20,12 +19,10 @@ public final class Tokenizing {
      * @return Corresponding argument list.
      */
     public static List<String> argList(String buffer) {
-        return transform(arguments(buffer), new Function<Argument, String>() {
-            @Override
-            public String apply(Argument arg) {
-                return arg.getValue();
-            }
-        });
+        return arguments(buffer)
+                .stream()
+                .map(Argument::getValue)
+                .collect(toList());
     }
 
     /**

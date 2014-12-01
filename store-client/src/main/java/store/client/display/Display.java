@@ -18,7 +18,6 @@ import static store.client.display.MappableFormatting.format;
 import store.client.exception.RequestFailedException;
 import store.common.json.JsonWriting;
 import store.common.mappable.Mappable;
-import store.common.model.Revision;
 import store.common.model.RevisionTree;
 import store.common.value.Value;
 import store.common.yaml.YamlWriter;
@@ -110,9 +109,7 @@ public class Display {
      */
     public void printTree(RevisionTree tree) {
         TreePrinter printer = new TreePrinter(2, new RevisionFormatter(config.isDisplayPretty()));
-        for (Revision rev : tree.list()) {
-            printer.add(rev);
-        }
+        tree.list().stream().forEach(printer::add);
         println(printer.print());
     }
 

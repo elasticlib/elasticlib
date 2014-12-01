@@ -1,6 +1,5 @@
 package store.client.display;
 
-import com.google.common.base.Function;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 import store.common.hash.Hash;
@@ -110,12 +109,7 @@ public class TreePrinterTest {
     }
 
     private static String tree(Revision... revisions) {
-        TreePrinter printer = new TreePrinter(2, new Function<Revision, String>() {
-            @Override
-            public String apply(Revision rev) {
-                return rev.getRevision().asHexadecimalString();
-            }
-        });
+        TreePrinter printer = new TreePrinter(2, rev -> rev.getRevision().asHexadecimalString());
         for (Revision info : revisions) {
             printer.add(info);
         }

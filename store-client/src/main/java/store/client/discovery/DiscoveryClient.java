@@ -11,9 +11,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.Collections;
-import static java.util.Collections.sort;
 import static java.util.Collections.unmodifiableList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import static java.util.concurrent.Executors.defaultThreadFactory;
@@ -40,6 +38,7 @@ public class DiscoveryClient {
     private static final byte[] PAYLOAD = "store-discovery".getBytes(Charsets.UTF_8);
     private static final String ERROR_MESSAGE = "Unexpected IO error";
     private static final Logger LOG = LoggerFactory.getLogger(DiscoveryClient.class);
+
     private final ClientConfig config;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicReference<List<NodeDef>> snapshot = new AtomicReference<>(Collections.<NodeDef>emptyList());
@@ -184,12 +183,7 @@ public class DiscoveryClient {
 
         private void takeSnapshot() {
             List<NodeDef> list = new ArrayList<>(cache.asMap().values());
-            sort(list, new Comparator<NodeDef>() {
-                @Override
-                public int compare(NodeDef lhs, NodeDef rhs) {
-                    return lhs.getName().compareTo(rhs.getName());
-                }
-            });
+            list.sort((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
             snapshot.set(unmodifiableList(list));
         }
     }

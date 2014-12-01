@@ -1,9 +1,8 @@
 package store.client.display;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Represents a text-based two-dimensional printable grid.
@@ -33,11 +32,8 @@ class PrintGrid {
     }
 
     public List<String> render() {
-        return Lists.transform(builders, new Function<StringBuilder, String>() {
-            @Override
-            public String apply(StringBuilder builder) {
-                return builder.toString().trim();
-            }
-        });
+        return builders.stream()
+                .map(x -> x.toString().trim())
+                .collect(toList());
     }
 }

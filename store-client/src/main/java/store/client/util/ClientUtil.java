@@ -2,9 +2,9 @@ package store.client.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import static java.util.stream.Collectors.toSet;
 import store.client.exception.RequestFailedException;
 import store.common.client.Client;
 import store.common.hash.Guid;
@@ -59,11 +59,9 @@ public final class ClientUtil {
      * @return Their revisions hashes.
      */
     public static Set<Hash> revisions(List<Revision> head) {
-        Set<Hash> revs = new HashSet<>();
-        for (Revision info : head) {
-            revs.add(info.getRevision());
-        }
-        return revs;
+        return head.stream()
+                .map(Revision::getRevision)
+                .collect(toSet());
     }
 
     /**

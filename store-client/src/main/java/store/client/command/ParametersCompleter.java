@@ -1,11 +1,5 @@
 package store.client.command;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.transform;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
@@ -13,11 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import static java.util.Collections.emptyList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
+import static java.util.stream.Collectors.toList;
 import javax.ws.rs.ProcessingException;
 import static store.client.command.CommandProvider.commands;
 import static store.client.command.Type.KEY;
@@ -28,10 +22,8 @@ import store.client.http.Session;
 import store.client.util.Directories;
 import static store.client.util.Directories.workingDirectory;
 import store.common.exception.NodeException;
-import store.common.model.IndexEntry;
 import store.common.model.NodeDef;
-import store.common.model.NodeInfo;
-import store.common.model.RepositoryInfo;
+import store.common.model.RepositoryDef;
 
 /**
  * Provides parameters completion.
@@ -99,42 +91,38 @@ class ParametersCompleter {
     }
 
     private List<String> completeUri(final String param) {
-        List<String> list = newArrayList(filter(uris(), new Predicate<String>() {
-            @Override
-            public boolean apply(String input) {
-                return input.startsWith(param.toLowerCase());
-            }
-        }));
-        Collections.sort(list);
-        return list;
+        return uris()
+                .stream()
+                .filter(x -> x.startsWith(param.toLowerCase()))
+                .sorted()
+                .collect(toList());
     }
 
     private List<String> uris() {
-        List<String> uris = new ArrayList<>();
-        for (NodeDef def : discoveryClient.nodes()) {
-            for (URI uri : def.getPublishUris()) {
-                uris.add(uri.toString());
-            }
-        }
-        return uris;
+        return discoveryClient.nodes()
+                .stream()
+                .flatMap(d -> d.getPublishUris().stream())
+                .map(URI::toString)
+                .collect(toList());
     }
 
     private List<String> completeNode(String param) {
         Collection<String> nodes = new TreeSet<>();
-        for (NodeInfo info : session.getClient().remotes().listInfos()) {
+        session.getClient().remotes().listInfos().forEach(info -> {
             NodeDef def = info.getDef();
             nodes.add(def.getName());
             nodes.add(def.getGuid().asHexadecimalString());
-        }
+        });
         return filterStartWith(nodes, param);
     }
 
     private List<String> completeRepository(String param) {
         Collection<String> repositories = new TreeSet<>();
-        for (RepositoryInfo info : session.getClient().repositories().listInfos()) {
-            repositories.add(info.getDef().getName());
-            repositories.add(info.getDef().getGuid().asHexadecimalString());
-        }
+        session.getClient().repositories().listInfos().forEach(info -> {
+            RepositoryDef def = info.getDef();
+            repositories.add(def.getName());
+            repositories.add(def.getGuid().asHexadecimalString());
+        });
         return filterStartWith(repositories, param);
     }
 
@@ -142,34 +130,30 @@ class ParametersCompleter {
         if (param.isEmpty()) {
             return emptyList();
         }
-        List<String> hashes = new ArrayList<>();
-        for (IndexEntry entry : session.getRepository()
-                .find(Joiner.on("").join("content:", param.toLowerCase(), "*"), 0, 100)) {
+        String query = String.join("", "content:", param.toLowerCase(), "*");
+        List<String> hashes = session.getRepository()
+                .find(query, 0, 100)
+                .stream()
+                .map(e -> e.getHash().asHexadecimalString())
+                .collect(toList());
 
-            hashes.add(entry.getHash().asHexadecimalString());
-        }
         return filterStartWith(hashes, param);
     }
 
     private static List<String> completeCommand(String param) {
-        List<String> commands = transform(commands(), new Function<Command, String>() {
-            @Override
-            public String apply(Command command) {
-                return command.name();
-            }
-        });
+        List<String> commands = commands()
+                .stream()
+                .map(Command::name)
+                .collect(toList());
+
         return filterStartWith(commands, param.toLowerCase());
     }
 
     private static List<String> filterStartWith(Collection<String> collection, final String param) {
-        List<String> list = newArrayList(filter(collection, new Predicate<String>() {
-            @Override
-            public boolean apply(String input) {
-                return input.startsWith(param);
-            }
-        }));
-        Collections.sort(list);
-        return list;
+        return collection.stream()
+                .filter(x -> x.startsWith(param))
+                .sorted()
+                .collect(toList());
     }
 
     private static List<String> completePath(String param, boolean directoriesOnly) {

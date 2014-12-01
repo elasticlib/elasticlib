@@ -6,7 +6,6 @@ import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import static java.util.Collections.sort;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -52,12 +51,7 @@ final class CommandProvider {
                                                                          new OsCommand());
 
     static {
-        sort(COMMANDS, new Comparator<Command>() {
-            @Override
-            public int compare(Command c1, Command c2) {
-                return c1.name().compareTo(c2.name());
-            }
-        });
+        sort(COMMANDS, (c1, c2) -> c1.name().compareTo(c2.name()));
     }
 
     private CommandProvider() {
@@ -95,14 +89,14 @@ final class CommandProvider {
         for (Category category : Category.values()) {
             StringBuilder builder = new StringBuilder();
             builder.append(category).append(System.lineSeparator());
-            for (Command command : COMMANDS) {
-                if (command.category() == category) {
-                    builder.append(tab(2))
-                            .append(fixedSize(command.name(), 24))
-                            .append(command.description())
-                            .append(System.lineSeparator());
-                }
-            }
+            COMMANDS.stream()
+                    .filter(command -> command.category() == category)
+                    .forEach(command -> {
+                        builder.append(tab(2))
+                        .append(fixedSize(command.name(), 24))
+                        .append(command.description())
+                        .append(System.lineSeparator());
+                    });
             categoryHelps.add(builder.toString());
         }
         return Joiner.on(System.lineSeparator()).join(categoryHelps);

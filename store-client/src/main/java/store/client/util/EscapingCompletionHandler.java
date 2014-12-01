@@ -1,10 +1,9 @@
 package store.client.util;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import jline.console.ConsoleReader;
 import jline.console.CursorBuffer;
 import static jline.console.completer.CandidateListCompletionHandler.printCandidates;
@@ -53,12 +52,10 @@ public class EscapingCompletionHandler implements CompletionHandler {
         if (candidates == null || candidates.isEmpty()) {
             return null;
         }
-        List<String> strings = Lists.transform(candidates, new Function<CharSequence, String>() {
-            @Override
-            public String apply(CharSequence input) {
-                return Tokenizing.escape(input.toString());
-            }
-        });
+        List<String> strings = candidates.stream()
+                .map(x -> Tokenizing.escape(x.toString()))
+                .collect(Collectors.toList());
+
         String first = strings.get(0);
         StringBuilder candidate = new StringBuilder();
         int i = 0;
@@ -70,11 +67,6 @@ public class EscapingCompletionHandler implements CompletionHandler {
     }
 
     private static boolean startsWith(String starts, List<String> candidates) {
-        for (String candidate : candidates) {
-            if (!candidate.startsWith(starts)) {
-                return false;
-            }
-        }
-        return true;
+        return candidates.stream().allMatch(x -> x.startsWith(starts));
     }
 }

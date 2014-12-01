@@ -1,13 +1,11 @@
 package store.client.display;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import static java.util.stream.Collectors.toList;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import store.common.mappable.Mappable;
@@ -25,46 +23,26 @@ final class MappableFormatting {
     private static final Map<ValueType, Formatter> FORMATTERS = new EnumMap<>(ValueType.class);
 
     static {
-        FORMATTERS.put(ValueType.DATE, new Formatter() {
-            @Override
-            public Value apply(Value value) {
-                return Value.of(DateTimeFormat
-                        .longDateTime()
-                        .withZone(DateTimeZone.getDefault())
-                        .print(value.asInstant()));
-            }
+        FORMATTERS.put(ValueType.DATE, value -> {
+            return Value.of(DateTimeFormat
+                    .longDateTime()
+                    .withZone(DateTimeZone.getDefault())
+                    .print(value.asInstant()));
         });
-        FORMATTERS.put(ValueType.HASH, new Formatter() {
-            @Override
-            public Value apply(Value value) {
-                return Value.of(value.asHash().asHexadecimalString());
-            }
+        FORMATTERS.put(ValueType.HASH, value -> Value.of(value.asHash().asHexadecimalString()));
+        FORMATTERS.put(ValueType.GUID, value -> Value.of(value.asGuid().asHexadecimalString()));
+        FORMATTERS.put(ValueType.OBJECT, value -> {
+            Map<String, Value> map = new LinkedHashMap<>();
+            value.asMap().entrySet().stream().forEach(entry -> {
+                map.put(entry.getKey(), formatValue(entry.getValue()));
+            });
+            return Value.of(map);
         });
-        FORMATTERS.put(ValueType.GUID, new Formatter() {
-            @Override
-            public Value apply(Value value) {
-                return Value.of(value.asGuid().asHexadecimalString());
-            }
-        });
-        FORMATTERS.put(ValueType.OBJECT, new Formatter() {
-            @Override
-            public Value apply(Value value) {
-                Map<String, Value> map = new LinkedHashMap<>();
-                for (Entry<String, Value> entry : value.asMap().entrySet()) {
-                    map.put(entry.getKey(), formatValue(entry.getValue()));
-                }
-                return Value.of(map);
-            }
-        });
-        FORMATTERS.put(ValueType.ARRAY, new Formatter() {
-            @Override
-            public Value apply(Value value) {
-                List<Value> list = new ArrayList<>();
-                for (Value item : value.asList()) {
-                    list.add(formatValue(item));
-                }
-                return Value.of(list);
-            }
+        FORMATTERS.put(ValueType.ARRAY, value -> {
+            return Value.of(value.asList()
+                    .stream()
+                    .map(MappableFormatting::formatValue)
+                    .collect(toList()));
         });
     }
 
@@ -78,9 +56,9 @@ final class MappableFormatting {
 
     public static Value format(Mappable mappable) {
         Map<String, Value> map = new LinkedHashMap<>();
-        for (Entry<String, Value> entry : mappable.toMap().entrySet()) {
+        mappable.toMap().entrySet().stream().forEach(entry -> {
             formatAndPut(map, entry.getKey(), entry.getValue());
-        }
+        });
         return Value.of(map);
     }
 

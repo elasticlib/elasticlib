@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import static java.util.stream.Collectors.toCollection;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
 import store.client.config.ClientConfig;
@@ -113,13 +114,12 @@ public final class CommandParser implements Completer {
                 return command.complete(parametersCompleter, params);
             }
         }
-        Set<String> completions = new TreeSet<>();
-        for (Command command : CommandProvider.commands()) {
-            String completion = completion(command, argList);
-            if (completion != null) {
-                completions.add(completion);
-            }
-        }
+        Set<String> completions = CommandProvider.commands()
+                .stream()
+                .map(command -> completion(command, argList))
+                .filter(completion -> completion != null)
+                .collect(toCollection(TreeSet::new));
+
         return new ArrayList<>(completions);
     }
 

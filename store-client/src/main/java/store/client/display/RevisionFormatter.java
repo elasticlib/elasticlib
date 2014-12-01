@@ -1,6 +1,6 @@
 package store.client.display;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 import store.common.mappable.MapBuilder;
 import store.common.model.Revision;
 import store.common.value.Value;

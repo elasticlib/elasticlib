@@ -86,18 +86,7 @@ public class DiscoveryClient {
     }
 
     private void initExecutor() {
-        executor = Executors.newScheduledThreadPool(2, new ThreadFactory() {
-            private final ThreadFactory defaultFactory = defaultThreadFactory();
-            private final AtomicInteger counter = new AtomicInteger();
-
-            @Override
-            public Thread newThread(Runnable runnable) {
-                Thread thread = defaultFactory.newThread(runnable);
-                thread.setName("discovery-client-" + counter.incrementAndGet());
-                thread.setDaemon(true);
-                return thread;
-            }
-        });
+        executor = Executors.newScheduledThreadPool(2, new DiscoveryThreadFactory());
 
         executor.execute(new ListenTask());
         executor.scheduleAtFixedRate(new PingTask(),
@@ -125,6 +114,23 @@ public class DiscoveryClient {
     public List<NodeDef> nodes() {
         cache.asMap().values();
         return snapshot.get();
+    }
+
+    /**
+     * Provides thread for the discovery related tasks.
+     */
+    private static class DiscoveryThreadFactory implements ThreadFactory {
+
+        private final ThreadFactory defaultFactory = defaultThreadFactory();
+        private final AtomicInteger counter = new AtomicInteger();
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = defaultFactory.newThread(runnable);
+            thread.setName("discovery-client-" + counter.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        }
     }
 
     /**

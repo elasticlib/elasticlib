@@ -11,11 +11,15 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
  */
 class LoggingHandler extends Handler {
 
+    // Potential lost logger changes due to weak reference in OpenJDK: Hold a reference to prevent garbage collection.
+    private static final Logger LOG = Logger.getLogger("com.sleepycat.je");
+
     static {
         // Bug in Berkeley DB 6.0.11 : NPE in Database.sync() if log level includes Level.FINEST.
         // Logging below this level is disabled to avoids this.
-        Logger.getLogger("com.sleepycat.je").setLevel(Level.FINER);
+        LOG.setLevel(Level.FINER);
     }
+
     private final Handler delegate = new SLF4JBridgeHandler();
     private final String name;
 

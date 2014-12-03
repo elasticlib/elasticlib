@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import static store.common.bson.BinaryConstants.writeType;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;
@@ -175,9 +174,9 @@ public final class BsonWriter {
      * @return This encoder instance.
      */
     public BsonWriter put(Map<String, Value> map) {
-        for (Entry<String, Value> entry : map.entrySet()) {
+        map.entrySet().forEach(entry -> {
             put(entry.getKey(), entry.getValue());
-        }
+        });
         return this;
     }
 

@@ -76,9 +76,8 @@ public class RemotesClient {
                     .build();
         }
         JsonArrayBuilder urisArray = createArrayBuilder();
-        for (URI uri : uris) {
-            urisArray.add(uri.toString());
-        }
+        uris.forEach(uri -> urisArray.add(uri.toString()));
+
         return createObjectBuilder()
                 .add(URIS, urisArray)
                 .build();

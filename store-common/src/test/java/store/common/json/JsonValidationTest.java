@@ -147,9 +147,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidRevisionTest() {
-        for (JsonObject json : REVISIONS_JSON) {
+        REVISIONS_JSON.forEach(json -> {
             assertThat(isValid(json, Revision.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, Revision.class)).isFalse();
     }
 
@@ -176,9 +176,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidCommandResultTest() {
-        for (JsonObject json : COMMAND_RESULTS_JSON) {
+        COMMAND_RESULTS_JSON.forEach(json -> {
             assertThat(isValid(json, CommandResult.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISIONS_JSON.get(0), CommandResult.class)).isFalse();
         assertThat(isValid(REVISION_TREE_JSON, CommandResult.class)).isFalse();
     }
@@ -188,9 +188,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidEventTest() {
-        for (JsonObject json : EVENTS_ARRAY.getValuesAs(JsonObject.class)) {
+        EVENTS_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
             assertThat(isValid(json, Event.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, Event.class)).isFalse();
     }
 
@@ -199,9 +199,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidIndexEntryTest() {
-        for (JsonObject json : INDEX_ENTRIES_ARRAY.getValuesAs(JsonObject.class)) {
+        INDEX_ENTRIES_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
             assertThat(isValid(json, IndexEntry.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, IndexEntry.class)).isFalse();
     }
 
@@ -210,9 +210,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidRepositoryInfoTest() {
-        for (JsonObject json : REPOSITORY_INFOS_JSON) {
+        REPOSITORY_INFOS_JSON.forEach(json -> {
             assertThat(isValid(json, RepositoryInfo.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, RepositoryInfo.class)).isFalse();
     }
 
@@ -221,9 +221,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidReplicationInfoTest() {
-        for (JsonObject json : REPLICATION_INFOS_JSON) {
+        REPLICATION_INFOS_JSON.forEach(json -> {
             assertThat(isValid(json, ReplicationInfo.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, ReplicationInfo.class)).isFalse();
     }
 
@@ -232,9 +232,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidNodeDefTest() {
-        for (JsonObject json : NODE_DEFS_ARRAY.getValuesAs(JsonObject.class)) {
+        NODE_DEFS_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
             assertThat(isValid(json, NodeDef.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, NodeDef.class)).isFalse();
     }
 
@@ -243,9 +243,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidNodeInfoTest() {
-        for (JsonObject json : NODE_INFOS_ARRAY.getValuesAs(JsonObject.class)) {
+        NODE_INFOS_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
             assertThat(isValid(json, NodeInfo.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, NodeInfo.class)).isFalse();
     }
 
@@ -254,9 +254,9 @@ public class JsonValidationTest {
      */
     @Test
     public void isValidNodeExceptionTest() {
-        for (JsonObject json : NODE_EXCEPTIONS_ARRAY.getValuesAs(JsonObject.class)) {
+        NODE_EXCEPTIONS_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
             assertThat(isValid(json, NodeException.class)).isTrue();
-        }
+        });
         assertThat(isValid(REVISION_TREE_JSON, NodeException.class)).isFalse();
     }
 }

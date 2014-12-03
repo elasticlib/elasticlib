@@ -250,7 +250,7 @@ public class RepositoryClient {
 
     private static Optional<String> fileName(Response response) {
         String header = response.getHeaders().getFirst(CONTENT_DISPOSITION).toString();
-        if (header == null || header.isEmpty()) {
+        if (header.isEmpty()) {
             return Optional.absent();
         }
         for (String param : split(header, ';')) {

@@ -7,10 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -48,13 +44,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     private static final String ENTITY_LOGGER_PROPERTY = LoggingFilter.class.getName() + ".entityLogger";
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
     private static final Logger LOG = LoggerFactory.getLogger(LoggingFilter.class);
-    private static final Comparator<Entry<String, List<String>>> COMPARATOR =
-            new Comparator<Entry<String, List<String>>>() {
-        @Override
-        public int compare(Entry<String, List<String>> o1, Entry<String, List<String>> o2) {
-            return StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey());
-        }
-    };
+
     private final AtomicLong id = new AtomicLong();
 
     private StringBuilder prefixId(StringBuilder builder, long id) {
@@ -92,21 +82,17 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
 
     private void printPrefixedHeaders(StringBuilder builder, long id, String prefix,
                                       MultivaluedMap<String, String> headers) {
-
-        TreeSet<Entry<String, List<String>>> sortedHeaders = new TreeSet<>(COMPARATOR);
-        sortedHeaders.addAll(headers.entrySet());
-
-        for (Entry<String, List<String>> headerEntry : sortedHeaders) {
-            List<?> val = headerEntry.getValue();
-            String header = headerEntry.getKey();
-
-            prefixId(builder, id)
+        headers.entrySet()
+                .stream()
+                .sorted((x, y) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(x.getKey(), y.getKey()))
+                .forEach(headerEntry -> {
+                    prefixId(builder, id)
                     .append(prefix)
-                    .append(header)
+                    .append(headerEntry.getKey())
                     .append(": ")
-                    .append(Joiner.on(',').join(val))
+                    .append(Joiner.on(',').join(headerEntry.getValue()))
                     .append(System.lineSeparator());
-        }
+                });
     }
 
     private InputStream logInboundEntity(long id, StringBuilder builder, InputStream stream) throws IOException {

@@ -224,11 +224,12 @@ public class RevisionTreeTest {
     @Test(dataProvider = "listTestDataProvider")
     public void listTest(RevisionTree tree) {
         List<Revision> list = tree.list();
-        for (Revision info : list) {
-            for (Hash parent : info.getParents()) {
-                assertOrder(list, info, tree.get(parent));
-            }
-        }
+        list.stream().forEach(rev -> {
+            rev.getParents()
+                    .stream()
+                    .map(tree::get)
+                    .forEach(parent -> assertOrder(list, rev, parent));
+        });
     }
 
     private static void assertOrder(List<Revision> list, Revision first, Revision second) {

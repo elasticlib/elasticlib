@@ -1,8 +1,6 @@
 package store.common.client;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
@@ -28,8 +26,8 @@ public class HeaderRestoringWriterInterceptor implements WriterInterceptor {
         context.proceed();
         MultivaluedMap<String, Object> after = context.getHeaders();
         after.clear();
-        for (Map.Entry<String, List<Object>> entry : before.entrySet()) {
+        before.entrySet().forEach(entry -> {
             after.addAll(entry.getKey(), entry.getValue());
-        }
+        });
     }
 }

@@ -20,7 +20,6 @@ import store.common.exception.ConflictException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.exception.RepositoryClosedException;
 import store.common.exception.UnknownContentException;
-import store.common.hash.Hash;
 import static store.common.metadata.Properties.Common.CONTENT_TYPE;
 import static store.common.metadata.Properties.Common.FILE_NAME;
 import store.common.model.AgentInfo;
@@ -125,12 +124,9 @@ public class RepositoryTest {
 
         assertThat(repository.history(true, 0, 10)).isEmpty();
 
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertUpToDate(repository.getInfo(),
-                               new RepositoryStats(0, 0, 0, Collections.<String, Long>emptyMap()));
-            }
+        async(() -> {
+            assertUpToDate(repository.getInfo(),
+                           new RepositoryStats(0, 0, 0, Collections.<String, Long>emptyMap()));
         });
     }
 
@@ -290,12 +286,9 @@ public class RepositoryTest {
      */
     @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
     public void findTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
-                assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10)).containsExactly(expected);
-            }
+        async(() -> {
+            IndexEntry expected = new IndexEntry(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
+            assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10)).containsExactly(expected);
         });
     }
 
@@ -304,13 +297,10 @@ public class RepositoryTest {
      */
     @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
     public void getInfoTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertUpToDate(repository.getInfo(),
-                               new RepositoryStats(1, 0, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
-                                                                            CONTENT_TYPE.key(), 1L)));
-            }
+        async(() -> {
+            assertUpToDate(repository.getInfo(),
+                           new RepositoryStats(1, 0, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
+                                                                        CONTENT_TYPE.key(), 1L)));
         });
     }
 
@@ -369,12 +359,9 @@ public class RepositoryTest {
      */
     @Test(groups = UPDATE_CONTENT_CHECKS, dependsOnGroups = UPDATE_CONTENT)
     public void findAfterUpdateTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                IndexEntry expected = new IndexEntry(UPDATED_LOREM_IPSUM.getHash(), UPDATED_LOREM_IPSUM.getHead());
-                assertThat(repository.find(DESCRIPTION + ":" + TEST, 0, 10)).containsExactly(expected);
-            }
+        async(() -> {
+            IndexEntry expected = new IndexEntry(UPDATED_LOREM_IPSUM.getHash(), UPDATED_LOREM_IPSUM.getHead());
+            assertThat(repository.find(DESCRIPTION + ":" + TEST, 0, 10)).containsExactly(expected);
         });
     }
 
@@ -383,14 +370,11 @@ public class RepositoryTest {
      */
     @Test(groups = UPDATE_CONTENT_CHECKS, dependsOnGroups = UPDATE_CONTENT)
     public void getInfoAfterUpdateTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertUpToDate(repository.getInfo(),
-                               new RepositoryStats(1, 1, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
-                                                                            CONTENT_TYPE.key(), 1L,
-                                                                            DESCRIPTION, 1L)));
-            }
+        async(() -> {
+            assertUpToDate(repository.getInfo(),
+                           new RepositoryStats(1, 1, 0, ImmutableMap.of(FILE_NAME.key(), 1L,
+                                                                        CONTENT_TYPE.key(), 1L,
+                                                                        DESCRIPTION, 1L)));
         });
     }
 
@@ -419,7 +403,7 @@ public class RepositoryTest {
           dependsOnGroups = DELETE_CONTENT,
           expectedExceptions = UnknownContentException.class)
     public void deleteUnknownHashTest() {
-        repository.deleteContent(UNKNOWN_HASH, new TreeSet<Hash>());
+        repository.deleteContent(UNKNOWN_HASH, new TreeSet<>());
     }
 
     /**
@@ -449,12 +433,7 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE_CONTENT_CHECKS, dependsOnGroups = DELETE_CONTENT)
     public void findAfterDeleteTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10)).isEmpty();
-            }
-        });
+        async(assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10))::isEmpty);
     }
 
     /**
@@ -462,12 +441,9 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE_CONTENT_CHECKS, dependsOnGroups = DELETE_CONTENT)
     public void getInfoAfterDeleteTest() {
-        async(new Runnable() {
-            @Override
-            public void run() {
-                assertUpToDate(repository.getInfo(),
-                               new RepositoryStats(1, 1, 1, Collections.<String, Long>emptyMap()));
-            }
+        async(() -> {
+            assertUpToDate(repository.getInfo(),
+                           new RepositoryStats(1, 1, 1, Collections.<String, Long>emptyMap()));
         });
     }
 

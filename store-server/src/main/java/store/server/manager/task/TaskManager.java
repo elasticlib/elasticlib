@@ -29,17 +29,7 @@ public class TaskManager {
      * @param config Configuration holder.
      */
     public TaskManager(Config config) {
-        executor = newScheduledThreadPool(config.getInt(TASKS_POOL_SIZE), new ThreadFactory() {
-            private final ThreadFactory defaultFactory = defaultThreadFactory();
-            private final AtomicInteger counter = new AtomicInteger();
-
-            @Override
-            public Thread newThread(Runnable runnable) {
-                Thread thread = defaultFactory.newThread(runnable);
-                thread.setName("task-" + counter.incrementAndGet());
-                return thread;
-            }
-        });
+        executor = newScheduledThreadPool(config.getInt(TASKS_POOL_SIZE), new NamedThreadFactory());
     }
 
     /**
@@ -82,6 +72,22 @@ public class TaskManager {
      */
     public void stop() {
         executor.shutdown();
+    }
+
+    /**
+     * A thread factory with ad-hoc thread naming.
+     */
+    private static class NamedThreadFactory implements ThreadFactory {
+
+        private final ThreadFactory defaultFactory = defaultThreadFactory();
+        private final AtomicInteger counter = new AtomicInteger();
+
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = defaultFactory.newThread(runnable);
+            thread.setName("task-" + counter.incrementAndGet());
+            return thread;
+        }
     }
 
     /**

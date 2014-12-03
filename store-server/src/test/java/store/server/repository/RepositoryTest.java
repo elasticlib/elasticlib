@@ -433,7 +433,9 @@ public class RepositoryTest {
      */
     @Test(groups = DELETE_CONTENT_CHECKS, dependsOnGroups = DELETE_CONTENT)
     public void findAfterDeleteTest() {
-        async(assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10))::isEmpty);
+        async(() -> {
+            assertThat(repository.find(LOREM_IPSUM_QUERY, 0, 10)).isEmpty();
+        });
     }
 
     /**

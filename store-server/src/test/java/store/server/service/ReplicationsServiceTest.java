@@ -221,7 +221,9 @@ public class ReplicationsServiceTest {
 
     private void removeRepositoryTest(String repositoryName) {
         repositoriesService.removeRepository(repositoryName);
-        async(assertThat(replicationsService.listReplicationInfos())::isEmpty);
+        async(() -> {
+            assertThat(replicationsService.listReplicationInfos()).isEmpty();
+        });
 
         // Restore previous state.
         repositoriesService.addRepository(path.resolve(repositoryName));

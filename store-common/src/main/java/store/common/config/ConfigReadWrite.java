@@ -1,11 +1,11 @@
 package store.common.config;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.yaml.snakeyaml.error.YAMLException;
 import store.common.value.Value;
 import store.common.yaml.YamlReader;
@@ -28,7 +28,7 @@ public final class ConfigReadWrite {
      */
     public static Optional<Config> read(Path path) {
         if (!Files.exists(path)) {
-            return Optional.absent();
+            return Optional.empty();
         }
 
         try (InputStream input = Files.newInputStream(path);
@@ -36,7 +36,7 @@ public final class ConfigReadWrite {
 
             Optional<Value> value = reader.readValue();
             if (!value.isPresent()) {
-                return Optional.absent();
+                return Optional.empty();
             }
             return Optional.of(new Config(value.get()));
 

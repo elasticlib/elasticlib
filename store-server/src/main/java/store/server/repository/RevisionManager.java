@@ -1,10 +1,10 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import java.util.Optional;
 import java.util.SortedSet;
 import store.common.exception.ConflictException;
 import store.common.exception.UnknownContentException;
@@ -26,6 +26,7 @@ import store.server.manager.storage.StorageManager;
 class RevisionManager {
 
     private static final String REVISION = "revision";
+
     private final StorageManager storageManager;
     private final Database database;
 
@@ -137,7 +138,7 @@ class RevisionManager {
                                               lockMode);
 
         if (status == OperationStatus.NOTFOUND) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(asMappable(data, RevisionTree.class));
     }
@@ -159,7 +160,7 @@ class RevisionManager {
         boolean afterIsDeleted = after.isDeleted();
 
         if (before.isPresent() && before.get().equals(after)) {
-            return Optional.absent();
+            return Optional.empty();
         }
         if (beforeIsDeleted && !afterIsDeleted) {
             return Optional.of(Operation.CREATE);

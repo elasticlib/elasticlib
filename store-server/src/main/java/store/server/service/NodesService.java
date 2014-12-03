@@ -1,12 +1,12 @@
 package store.server.service;
 
-import com.google.common.base.Optional;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
 import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

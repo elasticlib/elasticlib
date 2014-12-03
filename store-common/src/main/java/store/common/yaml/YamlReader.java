@@ -1,7 +1,6 @@
 package store.common.yaml;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import static java.util.stream.Collectors.toList;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
@@ -51,7 +51,7 @@ public class YamlReader implements AutoCloseable {
     public <T extends Mappable> Optional<T> read(Class<T> clazz) {
         Optional<Value> value = readValue();
         if (!value.isPresent()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(MappableUtil.fromMap(value.get().asMap(), clazz));
     }
@@ -78,7 +78,7 @@ public class YamlReader implements AutoCloseable {
     public Optional<Value> readValue() {
         Node node = new Yaml().compose(reader);
         if (node == null) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(ValueReading.read(node));
     }

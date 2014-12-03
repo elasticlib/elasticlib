@@ -1,9 +1,9 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Closeable;
+import java.util.Optional;
 import store.common.config.Config;
 import static store.common.config.ConfigUtil.duration;
 import static store.common.config.ConfigUtil.unit;
@@ -81,7 +81,7 @@ class StagingSessionsCache implements Closeable {
      * @return Associated session, if any.
      */
     public Optional<StagingSession> get(Hash hash) {
-        return Optional.fromNullable(cache.getIfPresent(hash));
+        return Optional.ofNullable(cache.getIfPresent(hash));
     }
 
     /**

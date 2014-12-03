@@ -1,10 +1,10 @@
 package store.server.service;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,6 +40,7 @@ public class RepositoriesServiceTest {
     private static final String DELETE_REPOSITORY = "deleteRepository";
     private static final String DELETE_REPOSITORY_CHECKS = "deleteRepositoryChecks";
     private static final String REPOSITORY = "repository";
+
     private Path path;
     private Path repositoryPath;
     private ManagerModule managerModule;

@@ -1,6 +1,5 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import static com.google.common.io.BaseEncoding.base16;
@@ -14,6 +13,7 @@ import java.util.ArrayList;
 import static java.util.Collections.emptyList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -257,14 +257,14 @@ class Index {
     private Optional<IndexEntry> getEntry(Hash hash) {
         try {
             if (directory.listAll().length == 0) {
-                return Optional.absent();
+                return Optional.empty();
             }
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 TermQuery query = new TermQuery(new Term(CONTENT, hash.asHexadecimalString()));
                 ScoreDoc[] hits = searcher.search(query, 1).scoreDocs;
                 if (hits.length == 0) {
-                    return Optional.absent();
+                    return Optional.empty();
                 }
                 return Optional.of(newIndexEntry(searcher.doc(hits[0].doc)));
             }

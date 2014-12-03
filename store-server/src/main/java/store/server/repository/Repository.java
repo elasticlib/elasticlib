@@ -1,7 +1,6 @@
 package store.server.repository;
 
 import static com.google.common.base.Joiner.on;
-import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import static java.util.Collections.emptyList;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;

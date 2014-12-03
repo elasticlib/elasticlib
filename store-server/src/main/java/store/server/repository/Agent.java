@@ -1,6 +1,5 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import static com.google.common.collect.Iterables.getLast;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
@@ -9,6 +8,7 @@ import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -33,6 +33,7 @@ public abstract class Agent {
 
     private static final int FETCH_SIZE = 20;
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
+
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final Repository repository;
@@ -218,7 +219,7 @@ public abstract class Agent {
                     }
                 }
                 if (stopped) {
-                    return Optional.absent();
+                    return Optional.empty();
                 }
                 return Optional.of(events.removeFirst());
 

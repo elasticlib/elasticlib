@@ -1,7 +1,6 @@
 package store.client.config;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -10,6 +9,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import store.client.exception.RequestFailedException;
 import static store.client.util.ClientUtil.parseUri;
@@ -54,6 +54,7 @@ public class ClientConfig {
             .set(DISPLAY_PROGRESS, true)
             .set(DISPLAY_HTTP, false)
             .set(EDITOR, "");
+
     private Config extended;
     private Config config;
 

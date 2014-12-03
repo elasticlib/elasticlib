@@ -1,8 +1,8 @@
 package store.client.command;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.List;
+import java.util.Optional;
 import store.client.config.ClientConfig;
 import store.client.display.Display;
 import store.client.http.Session;
@@ -41,7 +41,7 @@ class Help extends AbstractCommand {
 
     private Optional<Command> command(List<String> params) {
         if (params.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return CommandProvider.command(Splitter
                 .on(' ')

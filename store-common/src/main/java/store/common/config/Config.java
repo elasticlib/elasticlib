@@ -1,7 +1,6 @@
 package store.common.config;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
+import java.util.Optional;
 import store.common.value.Value;
 import store.common.value.ValueType;
 import store.common.yaml.YamlWriter;
@@ -234,14 +234,14 @@ public class Config {
             return node;
         }
         if (!node.isPresent() || node.get().type() != ValueType.OBJECT) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return get(node.get(), subPath);
     }
 
     private static Optional<Value> node(Value tree, String key) {
         if (tree.type() != ValueType.OBJECT || !tree.asMap().containsKey(key)) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(tree.asMap().get(key));
     }

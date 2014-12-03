@@ -1,8 +1,8 @@
 package store.server.service;
 
-import com.google.common.base.Optional;
 import java.net.URI;
 import static java.time.Instant.now;
+import java.util.Optional;
 import java.util.function.Predicate;
 import javax.ws.rs.ProcessingException;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public class NodePingHandler {
                 return info;
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private static Optional<NodeInfo> ping(URI uri) {
@@ -59,7 +59,7 @@ public class NodePingHandler {
 
         } catch (ProcessingException e) {
             EXCEPTION_HANDLER.log(uri, e);
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 }

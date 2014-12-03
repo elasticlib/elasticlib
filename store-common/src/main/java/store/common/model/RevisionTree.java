@@ -1,6 +1,5 @@
 package store.common.model;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import static com.google.common.collect.Sets.difference;
@@ -18,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -245,7 +245,7 @@ public class RevisionTree implements Mappable {
     private Optional<Revision> merge(Revision left, Revision right) {
         if (left.isDeleted() != right.isDeleted()) {
             // No automatic merge in this particular case, it is a conflict.
-            return Optional.absent();
+            return Optional.empty();
         }
         if (left.getMetadata().equals(right.getMetadata())) {
             return threeWayMerge(left, right, left.getMetadata());
@@ -267,7 +267,7 @@ public class RevisionTree implements Mappable {
         while (ancestorsIt.hasNext()) {
             Optional<Revision> merge = workTree.merge(virtualAncestor, ancestorsIt.next());
             if (!merge.isPresent()) {
-                return Optional.absent();
+                return Optional.empty();
             }
             virtualAncestor = merge.get();
             if (ancestorsIt.hasNext()) {
@@ -281,7 +281,7 @@ public class RevisionTree implements Mappable {
         Optional<Diff> diff = Diff.merge(Diff.of(base, left.getMetadata()),
                                          Diff.of(base, right.getMetadata()));
         if (!diff.isPresent()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(new RevisionBuilder()
                 .withContent(left.getContent())
@@ -506,7 +506,7 @@ public class RevisionTree implements Mappable {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (merge.containsKey(key) && !merge.get(key).equals(value)) {
-                    return Optional.absent();
+                    return Optional.empty();
                 }
                 if (!merge.containsKey(key)) {
                     merge.put(key, value);

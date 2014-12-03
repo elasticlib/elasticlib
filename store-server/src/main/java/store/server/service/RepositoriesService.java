@@ -1,6 +1,5 @@
 package store.server.service;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -11,6 +10,7 @@ import static java.util.Collections.unmodifiableList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static java.util.stream.Collectors.toList;
@@ -350,7 +350,7 @@ public class RepositoriesService {
     public Optional<Repository> tryGetRepository(Guid guid) {
         lock.readLock().lock();
         try {
-            return Optional.fromNullable(repositories.get(guid));
+            return Optional.ofNullable(repositories.get(guid));
 
         } finally {
             lock.readLock().unlock();

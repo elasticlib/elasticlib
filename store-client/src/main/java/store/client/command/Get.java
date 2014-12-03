@@ -33,7 +33,7 @@ class Get extends AbstractCommand {
         Hash hash = parseHash(params.get(0));
         try {
             try (Content content = session.getRepository().getContent(hash)) {
-                Path path = Directories.resolve(content.getFileName().or(hash.asHexadecimalString()));
+                Path path = Directories.resolve(content.getFileName().orElse(hash.asHexadecimalString()));
                 try (InputStream inputStream = new LoggingInputStream(display,
                                                                       config,
                                                                       "Downloading",

@@ -1,12 +1,12 @@
 package store.common.client;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Splitter;
 import com.google.common.net.HttpHeaders;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.client.Entity.json;
@@ -251,7 +251,7 @@ public class RepositoryClient {
     private static Optional<String> fileName(Response response) {
         String header = response.getHeaders().getFirst(CONTENT_DISPOSITION).toString();
         if (header.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         for (String param : split(header, ';')) {
             List<String> parts = split(param, '=');
@@ -259,7 +259,7 @@ public class RepositoryClient {
                 return Optional.of(parts.get(1));
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private static List<String> split(String text, char character) {

@@ -1,8 +1,8 @@
 package store.common.client;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import javax.ws.rs.core.MediaType;
 
 /**

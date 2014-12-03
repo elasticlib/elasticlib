@@ -1,10 +1,10 @@
 package store.client.util;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.OutputStream;
 import static java.nio.file.Files.newOutputStream;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * A file output stream that create or truncate file in a lazy way, only when first byte is written.
@@ -21,7 +21,7 @@ public class DefferedFileOutputStream extends OutputStream {
      */
     public DefferedFileOutputStream(Path path) {
         this.path = path;
-        outputStream = Optional.absent();
+        outputStream = Optional.empty();
     }
 
     @Override

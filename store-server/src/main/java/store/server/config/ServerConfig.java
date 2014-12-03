@@ -1,9 +1,9 @@
 package store.server.config;
 
-import com.google.common.base.Optional;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.config.Config;

@@ -1,6 +1,5 @@
 package store.server.service;
 
-import com.google.common.base.Optional;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.util.Collections;
@@ -9,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -276,7 +276,7 @@ public class ReplicationsService {
         Optional<Repository> source = repositoriesService.tryGetRepository(srcId);
         Optional<Repository> destination = repositoriesService.tryGetRepository(destId);
         if (!source.isPresent() || !destination.isPresent()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         DatabaseEntry curSeqKey = entry(srcId, destId);
         if (resetCursor) {

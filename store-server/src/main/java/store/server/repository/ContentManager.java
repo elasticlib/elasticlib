@@ -1,6 +1,5 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,6 +11,7 @@ import java.nio.file.Files;
 import static java.nio.file.Files.newOutputStream;
 import java.nio.file.Path;
 import java.util.Deque;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +43,7 @@ class ContentManager {
     private static final String STAGE = "stage";
     private static final String CONTENT = "content";
     private static final Logger LOG = LoggerFactory.getLogger(ContentManager.class);
+
     private final Path root;
     private final LockManager lockManager;
     private final Deque<InputStream> inputStreams;

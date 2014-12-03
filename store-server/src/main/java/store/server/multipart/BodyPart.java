@@ -1,7 +1,7 @@
 package store.server.multipart;
 
-import com.google.common.base.Optional;
 import java.io.InputStream;
+import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -21,7 +21,7 @@ public class BodyPart {
 
     BodyPart(MIMEPart mimePart, ContentDisposition contentDisposition) {
         this.mimePart = mimePart;
-        this.contentDisposition = Optional.fromNullable(contentDisposition);
+        this.contentDisposition = Optional.ofNullable(contentDisposition);
     }
 
     /**

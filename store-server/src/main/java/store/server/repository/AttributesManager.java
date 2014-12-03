@@ -1,6 +1,5 @@
 package store.server.repository;
 
-import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import static java.util.Objects.requireNonNull;
+import java.util.Optional;
 import store.common.exception.IOFailureException;
 import store.common.exception.InvalidRepositoryPathException;
 import store.common.hash.Guid;
@@ -25,6 +25,7 @@ class AttributesManager {
     private static final String ATTRIBUTES = "attributes.yml";
     private static final String NAME = "name";
     private static final String GUID = "guid";
+
     private final String name;
     private final Guid guid;
 

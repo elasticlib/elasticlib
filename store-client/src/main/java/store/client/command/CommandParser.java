@@ -1,10 +1,10 @@
 package store.client.command;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import static java.util.stream.Collectors.toCollection;

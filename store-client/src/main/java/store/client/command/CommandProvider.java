@@ -1,13 +1,13 @@
 package store.client.command;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import static java.util.Collections.sort;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 final class CommandProvider {
 
@@ -59,14 +59,14 @@ final class CommandProvider {
 
     public static Optional<Command> command(List<String> argList) {
         if (argList.isEmpty()) {
-            return Optional.absent();
+            return Optional.empty();
         }
         for (Command command : COMMANDS) {
             if (matches(command, argList)) {
                 return Optional.of(command);
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     private static boolean matches(Command command, List<String> argList) {

@@ -1,7 +1,6 @@
 package store.client.command;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.yaml.snakeyaml.error.YAMLException;
 import store.client.config.ClientConfig;
 import store.client.display.Display;

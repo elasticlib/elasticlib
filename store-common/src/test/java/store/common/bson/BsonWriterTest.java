@@ -1,13 +1,13 @@
 package store.common.bson;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
-import org.joda.time.Instant;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.array;
 import static store.common.bson.BsonType.ARRAY;
@@ -164,7 +164,7 @@ public class BsonWriterTest {
                                 0x64, 0x61, 0x74, 0x65, 0x00, // key
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0xDD, 0x41); // value
         byte[] actual = new BsonWriter()
-                .put("date", new Instant(1432897))
+                .put("date", Instant.ofEpochMilli(1432897))
                 .build();
 
         assertThat(actual).isEqualTo(expected);

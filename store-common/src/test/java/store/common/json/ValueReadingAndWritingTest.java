@@ -3,6 +3,7 @@ package store.common.json;
 import com.google.common.collect.ImmutableMap;
 import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
+import java.time.Instant;
 import static java.util.Arrays.asList;
 import java.util.EnumMap;
 import java.util.Map;
@@ -14,7 +15,6 @@ import javax.json.JsonNumber;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import static org.fest.assertions.api.Assertions.assertThat;
-import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import store.common.hash.Guid;
@@ -64,26 +64,26 @@ public class ValueReadingAndWritingTest {
         put(Value.of("test"),
             jsonString("test"));
 
-        put(Value.of(new Instant(1391878872)),
+        put(Value.of(Instant.ofEpochMilli(1391878872)),
             jsonNumber(1391878872));
 
         put(Value.of(ImmutableMap.of("num", VALUES.get(INTEGER),
                                      "text", VALUES.get(STRING),
                                      "bool", VALUES.get(BOOLEAN))),
             createObjectBuilder()
-                .add("num", JSON.get(INTEGER))
-                .add("text", JSON.get(STRING))
-                .add("bool", JSON.get(BOOLEAN))
-                .build());
+            .add("num", JSON.get(INTEGER))
+            .add("text", JSON.get(STRING))
+            .add("bool", JSON.get(BOOLEAN))
+            .build());
 
         put(Value.of(asList(VALUES.get(INTEGER),
                             VALUES.get(STRING),
                             VALUES.get(BOOLEAN))),
             createArrayBuilder()
-                .add(JSON.get(INTEGER))
-                .add(JSON.get(STRING))
-                .add(JSON.get(BOOLEAN))
-                .build());
+            .add(JSON.get(INTEGER))
+            .add(JSON.get(STRING))
+            .add(JSON.get(BOOLEAN))
+            .build());
     }
 
     private static JsonString jsonString(String value) {

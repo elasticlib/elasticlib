@@ -1,10 +1,10 @@
 package store.common.mappable;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.joda.time.Instant;
 import store.common.hash.Guid;
 import store.common.hash.Hash;
 import store.common.value.Value;

@@ -1,6 +1,6 @@
 package store.common.value;
 
-import org.joda.time.Instant;
+import java.time.Instant;
 
 final class DateValue extends Value {
 

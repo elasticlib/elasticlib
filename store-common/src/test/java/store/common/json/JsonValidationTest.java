@@ -2,12 +2,12 @@ package store.common.json;
 
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
+import java.time.Instant;
 import javax.json.Json;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
 import static org.fest.assertions.api.Assertions.assertThat;
-import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static store.common.TestUtil.array;
@@ -110,7 +110,7 @@ public class JsonValidationTest {
             {Value.of(10)},
             {Value.of(new BigDecimal("3.14"))},
             {Value.of("lorem ipsum")},
-            {Value.of(new Instant(123000))},
+            {Value.of(Instant.ofEpochMilli(123000))},
             {Value.of(new Hash("8d5f3c77e94a0cad3a32340d342135f43dbb7cbb"))},
             {Value.of(new Guid("8d5f3c77e94a0cad3a32340d342135f4"))},
             {Value.of(array(0xCA, 0xFE, 0xBA, 0xBE))}

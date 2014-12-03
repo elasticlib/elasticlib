@@ -1,13 +1,14 @@
 package store.client.display;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import static java.util.stream.Collectors.toList;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
 import store.common.mappable.Mappable;
 import store.common.value.Value;
 import store.common.value.ValueType;
@@ -24,10 +25,10 @@ final class MappableFormatting {
 
     static {
         FORMATTERS.put(ValueType.DATE, value -> {
-            return Value.of(DateTimeFormat
-                    .longDateTime()
-                    .withZone(DateTimeZone.getDefault())
-                    .print(value.asInstant()));
+            return Value.of(DateTimeFormatter
+                    .ofLocalizedDateTime(FormatStyle.LONG)
+                    .withZone(ZoneId.systemDefault())
+                    .format(value.asInstant()));
         });
         FORMATTERS.put(ValueType.HASH, value -> Value.of(value.asHash().asHexadecimalString()));
         FORMATTERS.put(ValueType.GUID, value -> Value.of(value.asGuid().asHexadecimalString()));

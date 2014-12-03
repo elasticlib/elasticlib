@@ -1,13 +1,13 @@
 package store.common.yaml;
 
 import static com.google.common.io.BaseEncoding.base64;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.yaml.snakeyaml.nodes.MappingNode;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.NodeTuple;
@@ -31,7 +31,7 @@ import static store.common.value.ValueType.STRING;
 final class ValueWriting {
 
     private static final Map<ValueType, Function<Value, Node>> WRITERS = new EnumMap<>(ValueType.class);
-    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 
     static {
         WRITERS.put(NULL, value -> newScalarNode(Tag.NULL, "null"));
@@ -43,8 +43,8 @@ final class ValueWriting {
         WRITERS.put(DECIMAL, value -> newScalarNode(Tag.FLOAT, value.asBigDecimal().toString()));
         WRITERS.put(STRING, value -> writeString(value.asString()));
         WRITERS.put(DATE, value -> {
-            DateTimeFormatter formatter = DateTimeFormat.forPattern(DATE_FORMAT);
-            return newScalarNode(Tag.TIMESTAMP, formatter.print(value.asInstant()));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT).withZone(ZoneOffset.UTC);
+            return newScalarNode(Tag.TIMESTAMP, formatter.format(value.asInstant()));
         });
         WRITERS.put(OBJECT, value -> {
             List<NodeTuple> tuples = value.asMap()

@@ -7,11 +7,11 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Sequence;
 import static java.lang.Math.min;
+import static java.time.Instant.now;
 import java.util.ArrayList;
 import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.SortedSet;
-import org.joda.time.Instant;
 import store.common.bson.BsonWriter;
 import store.common.hash.Hash;
 import store.common.model.Event;
@@ -44,7 +44,7 @@ class HistoryManager {
                 .withSeq(seq)
                 .withContent(content)
                 .withRevisions(revisions)
-                .withTimestamp(new Instant())
+                .withTimestamp(now())
                 .withOperation(operation)
                 .build();
 

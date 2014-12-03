@@ -1,6 +1,7 @@
 package store.server.resources;
 
 import java.net.URI;
+import static java.time.Instant.now;
 import java.util.ArrayList;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -8,7 +9,6 @@ import javax.ws.rs.core.Application;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.joda.time.Instant;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,11 +43,11 @@ public class RemotesResourceTest extends AbstractResourceTest {
         return new ResourceConfig()
                 .register(RemotesResource.class)
                 .register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(nodesService).to(NodesService.class);
-            }
-        });
+                    @Override
+                    protected void configure() {
+                        bind(nodesService).to(NodesService.class);
+                    }
+                });
     }
 
     /**
@@ -102,7 +102,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
     @Test
     public void listRemotesTest() {
         NodeDef def = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
-        List<NodeInfo> nodeInfos = singletonList(new NodeInfo(def, Instant.now()));
+        List<NodeInfo> nodeInfos = singletonList(new NodeInfo(def, now()));
 
         when(nodesService.listRemotes()).thenReturn(nodeInfos);
         try (Client client = newClient()) {

@@ -1,10 +1,10 @@
 package store.common.bson;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.writeType;
 import static store.common.bson.ValueWriting.writeKey;
 import static store.common.bson.ValueWriting.writeValue;

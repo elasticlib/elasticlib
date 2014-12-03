@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.Collections;
@@ -11,7 +12,6 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.TreeSet;
-import org.joda.time.Instant;
 import store.common.exception.IOFailureException;
 import store.common.exception.NodeException;
 import store.common.exception.UnexpectedFailureException;
@@ -133,10 +133,10 @@ public final class TestData {
         REVISION_TREE = new RevisionTreeBuilder()
                 .add(REVISIONS.get(0))
                 .add(new RevisionBuilder()
-                .withContent(new Hash(HASHES[0]))
-                .withLength(10)
-                .withParent(new Hash(REVS[0]))
-                .build(new Hash(REVS[1])))
+                        .withContent(new Hash(HASHES[0]))
+                        .withLength(10)
+                        .withParent(new Hash(REVS[0]))
+                        .build(new Hash(REVS[1])))
                 .build();
 
         CONTENT_INFO = new ContentInfo(ContentState.PRESENT,
@@ -148,7 +148,7 @@ public final class TestData {
                 .withSeq(0)
                 .withContent(new Hash(HASHES[0]))
                 .withRevisions(new TreeSet<>(singleton(new Hash(REVS[0]))))
-                .withTimestamp(new Instant(0))
+                .withTimestamp(Instant.EPOCH)
                 .withOperation(Operation.CREATE)
                 .build());
 
@@ -156,7 +156,7 @@ public final class TestData {
                 .withSeq(1)
                 .withContent(new Hash(HASHES[1]))
                 .withRevisions(new TreeSet<>(asList(new Hash(REVS[0]), new Hash(REVS[1]))))
-                .withTimestamp(new Instant(123000))
+                .withTimestamp(Instant.ofEpochMilli(123000))
                 .withOperation(Operation.DELETE)
                 .build());
 
@@ -213,11 +213,11 @@ public final class TestData {
                                   Collections.<URI>emptyList()));
 
         NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(0),
-                                    new Instant(0)));
+                                    Instant.EPOCH));
 
         NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(1),
                                     NODE_DEFS.get(1).getPublishUris().get(1),
-                                    new Instant(123000)));
+                                    Instant.ofEpochMilli(123000)));
 
         NODE_EXCEPTIONS.add(new UnknownRepositoryException());
         NODE_EXCEPTIONS.add(new UnexpectedFailureException(new NullPointerException()));

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import static java.util.stream.Collectors.toList;
-import org.joda.time.Instant;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.constructor.SafeConstructor.ConstructYamlTimestamp;
 import org.yaml.snakeyaml.nodes.MappingNode;
@@ -49,7 +48,7 @@ final class ValueReading {
         READERS.put(Tag.STR, node -> Value.of(value(node)));
         READERS.put(Tag.TIMESTAMP, node -> {
             Date date = (Date) new ConstructYamlTimestamp().construct(node);
-            return Value.of(new Instant(date));
+            return Value.of(date.toInstant());
         });
 
         Function<Node, Value> mapReader = node -> {

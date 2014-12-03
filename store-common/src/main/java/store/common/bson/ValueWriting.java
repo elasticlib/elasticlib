@@ -37,7 +37,7 @@ final class ValueWriting {
         WRITERS.put(INTEGER, value -> writeLong(value.asLong()));
         WRITERS.put(DECIMAL, value -> writeString(value.toString()));
         WRITERS.put(STRING, value -> writeString(value.asString()));
-        WRITERS.put(DATE, value -> writeLong(value.asInstant().getMillis()));
+        WRITERS.put(DATE, value -> writeLong(value.asInstant().toEpochMilli()));
         WRITERS.put(OBJECT, value -> {
             ByteArrayBuilder builder = new ByteArrayBuilder();
             value.asMap().entrySet().stream().forEach(entry -> {

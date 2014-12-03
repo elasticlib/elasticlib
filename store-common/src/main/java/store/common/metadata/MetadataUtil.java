@@ -15,7 +15,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -154,7 +153,7 @@ public final class MetadataUtil {
             }
             Date date = metadata.getDate(tikaKey);
             if (date != null) {
-                return Value.of(new Instant(date));
+                return Value.of(date.toInstant());
             }
             return Value.of(raw);
         }

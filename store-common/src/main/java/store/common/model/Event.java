@@ -1,12 +1,12 @@
 package store.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import java.time.Instant;
 import static java.util.Collections.unmodifiableSortedSet;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
 import java.util.SortedSet;
-import org.joda.time.Instant;
 import store.common.hash.Hash;
 import store.common.mappable.MapBuilder;
 import store.common.mappable.Mappable;

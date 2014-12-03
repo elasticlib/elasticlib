@@ -2,9 +2,9 @@ package store.server.service;
 
 import com.google.common.base.Optional;
 import java.net.URI;
+import static java.time.Instant.now;
 import java.util.function.Predicate;
 import javax.ws.rs.ProcessingException;
-import static org.joda.time.Instant.now;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import store.common.client.Client;

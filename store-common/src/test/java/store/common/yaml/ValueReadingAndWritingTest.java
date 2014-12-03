@@ -2,11 +2,11 @@ package store.common.yaml;
 
 import static com.google.common.io.BaseEncoding.base64;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 import static org.fest.assertions.api.Assertions.assertThat;
-import org.joda.time.Instant;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.yaml.snakeyaml.nodes.ScalarNode;
@@ -56,8 +56,8 @@ public class ValueReadingAndWritingTest {
         put(Value.of(text),
             newScalarNode(Tag.STR, text));
 
-        put(Value.of(new Instant(1391878000)),
-            newScalarNode(Tag.TIMESTAMP, "1970-01-17 02:37:58"));
+        put(Value.of(Instant.ofEpochMilli(1391878000)),
+            newScalarNode(Tag.TIMESTAMP, "1970-01-17T02:37:58.000Z"));
     }
 
     private static ScalarNode newScalarNode(Tag tag, String value) {

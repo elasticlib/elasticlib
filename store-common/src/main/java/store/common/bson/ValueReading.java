@@ -1,13 +1,13 @@
 package store.common.bson;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import org.joda.time.Instant;
 import static store.common.bson.BinaryConstants.FALSE;
 import static store.common.bson.BinaryConstants.TRUE;
 import static store.common.bson.BinaryConstants.readType;
@@ -53,7 +53,7 @@ final class ValueReading {
         READERS.put(INTEGER, reader -> Value.of(reader.readLong()));
         READERS.put(DECIMAL, reader -> Value.of(new BigDecimal(reader.readString(reader.readInt()))));
         READERS.put(STRING, reader -> Value.of(reader.readString(reader.readInt())));
-        READERS.put(DATE, reader -> Value.of(new Instant(reader.readLong())));
+        READERS.put(DATE, reader -> Value.of(Instant.ofEpochMilli(reader.readLong())));
         READERS.put(OBJECT, reader -> Value.of(readMap(reader, reader.readInt())));
         READERS.put(ARRAY, reader -> Value.of(readList(reader, reader.readInt())));
     }

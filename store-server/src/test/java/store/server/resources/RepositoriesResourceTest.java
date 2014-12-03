@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import static java.time.Instant.now;
 import java.util.Arrays;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -13,7 +14,6 @@ import javax.ws.rs.core.MediaType;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.joda.time.Instant;
 import org.mockito.ArgumentMatcher;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -396,11 +396,10 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void historyTest() {
         boolean asc = true;
-        List<Event> history = singletonList(
-                new EventBuilder()
+        List<Event> history = singletonList(new EventBuilder()
                 .withOperation(Operation.CREATE)
                 .withSeq(1)
-                .withTimestamp(Instant.now())
+                .withTimestamp(now())
                 .withContent(hash)
                 .withRevisions(LOREM_IPSUM.getHead())
                 .build());

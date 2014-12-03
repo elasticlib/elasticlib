@@ -40,7 +40,7 @@ final class ValueWriting {
         WRITERS.put(INTEGER, (value, schema) -> jsonNumber(value.asLong()));
         WRITERS.put(DECIMAL, (value, schema) -> jsonNumber(value.asBigDecimal()));
         WRITERS.put(STRING, (value, schema) -> jsonString(value.asString()));
-        WRITERS.put(DATE, (value, schema) -> jsonNumber(value.asInstant().getMillis()));
+        WRITERS.put(DATE, (value, schema) -> jsonNumber(value.asInstant().toEpochMilli()));
         WRITERS.put(OBJECT, (value, schema) -> writeMap(value.asMap(), schema).build());
         WRITERS.put(ARRAY, (value, schema) -> writeList(value.asList(), schema).build());
     }

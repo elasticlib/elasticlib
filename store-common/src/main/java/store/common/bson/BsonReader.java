@@ -1,12 +1,12 @@
 package store.common.bson;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import static java.util.Collections.unmodifiableMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import org.joda.time.Instant;
 import static store.common.bson.ValueReading.readMap;
 import store.common.hash.Guid;
 import store.common.hash.Hash;

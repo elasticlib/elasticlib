@@ -228,7 +228,7 @@ class Index {
                 return;
 
             case DATE:
-                String formatted = timeToString(value.asInstant().getMillis(), Resolution.SECOND);
+                String formatted = timeToString(value.asInstant().toEpochMilli(), Resolution.SECOND);
                 document.add(new TextField(key, formatted, Store.NO));
                 return;
 

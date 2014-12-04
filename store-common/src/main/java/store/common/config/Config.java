@@ -60,7 +60,7 @@ public class Config {
         Map<String, Value> baseMap = base.asMap();
         Map<String, Value> extensionMap = extension.asMap();
         Map<String, Value> result = new LinkedHashMap<>();
-        baseMap.entrySet().stream().forEach(entry -> {
+        baseMap.entrySet().forEach(entry -> {
             if (extensionMap.containsKey(entry.getKey())) {
                 result.put(entry.getKey(), extend(entry.getValue(), extensionMap.get(entry.getKey())));
             } else {
@@ -107,7 +107,7 @@ public class Config {
             return Collections.emptyList();
         }
         List<String> keys = new ArrayList<>();
-        node.asMap().entrySet().stream().forEach(entry -> {
+        node.asMap().entrySet().forEach(entry -> {
             String key = path.isEmpty() ? entry.getKey() : key(path, entry.getKey());
             List<String> subKeys = listKeys(key, entry.getValue());
             if (subKeys.isEmpty()) {
@@ -157,7 +157,7 @@ public class Config {
 
     private static Map<String, Value> flatMap(String key, Map<String, Value> map) {
         Map<String, Value> flatMap = new LinkedHashMap<>();
-        map.entrySet().stream().forEach(entry -> {
+        map.entrySet().forEach(entry -> {
             String flatKey = key(key, entry.getKey());
             Value value = entry.getValue();
             if (value.type() != ValueType.OBJECT) {

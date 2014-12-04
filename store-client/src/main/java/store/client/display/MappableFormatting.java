@@ -34,7 +34,7 @@ final class MappableFormatting {
         FORMATTERS.put(ValueType.GUID, value -> Value.of(value.asGuid().asHexadecimalString()));
         FORMATTERS.put(ValueType.OBJECT, value -> {
             Map<String, Value> map = new LinkedHashMap<>();
-            value.asMap().entrySet().stream().forEach(entry -> {
+            value.asMap().entrySet().forEach(entry -> {
                 map.put(entry.getKey(), formatValue(entry.getValue()));
             });
             return Value.of(map);
@@ -57,7 +57,7 @@ final class MappableFormatting {
 
     public static Value format(Mappable mappable) {
         Map<String, Value> map = new LinkedHashMap<>();
-        mappable.toMap().entrySet().stream().forEach(entry -> {
+        mappable.toMap().entrySet().forEach(entry -> {
             formatAndPut(map, entry.getKey(), entry.getValue());
         });
         return Value.of(map);

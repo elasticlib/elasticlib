@@ -49,7 +49,7 @@ final class ListSchema extends Schema {
                     .build();
         }
         JsonArrayBuilder itemsBuilder = createArrayBuilder();
-        items.stream().forEach(item -> itemsBuilder.add(item.write()));
+        items.forEach(item -> itemsBuilder.add(item.write()));
         return builder
                 .add(ITEMS, itemsBuilder)
                 .build();

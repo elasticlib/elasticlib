@@ -78,7 +78,7 @@ final class ValueWriting {
 
     public static JsonObjectBuilder writeMap(Map<String, Value> map, Schema schema) {
         JsonObjectBuilder json = createObjectBuilder();
-        map.entrySet().stream().forEach(entry -> {
+        map.entrySet().forEach(entry -> {
             String key = entry.getKey();
             Value value = entry.getValue();
             Schema subSchema = schema.properties().get(key);
@@ -97,7 +97,7 @@ final class ValueWriting {
         JsonArrayBuilder array = createArrayBuilder();
         List<Schema> itemsSchemas = schema.items();
         if (itemsSchemas.size() == 1) {
-            list.stream().forEach(value -> array.add(writeValue(value, itemsSchemas.get(0))));
+            list.forEach(value -> array.add(writeValue(value, itemsSchemas.get(0))));
 
         } else {
             for (int i = 0; i < list.size(); i++) {

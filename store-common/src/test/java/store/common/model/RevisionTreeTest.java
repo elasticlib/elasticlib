@@ -224,7 +224,7 @@ public class RevisionTreeTest {
     @Test(dataProvider = "listTestDataProvider")
     public void listTest(RevisionTree tree) {
         List<Revision> list = tree.list();
-        list.stream().forEach(rev -> {
+        list.forEach(rev -> {
             rev.getParents()
                     .stream()
                     .map(tree::get)

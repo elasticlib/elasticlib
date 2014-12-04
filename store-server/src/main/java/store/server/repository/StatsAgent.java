@@ -72,7 +72,7 @@ class StatsAgent extends Agent {
     private static Map<String, Long> reduce(Map<String, Long> base, Map<String, Long> diff, boolean add) {
         Map<String, Long> counts = new TreeMap<>();
         counts.putAll(base);
-        diff.entrySet().stream().forEach(entry -> {
+        diff.entrySet().forEach(entry -> {
             String key = entry.getKey();
             long baseValue = counts.containsKey(key) ? counts.get(key) : 0;
             long diffValue = (add ? 1 : -1) * entry.getValue();

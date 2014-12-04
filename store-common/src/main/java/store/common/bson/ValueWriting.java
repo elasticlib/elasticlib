@@ -40,7 +40,7 @@ final class ValueWriting {
         WRITERS.put(DATE, value -> writeLong(value.asInstant().toEpochMilli()));
         WRITERS.put(OBJECT, value -> {
             ByteArrayBuilder builder = new ByteArrayBuilder();
-            value.asMap().entrySet().stream().forEach(entry -> {
+            value.asMap().entrySet().forEach(entry -> {
                 builder.append(writeType(entry.getValue().type()))
                         .append(writeKey(entry.getKey()))
                         .append(writeValue(entry.getValue()));
@@ -49,7 +49,7 @@ final class ValueWriting {
         });
         WRITERS.put(ARRAY, value -> {
             ByteArrayBuilder builder = new ByteArrayBuilder();
-            value.asList().stream().forEach(item -> {
+            value.asList().forEach(item -> {
                 builder.append(writeType(item.type()))
                         .append(writeValue(item));
             });

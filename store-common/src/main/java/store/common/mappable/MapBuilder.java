@@ -153,7 +153,7 @@ public class MapBuilder {
      * @return This builder.
      */
     public MapBuilder putAll(Map<String, Value> entries) {
-        entries.entrySet().stream().forEach(entry -> map.put(entry.getKey(), entry.getValue()));
+        entries.entrySet().forEach(entry -> map.put(entry.getKey(), entry.getValue()));
         return this;
     }
 

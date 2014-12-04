@@ -71,7 +71,7 @@ public class MessageManager {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void post(Object message) {
         LOG.info("Receiving [{}]", format(message.getClass()));
-        actions(message.getClass()).stream().forEach((Action action) -> {
+        actions(message.getClass()).forEach((Action action) -> {
             taskManager.execute(action.description(), () -> action.apply(message));
         });
     }

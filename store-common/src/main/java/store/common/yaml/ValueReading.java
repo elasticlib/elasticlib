@@ -53,7 +53,7 @@ final class ValueReading {
 
         Function<Node, Value> mapReader = node -> {
             Map<String, Value> map = new LinkedHashMap<>();
-            MappingNode.class.cast(node).getValue().stream().forEach(tuple -> {
+            MappingNode.class.cast(node).getValue().forEach(tuple -> {
                 String key = value(tuple.getKeyNode());
                 Value value = read(tuple.getValueNode());
                 map.put(key, value);

@@ -186,7 +186,7 @@ class Index {
     private static Document newDocument(RevisionTree revisionTree) {
         Document document = new Document();
         document.add(new TextField(CONTENT, revisionTree.getContent().asHexadecimalString(), Store.YES));
-        revisionTree.getHead().stream().forEach(rev -> {
+        revisionTree.getHead().forEach(rev -> {
             document.add(new TextField(REVISION, rev.asHexadecimalString(), Store.YES));
         });
         document.add(new LongField(LENGTH, revisionTree.getLength(), Store.NO));
@@ -194,7 +194,7 @@ class Index {
                 .asMap()
                 .entrySet()
                 .stream()
-                .forEach(entry -> entry.getValue().stream().forEach(value -> add(document, entry.getKey(), value)));
+                .forEach(entry -> entry.getValue().forEach(value -> add(document, entry.getKey(), value)));
 
         return document;
     }
@@ -237,13 +237,11 @@ class Index {
                 return;
 
             case ARRAY:
-                value.asList().stream().forEach(item -> add(document, key, item));
+                value.asList().forEach(item -> add(document, key, item));
                 return;
 
             case OBJECT:
-                value.asMap().entrySet().stream().forEach(entry -> {
-                    add(document, key + "." + entry.getKey(), entry.getValue());
-                });
+                value.asMap().entrySet().forEach(entry -> add(document, key + "." + entry.getKey(), entry.getValue()));
                 return;
 
             case NULL:

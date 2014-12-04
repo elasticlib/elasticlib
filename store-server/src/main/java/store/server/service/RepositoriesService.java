@@ -75,7 +75,7 @@ public class RepositoriesService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                repositoriesDao.listRepositoryDefs().stream().forEach(def -> {
+                repositoriesDao.listRepositoryDefs().forEach(def -> {
                     try {
                         openRepository(def);
 
@@ -103,7 +103,7 @@ public class RepositoriesService {
     public void stop() {
         lock.writeLock().lock();
         try {
-            repositories.values().stream().forEach(Repository::close);
+            repositories.values().forEach(Repository::close);
             repositories.clear();
 
         } finally {

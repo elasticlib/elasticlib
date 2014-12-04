@@ -382,8 +382,8 @@ public class ReplicationsService {
             lock.writeLock().lock();
             try {
                 Guid guid = message.getRepositoryGuid();
-                destinations(guid).stream().forEach(destination -> stopReplication(guid, destination));
-                sources(guid).stream().forEach(source -> stopReplication(source, guid));
+                destinations(guid).forEach(destination -> stopReplication(guid, destination));
+                sources(guid).forEach(source -> stopReplication(source, guid));
 
             } finally {
                 lock.writeLock().unlock();
@@ -406,8 +406,8 @@ public class ReplicationsService {
                 storageManager.inTransaction(() -> {
                     replicationsDao.deleteAllReplicationDefs(guid);
                 });
-                destinations(guid).stream().forEach(destination -> deleteReplication(guid, destination));
-                sources(guid).stream().forEach(source -> deleteReplication(source, guid));
+                destinations(guid).forEach(destination -> deleteReplication(guid, destination));
+                sources(guid).forEach(source -> deleteReplication(source, guid));
 
             } finally {
                 lock.writeLock().unlock();

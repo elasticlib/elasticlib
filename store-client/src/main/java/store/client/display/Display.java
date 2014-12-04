@@ -109,7 +109,7 @@ public class Display {
      */
     public void printTree(RevisionTree tree) {
         TreePrinter printer = new TreePrinter(2, new RevisionFormatter(config.isDisplayPretty()));
-        tree.list().stream().forEach(printer::add);
+        tree.list().forEach(printer::add);
         println(printer.print());
     }
 

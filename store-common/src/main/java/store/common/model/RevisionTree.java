@@ -296,7 +296,7 @@ public class RevisionTree implements Mappable {
     private Set<Revision> latestCommonAncestors(Revision left, Revision right) {
         Set<Revision> commonAncestors = intersection(ancestors(left), ancestors(right));
         SetMultimap<Revision, Revision> dependencies = HashMultimap.create();
-        commonAncestors.stream().forEach(info -> {
+        commonAncestors.forEach(info -> {
             dependencies.putAll(info, intersection(commonAncestors, ancestors(info)));
         });
         return difference(commonAncestors, new HashSet<>(dependencies.values()));
@@ -402,7 +402,7 @@ public class RevisionTree implements Mappable {
          * @return this
          */
         public RevisionTreeBuilder addAll(Collection<Revision> revisions) {
-            revisions.stream().forEach(rev -> nodes.put(rev.getRevision(), rev));
+            revisions.forEach(rev -> nodes.put(rev.getRevision(), rev));
             return this;
         }
 
@@ -442,7 +442,7 @@ public class RevisionTree implements Mappable {
          * @return A topologically ordered list.
          */
         public List<Revision> sort() {
-            head.stream().forEach(seed -> visit(unsorted.get(seed)));
+            head.forEach(seed -> visit(unsorted.get(seed)));
 
             // Nodes are actually sorted in reverse order at this point.
             Collections.reverse(sorted);
@@ -523,7 +523,7 @@ public class RevisionTree implements Mappable {
          */
         public Map<String, Value> apply(Map<String, Value> source) {
             Map<String, Value> result = new TreeMap<>(source);
-            diff.entrySet().stream().forEach(entry -> {
+            diff.entrySet().forEach(entry -> {
                 String key = entry.getKey();
                 Value value = entry.getValue();
                 if (value.type() == ValueType.NULL) {

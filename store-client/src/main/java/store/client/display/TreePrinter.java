@@ -72,7 +72,7 @@ class TreePrinter {
         previousBranches.clear();
         previousBranches.addAll(nextBranches);
         nextBranches.clear();
-        previousBranches.stream().forEach(rev -> {
+        previousBranches.forEach(rev -> {
             if (rev.equals(current.getRevision())) {
                 if (current.getParents().isEmpty()) {
                     nextBranches.add(null);
@@ -180,7 +180,7 @@ class TreePrinter {
     }
 
     private void printPaddingLine(int width) {
-        nextBranches.stream().forEach(rev -> {
+        nextBranches.forEach(rev -> {
             append(rev != null ? STRAIGHT_EDGE : DOUBLE_SPACE);
         });
         pad(SPACE, width - cursor);
@@ -227,7 +227,7 @@ class TreePrinter {
         printStraightEdges(grid);
         printSkewEdges(grid);
 
-        grid.render().stream().forEach(line -> {
+        grid.render().forEach(line -> {
             append(line);
             newLine();
         });

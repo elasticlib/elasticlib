@@ -59,7 +59,7 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
      */
     @BeforeMethod
     public final void resetMocks() {
-        mocks.stream().forEach(Mockito::reset);
+        mocks.forEach(Mockito::reset);
     }
 
     /**

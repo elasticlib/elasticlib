@@ -4,16 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>store</groupId>
-    <artifactId>store</artifactId>
+    <groupId>org.elasticlib</groupId>
+    <artifactId>elasticlib</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Store</name>
+    <name>ElasticLib</name>
 
     <modules>
-        <module>store-common</module>
-        <module>store-server</module>
-        <module>store-client</module>
+        <module>elasticlib-common</module>
+        <module>elasticlib-node</module>
+        <module>elasticlib-console</module>
     </modules>
 
     <properties>
@@ -216,8 +216,8 @@
             </dependency>
 
             <dependency>
-                <groupId>store</groupId>
-                <artifactId>store-common</artifactId>
+                <groupId>org.elasticlib</groupId>
+                <artifactId>elasticlib-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

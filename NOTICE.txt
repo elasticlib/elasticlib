@@ -1,0 +1,6 @@
+
+ElasticLib
+Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).

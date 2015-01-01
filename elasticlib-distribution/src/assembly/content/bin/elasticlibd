@@ -1,0 +1,7 @@
+#!/bin/sh
+
+PRG=`readlink -f "$0"`
+BIN=`dirname "$PRG"`
+ROOT=`dirname "$BIN"`
+
+java -classpath "$ROOT"/node/resources:"$ROOT"/node/*:"$ROOT"/lib/* org.elasticlib.node.App ${1:-"$ROOT"/node/home}

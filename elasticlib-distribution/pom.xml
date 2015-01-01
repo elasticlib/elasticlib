@@ -25,18 +25,43 @@ limitations under the License.
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>elasticlib-console</artifactId>
-    <packaging>jar</packaging>
-    <name>ElasticLib Console</name>
+    <artifactId>elasticlib-distribution</artifactId>
+    <packaging>pom</packaging>
+    <name>ElasticLib Distribution</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>elasticlib</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/assembly/assembly.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
+            <groupId>org.elasticlib</groupId>
+            <artifactId>elasticlib-node</artifactId>
         </dependency>
         <dependency>
             <groupId>org.elasticlib</groupId>
-            <artifactId>elasticlib-common</artifactId>
+            <artifactId>elasticlib-console</artifactId>
         </dependency>
     </dependencies>
 </project>

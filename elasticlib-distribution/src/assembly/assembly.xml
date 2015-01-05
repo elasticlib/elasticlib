@@ -32,6 +32,13 @@ limitations under the License.
             </includes>
         </fileSet>
         <fileSet>
+            <directory>${basedir}/target/generated-sources/license</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>*.txt</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>${basedir}/src/assembly/content/bin</directory>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>

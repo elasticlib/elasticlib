@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,11 +87,19 @@ public class Node {
 
     private static String startingMessage(Path home, Config config) {
         return new StringBuilder()
+                .append(about()).append(lineSeparator())
                 .append("Starting...").append(lineSeparator())
                 .append("Using home: ").append(home).append(lineSeparator())
                 .append("Using config:").append(lineSeparator())
                 .append(config)
                 .toString();
+    }
+
+    private static String about() {
+        Package pkg = Node.class.getPackage();
+        String title = pkg.getImplementationTitle() == null ? "" : pkg.getImplementationTitle();
+        String version = pkg.getImplementationVersion() == null ? "" : pkg.getImplementationVersion();
+        return String.join("", title, " ", version);
     }
 
     private AbstractBinder bindings() {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@ package org.elasticlib.console;
 
 import java.io.IOException;
 import static java.lang.Runtime.getRuntime;
+import static java.lang.System.lineSeparator;
 import javax.ws.rs.ProcessingException;
 import jline.console.ConsoleReader;
 import org.elasticlib.common.exception.NodeException;
@@ -60,7 +61,7 @@ public final class App {
         try (Session session = new Session(display, config)) {
             try {
                 config.init();
-                display.println("Using config:" + System.lineSeparator() + config.print());
+                display.println(about());
                 session.init();
 
             } catch (NodeException e) {
@@ -88,5 +89,12 @@ public final class App {
         } finally {
             consoleReader.shutdown();
         }
+    }
+
+    private static String about() {
+        Package pkg = App.class.getPackage();
+        String title = pkg.getImplementationTitle() == null ? "" : pkg.getImplementationTitle();
+        String version = pkg.getImplementationVersion() == null ? "" : pkg.getImplementationVersion();
+        return String.join("", title, " ", version, lineSeparator());
     }
 }

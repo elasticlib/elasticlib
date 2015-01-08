@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,7 @@ final class CommandProvider {
                                                                          new Tree(),
                                                                          new Find(),
                                                                          new History(),
+                                                                         new About(),
                                                                          new Cd(),
                                                                          new Pwd(),
                                                                          new Quit(),

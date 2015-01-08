@@ -28,6 +28,7 @@ import org.elasticlib.console.display.Display;
 import org.elasticlib.console.exception.QuitException;
 import org.elasticlib.console.exception.RequestFailedException;
 import org.elasticlib.console.http.Session;
+import static org.elasticlib.console.util.Directories.workingDirectory;
 import org.elasticlib.console.util.EscapingCompletionHandler;
 
 /**
@@ -79,9 +80,11 @@ public final class App {
             consoleReader.setCompletionHandler(new EscapingCompletionHandler());
             consoleReader.setExpandEvents(false);
 
+            display.setPrompt(session.getConnectionString(), workingDirectory());
             String buffer = consoleReader.readLine();
             while (buffer != null) {
                 parser.execute(buffer);
+                display.setPrompt(session.getConnectionString(), workingDirectory());
                 buffer = consoleReader.readLine();
             }
         } catch (QuitException e) {

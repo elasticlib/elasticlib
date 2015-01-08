@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.elasticlib.console.http;
 
-import com.google.common.base.Joiner;
 import java.io.Closeable;
 import java.net.URI;
 import org.elasticlib.common.client.Client;
@@ -33,12 +32,12 @@ public class Session implements Closeable {
 
     private static final String NOT_CONNECTED = "Not connected";
     private static final String NO_REPOSITORY = "No repository selected";
-    private final Display display;
+
     private final ConsoleConfig config;
     private final PrintingHandler printingHandler;
     private Client client;
     private String node;
-    private Guid repository;
+    private RepositoryDef repositoryDef;
 
     /**
      * Constructor.
@@ -47,7 +46,6 @@ public class Session implements Closeable {
      * @param config Config.
      */
     public Session(Display display, ConsoleConfig config) {
-        this.display = display;
         this.config = config;
         printingHandler = new PrintingHandler(display, config);
     }
@@ -77,7 +75,6 @@ public class Session implements Closeable {
         printingHandler.setEnabled(true);
         try {
             node = client.node().getDef().getName();
-            display.setPrompt(node);
 
         } finally {
             printingHandler.setEnabled(false);
@@ -103,20 +100,19 @@ public class Session implements Closeable {
     /**
      * Selects a repository to use.
      *
-     * @param repositoryName Repository name.
+     * @param repository Repository name or encoded GUID.
      */
-    public void use(String repositoryName) {
+    public void use(String repository) {
         if (client == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
         printingHandler.setEnabled(true);
         try {
             RepositoryDef def = client.repositories()
-                    .getInfo(repositoryName)
+                    .getInfo(repository)
                     .getDef();
 
-            repository = def.getGuid();
-            display.setPrompt(Joiner.on('/').join(node, def.getName()));
+            repositoryDef = def;
         } finally {
             printingHandler.setEnabled(false);
         }
@@ -126,13 +122,8 @@ public class Session implements Closeable {
      * Stops using current repository, if any.
      */
     public void leave() {
-        if (repository != null) {
-            repository = null;
-            if (node == null) {
-                display.resetPrompt();
-            } else {
-                display.setPrompt(node);
-            }
+        if (repositoryDef != null) {
+            repositoryDef = null;
         }
     }
 
@@ -142,7 +133,7 @@ public class Session implements Closeable {
      * @param repositoryGuid Repository GUID.
      */
     public void leave(Guid repositoryGuid) {
-        if (repository != null && repository.equals(repositoryGuid)) {
+        if (repositoryDef != null && repositoryDef.getGuid().equals(repositoryGuid)) {
             leave();
         }
     }
@@ -168,17 +159,32 @@ public class Session implements Closeable {
         if (client == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
-        if (repository == null) {
+        if (repositoryDef == null) {
             throw new RequestFailedException(NO_REPOSITORY);
         }
-        return client.repositories().get(repository);
+        return client.repositories().get(repositoryDef.getGuid());
+    }
+
+    /**
+     * Provides a string which describes the connection to the current node and repository, if any. Returns an empty
+     * string if there is currently no connection.
+     *
+     * @return A string describing the current connection.
+     */
+    public String getConnectionString() {
+        if (node == null) {
+            return "";
+        }
+        if (repositoryDef == null) {
+            return node;
+        }
+        return String.join("/", node, repositoryDef.getName());
     }
 
     @Override
     public void close() {
         node = null;
-        repository = null;
-        display.resetPrompt();
+        repositoryDef = null;
         if (client != null) {
             client.close();
             client = null;

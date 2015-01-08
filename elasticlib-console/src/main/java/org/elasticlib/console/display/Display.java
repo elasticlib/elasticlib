@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,12 @@
  */
 package org.elasticlib.console.display;
 
-import static com.google.common.base.Joiner.on;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -42,7 +42,9 @@ import org.elasticlib.console.exception.RequestFailedException;
  */
 public class Display {
 
+    private static final String SEPARATOR = ":";
     private static final String PROMPT = "$ ";
+
     private final ConsoleReader consoleReader;
     private final ConsoleConfig config;
     private final PrintWriter out;
@@ -159,20 +161,28 @@ public class Display {
     /**
      * Set prompt to display.
      *
-     * @param prompt Prompt to display (excluding actual prompt-separator).
+     * @param connectionString Current connection string.
+     * @param workingDirectory Current working directory.
      */
-    public void setPrompt(String prompt) {
-        if (config.isDisplayColor()) {
-            consoleReader.setPrompt(on("").join(Color.BOLD_GREEN, prompt, Color.BOLD_BLUE, PROMPT, Color.RESET));
-        } else {
-            consoleReader.setPrompt(prompt + PROMPT);
-        }
+    public void setPrompt(String connectionString, Path workingDirectory) {
+        consoleReader.setPrompt(prompt(connectionString, workingDirectory));
     }
 
-    /**
-     * Clear displayed prompt (excluding separator).
-     */
-    public void resetPrompt() {
-        setPrompt("");
+    private String prompt(String connectionString, Path workingDirectory) {
+        StringBuilder builder = new StringBuilder();
+        if (!connectionString.isEmpty()) {
+            builder.append(part(Color.BOLD_GREEN, connectionString))
+                    .append(part(Color.RESET, SEPARATOR));
+        }
+        return builder.append(part(Color.BOLD_BLUE, workingDirectory.toString()))
+                .append(part(Color.RESET, PROMPT))
+                .toString();
+    }
+
+    private String part(Color color, String value) {
+        if (config.isDisplayColor()) {
+            return color + value;
+        }
+        return value;
     }
 }

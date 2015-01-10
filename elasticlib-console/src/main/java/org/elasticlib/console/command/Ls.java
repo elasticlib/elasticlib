@@ -101,7 +101,7 @@ class Ls extends AbstractCommand {
         if (posixFileAttributesOpt.isPresent()) {
             PosixFileAttributes posixAttributes = posixFileAttributesOpt.get();
 
-            values.add(Cell.rightPadded((fileType(basicAttributes) + permissions(posixAttributes))));
+            values.add(Cell.rightPadded(fileType(basicAttributes) + permissions(posixAttributes)));
             values.add(Cell.rightPadded(posixAttributes.owner().getName()));
             values.add(Cell.rightPadded(posixAttributes.group().getName()));
         }

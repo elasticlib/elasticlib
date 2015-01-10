@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.elasticlib.console.display;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -24,14 +23,20 @@ import java.util.Iterator;
 /**
  * Byte length formatting for humans.
  */
-final class ByteLengthFormatter {
+public final class ByteLengthFormatter {
 
     private ByteLengthFormatter() {
     }
 
+    /**
+     * Formats supplied bytes length for humans.
+     *
+     * @param length An amount of bytes.
+     * @return A human-readable representation of this amount.
+     */
     public static String format(long length) {
         Unit unit = Unit.of(length);
-        String value = format(BigDecimal.valueOf(length).divide(BigDecimal.valueOf(unit.prefix)));
+        String value = format(length, unit);
 
         StringBuilder builder = new StringBuilder();
         builder.append(value)
@@ -48,14 +53,36 @@ final class ByteLengthFormatter {
         return builder.toString();
     }
 
-    private static String format(BigDecimal value) {
-        Iterator<String> parts = Splitter.on('.').split(value.toPlainString()).iterator();
+    /**
+     * Formats supplied bytes length for humans, with a compact style.
+     *
+     * @param length An amount of bytes.
+     * @return A human-readable representation of this amount.
+     */
+    public static String formatShort(long length) {
+        Unit unit = Unit.of(length);
+        String value = format(length, unit);
+
+        return new StringBuilder()
+                .append(value)
+                .append(unit.toShortString())
+                .toString();
+    }
+
+    private static String format(long length, Unit unit) {
+        BigDecimal value = BigDecimal.valueOf(length)
+                .divide(BigDecimal.valueOf(unit.prefix));
+
+        Iterator<String> parts = Splitter.on('.')
+                .split(value.toPlainString())
+                .iterator();
+
         String integerPart = parts.next();
         if (!parts.hasNext()) {
             return integerPart;
         }
         String fractionalPart = parts.next().substring(0, 1);
-        return Joiner.on(',').join(integerPart, fractionalPart);
+        return String.join(",", integerPart, fractionalPart);
     }
 
     private static enum Unit {
@@ -86,6 +113,13 @@ final class ByteLengthFormatter {
                 return "octets";
             }
             return name().charAt(0) + name().substring(1).toLowerCase();
+        }
+
+        public String toShortString() {
+            if (this == O) {
+                return "";
+            }
+            return name().substring(0, 1);
         }
     }
 }

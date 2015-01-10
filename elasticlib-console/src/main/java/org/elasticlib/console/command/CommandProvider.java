@@ -61,6 +61,7 @@ final class CommandProvider {
                                                                          new History(),
                                                                          new About(),
                                                                          new Cd(),
+                                                                         new Ls(),
                                                                          new Pwd(),
                                                                          new Quit(),
                                                                          new Help(),

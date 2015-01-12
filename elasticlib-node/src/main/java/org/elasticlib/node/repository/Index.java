@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,7 @@ class Index {
     }
 
     private IndexWriter newIndexWriter() throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_2, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_3, analyzer);
         return new IndexWriter(directory, config);
     }
 

@@ -102,53 +102,6 @@ limitations under the License.
                     </archive>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>1.8</version>
-                <configuration>
-                    <useMissingFile>true</useMissingFile>
-                    <licenseMerges>
-                        <licenseMerge>
-                            Apache License, Version 2.0
-                            |Apache License Version 2.0
-                            |Apache License 2.0
-                            |Apache License
-                            |Apache 2
-                            |The Apache Software License, Version 2.0
-                            |The Apache License, Version 2.0
-                        </licenseMerge>
-                        <licenseMerge>
-                            BSD License
-                            |BSD
-                            |BSD style
-                            |The BSD License
-                        </licenseMerge>
-                        <licenseMerge>
-                            GNU Lesser General Public License
-                            | GNU LESSER GENERAL PUBLIC LICENSE
-                        </licenseMerge>
-                        <licenseMerge>
-                            Mozilla Public License 1.1
-                            |Mozilla Public License 1.1 (MPL 1.1)
-                            |MPL 1.1
-                        </licenseMerge>
-                        <licenseMerge>MIT License | The MIT License</licenseMerge>
-                        <licenseMerge>Common Public License Version 1.0 | CDDL, v1.0</licenseMerge>
-                        <licenseMerge>Common Public License Version 1.1 | CDDL, CDDL 1.1</licenseMerge>
-                        <licenseMerge>CDDL+GPL License | CDDL+GPL</licenseMerge>
-                    </licenseMerges>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>aggregate-add-third-party</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 

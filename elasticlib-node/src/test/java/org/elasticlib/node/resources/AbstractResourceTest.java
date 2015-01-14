@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import org.elasticlib.node.providers.MultipartReader;
 import org.elasticlib.node.service.ClientLoggingHandler;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTestNg.ContainerPerClassTest;
+import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -53,6 +54,10 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
      */
     public AbstractResourceTest(Logger logger) {
         super(new GrizzlyTestContainerFactory());
+
+        // Specifies the test container to dynamically bind to an available port
+        // instead of using the fixed default one.
+        set(TestProperties.CONTAINER_PORT, 0);
         this.logger = logger;
     }
 

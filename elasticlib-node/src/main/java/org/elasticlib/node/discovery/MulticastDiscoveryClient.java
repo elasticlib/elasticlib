@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MulticastDiscoveryClient {
 
-    private static final byte[] PAYLOAD = "store-discovery".getBytes(Charsets.UTF_8);
+    private static final byte[] PAYLOAD = "elasticlib-discovery".getBytes(Charsets.UTF_8);
     private static final String ERROR_MESSAGE = "Unexpected IO error";
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryClient.class);
     private final Config config;

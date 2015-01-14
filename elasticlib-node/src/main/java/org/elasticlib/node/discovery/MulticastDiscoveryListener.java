@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,9 @@ import org.slf4j.LoggerFactory;
  */
 public class MulticastDiscoveryListener {
 
+    private static final String PAYLOAD = "elasticlib-discovery";
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryListener.class);
+
     private final Config config;
     private final NodesService nodesService;
     private boolean started;
@@ -170,7 +172,7 @@ public class MulticastDiscoveryListener {
                 return false;
             }
             String payload = new String(packet.getData(), Charsets.UTF_8).trim().toLowerCase();
-            return payload.equals("store-discovery");
+            return payload.equals(PAYLOAD);
         }
 
         private String sender(DatagramPacket packet) {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ public class ConsoleConfig {
             .set(DISCOVERY_GROUP, "235.141.20.10")
             .set(DISCOVERY_PORT, 23875)
             .set(DISCOVERY_TTL, 3)
-            .set(DISCOVERY_PING_INTERVAL, "10 seconds")
+            .set(DISCOVERY_PING_INTERVAL, "60 seconds")
             .set(DISPLAY_FORMAT, Format.YAML.toString())
             .set(DISPLAY_COLOR, true)
             .set(DISPLAY_PRETTY, true)

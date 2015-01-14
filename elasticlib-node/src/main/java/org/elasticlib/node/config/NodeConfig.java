@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -146,16 +146,16 @@ public final class NodeConfig {
             .set(HTTP_CONTEXT, "/")
             .set(DISCOVERY_MULTICAST_LISTEN, true)
             .set(DISCOVERY_MULTICAST_PING_ENABLED, true)
-            .set(DISCOVERY_MULTICAST_PING_INTERVAL, "30 seconds")
+            .set(DISCOVERY_MULTICAST_PING_INTERVAL, "10 minutes")
             .set(DISCOVERY_MULTICAST_GROUP, "235.141.20.10")
             .set(DISCOVERY_MULTICAST_PORT, 23875)
             .set(DISCOVERY_MULTICAST_TTL, 3)
             .set(DISCOVERY_UNICAST_ENABLED, true)
-            .set(DISCOVERY_UNICAST_INTERVAL, "30 seconds")
+            .set(DISCOVERY_UNICAST_INTERVAL, "60 seconds")
             .set(REMOTES_PING_ENABLED, true)
-            .set(REMOTES_PING_INTERVAL, "10 seconds")
+            .set(REMOTES_PING_INTERVAL, "60 seconds")
             .set(REMOTES_CLEANUP_ENABLED, true)
-            .set(REMOTES_CLEANUP_INTERVAL, "60 seconds")
+            .set(REMOTES_CLEANUP_INTERVAL, "10 minutes")
             .set(TASKS_POOL_SIZE, getRuntime().availableProcessors())
             .set(STAGING_SESSIONS_MAX_SIZE, 20)
             .set(STAGING_SESSIONS_TIMEOUT, "60 seconds")

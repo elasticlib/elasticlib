@@ -1,4 +1,4 @@
-ElasticLib - A distributed digital library 
+ElasticLib - A distributed digital library
 ==========================================
 
 ## Overview
@@ -22,18 +22,18 @@ Concerning this latter point, metadata is automatically extracted from each file
 * For a photo, the date on which it was taken, its format and size.
 * Content is also extracted from readable files like PDFs or flat text ones.
 
-All collected metadata is stored along with associated file in the repository and indexed in an embedded search engine, 
+All collected metadata is stored along with associated file in the repository and indexed in an embedded search engine,
 so you can find files by searching on metadata or text content. Metadata is also freely modifiable, in order to enable you to
 enhance or correct information about a given file.
 
 Instead of having to make backups of your files, elasticLib lets you synchronize repositories. You just have to
-set up a replication between two repositories and any past or future change on one of them will eventually be 
+set up a replication between two repositories and any past or future change on one of them will eventually be
 propagated to the other. To be more precise, replications can be:
 
 * Unidirectional, meaning that changes are only propagated one way.
 * Bidirectional, meaning that changes are propagated both ways.
 
-The repositories are managed by nodes. A node runs on a given computer and lets you :
+The repositories are managed by nodes. A node runs on a given computer and lets you:
 
 * Create repositories on this computer.
 * Put or delete files in any repository managed by this node, and edit associated metadata.
@@ -46,11 +46,11 @@ A web-based interface is also planned.
 ## System requirements
 
 * Java 8
-* Currently only tested on and packaged for Unix like operating systems, but it should works on windows to.
-* You also need Maven if you would like to build it from source.
-* And that's all !
+* Currently only tested on and packaged for Unix like operating systems, but it should work on Windows too.
+* You also need to have Maven if you would like to build it from source.
+* And that's all!
 
-## Installating
+## Installing
 
 First clone the Git repository on your local computer. Cd into cloned root directory and run a Maven build:
 
@@ -100,12 +100,11 @@ Some features to be done:
 
 ## Contributing
 
-Any contribution is welcome ! Some guidelines and instructions in order to get started coming soon...
+Any contribution is welcome! Some guidelines and instructions in order to get started coming soon...
 
 ## Copyright and license
 
 Copyright 2014 Guillaume Masclet
 
 ElasticLib is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
-
 

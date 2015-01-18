@@ -78,7 +78,7 @@ The command-line interface can be started with the following command:
 $ [INSTALL_DIR]/elasticlib/bin/elasticlib
 ```
 
-You may want to add the the `[INSTALL_DIR]/elasticlib/bin/` directory to your `PATH`.
+You may want to add the `[INSTALL_DIR]/elasticlib/bin/` directory to your `PATH`.
 
 ## Roadmap
 

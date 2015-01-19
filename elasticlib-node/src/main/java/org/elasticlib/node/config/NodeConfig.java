@@ -15,7 +15,6 @@
  */
 package org.elasticlib.node.config;
 
-import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -108,7 +107,7 @@ public final class NodeConfig {
      */
     public static final String REMOTES_CLEANUP_INTERVAL = "remotes.cleanup.interval";
     /**
-     * Asynchronous tasks executor pool size. Default to the number of available processors.
+     * Asynchronous tasks executor pool size. Default to 1.
      */
     public static final String TASKS_POOL_SIZE = "tasks.poolSize";
     /**
@@ -136,7 +135,7 @@ public final class NodeConfig {
      */
     public static final String STORAGE_SYNC_INTERVAL = "storage.sync.interval";
     /**
-     * The lock timeout for all Berkeley DB operations. Default to '0', meaning that locking never times out.
+     * The lock timeout for all Berkeley DB operations. '0' means that locking never times out. Default to '60 seconds'.
      */
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
     private static final Logger LOG = LoggerFactory.getLogger(NodeConfig.class);
@@ -150,20 +149,20 @@ public final class NodeConfig {
             .set(DISCOVERY_MULTICAST_GROUP, "235.141.20.10")
             .set(DISCOVERY_MULTICAST_PORT, 23875)
             .set(DISCOVERY_MULTICAST_TTL, 3)
-            .set(DISCOVERY_UNICAST_ENABLED, true)
+            .set(DISCOVERY_UNICAST_ENABLED, false)
             .set(DISCOVERY_UNICAST_INTERVAL, "60 seconds")
             .set(REMOTES_PING_ENABLED, true)
             .set(REMOTES_PING_INTERVAL, "60 seconds")
             .set(REMOTES_CLEANUP_ENABLED, true)
             .set(REMOTES_CLEANUP_INTERVAL, "10 minutes")
-            .set(TASKS_POOL_SIZE, getRuntime().availableProcessors())
+            .set(TASKS_POOL_SIZE, 1)
             .set(STAGING_SESSIONS_MAX_SIZE, 20)
             .set(STAGING_SESSIONS_TIMEOUT, "60 seconds")
             .set(STAGING_SESSIONS_CLEANUP_ENABLED, true)
             .set(STAGING_SESSIONS_CLEANUP_INTERVAL, "30 seconds")
             .set(STORAGE_SYNC_ENABLED, true)
             .set(STORAGE_SYNC_INTERVAL, "10 seconds")
-            .set(JE_LOCK_TIMEOUT, "0");
+            .set(JE_LOCK_TIMEOUT, "60 seconds");
 
     private NodeConfig() {
     }

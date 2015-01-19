@@ -3,5 +3,59 @@
 PRG=`readlink -f "$0"`
 BIN=`dirname "$PRG"`
 ROOT=`dirname "$BIN"`
+NODE_HOME=${2:-"$ROOT"/node/home}
+NODE_PID="$NODE_HOME"/pid
+CLASSPATH="$ROOT"/node/resources:"$ROOT"/node/*:"$ROOT"/lib/*
+MAIN_CLASS="org.elasticlib.node.App"
 
-java -classpath "$ROOT"/node/resources:"$ROOT"/node/*:"$ROOT"/lib/* org.elasticlib.node.App ${1:-"$ROOT"/node/home}
+if [ "$1" = "run" ]; then
+    java -classpath "$CLASSPATH" -Delasticlib.home="$NODE_HOME" "$MAIN_CLASS" "$NODE_HOME"
+
+elif [ "$1" = "start" ]; then
+    if [ -s "$NODE_PID" ]; then
+        PID=`cat "$NODE_PID"`
+        ps -p $PID >/dev/null 2>&1
+        if [ $? -eq 0 ] ; then
+            echo "Start aborted, an Elasticlib node seems to be already running with PID $PID"
+            exit 1
+        fi
+        rm -f "$NODE_PID" >/dev/null 2>&1
+        if [ $? != 0 ]; then
+            echo "Start aborted, failed to remove stale PID file"
+            exit 1
+        fi
+        echo "Removed existing stale PID file"
+    fi
+
+    java -classpath "$CLASSPATH" -Delasticlib.home="$NODE_HOME" "$MAIN_CLASS" "$NODE_HOME" >/dev/null 2>&1 &
+    echo $! > "$NODE_PID"
+    echo "Elasticlib node started"
+
+elif [ "$1" = "stop" ]; then
+    if [ ! -f "$NODE_PID" ]; then
+        echo "Stop aborted, PID file does not exist"
+        exit 1
+    fi
+
+    if [ ! -s "$NODE_PID" ]; then
+        echo "Stop aborted, PID file is empty"
+        exit 1
+    fi
+
+    kill -15 `cat "$NODE_PID"` >/dev/null 2>&1
+    if [ $? -gt 0 ]; then
+        echo "Stop aborted, PID file found but no matching process was found"
+        exit 1
+    fi
+    rm -f "$NODE_PID" >/dev/null 2>&1
+    if [ $? != 0 ]; then
+        echo "Elasticlib node stopped but failed to remove PID file"
+        exit 1
+    fi
+    echo "Elasticlib node stopped"
+
+else
+    echo "Usage: elasticlibd start|stop|run [NODE_HOME]"
+    exit 1
+fi
+

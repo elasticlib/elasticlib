@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -106,18 +106,11 @@ class ParametersCompleter {
     }
 
     private List<String> completeUri(final String param) {
-        return uris()
+        return discoveryClient.uris()
                 .stream()
+                .map(URI::toString)
                 .filter(x -> x.startsWith(param.toLowerCase()))
                 .sorted()
-                .collect(toList());
-    }
-
-    private List<String> uris() {
-        return discoveryClient.nodes()
-                .stream()
-                .flatMap(d -> d.getPublishUris().stream())
-                .map(URI::toString)
                 .collect(toList());
     }
 

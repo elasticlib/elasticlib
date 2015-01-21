@@ -18,15 +18,18 @@ package org.elasticlib.console.discovery;
 import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.ArrayList;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Collections;
-import static java.util.Collections.unmodifiableList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import static java.util.concurrent.Executors.defaultThreadFactory;
@@ -37,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.json.Json;
 import javax.json.JsonReader;
-import org.elasticlib.common.hash.Guid;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import org.elasticlib.common.json.JsonReading;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.console.config.ConsoleConfig;
@@ -46,7 +49,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Multicast discovery client. Sends periodically discovery requests and collects responses. Maintains a list of alive
- * nodes.
+ * nodes URIs.
  */
 public class DiscoveryClient {
 
@@ -56,9 +59,9 @@ public class DiscoveryClient {
 
     private final ConsoleConfig config;
     private final AtomicBoolean started = new AtomicBoolean(false);
-    private final AtomicReference<List<NodeDef>> snapshot = new AtomicReference<>(Collections.<NodeDef>emptyList());
+    private final AtomicReference<List<URI>> snapshot = new AtomicReference<>(Collections.<URI>emptyList());
     private MulticastSocket socket;
-    private Cache<Guid, NodeDef> cache;
+    private Cache<URI, Boolean> cache;
     private ScheduledExecutorService executor;
 
     /**
@@ -90,7 +93,6 @@ public class DiscoveryClient {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-
     }
 
     private void initCache() {
@@ -122,12 +124,11 @@ public class DiscoveryClient {
     }
 
     /**
-     * Provides a snapshot of the definitions of all current alive nodes.
+     * Provides a snapshot of the URIs of all current alive nodes.
      *
-     * @return A list of node definitions.
+     * @return A list of node URIs.
      */
-    public List<NodeDef> nodes() {
-        cache.asMap().values();
+    public List<URI> uris() {
         return snapshot.get();
     }
 
@@ -182,9 +183,11 @@ public class DiscoveryClient {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
                     socket.receive(packet);
-                    NodeDef def = read(packet);
-                    cache.put(def.getGuid(), def);
-                    takeSnapshot();
+                    read(packet)
+                            .getPublishUris()
+                            .forEach(uri -> cache.put(fromUri(uri).host(hostName(uri)).build(), true));
+
+                    snapshot.set(ImmutableList.copyOf(cache.asMap().keySet()));
 
                 } catch (IOException e) {
                     if (started.get()) {
@@ -202,10 +205,17 @@ public class DiscoveryClient {
             }
         }
 
-        private void takeSnapshot() {
-            List<NodeDef> list = new ArrayList<>(cache.asMap().values());
-            list.sort((lhs, rhs) -> lhs.getName().compareTo(rhs.getName()));
-            snapshot.set(unmodifiableList(list));
+        private String hostName(URI uri) {
+            try {
+                InetAddress address = InetAddress.getByName(uri.getHost());
+                if (address.isLoopbackAddress() || NetworkInterface.getByInetAddress(address) != null) {
+                    return "localhost";
+                }
+                return address.getHostName();
+
+            } catch (UnknownHostException | SocketException ignored) {
+                return uri.getHost();
+            }
         }
     }
 }

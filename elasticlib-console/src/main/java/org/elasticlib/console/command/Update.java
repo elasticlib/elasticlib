@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import com.google.common.base.Charsets;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.String.join;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
 import org.elasticlib.console.exception.RequestFailedException;
 import org.elasticlib.console.http.Session;
+import static org.elasticlib.console.tokenizing.Tokenizing.argList;
 import static org.elasticlib.console.util.ClientUtil.parseHash;
 import static org.elasticlib.console.util.ClientUtil.revisions;
 import static org.elasticlib.console.util.Directories.home;
@@ -90,7 +92,7 @@ class Update extends AbstractCommand {
             Path tmp = Files.createTempFile(home(), "tmp", ".yml");
             try {
                 write(head, tmp);
-                new ProcessBuilder(editor, tmp.toString()).start().waitFor();
+                execute(editor, tmp);
 
                 return new RevisionBuilder()
                         .withContent(head.get(0).getContent())
@@ -102,9 +104,6 @@ class Update extends AbstractCommand {
             } finally {
                 Files.deleteIfExists(tmp);
             }
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
@@ -124,6 +123,18 @@ class Update extends AbstractCommand {
                     writer.newLine();
                 }
             }
+        }
+    }
+
+    private static void execute(String editor, Path file) throws IOException {
+        try {
+            List<String> command = argList(join(" ", editor, file.toString()));
+            new ProcessBuilder(command)
+                    .start()
+                    .waitFor();
+
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
         }
     }
 

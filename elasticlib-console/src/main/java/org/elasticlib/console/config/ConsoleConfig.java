@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigException;
 import org.elasticlib.common.config.ConfigReadWrite;
+import static org.elasticlib.common.config.ConfigReadWrite.readFromClassPath;
 import org.elasticlib.common.config.ConfigUtil;
 import static org.elasticlib.common.config.ConfigUtil.duration;
 import static org.elasticlib.common.config.ConfigUtil.unit;
@@ -54,20 +55,7 @@ public class ConsoleConfig {
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
     private static final Path CONFIG_PATH = home().resolve("config.yml");
-    private static final Config DEFAULT = Config.empty()
-            .set(DEFAULT_NODE, "")
-            .set(DEFAULT_REPOSITORY, "")
-            .set(DISCOVERY_ENABLED, true)
-            .set(DISCOVERY_GROUP, "235.141.20.10")
-            .set(DISCOVERY_PORT, 23875)
-            .set(DISCOVERY_TTL, 3)
-            .set(DISCOVERY_PING_INTERVAL, "60 seconds")
-            .set(DISPLAY_FORMAT, Format.YAML.toString())
-            .set(DISPLAY_COLOR, true)
-            .set(DISPLAY_PRETTY, true)
-            .set(DISPLAY_PROGRESS, true)
-            .set(DISPLAY_HTTP, false)
-            .set(EDITOR, "");
+    private static final Config DEFAULT = readFromClassPath(ConsoleConfig.class, "config.yml");
 
     private Config extended;
     private Config config;

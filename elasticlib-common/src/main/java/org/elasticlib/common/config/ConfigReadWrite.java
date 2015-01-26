@@ -35,6 +35,28 @@ public final class ConfigReadWrite {
     }
 
     /**
+     * Reads config from the class path. Looks for a resource located in same package as supplied class, with supplied
+     * file name. Fails if such resource is not a valid YAML file. Returns the empty config if such resource does not
+     * exist or is empty.
+     *
+     * @param clazz Class used to locate the resource holding the config to read.
+     * @param fileName The resource file name.
+     * @return A new config instance.
+     */
+    public static Config readFromClassPath(Class<?> clazz, String fileName) {
+        String resource = clazz.getPackage().getName().replace(".", "/") + "/" + fileName;
+        try (InputStream stream = clazz.getClassLoader().getResourceAsStream(resource)) {
+            if (stream == null) {
+                return Config.empty();
+            }
+            return read(stream);
+
+        } catch (IOException e) {
+            throw new ConfigException(e);
+        }
+    }
+
+    /**
      * Reads config at supplied path. Fails if file at supplied path is not a valid YAML file. Returns the empty config
      * instance if such file does not exist or is empty.
      *
@@ -45,10 +67,16 @@ public final class ConfigReadWrite {
         if (!Files.exists(path)) {
             return Config.empty();
         }
+        try (InputStream input = Files.newInputStream(path)) {
+            return read(input);
 
-        try (InputStream input = Files.newInputStream(path);
-                YamlReader reader = new YamlReader(input)) {
+        } catch (IOException e) {
+            throw new ConfigException(e);
+        }
+    }
 
+    private static Config read(InputStream stream) {
+        try (YamlReader reader = new YamlReader(stream)) {
             Optional<Value> value = reader.readValue();
             if (!value.isPresent()) {
                 return Config.empty();

@@ -55,7 +55,7 @@ public class ConfigTest {
                 .set(key(WEB, HOST), "127.0.0.1")
                 .set(key(WEB, PORT), 8080)
                 .set(key(LOG), true)
-                .extend(ConfigReadWrite.read(path("config.yml")));
+                .extend(readFromClassPath("config.yml"));
 
         webValue = new MapBuilder()
                 .put(SCHEME, "http")
@@ -81,6 +81,14 @@ public class ConfigTest {
     /**
      * Test.
      */
+    @Test(expectedExceptions = ConfigException.class)
+    public void readGarbageFromClassPathTest() {
+        readFromClassPath("garbage.properties");
+    }
+
+    /**
+     * Test.
+     */
     @Test
     public void readEmptyFileTest() {
         assertThat(ConfigReadWrite.read(path("empty.yml")).isEmpty()).isTrue();
@@ -88,12 +96,30 @@ public class ConfigTest {
 
     /**
      * Test.
-     *
-     * @throws IOException If an I/O error occurs.
      */
     @Test
-    public void readNonExistingFileTest() throws IOException {
-        assertThat(ConfigReadWrite.read(path("empty.yml").resolve("../absent.yml")).isEmpty()).isTrue();
+    public void readEmptyFileFromClassPathTest() {
+        assertThat(readFromClassPath("empty.yml").isEmpty()).isTrue();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readNonExistingFileTest() {
+        Path path = path("config.yml")
+                .resolve("../absent.yml")
+                .normalize();
+
+        assertThat(ConfigReadWrite.read(path).isEmpty()).isTrue();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readNonExistingFileFromClassPathTest() {
+        assertThat(readFromClassPath("absent.yml").isEmpty()).isTrue();
     }
 
     /**
@@ -291,9 +317,13 @@ public class ConfigTest {
         }
     }
 
-    private Path path(String filename) {
+    private Config readFromClassPath(String fileName) {
+        return ConfigReadWrite.readFromClassPath(getClass(), fileName);
+    }
+
+    private Path path(String fileName) {
         try {
-            String resource = getClass().getPackage().getName().replace(".", "/") + "/" + filename;
+            String resource = getClass().getPackage().getName().replace(".", "/") + "/" + fileName;
             return Paths.get(getClass().getClassLoader().getResource(resource).toURI());
 
         } catch (URISyntaxException e) {

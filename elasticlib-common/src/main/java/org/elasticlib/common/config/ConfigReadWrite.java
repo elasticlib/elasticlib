@@ -89,7 +89,7 @@ public final class ConfigReadWrite {
     }
 
     /**
-     * Write supplied config at supplied path.
+     * Writes supplied config at supplied path.
      *
      * @param path File path.
      * @param config Config to write.

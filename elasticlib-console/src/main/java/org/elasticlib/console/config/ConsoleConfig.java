@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigException;
@@ -78,15 +77,15 @@ public class ConsoleConfig {
      */
     public void init() {
         try {
-            Optional<Config> loaded = ConfigReadWrite.read(CONFIG_PATH);
-            if (loaded.isPresent()) {
+            Config loaded = ConfigReadWrite.read(CONFIG_PATH);
+            if (!loaded.isEmpty()) {
                 List<String> validKeys = listKeys();
-                for (String key : loaded.get().listKeys()) {
+                for (String key : loaded.listKeys()) {
                     if (!validKeys.contains(key)) {
                         throw new ConfigException(undefinedConfigKey(key));
                     }
                 }
-                config = loaded.get();
+                config = loaded;
 
             } else {
                 config = Config.empty();

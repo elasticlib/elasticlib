@@ -17,7 +17,6 @@ package org.elasticlib.node.config;
 
 import static java.lang.System.lineSeparator;
 import java.nio.file.Path;
-import java.util.Optional;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigException;
 import org.elasticlib.common.config.ConfigReadWrite;
@@ -176,10 +175,8 @@ public final class NodeConfig {
     public static Config load(Path path) {
         Config config = DEFAULT;
         try {
-            Optional<Config> loaded = ConfigReadWrite.read(path);
-            if (loaded.isPresent()) {
-                config = DEFAULT.extend(loaded.get());
-            }
+            return config.extend(ConfigReadWrite.read(path));
+
         } catch (ConfigException e) {
             LOG.warn("Failed to load config at {}{}{}", path, lineSeparator(), e.getMessage());
         }

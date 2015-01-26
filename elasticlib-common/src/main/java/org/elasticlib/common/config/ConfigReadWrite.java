@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,15 +35,15 @@ public final class ConfigReadWrite {
     }
 
     /**
-     * Reads config at supplied path. Fails if file at supplied path is not a valid YAML file. Returns nothing if file
-     * does not exist or is empty.
+     * Reads config at supplied path. Fails if file at supplied path is not a valid YAML file. Returns the empty config
+     * instance if such file does not exist or is empty.
      *
      * @param path File path.
-     * @return A new config instance, if any.
+     * @return A new config instance.
      */
-    public static Optional<Config> read(Path path) {
+    public static Config read(Path path) {
         if (!Files.exists(path)) {
-            return Optional.empty();
+            return Config.empty();
         }
 
         try (InputStream input = Files.newInputStream(path);
@@ -51,9 +51,9 @@ public final class ConfigReadWrite {
 
             Optional<Value> value = reader.readValue();
             if (!value.isPresent()) {
-                return Optional.empty();
+                return Config.empty();
             }
-            return Optional.of(new Config(value.get()));
+            return new Config(value.get());
 
         } catch (IOException | YAMLException e) {
             throw new ConfigException(e);

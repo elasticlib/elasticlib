@@ -55,7 +55,7 @@ public class ConfigTest {
                 .set(key(WEB, HOST), "127.0.0.1")
                 .set(key(WEB, PORT), 8080)
                 .set(key(LOG), true)
-                .extend(ConfigReadWrite.read(path("config.yml")).get());
+                .extend(ConfigReadWrite.read(path("config.yml")));
 
         webValue = new MapBuilder()
                 .put(SCHEME, "http")
@@ -83,7 +83,7 @@ public class ConfigTest {
      */
     @Test
     public void readEmptyFileTest() {
-        assertThat(ConfigReadWrite.read(path("empty.yml")).isPresent()).isFalse();
+        assertThat(ConfigReadWrite.read(path("empty.yml")).isEmpty()).isTrue();
     }
 
     /**
@@ -93,7 +93,7 @@ public class ConfigTest {
      */
     @Test
     public void readNonExistingFileTest() throws IOException {
-        assertThat(ConfigReadWrite.read(path("empty.yml").resolve("../absent.yml")).isPresent()).isFalse();
+        assertThat(ConfigReadWrite.read(path("empty.yml").resolve("../absent.yml")).isEmpty()).isTrue();
     }
 
     /**
@@ -284,9 +284,7 @@ public class ConfigTest {
         Path path = Files.createTempFile("config", "yml");
         try {
             ConfigReadWrite.write(path, config);
-            Config loaded = ConfigReadWrite.read(path).get();
-
-            assertThat(loaded).isEqualTo(config);
+            assertThat(ConfigReadWrite.read(path)).isEqualTo(config);
 
         } finally {
             Files.deleteIfExists(path);

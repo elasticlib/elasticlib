@@ -139,7 +139,7 @@ public final class NodeConfig {
      */
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
     private static final Logger LOG = LoggerFactory.getLogger(NodeConfig.class);
-    private static final Config DEFAULT = new Config()
+    private static final Config DEFAULT = Config.empty()
             .set(HTTP_HOST, "0.0.0.0")
             .set(HTTP_PORT, 9400)
             .set(HTTP_CONTEXT, "/")

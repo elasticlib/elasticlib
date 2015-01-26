@@ -55,7 +55,7 @@ public class ConsoleConfig {
     private static final String DISPLAY_HTTP = "display.http";
     private static final String EDITOR = "editor";
     private static final Path CONFIG_PATH = home().resolve("config.yml");
-    private static final Config DEFAULT = new Config()
+    private static final Config DEFAULT = Config.empty()
             .set(DEFAULT_NODE, "")
             .set(DEFAULT_REPOSITORY, "")
             .set(DISCOVERY_ENABLED, true)
@@ -89,12 +89,12 @@ public class ConsoleConfig {
                 config = loaded.get();
 
             } else {
-                config = new Config();
+                config = Config.empty();
             }
             extended = DEFAULT.extend(config);
 
         } catch (ConfigException e) {
-            config = new Config();
+            config = Config.empty();
             extended = DEFAULT.extend(config);
             throw new RequestFailedException("Could not load config, using default. Cause:", e);
         }
@@ -348,7 +348,7 @@ public class ConsoleConfig {
         } catch (IOException e) {
             throw new RequestFailedException(e);
         }
-        config = new Config();
+        config = Config.empty();
         extended = DEFAULT.extend(config);
     }
 

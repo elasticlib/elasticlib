@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,7 +104,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "durationDataProvider")
     public void durationTest(String value, long expected) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         assertThat(duration(config, KEY)).as(value).isEqualTo(expected);
     }
 
@@ -139,7 +139,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "unitDataProvider")
     public void unitTest(String value, TimeUnit expected) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         assertThat(unit(config, KEY)).as(value).isEqualTo(expected);
     }
 
@@ -165,7 +165,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "malformedDurationDataProvider", expectedExceptions = ConfigException.class)
     public void malformedDurationTest(String value) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         duration(config, KEY);
     }
 
@@ -190,7 +190,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "malformedUnitDataProvider", expectedExceptions = ConfigException.class)
     public void malformedUnitTest(String value) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         unit(config, KEY);
     }
 
@@ -238,7 +238,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "urisDataProvider")
     public void urisTest(Value value, List<URI> expected) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         assertThat(ConfigUtil.uris(config, KEY)).as(value.toString()).isEqualTo(expected);
     }
 
@@ -263,7 +263,7 @@ public class ConfigUtilTest {
      */
     @Test(dataProvider = "malformedUrisDataProvider", expectedExceptions = ConfigException.class)
     public void malformedUrisTest(Value value) {
-        Config config = new Config().set(KEY, value);
+        Config config = Config.empty().set(KEY, value);
         ConfigUtil.uris(config, KEY);
     }
 }

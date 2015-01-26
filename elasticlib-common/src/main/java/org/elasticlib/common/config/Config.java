@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,14 +40,9 @@ import org.elasticlib.common.yaml.YamlWriter;
 public class Config {
 
     private static final String SEPARATOR = ".";
-    private final Value root;
+    private static final Config EMPTY = new Config(Value.of(Collections.<String, Value>emptyMap()));
 
-    /**
-     * Empty config constructor.
-     */
-    public Config() {
-        this.root = Value.of(Collections.<String, Value>emptyMap());
-    }
+    private final Value root;
 
     /**
      * Constructor.
@@ -56,6 +51,15 @@ public class Config {
      */
     public Config(Value root) {
         this.root = requireNonNull(root);
+    }
+
+    /**
+     * Provides the singleton empty config instance.
+     *
+     * @return The empty config instance.
+     */
+    public static Config empty() {
+        return EMPTY;
     }
 
     /**

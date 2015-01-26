@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ public class ConfigTest {
      */
     @BeforeClass
     public void init() {
-        config = new Config()
+        config = Config.empty()
                 .set(key(WEB, SCHEME), "http")
                 .set(key(WEB, HOST), "127.0.0.1")
                 .set(key(WEB, PORT), 8080)
@@ -101,9 +101,9 @@ public class ConfigTest {
      */
     @Test
     public void isEmptyTest() {
-        assertThat(new Config().isEmpty()).isTrue();
+        assertThat(Config.empty().isEmpty()).isTrue();
         assertThat(new Config(Value.ofNull()).isEmpty()).isFalse();
-        assertThat(new Config().set("root", "val").isEmpty()).isFalse();
+        assertThat(Config.empty().set("root", "val").isEmpty()).isFalse();
     }
 
     /**
@@ -111,7 +111,7 @@ public class ConfigTest {
      */
     @Test
     public void listKeysEmptyTest() {
-        assertThat(new Config().listKeys()).isEmpty();
+        assertThat(Config.empty().listKeys()).isEmpty();
     }
 
     /**
@@ -146,7 +146,7 @@ public class ConfigTest {
                 .put("je.lock.timeout", "5 m")
                 .build();
 
-        Config conf = new Config()
+        Config conf = Config.empty()
                 .set("test", 42)
                 .set("je.maxMemory", 524288000)
                 .set("je.lock.timeout", "5 m");
@@ -245,7 +245,7 @@ public class ConfigTest {
      */
     @Test
     public void unsetRecursivelyTest() {
-        Map<String, Value> actual = new Config()
+        Map<String, Value> actual = Config.empty()
                 .set(key(LOG), true)
                 .set(key(WEB, SCHEME), "http")
                 .unset(key(WEB, SCHEME))

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ public final class TestUtil {
      * @return Test config.
      */
     public static Config config() {
-        return new Config()
+        return Config.empty()
                 .set(TASKS_POOL_SIZE, 1)
                 .set(STAGING_SESSIONS_MAX_SIZE, 10)
                 .set(STAGING_SESSIONS_TIMEOUT, "10 s")

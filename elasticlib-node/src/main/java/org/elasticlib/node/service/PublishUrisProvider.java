@@ -67,10 +67,13 @@ public class PublishUrisProvider {
         if (!uris.isEmpty()) {
             return uris;
         }
-        return hosts().stream().map(this::uri).collect(toList());
+        return hosts()
+                .stream()
+                .map(this::toUri)
+                .collect(toList());
     }
 
-    private URI uri(String host) {
+    private URI toUri(String host) {
         return UriBuilder.fromUri("http:/")
                 .host(host)
                 .port(config.getInt(NodeConfig.HTTP_PORT))

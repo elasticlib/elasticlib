@@ -144,7 +144,7 @@ public final class NodeConfig {
     }
 
     /**
-     * Load config.
+     * Provides the node default config, extended with config loaded from supplied path.
      *
      * @param path Config file path.
      * @return A new config instance.

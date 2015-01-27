@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigException;
 import org.elasticlib.common.config.ConfigReadWrite;
+import static org.elasticlib.common.config.ConfigReadWrite.readFromClassPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,130 +39,106 @@ public final class NodeConfig {
      */
     public static final String NODE_URIS = "node.uris";
     /**
-     * Node bind host. Defaults to '0.0.0.0'.
+     * Node bind host.
      */
     public static final String HTTP_HOST = "http.host";
     /**
-     * Node TCP port. Default to 9400.
+     * Node TCP port.
      */
     public static final String HTTP_PORT = "http.port";
     /**
-     * Node deployment context. Default to '/'.
+     * Node deployment context.
      */
     public static final String HTTP_CONTEXT = "http.context";
     /**
-     * Whether listening to multicast discovery requests is enabled. Default to true. If disabled, this node will not be
-     * discoverable by other ones.
+     * Whether listening to multicast discovery requests is enabled. If disabled, this node will not be discoverable by
+     * other ones.
      */
     public static final String DISCOVERY_MULTICAST_LISTEN = "discovery.multicast.listen";
     /**
-     * Whether discovery by multicast requests is enabled. Default to true.
+     * Whether discovery by multicast requests is enabled.
      */
     public static final String DISCOVERY_MULTICAST_PING_ENABLED = "discovery.multicast.ping.enabled";
     /**
-     * Multicast discovery requests interval. Default to '30 seconds'.
+     * Multicast discovery requests interval.
      */
     public static final String DISCOVERY_MULTICAST_PING_INTERVAL = "discovery.multicast.ping.interval";
     /**
-     * Multicast discovery group address. Default to '235.141.20.10'. Valid multicast group addresses are in the range
-     * 224.0.0.0 to 239.255.255.255, inclusive (Class D IP addresses). The address 224.0.0.0 is reserved and should not
-     * be used.
+     * Multicast discovery group address. Valid multicast group addresses are in the range 224.0.0.0 to 239.255.255.255,
+     * inclusive (Class D IP addresses). The address 224.0.0.0 is reserved and should not be used.
      */
     public static final String DISCOVERY_MULTICAST_GROUP = "discovery.multicast.group";
     /**
-     * Multicast discovery port. Default to 23875.
+     * Multicast discovery port.
      */
     public static final String DISCOVERY_MULTICAST_PORT = "discovery.multicast.port";
     /**
-     * Multicast discovery packets time to live. Default to 3. Must be in the range 0 to 255, inclusive. If TTL is set
-     * to 0, packets are only delivered locally.
+     * Multicast discovery packets time to live. Must be in the range 0 to 255, inclusive. If TTL is set to 0, packets
+     * are only delivered locally.
      */
     public static final String DISCOVERY_MULTICAST_TTL = "discovery.multicast.ttl";
     /**
-     * Whether unicast discovery is enabled. Default to true.
+     * Whether unicast discovery is enabled.
      */
     public static final String DISCOVERY_UNICAST_ENABLED = "discovery.unicast.enabled";
     /**
-     * Unicast discovery task scheduling interval. Default to '30 seconds'.
+     * Unicast discovery task scheduling interval.
      */
     public static final String DISCOVERY_UNICAST_INTERVAL = "discovery.unicast.interval";
     /**
-     * URI(s) of the remotes node to contact for unicast discovery. All known remotes nodes are contacted if missing.
+     * URI(s) of the remotes node to contact for unicast discovery.
      */
     public static final String DISCOVERY_UNICAST_URIS = "discovery.unicast.uris";
     /**
-     * Whether remote nodes ping is enabled. Default to true.
+     * Whether remote nodes ping is enabled.
      */
     public static final String REMOTES_PING_ENABLED = "remotes.ping.enabled";
     /**
-     * Remote nodes exchange ping task scheduling interval. Default to '10 seconds'.
+     * Remote nodes exchange ping task scheduling interval.
      */
     public static final String REMOTES_PING_INTERVAL = "remotes.ping.interval";
     /**
-     * Whether unreachable remote nodes are automatically removed. Default to true.
+     * Whether unreachable remote nodes are automatically removed.
      */
     public static final String REMOTES_CLEANUP_ENABLED = "remotes.cleanup.enabled";
     /**
-     * Unreachable remote nodes cleanup task scheduling interval. Default to '60 seconds'.
+     * Unreachable remote nodes cleanup task scheduling interval.
      */
     public static final String REMOTES_CLEANUP_INTERVAL = "remotes.cleanup.interval";
     /**
-     * Asynchronous tasks executor pool size. Default to 1.
+     * Asynchronous tasks executor pool size.
      */
     public static final String TASKS_POOL_SIZE = "tasks.poolSize";
     /**
-     * Maximum number of suspended content staging sessions. Default to 20.
+     * Maximum number of suspended content staging sessions.
      */
     public static final String STAGING_SESSIONS_MAX_SIZE = "staging.maxSize";
     /**
-     * Suspended content staging sessions timeout. Default to '60 seconds'.
+     * Suspended content staging sessions timeout.
      */
     public static final String STAGING_SESSIONS_TIMEOUT = "staging.timeout";
     /**
-     * Whether suspended content staging sessions are periodically cleaned. Default to true.
+     * Whether suspended content staging sessions are periodically cleaned.
      */
     public static final String STAGING_SESSIONS_CLEANUP_ENABLED = "staging.cleanup.enabled";
     /**
-     * Periodicity at which suspended content staging sessions cleanup is performed. Default to '30 seconds'.
+     * Periodicity at which suspended content staging sessions cleanup is performed.
      */
     public static final String STAGING_SESSIONS_CLEANUP_INTERVAL = "staging.cleanup.interval";
     /**
-     * Whether deffered databases are periodically flushed. Default to true.
+     * Whether deffered databases are periodically flushed.
      */
     public static final String STORAGE_SYNC_ENABLED = "storage.sync.enabled";
     /**
-     * Periodicity at which deffered databases are flushed. Default to '10 seconds'.
+     * Periodicity at which deffered databases are flushed.
      */
     public static final String STORAGE_SYNC_INTERVAL = "storage.sync.interval";
     /**
-     * The lock timeout for all Berkeley DB operations. '0' means that locking never times out. Default to '60 seconds'.
+     * The lock timeout for all Berkeley DB operations. '0' means that locking never times out.
      */
     public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
+
     private static final Logger LOG = LoggerFactory.getLogger(NodeConfig.class);
-    private static final Config DEFAULT = Config.empty()
-            .set(HTTP_HOST, "0.0.0.0")
-            .set(HTTP_PORT, 9400)
-            .set(HTTP_CONTEXT, "/")
-            .set(DISCOVERY_MULTICAST_LISTEN, true)
-            .set(DISCOVERY_MULTICAST_PING_ENABLED, true)
-            .set(DISCOVERY_MULTICAST_PING_INTERVAL, "10 minutes")
-            .set(DISCOVERY_MULTICAST_GROUP, "235.141.20.10")
-            .set(DISCOVERY_MULTICAST_PORT, 23875)
-            .set(DISCOVERY_MULTICAST_TTL, 3)
-            .set(DISCOVERY_UNICAST_ENABLED, false)
-            .set(DISCOVERY_UNICAST_INTERVAL, "60 seconds")
-            .set(REMOTES_PING_ENABLED, true)
-            .set(REMOTES_PING_INTERVAL, "60 seconds")
-            .set(REMOTES_CLEANUP_ENABLED, true)
-            .set(REMOTES_CLEANUP_INTERVAL, "10 minutes")
-            .set(TASKS_POOL_SIZE, 1)
-            .set(STAGING_SESSIONS_MAX_SIZE, 20)
-            .set(STAGING_SESSIONS_TIMEOUT, "60 seconds")
-            .set(STAGING_SESSIONS_CLEANUP_ENABLED, true)
-            .set(STAGING_SESSIONS_CLEANUP_INTERVAL, "30 seconds")
-            .set(STORAGE_SYNC_ENABLED, true)
-            .set(STORAGE_SYNC_INTERVAL, "10 seconds")
-            .set(JE_LOCK_TIMEOUT, "60 seconds");
 
     private NodeConfig() {
     }
@@ -173,7 +150,7 @@ public final class NodeConfig {
      * @return A new config instance.
      */
     public static Config load(Path path) {
-        Config config = DEFAULT;
+        Config config = readFromClassPath(NodeConfig.class, "config.yml");
         try {
             return config.extend(ConfigReadWrite.read(path));
 

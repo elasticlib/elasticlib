@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,9 @@ public class NodeNameProvider {
      * @return The name of the local node.
      */
     public String name() {
-        if (config.containsKey(NodeConfig.NODE_NAME)) {
-            return config.getString(NodeConfig.NODE_NAME);
+        String name = config.getString(NodeConfig.NODE_NAME);
+        if (!name.isEmpty()) {
+            return name;
         }
         try {
             return InetAddress.getLocalHost().getHostName();

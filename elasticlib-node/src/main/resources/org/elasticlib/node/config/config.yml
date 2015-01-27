@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+node:
+  name: ''
+  uris: []
+
 http:
   host: 0.0.0.0
   port: 9400
@@ -30,6 +34,7 @@ discovery:
   unicast:
     enabled: false
     interval: 60 seconds
+    uris: []
 
 remotes:
   ping:

@@ -30,12 +30,12 @@ import org.slf4j.LoggerFactory;
 public final class NodeConfig {
 
     /**
-     * Node name. Generated at runtime if missing.
+     * Node name. Generated at runtime if empty.
      */
     public static final String NODE_NAME = "node.name";
     /**
      * URI(s) this node will publish itself in the cluster so that remote nodes may connect to it. Generated at runtime
-     * if missing.
+     * if empty.
      */
     public static final String NODE_URIS = "node.uris";
     /**
@@ -86,7 +86,7 @@ public final class NodeConfig {
      */
     public static final String DISCOVERY_UNICAST_INTERVAL = "discovery.unicast.interval";
     /**
-     * URI(s) of the remotes node to contact for unicast discovery.
+     * URI(s) of the remotes node to contact for unicast discovery. If empty, all known remotes are contacted.
      */
     public static final String DISCOVERY_UNICAST_URIS = "discovery.unicast.uris";
     /**

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,8 +63,9 @@ public class PublishUrisProvider {
      * @return The publish URI(s) of the local node.
      */
     public List<URI> uris() {
-        if (config.containsKey(NodeConfig.NODE_URIS)) {
-            return ConfigUtil.uris(config, NodeConfig.NODE_URIS);
+        List<URI> uris = ConfigUtil.uris(config, NodeConfig.NODE_URIS);
+        if (!uris.isEmpty()) {
+            return uris;
         }
         return hosts().stream().map(this::uri).collect(toList());
     }

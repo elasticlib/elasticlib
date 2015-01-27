@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,9 @@ import static java.util.stream.Collectors.toSet;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.config.Config;
-import org.elasticlib.common.config.ConfigException;
+import org.elasticlib.common.config.ConfigUtil;
 import static org.elasticlib.common.config.ConfigUtil.duration;
 import static org.elasticlib.common.config.ConfigUtil.unit;
-import static org.elasticlib.common.config.ConfigUtil.uris;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
@@ -130,13 +129,9 @@ public class UnicastDiscoveryClient {
         }
 
         private Iterable<URI> targetUris() {
-            if (config.containsKey(NodeConfig.DISCOVERY_UNICAST_URIS)) {
-                try {
-                    return uris(config, NodeConfig.DISCOVERY_UNICAST_URIS);
-
-                } catch (ConfigException e) {
-                    LOG.warn("Config error, using default value", e);
-                }
+            List<URI> uris = ConfigUtil.uris(config, NodeConfig.DISCOVERY_UNICAST_URIS);
+            if (!uris.isEmpty()) {
+                return uris;
             }
             return Lists.transform(remotes, NodeInfo::getTransportUri);
         }

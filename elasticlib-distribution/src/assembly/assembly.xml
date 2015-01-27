@@ -53,6 +53,13 @@ limitations under the License.
         </fileSet>
     </fileSets>
 
+    <files>
+        <file>
+            <source>${basedir}/../elasticlib-node/target/classes/org/elasticlib/node/config/config.yml</source>
+            <outputDirectory>node/home</outputDirectory>
+        </file>
+    </files>
+
     <dependencySets>
         <dependencySet>
             <excludes>

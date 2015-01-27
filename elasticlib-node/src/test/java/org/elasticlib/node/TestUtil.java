@@ -24,7 +24,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Hash;
-import static org.elasticlib.node.config.NodeConfig.JE_LOCK_TIMEOUT;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_CLEANUP_ENABLED;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_CLEANUP_INTERVAL;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_MAX_SIZE;
@@ -37,6 +36,11 @@ import static org.elasticlib.node.config.NodeConfig.TASKS_POOL_SIZE;
  * Test utilities.
  */
 public final class TestUtil {
+
+    /**
+     * The lock timeout for all Berkeley DB operations. '0' means that locking never times out.
+     */
+    private static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
 
     /**
      * An unknown hash.

@@ -133,10 +133,6 @@ public final class NodeConfig {
      * Periodicity at which deffered databases are flushed.
      */
     public static final String STORAGE_SYNC_INTERVAL = "storage.sync.interval";
-    /**
-     * The lock timeout for all Berkeley DB operations. '0' means that locking never times out.
-     */
-    public static final String JE_LOCK_TIMEOUT = "je.lock.timeout";
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeConfig.class);
 

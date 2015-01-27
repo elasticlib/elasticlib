@@ -15,11 +15,11 @@
  */
 package org.elasticlib.node.discovery;
 
-import com.google.common.collect.Lists;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.client.Client;
@@ -133,7 +133,9 @@ public class UnicastDiscoveryClient {
             if (!uris.isEmpty()) {
                 return uris;
             }
-            return Lists.transform(remotes, NodeInfo::getTransportUri);
+            return remotes.stream()
+                    .map(NodeInfo::getTransportUri)
+                    .collect(toList());
         }
 
         private void process(URI target) {

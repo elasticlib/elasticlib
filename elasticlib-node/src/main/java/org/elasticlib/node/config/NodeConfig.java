@@ -94,7 +94,7 @@ public final class NodeConfig {
      */
     public static final String REMOTES_PING_ENABLED = "remotes.ping.enabled";
     /**
-     * Remote nodes exchange ping task scheduling interval.
+     * Remote nodes ping task scheduling interval.
      */
     public static final String REMOTES_PING_INTERVAL = "remotes.ping.interval";
     /**

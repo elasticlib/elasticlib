@@ -43,6 +43,8 @@ The repositories are managed by nodes. A node runs on a given computer and lets 
 In order to accomplish that, each node expose a RESTful API. A command-line interface enables you to interact with this API.
 A web-based interface is also planned.
 
+
+
 ## System requirements
 
 * Java 8
@@ -50,35 +52,44 @@ A web-based interface is also planned.
 * You also need to have Maven if you would like to build it from source.
 * And that's all!
 
+
+
 ## Installing
 
-First clone the Git repository on your local computer. Cd into cloned root directory and run a Maven build:
+First clone the ElasticLib GitHub repository on your local computer. Cd into cloned root directory and run a Maven build:
 
 ```
 $ mvn install
 ```
 
-From there, unzip the zip archive from the target directory of the _distribution_ sub-module to the installation folder of your choice:
+From there, unzip the zip archive from the target directory of the distribution sub-module to the installation folder of your choice:
 
 ```
-$ unzip elasticlib-distribution/target/elasticlib.zip -d [INSTALL_DIR]
+$ unzip elasticlib-distribution/target/elasticlib.zip -d <install_dir>
 ```
+
+You may want to add the <install_dir>/elasticlib/bin/ directory to your PATH.
+
+
 
 ## Using
 
-In order to start a node, run:
+Start a node on local host by typing:
 
 ```
-$ [INSTALL_DIR]/elasticlib/bin/elasticlibd
+$ elasticlibd start
 ```
 
-The command-line interface can be started with the following command:
+Then, in order to begin a console session, type:
 
 ```
-$ [INSTALL_DIR]/elasticlib/bin/elasticlib
+$ elasticlib
 ```
 
-You may want to add the `[INSTALL_DIR]/elasticlib/bin/` directory to your `PATH`.
+
+Please consult the [ElasticLib wiki](https://github.com/elasticlib/elasticlib/wiki) for further information.
+
+
 
 ## Roadmap
 
@@ -98,9 +109,13 @@ Some features to be done:
 * More advanced features like filtered replications, customizable indexation...
 * Enhancement of existing functionalities.
 
+
+
 ## Contributing
 
-Any contribution is welcome! Some guidelines and instructions in order to get started coming soon...
+Any contribution is welcome! Please consult the [contributing page on the wiki](https://github.com/elasticlib/elasticlib/wiki/Contributing) for further information.
+
+
 
 ## Copyright and license
 

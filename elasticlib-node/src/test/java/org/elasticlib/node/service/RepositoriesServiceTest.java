@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -300,6 +300,6 @@ public class RepositoriesServiceTest {
 
     private void check(RepositoryDef def) {
         assertThat(def.getName()).isEqualTo(REPOSITORY);
-        assertThat(def.getPath()).isEqualTo(repositoryPath);
+        assertThat(def.getPath()).isEqualTo(repositoryPath.toString());
     }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.elasticlib.node.resources;
 
-import java.nio.file.Paths;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import javax.ws.rs.core.Application;
@@ -122,6 +121,6 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
     }
 
     private static RepositoryDef def(String name) {
-        return new RepositoryDef(name, Guid.random(), Paths.get("/tmp", name));
+        return new RepositoryDef(name, Guid.random(), "/tmp/" + name);
     }
 }

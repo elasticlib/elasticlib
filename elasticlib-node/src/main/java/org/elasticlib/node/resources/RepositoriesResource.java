@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,7 +151,10 @@ public class RepositoriesResource {
         if (!hasStringValue(json, PATH)) {
             throw newInvalidJsonException();
         }
-        java.nio.file.Path path = Paths.get(json.getString(PATH));
+        java.nio.file.Path path = Paths.get(json.getString(PATH))
+                .toAbsolutePath()
+                .normalize();
+
         repositoriesService.createRepository(path);
         return Response
                 .created(uriInfo.getAbsolutePathBuilder().path(path.getFileName().toString()).build())
@@ -162,7 +165,10 @@ public class RepositoriesResource {
         if (!hasStringValue(json, PATH)) {
             throw newInvalidJsonException();
         }
-        java.nio.file.Path path = Paths.get(json.getString(PATH));
+        java.nio.file.Path path = Paths.get(json.getString(PATH))
+                .toAbsolutePath()
+                .normalize();
+
         repositoriesService.addRepository(path);
         return Response
                 .created(uriInfo.getAbsolutePathBuilder().path(path.getFileName().toString()).build())

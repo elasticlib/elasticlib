@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ class AddRepository extends AbstractCommand {
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .repositories()
-                .add(Directories.resolve(params.get(0)));
+                .add(Directories.resolve(params.get(0)).toString());
 
         display.printOk();
     }

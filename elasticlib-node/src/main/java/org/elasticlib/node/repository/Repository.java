@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import static java.util.Collections.emptyList;
 import java.util.List;
@@ -85,7 +86,10 @@ public class Repository {
                        ContentManager contentManager,
                        Index index) {
         this.def = def;
-        storageManager = new StorageManager(def.getName(), def.getPath().resolve(STORAGE), config, taskManager);
+        storageManager = new StorageManager(def.getName(),
+                                            Paths.get(def.getPath()).resolve(STORAGE),
+                                            config,
+                                            taskManager);
         this.messageManager = messageManager;
         revisionManager = new RevisionManager(storageManager);
         historyManager = new HistoryManager(storageManager);
@@ -124,7 +128,7 @@ public class Repository {
         AttributesManager attributesManager = AttributesManager.create(path);
         String name = attributesManager.getName();
         Guid guid = attributesManager.getGuid();
-        return new Repository(new RepositoryDef(name, guid, path),
+        return new Repository(new RepositoryDef(name, guid, path.toString()),
                               config,
                               taskManager,
                               messageManager,
@@ -154,7 +158,7 @@ public class Repository {
         AttributesManager attributesManager = AttributesManager.open(path);
         String name = attributesManager.getName();
         Guid guid = attributesManager.getGuid();
-        return new Repository(new RepositoryDef(name, guid, path),
+        return new Repository(new RepositoryDef(name, guid, path.toString()),
                               config,
                               taskManager,
                               messageManager,

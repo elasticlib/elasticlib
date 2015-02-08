@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,6 @@
 package org.elasticlib.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.Objects.requireNonNull;
@@ -37,7 +35,7 @@ public final class RepositoryDef implements Mappable {
     private static final String PATH = "path";
     private final String name;
     private final Guid guid;
-    private final Path path;
+    private final String path;
 
     /**
      * Constructor.
@@ -46,7 +44,7 @@ public final class RepositoryDef implements Mappable {
      * @param guid Repository GUID.
      * @param path Repository path.
      */
-    public RepositoryDef(String name, Guid guid, Path path) {
+    public RepositoryDef(String name, Guid guid, String path) {
         this.name = requireNonNull(name);
         this.guid = requireNonNull(guid);
         this.path = requireNonNull(path);
@@ -69,7 +67,7 @@ public final class RepositoryDef implements Mappable {
     /**
      * @return The repository path.
      */
-    public Path getPath() {
+    public String getPath() {
         return path;
     }
 
@@ -78,7 +76,7 @@ public final class RepositoryDef implements Mappable {
         return new MapBuilder()
                 .put(NAME, name)
                 .put(GUID, guid)
-                .put(PATH, path.toString())
+                .put(PATH, path)
                 .build();
     }
 
@@ -91,7 +89,7 @@ public final class RepositoryDef implements Mappable {
     public static RepositoryDef fromMap(Map<String, Value> map) {
         return new RepositoryDef(map.get(NAME).asString(),
                                  map.get(GUID).asGuid(),
-                                 Paths.get(map.get(PATH).asString()));
+                                 map.get(PATH).asString());
     }
 
     @Override

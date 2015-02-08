@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ package org.elasticlib.common;
 import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
 import java.net.URI;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
@@ -190,11 +189,11 @@ public final class TestData {
 
         REPOSITORY_DEFS.add(new RepositoryDef("primary",
                                               GUIDS[0],
-                                              Paths.get("/repo/primary")));
+                                              "/repo/primary"));
 
         REPOSITORY_DEFS.add(new RepositoryDef("secondary",
                                               GUIDS[1],
-                                              Paths.get("/repo/secondary")));
+                                              "/repo/secondary"));
 
         REPLICATION_DEFS.add(new ReplicationDef(GUIDS[0], GUIDS[1]));
         REPLICATION_DEFS.add(new ReplicationDef(GUIDS[1], GUIDS[0]));

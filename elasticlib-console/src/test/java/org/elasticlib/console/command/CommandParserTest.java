@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.elasticlib.console.command;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.List;
@@ -54,10 +53,10 @@ public class CommandParserTest {
         when(session.getClient().repositories().listInfos())
                 .thenReturn(asList(new RepositoryInfo(new RepositoryDef("primary",
                                                                         new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
-                                                                        Paths.get("/repo/primary"))),
+                                                                        "/repo/primary")),
                                    new RepositoryInfo(new RepositoryDef("secondary",
                                                                         new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
-                                                                        Paths.get("/repo/secondary")))));
+                                                                        "/repo/secondary"))));
 
         parser = new CommandParser(display, session, config, discoveryClient);
     }

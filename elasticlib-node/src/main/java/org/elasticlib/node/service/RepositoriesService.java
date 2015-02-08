@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import static java.util.Collections.unmodifiableList;
@@ -105,7 +106,7 @@ public class RepositoriesService {
     }
 
     private void openRepository(RepositoryDef repositoryDef) {
-        Path path = repositoryDef.getPath();
+        Path path = Paths.get(repositoryDef.getPath());
         Repository repository = Repository.open(path, config, taskManager, messageManager);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
@@ -242,7 +243,7 @@ public class RepositoriesService {
             storageManager.inTransaction(() -> {
                 RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                 Guid guid = def.getGuid();
-                Path path = def.getPath();
+                Path path = Paths.get(def.getPath());
 
                 if (repositories.containsKey(guid)) {
                     repositories.remove(guid).close();
@@ -260,7 +261,7 @@ public class RepositoriesService {
     }
 
     private boolean hasRepositoryAt(Path path) {
-        return repositoriesDao.listRepositoryDefs().stream().anyMatch(def -> def.getPath().equals(path));
+        return repositoriesDao.listRepositoryDefs().stream().anyMatch(def -> def.getPath().equals(path.toString()));
     }
 
     private static void recursiveDelete(Path path) {

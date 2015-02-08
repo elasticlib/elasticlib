@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
  */
 package org.elasticlib.common.client;
 
-import java.nio.file.Path;
 import java.util.List;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObject;
@@ -59,10 +58,10 @@ public class RepositoriesClient {
      *
      * @param path Repository path (from node perspective).
      */
-    public void create(Path path) {
+    public void create(String path) {
         post(createObjectBuilder()
                 .add(ACTION, CREATE)
-                .add(PATH, path.toAbsolutePath().toString())
+                .add(PATH, path)
                 .build());
     }
 
@@ -71,10 +70,10 @@ public class RepositoriesClient {
      *
      * @param path Repository path (from node perspective).
      */
-    public void add(Path path) {
+    public void add(String path) {
         post(createObjectBuilder()
                 .add(ACTION, ADD)
-                .add(PATH, path.toAbsolutePath().toString())
+                .add(PATH, path)
                 .build());
     }
 

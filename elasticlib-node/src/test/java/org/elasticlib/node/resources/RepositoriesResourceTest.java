@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import static org.elasticlib.node.TestUtil.LOREM_IPSUM;
 import org.elasticlib.node.repository.Repository;
 import org.elasticlib.node.service.RepositoriesService;
 import static org.fest.assertions.api.Assertions.assertThat;
+import org.fest.util.Files;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.ArgumentMatcher;
@@ -72,12 +73,12 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
 
     private final RepositoriesService repositoriesService = mock(RepositoriesService.class);
     private final Guid guid = Guid.random();
-    private final Path path = Paths.get("/tmp/test");
+    private final Path path = Paths.get(Files.temporaryFolderPath(), "test");
     private final Hash hash = LOREM_IPSUM.getHash();
     private final long position = 0;
     private final StagingInfo stagingInfo = new StagingInfo(guid, hash, position);
     private final CommandResult result = CommandResult.noOp(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
-    private final RepositoryInfo repositoryInfo = new RepositoryInfo(new RepositoryDef("test", guid, path));
+    private final RepositoryInfo repositoryInfo = new RepositoryInfo(new RepositoryDef("test", guid, path.toString()));
     private final int first = 0;
     private final int size = 20;
     private final String query = "lorem ipsum";
@@ -108,7 +109,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void createRepositoryTest() {
         try (Client client = newClient()) {
-            client.repositories().create(path);
+            client.repositories().create(path.toString());
         }
         verify(repositoriesService).createRepository(path);
     }
@@ -119,7 +120,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void addRepositoryTest() {
         try (Client client = newClient()) {
-            client.repositories().add(path);
+            client.repositories().add(path.toString());
         }
         verify(repositoriesService).addRepository(path);
     }

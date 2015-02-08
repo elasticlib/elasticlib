@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,10 @@ import static org.elasticlib.common.TestUtil.readString;
 
 final class YamlTestData {
 
+    private static final String UNIX_EOL = "\n";
+    private static final String MAC_EOL = "\r";
+    private static final String WINDOWS_EOL = "\r\n";
+
     public static final String STAGING_INFO_YAML;
     public static final List<String> REVISIONS_YAML = new ArrayList<>();
     public static final String REVISION_TREE_YAML;
@@ -39,37 +43,44 @@ final class YamlTestData {
     static {
         Class<?> clazz = YamlTestData.class;
 
-        STAGING_INFO_YAML = readString(clazz, "stagingInfo.yml");
+        STAGING_INFO_YAML = readYaml(clazz, "stagingInfo.yml");
 
-        REVISIONS_YAML.add(readString(clazz, "revision0.yml"));
-        REVISIONS_YAML.add(readString(clazz, "revision1.yml"));
+        REVISIONS_YAML.add(readYaml(clazz, "revision0.yml"));
+        REVISIONS_YAML.add(readYaml(clazz, "revision1.yml"));
 
-        REVISION_TREE_YAML = readString(clazz, "revisionTree.yml");
+        REVISION_TREE_YAML = readYaml(clazz, "revisionTree.yml");
 
-        CONTENT_INFO_YAML = readString(clazz, "contentInfo.yml");
+        CONTENT_INFO_YAML = readYaml(clazz, "contentInfo.yml");
 
-        EVENTS_YAML = readString(clazz, "events.yml");
+        EVENTS_YAML = readYaml(clazz, "events.yml");
 
-        COMMAND_RESULTS_YAML.add(readString(clazz, "commandResult1.yml"));
-        COMMAND_RESULTS_YAML.add(readString(clazz, "commandResult2.yml"));
+        COMMAND_RESULTS_YAML.add(readYaml(clazz, "commandResult1.yml"));
+        COMMAND_RESULTS_YAML.add(readYaml(clazz, "commandResult2.yml"));
 
-        INDEX_ENTRIES_YAML = readString(clazz, "indexEntries.yml");
+        INDEX_ENTRIES_YAML = readYaml(clazz, "indexEntries.yml");
 
-        REPOSITORY_DEFS_YAML = readString(clazz, "repositoryDefs.yml");
-        REPLICATION_DEFS_YAML = readString(clazz, "replicationDefs.yml");
+        REPOSITORY_DEFS_YAML = readYaml(clazz, "repositoryDefs.yml");
+        REPLICATION_DEFS_YAML = readYaml(clazz, "replicationDefs.yml");
 
-        REPOSITORY_INFOS_YAML.add(readString(clazz, "repositoryInfo0.yml"));
-        REPOSITORY_INFOS_YAML.add(readString(clazz, "repositoryInfo1.yml"));
+        REPOSITORY_INFOS_YAML.add(readYaml(clazz, "repositoryInfo0.yml"));
+        REPOSITORY_INFOS_YAML.add(readYaml(clazz, "repositoryInfo1.yml"));
 
-        REPLICATION_INFOS_YAML.add(readString(clazz, "replicationInfo0.yml"));
-        REPLICATION_INFOS_YAML.add(readString(clazz, "replicationInfo1.yml"));
+        REPLICATION_INFOS_YAML.add(readYaml(clazz, "replicationInfo0.yml"));
+        REPLICATION_INFOS_YAML.add(readYaml(clazz, "replicationInfo1.yml"));
 
-        NODE_DEFS_YAML = readString(clazz, "nodeDefs.yml");
-        NODE_INFOS_YAML = readString(clazz, "nodeInfos.yml");
+        NODE_DEFS_YAML = readYaml(clazz, "nodeDefs.yml");
+        NODE_INFOS_YAML = readYaml(clazz, "nodeInfos.yml");
 
-        NODE_EXCEPTIONS_YAML = readString(clazz, "nodeExceptions.yml");
+        NODE_EXCEPTIONS_YAML = readYaml(clazz, "nodeExceptions.yml");
     }
 
     private YamlTestData() {
+    }
+
+    private static String readYaml(Class<?> clazz, String filename) {
+        return readString(clazz, filename)
+                .replace(WINDOWS_EOL, UNIX_EOL)
+                .replace(MAC_EOL, UNIX_EOL)
+                .trim();
     }
 }

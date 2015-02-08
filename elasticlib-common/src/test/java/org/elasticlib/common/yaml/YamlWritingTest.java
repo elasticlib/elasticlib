@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -181,7 +181,7 @@ public class YamlWritingTest {
                 YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
 
             yamlWriter.write(mappable);
-            return stringWriter.toString();
+            return stringWriter.toString().trim();
 
         } catch (IOException e) {
             throw new AssertionError(e);
@@ -193,7 +193,7 @@ public class YamlWritingTest {
                 YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
 
             yamlWriter.writeAll(mappables);
-            return stringWriter.toString();
+            return stringWriter.toString().trim();
 
         } catch (IOException e) {
             throw new AssertionError(e);

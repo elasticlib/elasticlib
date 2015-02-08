@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,35 +42,35 @@ final class JsonTestData {
     static {
         Class<?> clazz = JsonTestData.class;
 
-        STAGING_INFO_JSON = readJsonObject(clazz, "stagingInfo.json");
+        STAGING_INFO_JSON = readJsonObject(clazz, "stagingInfoTest.json");
 
-        REVISIONS_JSON.add(readJsonObject(clazz, "revision0.json"));
-        REVISIONS_JSON.add(readJsonObject(clazz, "revision1.json"));
+        REVISIONS_JSON.add(readJsonObject(clazz, "revisionTest0.json"));
+        REVISIONS_JSON.add(readJsonObject(clazz, "revisionTest1.json"));
 
-        REVISION_TREE_JSON = readJsonObject(clazz, "revisionTree.json");
+        REVISION_TREE_JSON = readJsonObject(clazz, "revisionTreeTest.json");
 
-        CONTENT_INFO_JSON = readJsonObject(clazz, "contentInfo.json");
+        CONTENT_INFO_JSON = readJsonObject(clazz, "contentInfoTest.json");
 
-        EVENTS_ARRAY = readJsonArray(clazz, "events.json");
+        EVENTS_ARRAY = readJsonArray(clazz, "eventsTest.json");
 
-        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult1.json"));
-        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResult2.json"));
+        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResultTest1.json"));
+        COMMAND_RESULTS_JSON.add(readJsonObject(clazz, "commandResultTest2.json"));
 
-        INDEX_ENTRIES_ARRAY = readJsonArray(clazz, "indexEntries.json");
+        INDEX_ENTRIES_ARRAY = readJsonArray(clazz, "indexEntriesTest.json");
 
-        REPOSITORY_DEFS_ARRAY = readJsonArray(clazz, "repositoryDefs.json");
-        REPLICATION_DEFS_ARRAY = readJsonArray(clazz, "replicationDefs.json");
+        REPOSITORY_DEFS_ARRAY = readJsonArray(clazz, "repositoryDefsTest.json");
+        REPLICATION_DEFS_ARRAY = readJsonArray(clazz, "replicationDefsTest.json");
 
-        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfo0.json"));
-        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfo1.json"));
+        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfoTest0.json"));
+        REPOSITORY_INFOS_JSON.add(readJsonObject(clazz, "repositoryInfoTest1.json"));
 
-        REPLICATION_INFOS_JSON.add(readJsonObject(clazz, "replicationInfo0.json"));
-        REPLICATION_INFOS_JSON.add(readJsonObject(clazz, "replicationInfo1.json"));
+        REPLICATION_INFOS_JSON.add(readJsonObject(clazz, "replicationInfoTest0.json"));
+        REPLICATION_INFOS_JSON.add(readJsonObject(clazz, "replicationInfoTest1.json"));
 
-        NODE_DEFS_ARRAY = readJsonArray(clazz, "nodeDefs.json");
-        NODE_INFOS_ARRAY = readJsonArray(clazz, "nodeInfos.json");
+        NODE_DEFS_ARRAY = readJsonArray(clazz, "nodeDefsTest.json");
+        NODE_INFOS_ARRAY = readJsonArray(clazz, "nodeInfosTest.json");
 
-        NODE_EXCEPTIONS_ARRAY = readJsonArray(clazz, "nodeExceptions.json");
+        NODE_EXCEPTIONS_ARRAY = readJsonArray(clazz, "nodeExceptionsTest.json");
     }
 
     private JsonTestData() {

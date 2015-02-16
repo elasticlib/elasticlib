@@ -113,7 +113,6 @@ Please consult the [ElasticLib wiki](https://github.com/elasticlib/elasticlib/wi
 
 ## Roadmap
 
-
 This is still a work in progress. A substantial set of the core functionalities is already implemented, which is mainly:
 
 * A basic implementation of the main operations on a repository.

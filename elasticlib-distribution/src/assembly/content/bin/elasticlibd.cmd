@@ -52,7 +52,11 @@ echo Usage: elasticlibd ^<install^|remove^|manage^|start^|stop^|run^> ^[elasticl
 exit /b 1
 
 :doRun
-java -classpath "%classpath%" -Delasticlib.home="%elasticlib_home%" %main_class% "%elasticlib_home%"
+java -classpath "%classpath%" ^
+     -Delasticlib.home="%elasticlib_home%" ^
+     -Dlogback.configurationFile="%root%\node\resources\logback.xml" ^
+     %main_class% ^
+     "%elasticlib_home%"
 exit /b 0
 
 :doInstall
@@ -65,6 +69,7 @@ exit /b 0
     --StartMethod main ^
     --StopMethod close ^
     ++JvmOptions -Delasticlib.home="%elasticlib_home%" ^
+    ++JvmOptions -Dlogback.configurationFile="%root%\node\resources\logback.xml" ^
     ++StartParams "%elasticlib_home%" ^
     --Classpath "%classpath%" ^
     --StartPath "%elasticlib_home%" ^

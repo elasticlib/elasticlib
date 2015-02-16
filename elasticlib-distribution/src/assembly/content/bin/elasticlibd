@@ -23,7 +23,11 @@ CLASSPATH="$ROOT"/node/resources:"$ROOT"/node/*:"$ROOT"/lib/*
 MAIN_CLASS="org.elasticlib.node.App"
 
 if [ "$1" = "run" ]; then
-    java -classpath "$CLASSPATH" -Delasticlib.home="$ELASTICLIB_HOME" "$MAIN_CLASS" "$ELASTICLIB_HOME"
+    java -classpath "$CLASSPATH" \
+         -Delasticlib.home="$ELASTICLIB_HOME" \
+         -Dlogback.configurationFile="$ROOT"/node/resources/logback.xml \
+         "$MAIN_CLASS" \
+         "$ELASTICLIB_HOME"
 
 elif [ "$1" = "start" ]; then
     if [ -s "$PID_FILE" ]; then
@@ -41,7 +45,13 @@ elif [ "$1" = "start" ]; then
         echo "Removed existing stale PID file"
     fi
 
-    java -classpath "$CLASSPATH" -Delasticlib.home="$ELASTICLIB_HOME" "$MAIN_CLASS" "$ELASTICLIB_HOME" >/dev/null 2>&1 &
+    java -classpath "$CLASSPATH" \
+         -Delasticlib.home="$ELASTICLIB_HOME" \
+         -Dlogback.configurationFile="$ROOT"/node/resources/logback.xml \
+         "$MAIN_CLASS" \
+         "$ELASTICLIB_HOME" \
+         >/dev/null 2>&1 &
+
     echo $! > "$PID_FILE"
     echo "Elasticlib node started"
 

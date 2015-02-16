@@ -16,9 +16,9 @@
 package org.elasticlib.node;
 
 import static java.lang.Runtime.getRuntime;
-import static java.lang.Thread.currentThread;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -29,6 +29,10 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 public final class App {
 
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
+
+    private static Node node;
+    private static volatile CountDownLatch keepAliveLatch;
+    private static volatile Thread keepAliveThread;
 
     private App() {
     }
@@ -49,21 +53,35 @@ public final class App {
         SLF4JBridgeHandler.install();
 
         Path home = Paths.get(args[0]);
-        Node node = new Node(home);
+        node = new Node(home);
         node.start();
 
-        getRuntime().addShutdownHook(new Thread("shutdown") {
-            @Override
-            public void run() {
-                node.stop();
+        getRuntime().addShutdownHook(new Thread(() -> {
+            node.stop();
+            keepAliveLatch.countDown();
+
+        }, "shutdown"));
+
+        keepAliveLatch = new CountDownLatch(1);
+        keepAliveThread = new Thread(() -> {
+            try {
+                keepAliveLatch.await();
+
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
             }
-        });
+        }, "keepAlive");
+        keepAliveThread.setDaemon(false);
+        keepAliveThread.start();
+    }
 
-        try {
-            currentThread().join();
-
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
+    /**
+     * Hook used by Prunsrv to stop this app.
+     *
+     * @param args Command line arguments.
+     */
+    public static void close(String[] args) {
+        node.stop();
+        keepAliveLatch.countDown();
     }
 }

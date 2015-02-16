@@ -29,6 +29,7 @@ limitations under the License.
             <directory>${basedir}/..</directory>
             <includes>
                 <include>*.txt</include>
+                <include>*.md</include>
             </includes>
         </fileSet>
         <fileSet>

@@ -48,7 +48,7 @@ A web-based interface is also planned.
 ## System requirements
 
 * Java 8
-* Currently only tested on and packaged for Unix like operating systems, but it should work on Windows too.
+* Works on Unix-like operating systems and Windows.
 * You also need to have Maven if you would like to build it from source.
 * And that's all!
 
@@ -56,23 +56,24 @@ A web-based interface is also planned.
 
 ## Installing
 
-First clone the ElasticLib GitHub repository on your local computer. Cd into cloned root directory and run a Maven build:
+Simply unzip the ElasticLib release archive to the installation folder of your choice. 
+You may want to add the `<install_dir>/elasticlib/bin/` directory to your PATH.
+
+If you want to build ElasticLib from source, first clone the ElasticLib GitHub repository on your local computer. 
+Cd into cloned root directory and run a Maven build:
 
 ```
 $ mvn install
 ```
 
-From there, unzip the zip archive from the target directory of the distribution sub-module to the installation folder of your choice:
-
-```
-$ unzip elasticlib-distribution/target/elasticlib.zip -d <install_dir>
-```
-
-You may want to add the <install_dir>/elasticlib/bin/ directory to your PATH.
+After the build has completed, the release archive will be available in the target directory of the distribution sub-module,
+that is `elasticlib-distribution/target/elasticlib.zip`.
 
 
 
 ## Using
+
+### Unix
 
 Start a node on local host by typing:
 
@@ -86,6 +87,25 @@ Then, in order to begin a console session, type:
 $ elasticlib
 ```
 
+### Windows
+
+On windows, you first have to install an ElasticLib node as a service. To this end, type:
+
+```
+> elasticlibd.cmd install
+```
+
+After that, start the installed service by typing:
+
+```
+> elasticlibd.cmd start
+```
+
+Then, in order to begin a console session, type:
+
+```
+> elasticlib.cmd
+```
 
 Please consult the [ElasticLib wiki](https://github.com/elasticlib/elasticlib/wiki) for further information.
 

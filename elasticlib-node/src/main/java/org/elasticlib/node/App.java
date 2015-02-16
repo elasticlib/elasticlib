@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  */
 package org.elasticlib.node;
 
+import static java.lang.Runtime.getRuntime;
 import static java.lang.Thread.currentThread;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,12 +43,22 @@ public final class App {
             LOG.error("The path to this node home-directory has to be supplied in the command line arguments");
             return;
         }
+
         // Optionally remove existing handlers and add SLF4JBridgeHandler to j.u.l root logger
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
         Path home = Paths.get(args[0]);
-        new Node(home).start();
+        Node node = new Node(home);
+        node.start();
+
+        getRuntime().addShutdownHook(new Thread("shutdown") {
+            @Override
+            public void run() {
+                node.stop();
+            }
+        });
+
         try {
             currentThread().join();
 

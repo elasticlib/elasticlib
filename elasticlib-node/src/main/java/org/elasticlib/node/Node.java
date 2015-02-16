@@ -16,7 +16,6 @@
 package org.elasticlib.node;
 
 import java.io.IOException;
-import static java.lang.Runtime.getRuntime;
 import static java.lang.System.lineSeparator;
 import java.net.URI;
 import java.nio.file.Path;
@@ -44,10 +43,13 @@ import org.slf4j.LoggerFactory;
 public class Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(Node.class);
+    private final Path home;
+    private final Config config;
     private final ManagerModule managerModule;
     private final ServiceModule serviceModule;
     private final DiscoveryModule discoveryModule;
     private final HttpServer httpServer;
+    private boolean stopped;
 
     /**
      * Constructor.
@@ -55,8 +57,8 @@ public class Node {
      * @param home Path to the node home-directory.
      */
     public Node(Path home) {
-        Config config = NodeConfig.load(home.resolve("config.yml"));
-        LOG.info(startingMessage(home, config));
+        this.home = home;
+        config = NodeConfig.load(home.resolve("config.yml"));
 
         managerModule = new ManagerModule(home, config);
         serviceModule = new ServiceModule(config, managerModule);
@@ -71,35 +73,6 @@ public class Node {
         httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config),
                                                                resourceConfig,
                                                                false);
-
-        getRuntime().addShutdownHook(new Thread("shutdown") {
-            @Override
-            public void run() {
-                LOG.info("Stopping...");
-                httpServer.shutdown();
-                discoveryModule.stop();
-                serviceModule.stop();
-                managerModule.stop();
-                LOG.info("Stopped");
-            }
-        });
-    }
-
-    private static String startingMessage(Path home, Config config) {
-        return new StringBuilder()
-                .append(about()).append(lineSeparator())
-                .append("Starting...").append(lineSeparator())
-                .append("Using home: ").append(home).append(lineSeparator())
-                .append("Using config:").append(lineSeparator())
-                .append(config)
-                .toString();
-    }
-
-    private static String about() {
-        Package pkg = Node.class.getPackage();
-        String title = pkg.getImplementationTitle() == null ? "" : pkg.getImplementationTitle();
-        String version = pkg.getImplementationVersion() == null ? "" : pkg.getImplementationVersion();
-        return String.join("", title, " ", version);
     }
 
     private AbstractBinder bindings() {
@@ -124,7 +97,8 @@ public class Node {
     /**
      * Starts the node.
      */
-    public void start() {
+    public synchronized void start() {
+        LOG.info(startingMessage());
         try {
             managerModule.start();
             serviceModule.start();
@@ -135,5 +109,39 @@ public class Node {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private String startingMessage() {
+        return new StringBuilder()
+                .append(about()).append(lineSeparator())
+                .append("Starting...").append(lineSeparator())
+                .append("Using home: ").append(home).append(lineSeparator())
+                .append("Using config:").append(lineSeparator())
+                .append(config)
+                .toString();
+    }
+
+    private static String about() {
+        Package pkg = Node.class.getPackage();
+        String title = pkg.getImplementationTitle() == null ? "" : pkg.getImplementationTitle();
+        String version = pkg.getImplementationVersion() == null ? "" : pkg.getImplementationVersion();
+        return String.join("", title, " ", version);
+    }
+
+    /**
+     * Stops the node.
+     */
+    public synchronized void stop() {
+        if (stopped) {
+            return;
+        }
+        stopped = true;
+
+        LOG.info("Stopping...");
+        httpServer.shutdown();
+        discoveryModule.stop();
+        serviceModule.stop();
+        managerModule.stop();
+        LOG.info("Stopped");
     }
 }

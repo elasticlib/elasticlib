@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.elasticlib.common.value.Value;
 import static org.elasticlib.common.value.Value.of;
 import org.elasticlib.common.yaml.YamlReader;
 import org.elasticlib.common.yaml.YamlWriter;
+import static org.yaml.snakeyaml.DumperOptions.LineBreak.UNIX;
 
 /**
  * Manages immutable persisted attributes of a repository, that are currently its name and GUID.
@@ -56,7 +57,7 @@ class AttributesManager {
                 .build();
 
         try (OutputStream output = Files.newOutputStream(path.resolve(ATTRIBUTES));
-                YamlWriter writer = new YamlWriter(output)) {
+                YamlWriter writer = new YamlWriter(output, UNIX)) {
             writer.writeValue(of(attributes));
 
         } catch (IOException e) {

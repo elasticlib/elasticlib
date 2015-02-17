@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.toList;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.value.Value;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.DumperOptions.LineBreak;
 import org.yaml.snakeyaml.emitter.Emitable;
 import org.yaml.snakeyaml.emitter.Emitter;
 import org.yaml.snakeyaml.nodes.Node;
@@ -40,7 +41,9 @@ import org.yaml.snakeyaml.serializer.Serializer;
 public class YamlWriter implements AutoCloseable {
 
     private static final int INDENT = 2;
+
     private final Writer writer;
+    private final LineBreak lineBreak;
 
     /**
      * Constructor for a an output-stream. Internally, an UTF-8 writer is created to write to the stream.
@@ -48,7 +51,17 @@ public class YamlWriter implements AutoCloseable {
      * @param outputStream The output-stream to write to.
      */
     public YamlWriter(OutputStream outputStream) {
-        this.writer = new BufferedWriter(new OutputStreamWriter(outputStream, Charsets.UTF_8));
+        this(outputStream, LineBreak.getPlatformLineBreak());
+    }
+
+    /**
+     * Constructor for a an output-stream. Internally, an UTF-8 writer is created to write to the stream.
+     *
+     * @param outputStream The output-stream to write to.
+     * @param lineBreak The type of line-break to use.
+     */
+    public YamlWriter(OutputStream outputStream, LineBreak lineBreak) {
+        this(new BufferedWriter(new OutputStreamWriter(outputStream, Charsets.UTF_8)), lineBreak);
     }
 
     /**
@@ -57,7 +70,18 @@ public class YamlWriter implements AutoCloseable {
      * @param writer The writer to write to.
      */
     public YamlWriter(Writer writer) {
+        this(writer, LineBreak.getPlatformLineBreak());
+    }
+
+    /**
+     * Constructor for a writer.
+     *
+     * @param writer The writer to write to.
+     * @param lineBreak The type of line-break to use.
+     */
+    public YamlWriter(Writer writer, LineBreak lineBreak) {
         this.writer = writer;
+        this.lineBreak = lineBreak;
     }
 
     /**
@@ -125,6 +149,7 @@ public class YamlWriter implements AutoCloseable {
     private void write(List<Node> nodes) throws IOException {
         DumperOptions options = new DumperOptions();
         options.setIndent(INDENT);
+        options.setLineBreak(lineBreak);
         if (nodes.size() > 1) {
             options.setExplicitStart(true);
             options.setExplicitEnd(true);

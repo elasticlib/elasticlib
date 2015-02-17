@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.elasticlib.common.yaml.YamlWriter;
 import static org.elasticlib.node.providers.MessageBodyWriterUtil.isJson;
 import static org.elasticlib.node.providers.MessageBodyWriterUtil.isYaml;
 import static org.elasticlib.node.providers.MessageBodyWriterUtil.writerFactory;
+import static org.yaml.snakeyaml.DumperOptions.LineBreak.UNIX;
 
 /**
  * Custom HTTP body writer for Mappable instances. Produces either JSON or YAML. For JSON, nicely format output if
@@ -77,7 +78,7 @@ public class MappableBodyWriter implements MessageBodyWriter<Mappable> {
     }
 
     private void writeYamlTo(Mappable t, OutputStream entityStream) throws IOException {
-        try (YamlWriter writer = new YamlWriter(entityStream)) {
+        try (YamlWriter writer = new YamlWriter(entityStream, UNIX)) {
             writer.write(t);
         }
     }

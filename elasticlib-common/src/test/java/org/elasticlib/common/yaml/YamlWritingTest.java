@@ -50,6 +50,7 @@ import static org.elasticlib.common.yaml.YamlTestData.REVISION_TREE_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.STAGING_INFO_YAML;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.Test;
+import static org.yaml.snakeyaml.DumperOptions.LineBreak.UNIX;
 
 /**
  * Unit tests.
@@ -178,7 +179,7 @@ public class YamlWritingTest {
 
     private static String write(Mappable mappable) {
         try (Writer stringWriter = new StringWriter();
-                YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
+                YamlWriter yamlWriter = new YamlWriter(stringWriter, UNIX)) {
 
             yamlWriter.write(mappable);
             return stringWriter.toString().trim();
@@ -190,7 +191,7 @@ public class YamlWritingTest {
 
     private static String writeAll(List<? extends Mappable> mappables) {
         try (Writer stringWriter = new StringWriter();
-                YamlWriter yamlWriter = new YamlWriter(stringWriter)) {
+                YamlWriter yamlWriter = new YamlWriter(stringWriter, UNIX)) {
 
             yamlWriter.writeAll(mappables);
             return stringWriter.toString().trim();

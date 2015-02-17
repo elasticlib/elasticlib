@@ -23,7 +23,7 @@ if not "%2" == "" set elasticlib_home=%~f2
 set name=ElasticLib-node-service
 set classpath=%root%\node\*;%root%\lib\*
 set main_class=org.elasticlib.node.App
-set log_opts=--LogPath "%elasticlib_home%\logs" --LogPrefix "%name%" --StdError auto --StdOutput auto
+set log_opts=--LogPath "%elasticlib_home%\logs" --LogPrefix "%name%" --StdError NUL --StdOutput NUL
 
 rem Detect Arch
 if NOT DEFINED JAVA_HOME (

@@ -21,7 +21,7 @@ for %%A in (%~dp0\..) do set root=%%~fA
 set elasticlib_home=%root%\node\home
 if not "%2" == "" set elasticlib_home=%~f2
 set name=ElasticLib-node-service
-set classpath=%root%\node\resources;%root%\node\*;%root%\lib\*
+set classpath=%root%\node\*;%root%\lib\*
 set main_class=org.elasticlib.node.App
 set log_opts=--LogPath "%elasticlib_home%\logs" --LogPrefix "%name%" --StdError auto --StdOutput auto
 
@@ -54,7 +54,7 @@ exit /b 1
 :doRun
 java -classpath "%classpath%" ^
      -Delasticlib.home="%elasticlib_home%" ^
-     -Dlogback.configurationFile="%root%\node\resources\logback.xml" ^
+     -Dlogback.configurationFile="%elasticlib_home%\logback.xml" ^
      %main_class% ^
      "%elasticlib_home%"
 exit /b 0
@@ -69,7 +69,7 @@ exit /b 0
     --StartMethod main ^
     --StopMethod close ^
     ++JvmOptions -Delasticlib.home="%elasticlib_home%" ^
-    ++JvmOptions -Dlogback.configurationFile="%root%\node\resources\logback.xml" ^
+    ++JvmOptions -Dlogback.configurationFile="%elasticlib_home%\logback.xml" ^
     ++StartParams "%elasticlib_home%" ^
     --Classpath "%classpath%" ^
     --StartPath "%elasticlib_home%" ^

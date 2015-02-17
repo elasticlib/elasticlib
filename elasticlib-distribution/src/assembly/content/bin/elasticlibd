@@ -19,13 +19,13 @@ BIN=`dirname "$PRG"`
 ROOT=`dirname "$BIN"`
 ELASTICLIB_HOME=${2:-"$ROOT"/node/home}
 PID_FILE="$ELASTICLIB_HOME"/pid
-CLASSPATH="$ROOT"/node/resources:"$ROOT"/node/*:"$ROOT"/lib/*
+CLASSPATH="$ROOT"/node/*:"$ROOT"/lib/*
 MAIN_CLASS="org.elasticlib.node.App"
 
 if [ "$1" = "run" ]; then
     java -classpath "$CLASSPATH" \
          -Delasticlib.home="$ELASTICLIB_HOME" \
-         -Dlogback.configurationFile="$ROOT"/node/resources/logback.xml \
+         -Dlogback.configurationFile="$ELASTICLIB_HOME"/logback.xml \
          "$MAIN_CLASS" \
          "$ELASTICLIB_HOME"
 
@@ -47,7 +47,7 @@ elif [ "$1" = "start" ]; then
 
     java -classpath "$CLASSPATH" \
          -Delasticlib.home="$ELASTICLIB_HOME" \
-         -Dlogback.configurationFile="$ROOT"/node/resources/logback.xml \
+         -Dlogback.configurationFile="$ELASTICLIB_HOME"/logback.xml \
          "$MAIN_CLASS" \
          "$ELASTICLIB_HOME" \
          >/dev/null 2>&1 &

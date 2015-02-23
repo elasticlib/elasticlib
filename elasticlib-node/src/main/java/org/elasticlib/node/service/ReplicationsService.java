@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,9 +104,7 @@ public class ReplicationsService {
             messageManager.register(RepositoryRemoved.class, new DeleteReplicationsAction());
 
             storageManager.inTransaction(() -> {
-                replicationsDao.listReplicationDefs()
-                        .stream()
-                        .forEach(this::startReplication);
+                replicationsDao.listReplicationDefs().forEach(this::startReplication);
             });
         } finally {
             lock.writeLock().unlock();

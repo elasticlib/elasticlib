@@ -140,6 +140,10 @@ public class UnicastDiscoveryClient {
 
         private void process(URI target) {
             try (Client client = new Client(target, LOGGING_HANDLER)) {
+                if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(target))) {
+                    nodesService.saveRemote(target);
+                }
+
                 List<NodeInfo> targetRemotes = client.remotes().listInfos();
                 targetRemotes.stream()
                         .filter(remote -> !knownNodes.contains(remote.getDef().getGuid()))

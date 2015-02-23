@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -159,6 +159,24 @@ public class NodesService {
 
     private boolean isAlreadyStored(NodeDef def) {
         return storageManager.inTransaction(() -> nodesDao.containsNodeInfo(def.getGuid()));
+    }
+
+    /**
+     * Save the remote node with supplied URI if:<br>
+     * - It is not the local node one.<br>
+     * - It is not already tracked.<br>
+     * - It is reachable.
+     * <p>
+     * If any of theses conditions does not hold, does nothing.
+     *
+     * @param uri Remote node URI.
+     */
+    public void saveRemote(URI uri) {
+        Optional<NodeInfo> info = nodePingHandler.ping(uri);
+        if (info.isPresent() && !info.get().getDef().getGuid().equals(guid)) {
+            LOG.info("Saving remote node {}", info.get().getDef().getName());
+            storageManager.inTransaction(() -> nodesDao.saveNodeInfo(info.get()));
+        }
     }
 
     /**

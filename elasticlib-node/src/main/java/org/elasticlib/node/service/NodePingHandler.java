@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,24 @@ public class NodePingHandler {
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
 
     /**
-     * Calls the supplied uris and returns info of the first node that responds.
+     * Calls the supplied URI and returns info of the associated node if it responds.
+     *
+     * @param uri A node URI.
+     * @return Info about the associated node.
+     */
+    public Optional<NodeInfo> ping(URI uri) {
+        try (Client client = new Client(uri, LOGGING_HANDLER)) {
+            NodeDef def = client.node().getDef();
+            return Optional.of(new NodeInfo(def, uri, now()));
+
+        } catch (ProcessingException e) {
+            EXCEPTION_HANDLER.log(uri, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Calls the supplied URIs and returns info of the first node that responds.
      *
      * @param uris Some node URI(s).
      * @return Info about the first reachable node.
@@ -47,7 +64,7 @@ public class NodePingHandler {
     }
 
     /**
-     * Calls the supplied uris and returns info of the first node that responds and which GUID matches expected one.
+     * Calls the supplied URIs and returns info of the first node that responds and which GUID matches expected one.
      *
      * @param uris Some node URI(s).
      * @param expected Expected node GUID.
@@ -57,7 +74,7 @@ public class NodePingHandler {
         return ping(uris, def -> def.getGuid().equals(expected));
     }
 
-    private static Optional<NodeInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
+    private Optional<NodeInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
         for (URI address : uris) {
             Optional<NodeInfo> info = ping(address);
             if (info.isPresent() && predicate.test(info.get().getDef())) {
@@ -65,16 +82,5 @@ public class NodePingHandler {
             }
         }
         return Optional.empty();
-    }
-
-    private static Optional<NodeInfo> ping(URI uri) {
-        try (Client client = new Client(uri, LOGGING_HANDLER)) {
-            NodeDef def = client.node().getDef();
-            return Optional.of(new NodeInfo(def, uri, now()));
-
-        } catch (ProcessingException e) {
-            EXCEPTION_HANDLER.log(uri, e);
-            return Optional.empty();
-        }
     }
 }

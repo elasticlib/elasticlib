@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import org.elasticlib.common.value.Value;
 public final class ReplicationInfo implements Mappable {
 
     private static final String SOURCE_DEF = "sourceDef";
-    private static final String DESTINATION_DEF = "destinationdef";
+    private static final String DESTINATION_DEF = "destinationDef";
     private static final String AGENT_INFO = "agentInfo";
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";

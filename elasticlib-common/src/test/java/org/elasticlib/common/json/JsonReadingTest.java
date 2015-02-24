@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
 import static org.elasticlib.common.TestData.NODE_EXCEPTIONS;
 import static org.elasticlib.common.TestData.NODE_INFOS;
+import static org.elasticlib.common.TestData.REMOTE_INFOS;
 import static org.elasticlib.common.TestData.REPLICATION_DEFS;
 import static org.elasticlib.common.TestData.REPLICATION_INFOS;
 import static org.elasticlib.common.TestData.REPOSITORY_DEFS;
@@ -40,6 +41,7 @@ import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_INFOS_ARRAY;
+import static org.elasticlib.common.json.JsonTestData.REMOTE_INFOS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static org.elasticlib.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
@@ -53,6 +55,7 @@ import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryDef;
@@ -178,6 +181,14 @@ public class JsonReadingTest {
     @Test
     public void readAllNodeInfosTest() {
         assertThat(readAll(NODE_INFOS_ARRAY, NodeInfo.class)).isEqualTo(NODE_INFOS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllRemoteInfosTest() {
+        assertThat(readAll(REMOTE_INFOS_ARRAY, RemoteInfo.class)).isEqualTo(REMOTE_INFOS);
     }
 
     /**

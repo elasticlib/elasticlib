@@ -18,7 +18,7 @@ package org.elasticlib.node.resources;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import org.elasticlib.common.model.NodeDef;
+import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.node.service.NodeService;
 
 /**
@@ -39,7 +39,7 @@ public class NodeResource {
      * @return output data
      */
     @GET
-    public NodeDef getNodeDef() {
-        return nodeService.getNodeDef();
+    public NodeInfo getNodeInfo() {
+        return nodeService.getNodeInfo();
     }
 }

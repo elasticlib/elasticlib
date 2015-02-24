@@ -30,7 +30,7 @@ import static org.elasticlib.common.config.ConfigUtil.unit;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
-import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -107,7 +107,7 @@ public class UnicastDiscoveryClient {
         task.cancel();
     }
 
-    private static Set<Guid> guids(List<NodeInfo> infos) {
+    private static Set<Guid> guids(List<RemoteInfo> infos) {
         return infos.stream()
                 .map(info -> info.getDef().getGuid())
                 .collect(toSet());
@@ -119,7 +119,7 @@ public class UnicastDiscoveryClient {
     private class DiscoveryTask implements Runnable {
 
         private NodeDef local;
-        private List<NodeInfo> remotes;
+        private List<RemoteInfo> remotes;
         private Set<Guid> knownNodes;
 
         @Override
@@ -141,7 +141,7 @@ public class UnicastDiscoveryClient {
                 return uris;
             }
             return remotes.stream()
-                    .map(NodeInfo::getTransportUri)
+                    .map(RemoteInfo::getTransportUri)
                     .collect(toList());
         }
 
@@ -151,7 +151,7 @@ public class UnicastDiscoveryClient {
                     remotesService.saveRemote(target);
                 }
 
-                List<NodeInfo> targetRemotes = client.remotes().listInfos();
+                List<RemoteInfo> targetRemotes = client.remotes().listInfos();
                 targetRemotes.stream()
                         .filter(remote -> !knownNodes.contains(remote.getDef().getGuid()))
                         .forEach(remote -> remotesService.saveRemote(remote.getDef()));

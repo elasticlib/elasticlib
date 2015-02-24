@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
 import static org.elasticlib.common.TestData.NODE_EXCEPTIONS;
 import static org.elasticlib.common.TestData.NODE_INFOS;
+import static org.elasticlib.common.TestData.REMOTE_INFOS;
 import static org.elasticlib.common.TestData.REPLICATION_DEFS;
 import static org.elasticlib.common.TestData.REPLICATION_INFOS;
 import static org.elasticlib.common.TestData.REPOSITORY_DEFS;
@@ -41,6 +42,7 @@ import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryDef;
@@ -55,6 +57,7 @@ import static org.elasticlib.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_DEFS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_EXCEPTIONS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_INFOS_YAML;
+import static org.elasticlib.common.yaml.YamlTestData.REMOTE_INFOS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
@@ -180,6 +183,14 @@ public class YamlReadingTest {
     @Test
     public void readAllNodeInfosTest() {
         assertThat(readAll(NODE_INFOS_YAML, NodeInfo.class)).isEqualTo(NODE_INFOS);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readAllRemoteInfosTest() {
+        assertThat(readAll(REMOTE_INFOS_YAML, RemoteInfo.class)).isEqualTo(REMOTE_INFOS);
     }
 
     /**

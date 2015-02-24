@@ -37,6 +37,7 @@ final class JsonTestData {
     public static final List<JsonObject> REPLICATION_INFOS_JSON = new ArrayList<>();
     public static final JsonArray NODE_DEFS_ARRAY;
     public static final JsonArray NODE_INFOS_ARRAY;
+    public static final JsonArray REMOTE_INFOS_ARRAY;
     public static final JsonArray NODE_EXCEPTIONS_ARRAY;
 
     static {
@@ -69,6 +70,7 @@ final class JsonTestData {
 
         NODE_DEFS_ARRAY = readJsonArray(clazz, "nodeDefsTest.json");
         NODE_INFOS_ARRAY = readJsonArray(clazz, "nodeInfosTest.json");
+        REMOTE_INFOS_ARRAY = readJsonArray(clazz, "remoteInfosTest.json");
 
         NODE_EXCEPTIONS_ARRAY = readJsonArray(clazz, "nodeExceptionsTest.json");
     }

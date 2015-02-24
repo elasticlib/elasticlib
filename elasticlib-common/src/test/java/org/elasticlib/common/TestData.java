@@ -21,7 +21,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
-import java.util.Collections;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import java.util.List;
@@ -44,6 +44,7 @@ import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.common.model.Operation;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryDef;
@@ -113,6 +114,10 @@ public final class TestData {
      * Some NodeInfo instances.
      */
     public static final List<NodeInfo> NODE_INFOS = new ArrayList<>();
+    /**
+     * Some RemoteInfo instances.
+     */
+    public static final List<RemoteInfo> REMOTE_INFOS = new ArrayList<>();
     /**
      * Some NodeException instances.
      */
@@ -224,14 +229,17 @@ public final class TestData {
 
         NODE_DEFS.add(new NodeDef("gamma",
                                   GUIDS[2],
-                                  Collections.<URI>emptyList()));
+                                  emptyList()));
 
-        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(0),
-                                    Instant.EPOCH));
+        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(0), emptyList()));
+        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(1), REPOSITORY_INFOS));
 
-        NODE_INFOS.add(new NodeInfo(NODE_DEFS.get(1),
-                                    NODE_DEFS.get(1).getPublishUris().get(1),
-                                    Instant.ofEpochMilli(123000)));
+        REMOTE_INFOS.add(new RemoteInfo(NODE_INFOS.get(0),
+                                        Instant.EPOCH));
+
+        REMOTE_INFOS.add(new RemoteInfo(NODE_INFOS.get(1),
+                                        NODE_DEFS.get(1).getPublishUris().get(1),
+                                        Instant.ofEpochMilli(123000)));
 
         NODE_EXCEPTIONS.add(new UnknownRepositoryException());
         NODE_EXCEPTIONS.add(new UnexpectedFailureException(new NullPointerException()));

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,64 +26,64 @@ import java.util.function.Predicate;
 import org.elasticlib.common.exception.NodeAlreadyTrackedException;
 import org.elasticlib.common.exception.UnknownNodeException;
 import org.elasticlib.common.hash.Guid;
-import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
 import org.elasticlib.node.manager.storage.StorageManager;
 
 /**
- * Provides a persistent storage for nodes infos.
+ * Provides a persistent storage for remote node infos.
  */
-public class NodesDao {
+public class RemotesDao {
 
-    private static final String NODES = "nodes";
+    private static final String REMOTES = "remotes";
 
     private final StorageManager storageManager;
-    private final Database nodeInfos;
+    private final Database remoteInfos;
 
     /**
      * Constructor.
      *
      * @param storageManager Persistent storage provider.
      */
-    public NodesDao(StorageManager storageManager) {
+    public RemotesDao(StorageManager storageManager) {
         this.storageManager = storageManager;
-        nodeInfos = storageManager.openDatabase(NODES);
+        remoteInfos = storageManager.openDatabase(REMOTES);
     }
 
     /**
-     * Checks whether a NodeInfo with supplied GUID is already stored.
+     * Checks whether a RemoteInfo with supplied GUID is already stored.
      *
      * @param guid A node GUID.
      * @return true if associated node definition is already stored.
      */
-    public boolean containsNodeInfo(Guid guid) {
-        OperationStatus status = nodeInfos.get(storageManager.currentTransaction(),
-                                               entry(guid),
-                                               new DatabaseEntry(),
-                                               LockMode.DEFAULT);
+    public boolean containsRemoteInfo(Guid guid) {
+        OperationStatus status = remoteInfos.get(storageManager.currentTransaction(),
+                                                 entry(guid),
+                                                 new DatabaseEntry(),
+                                                 LockMode.DEFAULT);
 
         return status == OperationStatus.SUCCESS;
     }
 
     /**
-     * Creates a new NodeInfo if it does not exist, does nothing otherwise.
+     * Creates a new RemoteInfo if it does not exist, does nothing otherwise.
      *
-     * @param info NodeInfo to save.
+     * @param info RemoteInfo to save.
      */
-    public void saveNodeInfo(NodeInfo info) {
-        nodeInfos.put(storageManager.currentTransaction(), entry(info.getDef().getGuid()), entry(info));
+    public void saveRemoteInfo(RemoteInfo info) {
+        remoteInfos.put(storageManager.currentTransaction(), entry(info.getDef().getGuid()), entry(info));
     }
 
     /**
-     * Creates a new NodeInfo. Fails if it already exist.
+     * Creates a new RemoteInfo. Fails if it already exist.
      *
-     * @param info NodeInfo to save.
+     * @param info RemoteInfo to save.
      */
-    public void createNodeInfo(NodeInfo info) {
-        OperationStatus status = nodeInfos.put(storageManager.currentTransaction(),
-                                               entry(info.getDef().getGuid()),
-                                               entry(info));
+    public void createRemoteInfo(RemoteInfo info) {
+        OperationStatus status = remoteInfos.put(storageManager.currentTransaction(),
+                                                 entry(info.getDef().getGuid()),
+                                                 entry(info));
 
         if (status == OperationStatus.KEYEXIST) {
             throw new NodeAlreadyTrackedException();
@@ -91,22 +91,22 @@ public class NodesDao {
     }
 
     /**
-     * Deletes a NodeInfo. Fail if it does not exist.
+     * Deletes a RemoteInfo. Fails if it does not exist.
      *
      * @param key Node name or encoded GUID.
      */
-    public void deleteNodeInfo(String key) {
+    public void deleteRemoteInfo(String key) {
         if (Guid.isValid(key)) {
-            OperationStatus status = nodeInfos.delete(storageManager.currentTransaction(), entry(new Guid(key)));
+            OperationStatus status = remoteInfos.delete(storageManager.currentTransaction(), entry(new Guid(key)));
             if (status == OperationStatus.SUCCESS) {
                 return;
             }
         }
         DatabaseEntry curKey = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
+        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
             while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                NodeInfo info = asMappable(data, NodeInfo.class);
+                RemoteInfo info = asMappable(data, RemoteInfo.class);
                 if (info.getDef().getName().equals(key)) {
                     cursor.delete();
                     return;
@@ -119,12 +119,12 @@ public class NodesDao {
     /**
      * Deletes info of all unreachable nodes.
      */
-    public void deleteUnreachableNodeInfos() {
+    public void deleteUnreachableRemoteInfos() {
         DatabaseEntry curKey = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
+        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
             while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                NodeInfo info = asMappable(data, NodeInfo.class);
+                RemoteInfo info = asMappable(data, RemoteInfo.class);
                 if (!info.isReachable()) {
                     cursor.delete();
                 }
@@ -133,20 +133,20 @@ public class NodesDao {
     }
 
     /**
-     * Loads all NodeInfo matching supplied predicate.
+     * Loads all RemoteInfo matching supplied predicate.
      *
      * @param predicate Filtering predicate.
      * @return Matching stored node infos.
      */
-    public List<NodeInfo> listNodeInfos(Predicate<NodeInfo> predicate) {
-        List<NodeInfo> list = new ArrayList<>();
+    public List<RemoteInfo> listRemoteInfos(Predicate<RemoteInfo> predicate) {
+        List<RemoteInfo> list = new ArrayList<>();
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(nodeInfos)) {
+        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
             while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                NodeInfo info = asMappable(data, NodeInfo.class);
+                RemoteInfo info = asMappable(data, RemoteInfo.class);
                 if (predicate.test(info)) {
-                    list.add(asMappable(data, NodeInfo.class));
+                    list.add(asMappable(data, RemoteInfo.class));
                 }
             }
         }

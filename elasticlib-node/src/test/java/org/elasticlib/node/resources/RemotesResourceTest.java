@@ -18,6 +18,7 @@ package org.elasticlib.node.resources;
 import java.net.URI;
 import static java.time.Instant.now;
 import java.util.ArrayList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import javax.ws.rs.core.Application;
@@ -25,6 +26,7 @@ import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.service.RemotesService;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -117,11 +119,12 @@ public class RemotesResourceTest extends AbstractResourceTest {
     @Test
     public void listRemotesTest() {
         NodeDef def = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
-        List<NodeInfo> nodeInfos = singletonList(new NodeInfo(def, now()));
+        NodeInfo info = new NodeInfo(def, emptyList());
+        List<RemoteInfo> remotes = singletonList(new RemoteInfo(info, now()));
 
-        when(remotesService.listRemotes()).thenReturn(nodeInfos);
+        when(remotesService.listRemotes()).thenReturn(remotes);
         try (Client client = newClient()) {
-            assertThat(client.remotes().listInfos()).isEqualTo(nodeInfos);
+            assertThat(client.remotes().listInfos()).isEqualTo(remotes);
         }
     }
 }

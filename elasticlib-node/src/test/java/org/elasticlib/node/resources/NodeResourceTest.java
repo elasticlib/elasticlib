@@ -15,12 +15,14 @@
  */
 package org.elasticlib.node.resources;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import javax.ws.rs.core.Application;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.exception.UnexpectedFailureException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
+import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.node.service.NodeService;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -63,11 +65,13 @@ public class NodeResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
-    public void getNodeDefTest() {
-        NodeDef nodeDef = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
-        when(nodeService.getNodeDef()).thenReturn(nodeDef);
+    public void getNodeInfoTest() {
+        NodeDef def = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
+        NodeInfo info = new NodeInfo(def, emptyList());
+
+        when(nodeService.getNodeInfo()).thenReturn(info);
         try (Client client = newClient()) {
-            assertThat(client.node().getDef()).isEqualTo(nodeDef);
+            assertThat(client.node().getInfo()).isEqualTo(info);
         }
     }
 
@@ -75,10 +79,10 @@ public class NodeResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test(expectedExceptions = UnexpectedFailureException.class)
-    public void getNodeDefWithUnexpectedFailureTest() {
-        when(nodeService.getNodeDef()).thenThrow(new NullPointerException());
+    public void getNodeInfoWithUnexpectedFailureTest() {
+        when(nodeService.getNodeInfo()).thenThrow(new NullPointerException());
         try (Client client = newClient()) {
-            client.node().getDef();
+            client.node().getInfo();
         }
     }
 }

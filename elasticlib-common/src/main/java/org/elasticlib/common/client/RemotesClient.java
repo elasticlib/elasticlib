@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
 import static org.elasticlib.common.client.ClientUtil.ensureSuccess;
 import static org.elasticlib.common.client.ClientUtil.readAll;
 import org.elasticlib.common.hash.Guid;
-import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 
 /**
  * Remotes API client.
@@ -56,9 +56,9 @@ public class RemotesClient {
      *
      * @return A list of node definitions.
      */
-    public List<NodeInfo> listInfos() {
+    public List<RemoteInfo> listInfos() {
         Response response = resource.request().get();
-        return readAll(response, NodeInfo.class);
+        return readAll(response, RemoteInfo.class);
     }
 
     /**

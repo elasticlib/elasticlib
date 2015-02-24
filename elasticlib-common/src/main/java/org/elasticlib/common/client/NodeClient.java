@@ -18,7 +18,7 @@ package org.elasticlib.common.client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import static org.elasticlib.common.client.ClientUtil.read;
-import org.elasticlib.common.model.NodeDef;
+import org.elasticlib.common.model.NodeInfo;
 
 /**
  * Current node API client.
@@ -38,12 +38,12 @@ public class NodeClient {
     }
 
     /**
-     * Provides the definition of the node this client is currently connected to.
+     * Provides the info about the node this client is currently connected to.
      *
      * @return A node definition.
      */
-    public NodeDef getDef() {
+    public NodeInfo getInfo() {
         Response response = resource.request().get();
-        return read(response, NodeDef.class);
+        return read(response, NodeInfo.class);
     }
 }

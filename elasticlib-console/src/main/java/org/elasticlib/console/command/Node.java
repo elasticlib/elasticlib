@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 package org.elasticlib.console.command;
 
 import java.util.List;
-import org.elasticlib.common.model.NodeDef;
+import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
 import org.elasticlib.console.http.Session;
@@ -34,10 +34,10 @@ class Node extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
-        NodeDef def = session.getClient()
+        NodeInfo info = session.getClient()
                 .node()
-                .getDef();
+                .getInfo();
 
-        display.print(def);
+        display.print(info);
     }
 }

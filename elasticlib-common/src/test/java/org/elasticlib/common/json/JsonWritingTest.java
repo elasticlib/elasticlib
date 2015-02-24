@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
 import static org.elasticlib.common.TestData.NODE_EXCEPTIONS;
 import static org.elasticlib.common.TestData.NODE_INFOS;
+import static org.elasticlib.common.TestData.REMOTE_INFOS;
 import static org.elasticlib.common.TestData.REPLICATION_DEFS;
 import static org.elasticlib.common.TestData.REPLICATION_INFOS;
 import static org.elasticlib.common.TestData.REPOSITORY_DEFS;
@@ -36,6 +37,7 @@ import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_INFOS_ARRAY;
+import static org.elasticlib.common.json.JsonTestData.REMOTE_INFOS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.REPLICATION_DEFS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static org.elasticlib.common.json.JsonTestData.REPOSITORY_DEFS_ARRAY;
@@ -163,6 +165,14 @@ public class JsonWritingTest {
     @Test
     public void writeAllNodeInfosTest() {
         assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_ARRAY);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllRemoteInfosTest() {
+        assertThat(writeAll(REMOTE_INFOS)).isEqualTo(REMOTE_INFOS_ARRAY);
     }
 
     /**

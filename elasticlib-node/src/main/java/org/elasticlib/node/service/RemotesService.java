@@ -18,7 +18,6 @@ package org.elasticlib.node.service;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
-import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +28,9 @@ import static org.elasticlib.common.config.ConfigUtil.unit;
 import org.elasticlib.common.exception.SelfTrackingException;
 import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.model.NodeDef;
-import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.config.NodeConfig;
-import org.elasticlib.node.dao.NodesDao;
+import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -48,7 +47,7 @@ public class RemotesService {
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
-    private final NodesDao nodesDao;
+    private final RemotesDao remotesDao;
     private final NodeService nodeService;
     private final NodePingHandler nodePingHandler;
     private final AtomicBoolean started = new AtomicBoolean();
@@ -61,21 +60,21 @@ public class RemotesService {
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
-     * @param nodesDao Nodes definitions DAO.
+     * @param remotesDao remote nodes DAO.
      * @param nodeService Node service.
      * @param nodePingHandler remote nodes ping handler.
      */
     public RemotesService(Config config,
                           TaskManager taskManager,
                           StorageManager storageManager,
-                          NodesDao nodesDao,
+                          RemotesDao remotesDao,
                           NodeService nodeService,
                           NodePingHandler nodePingHandler) {
 
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
-        this.nodesDao = nodesDao;
+        this.remotesDao = remotesDao;
         this.nodeService = nodeService;
         this.nodePingHandler = nodePingHandler;
     }
@@ -130,15 +129,15 @@ public class RemotesService {
         if (def.getGuid().equals(nodeService.getGuid()) || isAlreadyStored(def)) {
             return;
         }
-        Optional<NodeInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
+        Optional<RemoteInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
         if (info.isPresent()) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
-            storageManager.inTransaction(() -> nodesDao.saveNodeInfo(info.get()));
+            storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
 
     private boolean isAlreadyStored(NodeDef def) {
-        return storageManager.inTransaction(() -> nodesDao.containsNodeInfo(def.getGuid()));
+        return storageManager.inTransaction(() -> remotesDao.containsRemoteInfo(def.getGuid()));
     }
 
     /**
@@ -152,10 +151,10 @@ public class RemotesService {
      * @param uri Remote node URI.
      */
     public void saveRemote(URI uri) {
-        Optional<NodeInfo> info = nodePingHandler.ping(uri);
+        Optional<RemoteInfo> info = nodePingHandler.ping(uri);
         if (info.isPresent() && !info.get().getDef().getGuid().equals(nodeService.getGuid())) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
-            storageManager.inTransaction(() -> nodesDao.saveNodeInfo(info.get()));
+            storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
 
@@ -166,13 +165,13 @@ public class RemotesService {
      * @param uris URIs of the remote node.
      */
     public void addRemote(List<URI> uris) {
-        Optional<NodeInfo> info = nodePingHandler.ping(uris);
+        Optional<RemoteInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
             if (info.get().getDef().getGuid().equals(nodeService.getGuid())) {
                 throw new SelfTrackingException();
             }
             LOG.info("Adding remote node {}", info.get().getDef().getName());
-            storageManager.inTransaction(() -> nodesDao.createNodeInfo(info.get()));
+            storageManager.inTransaction(() -> remotesDao.createRemoteInfo(info.get()));
             return;
         }
         throw new UnreachableNodeException();
@@ -185,25 +184,25 @@ public class RemotesService {
      */
     public void removeRemote(String key) {
         LOG.info("Removing remote node {}", key);
-        storageManager.inTransaction(() -> nodesDao.deleteNodeInfo(key));
+        storageManager.inTransaction(() -> remotesDao.deleteRemoteInfo(key));
     }
 
     /**
      * Loads all remote nodes infos.
      *
-     * @return A list of NodeInfo instances.
+     * @return A list of RemoteInfo instances.
      */
-    public List<NodeInfo> listRemotes() {
-        return storageManager.inTransaction(() -> nodesDao.listNodeInfos(x -> true));
+    public List<RemoteInfo> listRemotes() {
+        return storageManager.inTransaction(() -> remotesDao.listRemoteInfos(x -> true));
     }
 
     /**
      * Loads info of all reachable remote nodes.
      *
-     * @return A list of NodeInfo instances.
+     * @return A list of RemoteInfo instances.
      */
-    public List<NodeInfo> listReachableRemotes() {
-        return storageManager.inTransaction(() -> nodesDao.listNodeInfos(NodeInfo::isReachable));
+    public List<RemoteInfo> listReachableRemotes() {
+        return storageManager.inTransaction(() -> remotesDao.listRemoteInfos(RemoteInfo::isReachable));
     }
 
     /**
@@ -213,22 +212,22 @@ public class RemotesService {
 
         @Override
         public void run() {
-            for (NodeInfo current : listRemotes()) {
+            for (RemoteInfo current : listRemotes()) {
                 if (!started.get()) {
                     return;
                 }
-                Optional<NodeInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
+                Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
                 storageManager.inTransaction(() -> {
                     if (updated.isPresent()) {
-                        nodesDao.saveNodeInfo(updated.get());
+                        remotesDao.saveRemoteInfo(updated.get());
                     } else {
-                        nodesDao.saveNodeInfo(new NodeInfo(current.getDef(), now()));
+                        remotesDao.saveRemoteInfo(current.asUnreachable());
                     }
                 });
             }
         }
 
-        private Iterable<URI> uris(NodeInfo info) {
+        private Iterable<URI> uris(RemoteInfo info) {
             if (!info.isReachable()) {
                 return info.getDef().getPublishUris();
             }
@@ -244,7 +243,7 @@ public class RemotesService {
 
         @Override
         public void run() {
-            storageManager.inTransaction(nodesDao::deleteUnreachableNodeInfos);
+            storageManager.inTransaction(remotesDao::deleteUnreachableRemoteInfos);
         }
     }
 }

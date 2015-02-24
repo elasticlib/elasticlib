@@ -24,6 +24,7 @@ import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +43,10 @@ public class NodePingHandler {
      * @param uri A node URI.
      * @return Info about the associated node.
      */
-    public Optional<NodeInfo> ping(URI uri) {
+    public Optional<RemoteInfo> ping(URI uri) {
         try (Client client = new Client(uri, LOGGING_HANDLER)) {
-            NodeDef def = client.node().getDef();
-            return Optional.of(new NodeInfo(def, uri, now()));
+            NodeInfo info = client.node().getInfo();
+            return Optional.of(new RemoteInfo(info, uri, now()));
 
         } catch (ProcessingException e) {
             EXCEPTION_HANDLER.log(uri, e);
@@ -59,7 +60,7 @@ public class NodePingHandler {
      * @param uris Some node URI(s).
      * @return Info about the first reachable node.
      */
-    public Optional<NodeInfo> ping(Iterable<URI> uris) {
+    public Optional<RemoteInfo> ping(Iterable<URI> uris) {
         return ping(uris, x -> true);
     }
 
@@ -70,13 +71,13 @@ public class NodePingHandler {
      * @param expected Expected node GUID.
      * @return Info about the first reachable node which requested GUID.
      */
-    public Optional<NodeInfo> ping(Iterable<URI> uris, Guid expected) {
+    public Optional<RemoteInfo> ping(Iterable<URI> uris, Guid expected) {
         return ping(uris, def -> def.getGuid().equals(expected));
     }
 
-    private Optional<NodeInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
+    private Optional<RemoteInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
         for (URI address : uris) {
-            Optional<NodeInfo> info = ping(address);
+            Optional<RemoteInfo> info = ping(address);
             if (info.isPresent() && predicate.test(info.get().getDef())) {
                 return info;
             }

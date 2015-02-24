@@ -26,6 +26,7 @@ import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
 import static org.elasticlib.common.TestData.NODE_EXCEPTIONS;
 import static org.elasticlib.common.TestData.NODE_INFOS;
+import static org.elasticlib.common.TestData.REMOTE_INFOS;
 import static org.elasticlib.common.TestData.REPLICATION_DEFS;
 import static org.elasticlib.common.TestData.REPLICATION_INFOS;
 import static org.elasticlib.common.TestData.REPOSITORY_DEFS;
@@ -41,6 +42,7 @@ import static org.elasticlib.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_DEFS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_EXCEPTIONS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_INFOS_YAML;
+import static org.elasticlib.common.yaml.YamlTestData.REMOTE_INFOS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPLICATION_DEFS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPLICATION_INFOS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.REPOSITORY_DEFS_YAML;
@@ -167,6 +169,14 @@ public class YamlWritingTest {
     @Test
     public void writeAllNodeInfosTest() {
         assertThat(writeAll(NODE_INFOS)).isEqualTo(NODE_INFOS_YAML);
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeAllRemoteInfosTest() {
+        assertThat(writeAll(REMOTE_INFOS)).isEqualTo(REMOTE_INFOS_YAML);
     }
 
     /**

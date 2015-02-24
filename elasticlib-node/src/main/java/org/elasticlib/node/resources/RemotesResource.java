@@ -37,7 +37,7 @@ import javax.ws.rs.core.Response;
 import org.elasticlib.common.exception.BadRequestException;
 import static org.elasticlib.common.json.JsonValidation.hasArrayValue;
 import static org.elasticlib.common.json.JsonValidation.hasStringValue;
-import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.service.RemotesService;
 
 /**
@@ -122,7 +122,7 @@ public class RemotesResource {
     }
 
     /**
-     * List definitions of all remote nodes.
+     * List info about all remote nodes.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>
@@ -130,8 +130,8 @@ public class RemotesResource {
      * @return output data
      */
     @GET
-    public GenericEntity<List<NodeInfo>> listRemotes() {
-        return new GenericEntity<List<NodeInfo>>(remotesService.listRemotes()) {
+    public GenericEntity<List<RemoteInfo>> listRemotes() {
+        return new GenericEntity<List<RemoteInfo>>(remotesService.listRemotes()) {
         };
     }
 }

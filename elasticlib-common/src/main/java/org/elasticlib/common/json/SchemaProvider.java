@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryDef;
@@ -65,6 +66,7 @@ final class SchemaProvider {
                  ReplicationInfo.class,
                  NodeDef.class,
                  NodeInfo.class,
+                 RemoteInfo.class,
                  NodeException.class);
     }
 

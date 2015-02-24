@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_EXCEPTIONS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_INFOS_ARRAY;
+import static org.elasticlib.common.json.JsonTestData.REMOTE_INFOS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.REPLICATION_INFOS_JSON;
 import static org.elasticlib.common.json.JsonTestData.REPOSITORY_INFOS_JSON;
 import static org.elasticlib.common.json.JsonTestData.REVISIONS_JSON;
@@ -49,6 +50,7 @@ import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.Revision;
@@ -262,6 +264,17 @@ public class JsonValidationTest {
             assertThat(isValid(json, NodeInfo.class)).isTrue();
         });
         assertThat(isValid(REVISION_TREE_JSON, NodeInfo.class)).isFalse();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidRemoteInfoTest() {
+        REMOTE_INFOS_ARRAY.getValuesAs(JsonObject.class).forEach(json -> {
+            assertThat(isValid(json, RemoteInfo.class)).isTrue();
+        });
+        assertThat(isValid(REVISION_TREE_JSON, RemoteInfo.class)).isFalse();
     }
 
     /**

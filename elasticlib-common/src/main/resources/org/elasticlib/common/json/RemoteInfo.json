@@ -1,5 +1,5 @@
 {
-    "title": "nodeInfo",
+    "title": "remoteInfo",
     "type": "object",
     "properties": {
         "name": {
@@ -18,6 +18,16 @@
             "items": {
                 "type": "string"
             }
+        },
+        "transportUri": {
+            "type": "string",
+            "optional": true
+        },
+        "reachable": {
+            "type": "boolean"
+        },
+        "refreshDate": {
+            "type": "date"
         },
         "repositories": {
             "type": "array",

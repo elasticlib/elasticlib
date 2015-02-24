@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,94 +16,62 @@
 package org.elasticlib.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import java.net.URI;
-import java.time.Instant;
+import static java.util.Collections.emptyList;
+import java.util.List;
 import java.util.Map;
 import static java.util.Objects.hash;
+import static java.util.stream.Collectors.toList;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.util.EqualsBuilder;
 import org.elasticlib.common.value.Value;
 
 /**
- * Info about a remote node from the point of view of the local one.
+ * Info about a node.
  */
 public class NodeInfo implements Mappable {
 
     private static final String DEF = "def";
-    private static final String TRANSPORT_URI = "transportUri";
-    private static final String REACHABLE = "reachable";
-    private static final String REFRESH_DATE = "refreshDate";
-    private final NodeDef def;
-    private final URI transportUri;
-    private final Instant refreshDate;
+    private static final String REPOSITORIES = "repositories";
+    private final NodeDef nodeDef;
+    private final List<RepositoryInfo> repositoryInfos;
 
     /**
-     * Constructor for a reachable node.
+     * Constructor.
      *
-     * @param def Node definition
-     * @param transportUri Node transport URI.
-     * @param refreshDate Refresh date of this info.
+     * @param nodeDef Node definition.
+     * @param repositoryInfos Info about node repositories.
      */
-    public NodeInfo(NodeDef def, URI transportUri, Instant refreshDate) {
-        this.def = def;
-        this.transportUri = transportUri;
-        this.refreshDate = refreshDate;
-    }
-
-    /**
-     * Constructor for an unreachable node.
-     *
-     * @param def Node definition
-     * @param refreshDate Refresh date of this info.
-     */
-    public NodeInfo(NodeDef def, Instant refreshDate) {
-        this(def, null, refreshDate);
-    }
-
-    /**
-     * @return If this node is reachable.
-     */
-    public boolean isReachable() {
-        return transportUri != null;
+    public NodeInfo(NodeDef nodeDef, List<RepositoryInfo> repositoryInfos) {
+        this.nodeDef = nodeDef;
+        this.repositoryInfos = repositoryInfos;
     }
 
     /**
      * @return The node definition.
      */
     public NodeDef getDef() {
-        return def;
+        return nodeDef;
     }
 
     /**
-     * @return The node transport URI. Fails if this node is not reachable.
+     * @return Info about the node repositories.
      */
-    public URI getTransportUri() {
-        if (!isReachable()) {
-            throw new IllegalStateException();
-        }
-        return transportUri;
-    }
-
-    /**
-     * @return The refresh date of this info.
-     */
-    public Instant getRefreshDate() {
-        return refreshDate;
+    public List<RepositoryInfo> listRepositoryInfos() {
+        return repositoryInfos;
     }
 
     @Override
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
-                .putAll(def.toMap());
+                .putAll(nodeDef.toMap());
 
-        if (isReachable()) {
-            builder.put(TRANSPORT_URI, transportUri.toString());
+        if (!repositoryInfos.isEmpty()) {
+            builder.put(REPOSITORIES, repositoryInfos.stream()
+                        .map(x -> Value.of(x.toMap()))
+                        .collect(toList()));
         }
-
-        return builder.put(REACHABLE, isReachable())
-                .put(REFRESH_DATE, refreshDate)
-                .build();
+        return builder.build();
     }
 
     /**
@@ -114,17 +82,19 @@ public class NodeInfo implements Mappable {
      */
     public static NodeInfo fromMap(Map<String, Value> map) {
         NodeDef def = NodeDef.fromMap(map);
-        if (!map.get(REACHABLE).asBoolean()) {
-            return new NodeInfo(def, map.get(REFRESH_DATE).asInstant());
+        if (!map.containsKey(REPOSITORIES)) {
+            return new NodeInfo(def, emptyList());
         }
-        return new NodeInfo(def,
-                            URI.create(map.get(TRANSPORT_URI).asString()),
-                            map.get(REFRESH_DATE).asInstant());
+        return new NodeInfo(def, map.get(REPOSITORIES)
+                            .asList()
+                            .stream()
+                            .map(x -> RepositoryInfo.fromMap(x.asMap()))
+                            .collect(toList()));
     }
 
     @Override
     public int hashCode() {
-        return hash(def, transportUri, refreshDate);
+        return hash(nodeDef, repositoryInfos);
     }
 
     @Override
@@ -134,18 +104,16 @@ public class NodeInfo implements Mappable {
         }
         NodeInfo other = (NodeInfo) obj;
         return new EqualsBuilder()
-                .append(def, other.def)
-                .append(transportUri, other.transportUri)
-                .append(refreshDate, other.refreshDate)
+                .append(nodeDef, other.nodeDef)
+                .append(repositoryInfos, other.repositoryInfos)
                 .build();
     }
 
     @Override
     public String toString() {
         return toStringHelper(this)
-                .add(DEF, def)
-                .add(TRANSPORT_URI, transportUri)
-                .add(REFRESH_DATE, refreshDate)
+                .add(DEF, nodeDef)
+                .add(REPOSITORIES, repositoryInfos)
                 .toString();
     }
 }

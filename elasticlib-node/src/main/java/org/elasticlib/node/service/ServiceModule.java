@@ -17,7 +17,7 @@ package org.elasticlib.node.service;
 
 import org.elasticlib.common.config.Config;
 import org.elasticlib.node.dao.AttributesDao;
-import org.elasticlib.node.dao.NodesDao;
+import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
@@ -47,7 +47,7 @@ public class ServiceModule {
         MessageManager messageManager = managerModule.getMessageManager();
 
         AttributesDao attributesDao = new AttributesDao(storageManager);
-        NodesDao nodesDao = new NodesDao(storageManager);
+        RemotesDao remotesDao = new RemotesDao(storageManager);
         RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
         ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
 
@@ -69,13 +69,14 @@ public class ServiceModule {
 
         nodeService = new NodeService(storageManager,
                                       attributesDao,
+                                      repositoriesService,
                                       nodeNameProvider,
                                       publishUrisProvider);
 
         remotesService = new RemotesService(config,
                                             taskManager,
                                             storageManager,
-                                            nodesDao,
+                                            remotesDao,
                                             nodeService,
                                             nodePingHandler);
     }

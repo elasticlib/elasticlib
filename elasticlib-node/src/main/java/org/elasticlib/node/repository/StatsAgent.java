@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,9 @@ class StatsAgent extends Agent {
                                            current.getUpdates(),
                                            current.getDeletions(),
                                            add(current.getMetadataCounts(),
-                                               counts(repository.getHead(event.getContent()))));
+                                               counts(repository.getRevisions(event.getContent(),
+                                                                              event.getRevisions()))));
+
             case UPDATE:
                 return new RepositoryStats(current.getCreations(),
                                            current.getUpdates() + 1,
@@ -115,7 +117,7 @@ class StatsAgent extends Agent {
 
     private Map<String, Long> diff(Event event) {
         RevisionTree tree = repository.getTree(event.getContent());
-        return substract(counts(tree.get(tree.getHead())),
+        return substract(counts(tree.get(event.getRevisions())),
                          counts(tree.get(previousHead(event))));
     }
 

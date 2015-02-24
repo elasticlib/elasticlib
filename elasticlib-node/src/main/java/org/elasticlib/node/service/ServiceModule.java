@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,8 @@ public class ServiceModule {
 
     private final RepositoriesService repositoriesService;
     private final ReplicationsService replicationsService;
-    private final NodesService nodesService;
+    private final NodeService nodeService;
+    private final RemotesService remotesService;
 
     /**
      * Constructor. Build and starts all services.
@@ -66,14 +67,17 @@ public class ServiceModule {
                                                       replicationsDao,
                                                       repositoriesService);
 
-        nodesService = new NodesService(config,
-                                        taskManager,
-                                        storageManager,
-                                        attributesDao,
-                                        nodesDao,
-                                        nodeNameProvider,
-                                        publishUrisProvider,
-                                        nodePingHandler);
+        nodeService = new NodeService(storageManager,
+                                      attributesDao,
+                                      nodeNameProvider,
+                                      publishUrisProvider);
+
+        remotesService = new RemotesService(config,
+                                            taskManager,
+                                            storageManager,
+                                            nodesDao,
+                                            nodeService,
+                                            nodePingHandler);
     }
 
     /**
@@ -82,14 +86,16 @@ public class ServiceModule {
     public void start() {
         repositoriesService.start();
         replicationsService.start();
-        nodesService.start();
+        nodeService.start();
+        remotesService.start();
     }
 
     /**
      * Properly stops all services.
      */
     public void stop() {
-        nodesService.stop();
+        remotesService.stop();
+        nodeService.stop();
         replicationsService.stop();
         repositoriesService.stop();
     }
@@ -109,9 +115,16 @@ public class ServiceModule {
     }
 
     /**
-     * @return The nodes service.
+     * @return The local node service.
      */
-    public NodesService getNodesService() {
-        return nodesService;
+    public NodeService getNodeService() {
+        return nodeService;
+    }
+
+    /**
+     * @return The remote nodes service.
+     */
+    public RemotesService getRemotesService() {
+        return remotesService;
     }
 }

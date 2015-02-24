@@ -33,7 +33,7 @@ import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.RemotesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class MulticastDiscoveryClient {
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryClient.class);
     private final Config config;
     private final TaskManager taskManager;
-    private final NodesService nodesService;
+    private final RemotesService remotesService;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private MulticastSocket socket;
     private Thread listeningThread;
@@ -58,12 +58,12 @@ public class MulticastDiscoveryClient {
      *
      * @param config Config.
      * @param taskManager Asynchronous tasks manager.
-     * @param nodesService The nodes service.
+     * @param remotesService Remote nodes service.
      */
-    public MulticastDiscoveryClient(Config config, TaskManager taskManager, NodesService nodesService) {
+    public MulticastDiscoveryClient(Config config, TaskManager taskManager, RemotesService remotesService) {
         this.config = config;
         this.taskManager = taskManager;
-        this.nodesService = nodesService;
+        this.remotesService = remotesService;
     }
 
     /**
@@ -159,7 +159,7 @@ public class MulticastDiscoveryClient {
                     socket.receive(packet);
 
                     LOG.info("Received multicast discovery response from {}", sender(packet));
-                    nodesService.saveRemote(read(packet));
+                    remotesService.saveRemote(read(packet));
 
                 } catch (IOException e) {
                     if (started.get()) {

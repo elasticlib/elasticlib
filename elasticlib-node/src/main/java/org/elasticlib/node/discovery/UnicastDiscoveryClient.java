@@ -35,8 +35,9 @@ import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
 import org.elasticlib.node.service.ClientLoggingHandler;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.NodeService;
 import org.elasticlib.node.service.ProcessingExceptionHandler;
+import org.elasticlib.node.service.RemotesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,8 @@ public class UnicastDiscoveryClient {
 
     private final Config config;
     private final TaskManager taskManager;
-    private final NodesService nodesService;
+    private final NodeService nodeService;
+    private final RemotesService remotesService;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private Task task;
 
@@ -65,12 +67,17 @@ public class UnicastDiscoveryClient {
      *
      * @param config Config.
      * @param taskManager Asynchronous tasks manager.
-     * @param nodesService The nodes service.
+     * @param nodeService Local node service.
+     * @param remotesService Remote nodes service.
      */
-    public UnicastDiscoveryClient(Config config, TaskManager taskManager, NodesService nodesService) {
+    public UnicastDiscoveryClient(Config config,
+                                  TaskManager taskManager,
+                                  NodeService nodeService,
+                                  RemotesService remotesService) {
         this.config = config;
         this.taskManager = taskManager;
-        this.nodesService = nodesService;
+        this.nodeService = nodeService;
+        this.remotesService = remotesService;
     }
 
     /**
@@ -117,8 +124,8 @@ public class UnicastDiscoveryClient {
 
         @Override
         public void run() {
-            local = nodesService.getNodeDef();
-            remotes = nodesService.listReachableRemotes();
+            local = nodeService.getNodeDef();
+            remotes = remotesService.listReachableRemotes();
             knownNodes = guids(remotes);
             for (URI uri : targetUris()) {
                 if (!started.get()) {
@@ -141,13 +148,13 @@ public class UnicastDiscoveryClient {
         private void process(URI target) {
             try (Client client = new Client(target, LOGGING_HANDLER)) {
                 if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(target))) {
-                    nodesService.saveRemote(target);
+                    remotesService.saveRemote(target);
                 }
 
                 List<NodeInfo> targetRemotes = client.remotes().listInfos();
                 targetRemotes.stream()
                         .filter(remote -> !knownNodes.contains(remote.getDef().getGuid()))
-                        .forEach(remote -> nodesService.saveRemote(remote.getDef()));
+                        .forEach(remote -> remotesService.saveRemote(remote.getDef()));
 
                 if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
                     try {

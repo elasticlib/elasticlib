@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.RemotesService;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -43,14 +43,14 @@ import org.testng.annotations.Test;
 public class RemotesResourceTest extends AbstractResourceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemotesResourceTest.class);
-    private final NodesService nodesService = mock(NodesService.class);
+    private final RemotesService remotesService = mock(RemotesService.class);
 
     /**
      * Constructor.
      */
     public RemotesResourceTest() {
         super(LOG);
-        registerMocks(nodesService);
+        registerMocks(remotesService);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
                 .register(new AbstractBinder() {
                     @Override
                     protected void configure() {
-                        bind(nodesService).to(NodesService.class);
+                        bind(remotesService).to(RemotesService.class);
                     }
                 });
     }
@@ -96,7 +96,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
         try (Client client = newClient()) {
             client.remotes().add(uris);
         }
-        verify(nodesService).addRemote(uris);
+        verify(remotesService).addRemote(uris);
     }
 
     /**
@@ -108,7 +108,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
         try (Client client = newClient()) {
             client.remotes().remove(guid);
         }
-        verify(nodesService).removeRemote(guid.asHexadecimalString());
+        verify(remotesService).removeRemote(guid.asHexadecimalString());
     }
 
     /**
@@ -119,7 +119,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
         NodeDef def = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
         List<NodeInfo> nodeInfos = singletonList(new NodeInfo(def, now()));
 
-        when(nodesService.listRemotes()).thenReturn(nodeInfos);
+        when(remotesService.listRemotes()).thenReturn(nodeInfos);
         try (Client client = newClient()) {
             assertThat(client.remotes().listInfos()).isEqualTo(nodeInfos);
         }

@@ -26,7 +26,7 @@ import javax.json.JsonWriter;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.json.JsonWriting;
 import org.elasticlib.node.config.NodeConfig;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.NodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,7 @@ public class MulticastDiscoveryListener {
     private static final Logger LOG = LoggerFactory.getLogger(MulticastDiscoveryListener.class);
 
     private final Config config;
-    private final NodesService nodesService;
+    private final NodeService nodeService;
     private boolean started;
     private DiscoveryThread thread;
 
@@ -47,11 +47,11 @@ public class MulticastDiscoveryListener {
      * Constructor.
      *
      * @param config Server config.
-     * @param nodesService The nodes service.
+     * @param nodeService Local node service.
      */
-    public MulticastDiscoveryListener(Config config, NodesService nodesService) {
+    public MulticastDiscoveryListener(Config config, NodeService nodeService) {
         this.config = config;
-        this.nodesService = nodesService;
+        this.nodeService = nodeService;
     }
 
     /**
@@ -182,7 +182,7 @@ public class MulticastDiscoveryListener {
         private byte[] response() throws IOException {
             try (ByteArrayOutputStream output = new ByteArrayOutputStream();
                     JsonWriter writer = Json.createWriter(output)) {
-                writer.write(JsonWriting.write(nodesService.getNodeDef()));
+                writer.write(JsonWriting.write(nodeService.getNodeDef()));
                 return output.toByteArray();
             }
         }

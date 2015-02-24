@@ -28,11 +28,9 @@ import static org.elasticlib.common.config.ConfigUtil.duration;
 import static org.elasticlib.common.config.ConfigUtil.unit;
 import org.elasticlib.common.exception.SelfTrackingException;
 import org.elasticlib.common.exception.UnreachableNodeException;
-import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.node.config.NodeConfig;
-import org.elasticlib.node.dao.AttributesDao;
 import org.elasticlib.node.dao.NodesDao;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.Task;
@@ -41,22 +39,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages nodes in the cluster.
+ * Manages remote nodes in the cluster.
  */
-public class NodesService {
+public class RemotesService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NodesService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RemotesService.class);
 
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
-    private final AttributesDao attributesDao;
     private final NodesDao nodesDao;
-    private final NodeNameProvider nodeNameProvider;
-    private final PublishUrisProvider publishUrisProvider;
+    private final NodeService nodeService;
     private final NodePingHandler nodePingHandler;
     private final AtomicBoolean started = new AtomicBoolean();
-    private Guid guid;
     private Task pingTask;
     private Task cleanupTask;
 
@@ -67,27 +62,21 @@ public class NodesService {
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
      * @param nodesDao Nodes definitions DAO.
-     * @param attributesDao Attributes DAO.
-     * @param nodeNameProvider Node name provider.
-     * @param publishUrisProvider Publish URI(s) provider.
+     * @param nodeService Node service.
      * @param nodePingHandler remote nodes ping handler.
      */
-    public NodesService(Config config,
-                        TaskManager taskManager,
-                        StorageManager storageManager,
-                        AttributesDao attributesDao,
-                        NodesDao nodesDao,
-                        NodeNameProvider nodeNameProvider,
-                        PublishUrisProvider publishUrisProvider,
-                        NodePingHandler nodePingHandler) {
+    public RemotesService(Config config,
+                          TaskManager taskManager,
+                          StorageManager storageManager,
+                          NodesDao nodesDao,
+                          NodeService nodeService,
+                          NodePingHandler nodePingHandler) {
 
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
-        this.attributesDao = attributesDao;
         this.nodesDao = nodesDao;
-        this.nodeNameProvider = nodeNameProvider;
-        this.publishUrisProvider = publishUrisProvider;
+        this.nodeService = nodeService;
         this.nodePingHandler = nodePingHandler;
     }
 
@@ -98,8 +87,6 @@ public class NodesService {
         if (!started.compareAndSet(false, true)) {
             return;
         }
-        guid = storageManager.inTransaction(attributesDao::guid);
-
         if (config.getBoolean(NodeConfig.REMOTES_PING_ENABLED)) {
             pingTask = taskManager.schedule(duration(config, NodeConfig.REMOTES_PING_INTERVAL),
                                             unit(config, NodeConfig.REMOTES_PING_INTERVAL),
@@ -130,13 +117,6 @@ public class NodesService {
     }
 
     /**
-     * @return The definition of the local node.
-     */
-    public NodeDef getNodeDef() {
-        return new NodeDef(nodeNameProvider.name(), guid, publishUrisProvider.uris());
-    }
-
-    /**
      * Save supplied node definition if:<br>
      * - It is not the local node one.<br>
      * - It is not already tracked.<br>
@@ -147,7 +127,7 @@ public class NodesService {
      * @param def Node definition to save
      */
     public void saveRemote(NodeDef def) {
-        if (def.getGuid().equals(guid) || isAlreadyStored(def)) {
+        if (def.getGuid().equals(nodeService.getGuid()) || isAlreadyStored(def)) {
             return;
         }
         Optional<NodeInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
@@ -173,7 +153,7 @@ public class NodesService {
      */
     public void saveRemote(URI uri) {
         Optional<NodeInfo> info = nodePingHandler.ping(uri);
-        if (info.isPresent() && !info.get().getDef().getGuid().equals(guid)) {
+        if (info.isPresent() && !info.get().getDef().getGuid().equals(nodeService.getGuid())) {
             LOG.info("Saving remote node {}", info.get().getDef().getName());
             storageManager.inTransaction(() -> nodesDao.saveNodeInfo(info.get()));
         }
@@ -188,7 +168,7 @@ public class NodesService {
     public void addRemote(List<URI> uris) {
         Optional<NodeInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
-            if (info.get().getDef().getGuid().equals(guid)) {
+            if (info.get().getDef().getGuid().equals(nodeService.getGuid())) {
                 throw new SelfTrackingException();
             }
             LOG.info("Adding remote node {}", info.get().getDef().getName());

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,16 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import org.elasticlib.common.model.NodeDef;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.NodeService;
 
 /**
- * Root REST resource.
+ * Local node REST resource.
  */
-@Path("/")
-public class RootResource {
+@Path("node")
+public class NodeResource {
 
     @Inject
-    private NodesService nodesService;
+    private NodeService nodeService;
 
     /**
      * Provides the definition of the local node.
@@ -40,6 +40,6 @@ public class RootResource {
      */
     @GET
     public NodeDef getNodeDef() {
-        return nodesService.getNodeDef();
+        return nodeService.getNodeDef();
     }
 }

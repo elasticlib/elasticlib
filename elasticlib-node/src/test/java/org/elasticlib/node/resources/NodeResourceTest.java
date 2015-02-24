@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import org.elasticlib.common.client.Client;
 import org.elasticlib.common.exception.UnexpectedFailureException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.NodeService;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -32,29 +32,29 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Integration tests on the root resource and the HTTP client. Service layer is mocked in these tests.
+ * Integration tests on the node resource and the HTTP client. Service layer is mocked in these tests.
  */
-public class RootResourceTest extends AbstractResourceTest {
+public class NodeResourceTest extends AbstractResourceTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RootResourceTest.class);
-    private final NodesService nodesService = mock(NodesService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NodeResourceTest.class);
+    private final NodeService nodeService = mock(NodeService.class);
 
     /**
      * Constructor.
      */
-    public RootResourceTest() {
+    public NodeResourceTest() {
         super(LOG);
-        registerMocks(nodesService);
+        registerMocks(nodeService);
     }
 
     @Override
     protected Application testConfiguration() {
         return new ResourceConfig()
-                .register(RootResource.class)
+                .register(NodeResource.class)
                 .register(new AbstractBinder() {
                     @Override
                     protected void configure() {
-                        bind(nodesService).to(NodesService.class);
+                        bind(nodeService).to(NodeService.class);
                     }
                 });
     }
@@ -65,7 +65,7 @@ public class RootResourceTest extends AbstractResourceTest {
     @Test
     public void getNodeDefTest() {
         NodeDef nodeDef = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
-        when(nodesService.getNodeDef()).thenReturn(nodeDef);
+        when(nodeService.getNodeDef()).thenReturn(nodeDef);
         try (Client client = newClient()) {
             assertThat(client.node().getDef()).isEqualTo(nodeDef);
         }
@@ -76,7 +76,7 @@ public class RootResourceTest extends AbstractResourceTest {
      */
     @Test(expectedExceptions = UnexpectedFailureException.class)
     public void getNodeDefWithUnexpectedFailureTest() {
-        when(nodesService.getNodeDef()).thenThrow(new NullPointerException());
+        when(nodeService.getNodeDef()).thenThrow(new NullPointerException());
         try (Client client = newClient()) {
             client.node().getDef();
         }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,11 @@ import static org.elasticlib.common.client.ClientUtil.read;
 import org.elasticlib.common.model.NodeDef;
 
 /**
- * Node API client.
+ * Current node API client.
  */
 public class NodeClient {
 
+    private static final String NODE = "node";
     private final WebTarget resource;
 
     /**
@@ -33,7 +34,7 @@ public class NodeClient {
      * @param resource Base web-resource.
      */
     NodeClient(WebTarget resource) {
-        this.resource = resource;
+        this.resource = resource.path(NODE);
     }
 
     /**

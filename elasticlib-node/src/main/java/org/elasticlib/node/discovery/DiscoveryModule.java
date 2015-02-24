@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,15 +37,16 @@ public class DiscoveryModule {
      */
     public DiscoveryModule(Config config, ManagerModule managerModule, ServiceModule serviceModule) {
         multicastDiscoveryListener = new MulticastDiscoveryListener(config,
-                                                                    serviceModule.getNodesService());
+                                                                    serviceModule.getNodeService());
 
         multicastDiscoveryClient = new MulticastDiscoveryClient(config,
                                                                 managerModule.getTaskManager(),
-                                                                serviceModule.getNodesService());
+                                                                serviceModule.getRemotesService());
 
         unicastDiscoveryClient = new UnicastDiscoveryClient(config,
                                                             managerModule.getTaskManager(),
-                                                            serviceModule.getNodesService());
+                                                            serviceModule.getNodeService(),
+                                                            serviceModule.getRemotesService());
     }
 
     /**

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ import org.elasticlib.common.exception.BadRequestException;
 import static org.elasticlib.common.json.JsonValidation.hasArrayValue;
 import static org.elasticlib.common.json.JsonValidation.hasStringValue;
 import org.elasticlib.common.model.NodeInfo;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.RemotesService;
 
 /**
  * Remote nodes REST resource.
@@ -49,7 +49,7 @@ public class RemotesResource {
     private static final String URI = "uri";
     private static final String URIS = "uris";
     @Inject
-    private NodesService nodesService;
+    private RemotesService remotesService;
 
     /**
      * Create a new remote node.
@@ -70,7 +70,7 @@ public class RemotesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addRemote(JsonObject json) {
-        nodesService.addRemote(parseAddRemoteRequest(json));
+        remotesService.addRemote(parseAddRemoteRequest(json));
         return Response.ok().build();
     }
 
@@ -117,7 +117,7 @@ public class RemotesResource {
     @DELETE
     @Path("{node}")
     public Response removeRemote(@PathParam("node") String nodeKey) {
-        nodesService.removeRemote(nodeKey);
+        remotesService.removeRemote(nodeKey);
         return Response.ok().build();
     }
 
@@ -131,7 +131,7 @@ public class RemotesResource {
      */
     @GET
     public GenericEntity<List<NodeInfo>> listRemotes() {
-        return new GenericEntity<List<NodeInfo>>(nodesService.listRemotes()) {
+        return new GenericEntity<List<NodeInfo>>(remotesService.listRemotes()) {
         };
     }
 }

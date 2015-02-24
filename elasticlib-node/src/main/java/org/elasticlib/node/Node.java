@@ -25,7 +25,8 @@ import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.discovery.DiscoveryModule;
 import org.elasticlib.node.manager.ManagerModule;
 import org.elasticlib.node.providers.LoggingFilter;
-import org.elasticlib.node.service.NodesService;
+import org.elasticlib.node.service.NodeService;
+import org.elasticlib.node.service.RemotesService;
 import org.elasticlib.node.service.ReplicationsService;
 import org.elasticlib.node.service.RepositoriesService;
 import org.elasticlib.node.service.ServiceModule;
@@ -81,7 +82,8 @@ public class Node {
             protected void configure() {
                 bind(serviceModule.getRepositoriesService()).to(RepositoriesService.class);
                 bind(serviceModule.getReplicationsService()).to(ReplicationsService.class);
-                bind(serviceModule.getNodesService()).to(NodesService.class);
+                bind(serviceModule.getNodeService()).to(NodeService.class);
+                bind(serviceModule.getRemotesService()).to(RemotesService.class);
             }
         };
     }

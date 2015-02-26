@@ -27,7 +27,7 @@ import static org.elasticlib.common.config.ConfigUtil.duration;
 import static org.elasticlib.common.config.ConfigUtil.unit;
 import org.elasticlib.common.exception.SelfTrackingException;
 import org.elasticlib.common.exception.UnreachableNodeException;
-import org.elasticlib.common.model.NodeDef;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.dao.RemotesDao;
@@ -116,28 +116,29 @@ public class RemotesService {
     }
 
     /**
-     * Save supplied node definition if:<br>
+     * Save the remote node with supplied URI(s) and GUID if:<br>
      * - It is not the local node one.<br>
      * - It is not already tracked.<br>
      * - Associated node is reachable.
      * <p>
      * If any of theses conditions does not hold, does nothing.
      *
-     * @param def Node definition to save
+     * @param uris URI(s) of the remote node.
+     * @param expected Remote node GUID.
      */
-    public void saveRemote(NodeDef def) {
-        if (def.getGuid().equals(nodeService.getGuid()) || isAlreadyStored(def)) {
+    public void saveRemote(List<URI> uris, Guid expected) {
+        if (expected.equals(nodeService.getGuid()) || isAlreadyStored(expected)) {
             return;
         }
-        Optional<RemoteInfo> info = nodePingHandler.ping(def.getPublishUris(), def.getGuid());
+        Optional<RemoteInfo> info = nodePingHandler.ping(uris, expected);
         if (info.isPresent()) {
-            LOG.info("Saving remote node {}", info.get().getDef().getName());
+            LOG.info("Saving remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
 
-    private boolean isAlreadyStored(NodeDef def) {
-        return storageManager.inTransaction(() -> remotesDao.containsRemoteInfo(def.getGuid()));
+    private boolean isAlreadyStored(Guid guid) {
+        return storageManager.inTransaction(() -> remotesDao.containsRemoteInfo(guid));
     }
 
     /**
@@ -152,8 +153,8 @@ public class RemotesService {
      */
     public void saveRemote(URI uri) {
         Optional<RemoteInfo> info = nodePingHandler.ping(uri);
-        if (info.isPresent() && !info.get().getDef().getGuid().equals(nodeService.getGuid())) {
-            LOG.info("Saving remote node {}", info.get().getDef().getName());
+        if (info.isPresent() && !info.get().getGuid().equals(nodeService.getGuid())) {
+            LOG.info("Saving remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
@@ -162,15 +163,15 @@ public class RemotesService {
      * Add a remote node to tracked ones. Fails if remote node is not reachable, is already tracked or its GUID is the
      * same as the local one.
      *
-     * @param uris URIs of the remote node.
+     * @param uris URI(s) of the remote node.
      */
     public void addRemote(List<URI> uris) {
         Optional<RemoteInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
-            if (info.get().getDef().getGuid().equals(nodeService.getGuid())) {
+            if (info.get().getGuid().equals(nodeService.getGuid())) {
                 throw new SelfTrackingException();
             }
-            LOG.info("Adding remote node {}", info.get().getDef().getName());
+            LOG.info("Adding remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.createRemoteInfo(info.get()));
             return;
         }
@@ -216,7 +217,7 @@ public class RemotesService {
                 if (!started.get()) {
                     return;
                 }
-                Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getDef().getGuid());
+                Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getGuid());
                 storageManager.inTransaction(() -> {
                     if (updated.isPresent()) {
                         remotesDao.saveRemoteInfo(updated.get());
@@ -229,10 +230,10 @@ public class RemotesService {
 
         private Iterable<URI> uris(RemoteInfo info) {
             if (!info.isReachable()) {
-                return info.getDef().getPublishUris();
+                return info.getPublishUris();
             }
             return concat(singleton(info.getTransportUri()),
-                          filter(info.getDef().getPublishUris(), uri -> !uri.equals(info.getTransportUri())));
+                          filter(info.getPublishUris(), uri -> !uri.equals(info.getTransportUri())));
         }
     }
 

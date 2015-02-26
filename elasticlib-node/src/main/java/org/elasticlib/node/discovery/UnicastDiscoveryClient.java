@@ -109,7 +109,7 @@ public class UnicastDiscoveryClient {
 
     private static Set<Guid> guids(List<RemoteInfo> infos) {
         return infos.stream()
-                .map(info -> info.getDef().getGuid())
+                .map(info -> info.getGuid())
                 .collect(toSet());
     }
 
@@ -153,8 +153,8 @@ public class UnicastDiscoveryClient {
 
                 List<RemoteInfo> targetRemotes = client.remotes().listInfos();
                 targetRemotes.stream()
-                        .filter(remote -> !knownNodes.contains(remote.getDef().getGuid()))
-                        .forEach(remote -> remotesService.saveRemote(remote.getDef()));
+                        .filter(remote -> !knownNodes.contains(remote.getGuid()))
+                        .forEach(remote -> remotesService.saveRemote(remote.getPublishUris(), remote.getGuid()));
 
                 if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
                     try {

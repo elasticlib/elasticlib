@@ -29,7 +29,6 @@ import java.util.TreeSet;
 import static java.util.stream.Collectors.toList;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.exception.NodeException;
-import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.RepositoryDef;
 import static org.elasticlib.console.command.CommandProvider.commands;
 import static org.elasticlib.console.command.Type.KEY;
@@ -117,9 +116,8 @@ class ParametersCompleter {
     private List<String> completeNode(String param) {
         Collection<String> nodes = new TreeSet<>();
         session.getClient().remotes().listInfos().forEach(info -> {
-            NodeDef def = info.getDef();
-            nodes.add(def.getName());
-            nodes.add(def.getGuid().asHexadecimalString());
+            nodes.add(info.getName());
+            nodes.add(info.getGuid().asHexadecimalString());
         });
         return filterStartWith(nodes, param);
     }

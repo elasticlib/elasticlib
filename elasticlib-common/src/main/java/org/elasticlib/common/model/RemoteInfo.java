@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.stream.Collectors.toList;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.util.EqualsBuilder;
@@ -67,17 +68,24 @@ public class RemoteInfo implements Mappable {
     }
 
     /**
-     * @return The node definition.
+     * @return The node name.
      */
-    public NodeDef getDef() {
-        return nodeInfo.getDef();
+    public String getName() {
+        return nodeInfo.getName();
     }
 
     /**
-     * @return Info about the node repositories.
+     * @return The node GUID.
      */
-    public List<RepositoryInfo> listRepositoryInfos() {
-        return nodeInfo.listRepositoryInfos();
+    public Guid getGuid() {
+        return nodeInfo.getGuid();
+    }
+
+    /**
+     * @return The publish URI(s) of this node.
+     */
+    public List<URI> getPublishUris() {
+        return nodeInfo.getPublishUris();
     }
 
     /**
@@ -97,10 +105,17 @@ public class RemoteInfo implements Mappable {
         return refreshDate;
     }
 
+    /**
+     * @return Info about the node repositories.
+     */
+    public List<RepositoryInfo> listRepositoryInfos() {
+        return nodeInfo.listRepositoryInfos();
+    }
+
     @Override
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
-                .putAll(nodeInfo.getDef().toMap());
+                .putAll(new NodeDef(getName(), getGuid(), getPublishUris()).toMap());
 
         if (isReachable()) {
             builder.put(TRANSPORT_URI, transportUri.toString());

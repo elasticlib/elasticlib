@@ -159,7 +159,8 @@ public class MulticastDiscoveryClient {
                     socket.receive(packet);
 
                     LOG.info("Received multicast discovery response from {}", sender(packet));
-                    remotesService.saveRemote(read(packet));
+                    NodeDef def = read(packet);
+                    remotesService.saveRemote(def.getPublishUris(), def.getGuid());
 
                 } catch (IOException e) {
                     if (started.get()) {

@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
-import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.common.model.RemoteInfo;
 import org.slf4j.Logger;
@@ -72,13 +71,13 @@ public class NodePingHandler {
      * @return Info about the first reachable node which requested GUID.
      */
     public Optional<RemoteInfo> ping(Iterable<URI> uris, Guid expected) {
-        return ping(uris, def -> def.getGuid().equals(expected));
+        return ping(uris, x -> x.getGuid().equals(expected));
     }
 
-    private Optional<RemoteInfo> ping(Iterable<URI> uris, Predicate<NodeDef> predicate) {
+    private Optional<RemoteInfo> ping(Iterable<URI> uris, Predicate<RemoteInfo> predicate) {
         for (URI address : uris) {
             Optional<RemoteInfo> info = ping(address);
-            if (info.isPresent() && predicate.test(info.get().getDef())) {
+            if (info.isPresent() && predicate.test(info.get())) {
                 return info;
             }
         }

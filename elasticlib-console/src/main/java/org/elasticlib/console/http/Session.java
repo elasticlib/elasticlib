@@ -74,7 +74,7 @@ public class Session implements Closeable {
         client = new Client(uri, printingHandler);
         printingHandler.setEnabled(true);
         try {
-            node = client.node().getInfo().getDef().getName();
+            node = client.node().getInfo().getName();
 
         } finally {
             printingHandler.setEnabled(false);

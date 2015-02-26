@@ -72,7 +72,7 @@ public class RemotesDao {
      * @param info RemoteInfo to save.
      */
     public void saveRemoteInfo(RemoteInfo info) {
-        remoteInfos.put(storageManager.currentTransaction(), entry(info.getDef().getGuid()), entry(info));
+        remoteInfos.put(storageManager.currentTransaction(), entry(info.getGuid()), entry(info));
     }
 
     /**
@@ -82,7 +82,7 @@ public class RemotesDao {
      */
     public void createRemoteInfo(RemoteInfo info) {
         OperationStatus status = remoteInfos.put(storageManager.currentTransaction(),
-                                                 entry(info.getDef().getGuid()),
+                                                 entry(info.getGuid()),
                                                  entry(info));
 
         if (status == OperationStatus.KEYEXIST) {
@@ -107,7 +107,7 @@ public class RemotesDao {
         try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
             while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
                 RemoteInfo info = asMappable(data, RemoteInfo.class);
-                if (info.getDef().getName().equals(key)) {
+                if (info.getName().equals(key)) {
                     cursor.delete();
                     return;
                 }
@@ -150,7 +150,7 @@ public class RemotesDao {
                 }
             }
         }
-        list.sort((a, b) -> a.getDef().getName().compareTo(b.getDef().getName()));
+        list.sort((a, b) -> a.getName().compareTo(b.getName()));
         return list;
     }
 }

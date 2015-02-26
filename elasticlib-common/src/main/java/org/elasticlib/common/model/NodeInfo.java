@@ -16,11 +16,13 @@
 package org.elasticlib.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import java.net.URI;
 import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.hash;
 import static java.util.stream.Collectors.toList;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.util.EqualsBuilder;
@@ -48,10 +50,24 @@ public class NodeInfo implements Mappable {
     }
 
     /**
-     * @return The node definition.
+     * @return The node name.
      */
-    public NodeDef getDef() {
-        return nodeDef;
+    public String getName() {
+        return nodeDef.getName();
+    }
+
+    /**
+     * @return The node GUID.
+     */
+    public Guid getGuid() {
+        return nodeDef.getGuid();
+    }
+
+    /**
+     * @return The publish URI(s) of this node.
+     */
+    public List<URI> getPublishUris() {
+        return nodeDef.getPublishUris();
     }
 
     /**

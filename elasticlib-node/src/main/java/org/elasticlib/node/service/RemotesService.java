@@ -194,6 +194,11 @@ public class RemotesService {
      * @return A list of RemoteInfo instances.
      */
     public List<RemoteInfo> listRemotes() {
+        LOG.info("Returning remote infos");
+        return remoteInfos();
+    }
+
+    private List<RemoteInfo> remoteInfos() {
         return storageManager.inTransaction(() -> remotesDao.listRemoteInfos(x -> true));
     }
 
@@ -203,6 +208,7 @@ public class RemotesService {
      * @return A list of RemoteInfo instances.
      */
     public List<RemoteInfo> listReachableRemotes() {
+        LOG.info("Returning reachable remote infos");
         return storageManager.inTransaction(() -> remotesDao.listRemoteInfos(RemoteInfo::isReachable));
     }
 
@@ -210,7 +216,8 @@ public class RemotesService {
      * Pings all known remote nodes and refresh info about them.
      */
     public void pingRemotes() {
-        for (RemoteInfo current : listRemotes()) {
+        LOG.info("Pinging remote nodes");
+        for (RemoteInfo current : remoteInfos()) {
             if (!started.get()) {
                 return;
             }
@@ -237,6 +244,7 @@ public class RemotesService {
      * Removes all unreachable remote nodes.
      */
     public void cleanupRemotes() {
+        LOG.info("Removing unreachable remote nodes");
         storageManager.inTransaction(remotesDao::deleteUnreachableRemoteInfos);
     }
 }

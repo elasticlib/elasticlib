@@ -5,11 +5,15 @@ import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.node.dao.AttributesDao;
 import org.elasticlib.node.manager.storage.StorageManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides info about the local node.
  */
 public class NodeService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NodeService.class);
 
     private final StorageManager storageManager;
     private final AttributesDao attributesDao;
@@ -45,7 +49,6 @@ public class NodeService {
      */
     public void start() {
         guid = storageManager.inTransaction(attributesDao::guid);
-
     }
 
     /**
@@ -59,6 +62,7 @@ public class NodeService {
      * @return The GUID of the local node.
      */
     public Guid getGuid() {
+        LOG.info("Returning local node GUID");
         return guid;
     }
 
@@ -66,13 +70,19 @@ public class NodeService {
      * @return The definition of the local node.
      */
     public NodeDef getNodeDef() {
-        return new NodeDef(nodeNameProvider.name(), guid, publishUrisProvider.uris());
+        LOG.info("Returning local node definition");
+        return nodeDef();
     }
 
     /**
      * @return Info about the local node.
      */
     public NodeInfo getNodeInfo() {
-        return new NodeInfo(getNodeDef(), repositoriesService.listRepositoryInfos());
+        LOG.info("Returning local node info");
+        return new NodeInfo(nodeDef(), repositoriesService.listRepositoryInfos());
+    }
+
+    private NodeDef nodeDef() {
+        return new NodeDef(nodeNameProvider.name(), guid, publishUrisProvider.uris());
     }
 }

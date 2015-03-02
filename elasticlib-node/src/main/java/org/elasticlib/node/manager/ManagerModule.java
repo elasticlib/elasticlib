@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@ public class ManagerModule {
         messageManager = new MessageManager(taskManager);
     }
 
-    private static StorageManager newStorageManager(Path path, Config config, TaskManager asyncManager) {
+    private static StorageManager newStorageManager(Path path, Config config, TaskManager taskManager) {
         try {
             if (!Files.exists(path)) {
                 Files.createDirectories(path);
@@ -55,7 +55,7 @@ public class ManagerModule {
         } catch (IOException e) {
             throw new IOFailureException(e);
         }
-        return new StorageManager(SERVICES, path, config, asyncManager);
+        return new StorageManager(SERVICES, path, config, taskManager);
     }
 
     /**

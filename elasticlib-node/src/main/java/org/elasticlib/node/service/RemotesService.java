@@ -90,13 +90,13 @@ public class RemotesService {
             pingTask = taskManager.schedule(duration(config, NodeConfig.REMOTES_PING_INTERVAL),
                                             unit(config, NodeConfig.REMOTES_PING_INTERVAL),
                                             "Pinging remote nodes",
-                                            new PingTask());
+                                            this::pingRemotes);
         }
         if (config.getBoolean(NodeConfig.REMOTES_CLEANUP_ENABLED)) {
             cleanupTask = taskManager.schedule(duration(config, NodeConfig.REMOTES_CLEANUP_INTERVAL),
                                                unit(config, NodeConfig.REMOTES_CLEANUP_INTERVAL),
                                                "Removing unreachable remote nodes",
-                                               new CleanupTask());
+                                               this::cleanupRemotes);
         }
     }
 
@@ -207,44 +207,36 @@ public class RemotesService {
     }
 
     /**
-     * Ping remote nodes and refresh info about them.
+     * Pings all known remote nodes and refresh info about them.
      */
-    private class PingTask implements Runnable {
-
-        @Override
-        public void run() {
-            for (RemoteInfo current : listRemotes()) {
-                if (!started.get()) {
-                    return;
+    public void pingRemotes() {
+        for (RemoteInfo current : listRemotes()) {
+            if (!started.get()) {
+                return;
+            }
+            Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getGuid());
+            storageManager.inTransaction(() -> {
+                if (updated.isPresent()) {
+                    remotesDao.saveRemoteInfo(updated.get());
+                } else {
+                    remotesDao.saveRemoteInfo(current.asUnreachable());
                 }
-                Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getGuid());
-                storageManager.inTransaction(() -> {
-                    if (updated.isPresent()) {
-                        remotesDao.saveRemoteInfo(updated.get());
-                    } else {
-                        remotesDao.saveRemoteInfo(current.asUnreachable());
-                    }
-                });
-            }
-        }
-
-        private Iterable<URI> uris(RemoteInfo info) {
-            if (!info.isReachable()) {
-                return info.getPublishUris();
-            }
-            return concat(singleton(info.getTransportUri()),
-                          filter(info.getPublishUris(), uri -> !uri.equals(info.getTransportUri())));
+            });
         }
     }
 
-    /**
-     * Remove unreachable remote nodes.
-     */
-    private class CleanupTask implements Runnable {
-
-        @Override
-        public void run() {
-            storageManager.inTransaction(remotesDao::deleteUnreachableRemoteInfos);
+    private static Iterable<URI> uris(RemoteInfo info) {
+        if (!info.isReachable()) {
+            return info.getPublishUris();
         }
+        return concat(singleton(info.getTransportUri()),
+                      filter(info.getPublishUris(), uri -> !uri.equals(info.getTransportUri())));
+    }
+
+    /**
+     * Removes all unreachable remote nodes.
+     */
+    public void cleanupRemotes() {
+        storageManager.inTransaction(remotesDao::deleteUnreachableRemoteInfos);
     }
 }

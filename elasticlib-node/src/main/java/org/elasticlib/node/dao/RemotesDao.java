@@ -81,9 +81,9 @@ public class RemotesDao {
      * @param info RemoteInfo to save.
      */
     public void createRemoteInfo(RemoteInfo info) {
-        OperationStatus status = remoteInfos.put(storageManager.currentTransaction(),
-                                                 entry(info.getGuid()),
-                                                 entry(info));
+        OperationStatus status = remoteInfos.putNoOverwrite(storageManager.currentTransaction(),
+                                                            entry(info.getGuid()),
+                                                            entry(info));
 
         if (status == OperationStatus.KEYEXIST) {
             throw new NodeAlreadyTrackedException();

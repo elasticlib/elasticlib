@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,31 +30,43 @@ import org.elasticlib.common.value.Value;
  */
 public final class ReplicationDef implements Mappable {
 
+    private static final String GUID = "guid";
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
+
+    private final Guid guid;
     private final Guid source;
     private final Guid destination;
 
     /**
      * Constructor.
      *
-     * @param source Source repository.
-     * @param destination Destination repository.
+     * @param guid Replication GUID.
+     * @param source Source repository GUID.
+     * @param destination Destination repository GUID.
      */
-    public ReplicationDef(Guid source, Guid destination) {
+    public ReplicationDef(Guid guid, Guid source, Guid destination) {
+        this.guid = requireNonNull(guid);
         this.source = requireNonNull(source);
         this.destination = requireNonNull(destination);
     }
 
     /**
-     * @return The source repository.
+     * @return The replication GUID.
+     */
+    public Guid getGuid() {
+        return guid;
+    }
+
+    /**
+     * @return The source repository GUID.
      */
     public Guid getSource() {
         return source;
     }
 
     /**
-     * @return The destination repository.
+     * @return The destination repository GUID.
      */
     public Guid getDestination() {
         return destination;
@@ -63,6 +75,7 @@ public final class ReplicationDef implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         return new MapBuilder()
+                .put(GUID, guid)
                 .put(SOURCE, source)
                 .put(DESTINATION, destination)
                 .build();
@@ -75,13 +88,15 @@ public final class ReplicationDef implements Mappable {
      * @return A new instance.
      */
     public static ReplicationDef fromMap(Map<String, Value> map) {
-        return new ReplicationDef(map.get(SOURCE).asGuid(),
+        return new ReplicationDef(map.get(GUID).asGuid(),
+                                  map.get(SOURCE).asGuid(),
                                   map.get(DESTINATION).asGuid());
     }
 
     @Override
     public String toString() {
         return toStringHelper(this)
+                .add(GUID, guid)
                 .add(SOURCE, source)
                 .add(DESTINATION, destination)
                 .toString();
@@ -89,7 +104,7 @@ public final class ReplicationDef implements Mappable {
 
     @Override
     public int hashCode() {
-        return hash(source, destination);
+        return hash(guid, source, destination);
     }
 
     @Override
@@ -99,6 +114,7 @@ public final class ReplicationDef implements Mappable {
         }
         ReplicationDef other = (ReplicationDef) obj;
         return new EqualsBuilder()
+                .append(guid, other.guid)
                 .append(source, other.source)
                 .append(destination, other.destination)
                 .build();

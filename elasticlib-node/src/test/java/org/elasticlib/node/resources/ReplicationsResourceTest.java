@@ -112,7 +112,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
      */
     @Test
     public void listReplicationsTest() {
-        List<ReplicationInfo> infos = singletonList(new ReplicationInfo(def(source), def(destination)));
+        List<ReplicationInfo> infos = singletonList(new ReplicationInfo(Guid.random(), def(source), def(destination)));
 
         when(replicationsService.listReplicationInfos()).thenReturn(infos);
         try (Client client = newClient()) {

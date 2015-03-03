@@ -133,7 +133,9 @@ public final class TestData {
 
         Guid[] GUIDS = new Guid[]{new Guid("8d5f3c77e94a0cad3a32340d342135f4"),
                                   new Guid("0d99dd9895a2a1c485e0c75f79f92cc1"),
-                                  new Guid("39819150ee99549a8c0a59782169bb3b")};
+                                  new Guid("39819150ee99549a8c0a59782169bb3b"),
+                                  new Guid("eac7690f2ca05940e9239d5300037551"),
+                                  new Guid("da8d63a4a8bd8760a203b18a948fab75")};
 
         STAGING_INFO = new StagingInfo(GUIDS[0], new Hash(HASHES[1]), 123456L);
 
@@ -200,8 +202,8 @@ public final class TestData {
                                               GUIDS[1],
                                               "/repo/secondary"));
 
-        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[0], GUIDS[1]));
-        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[1], GUIDS[0]));
+        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[3], GUIDS[0], GUIDS[1]));
+        REPLICATION_DEFS.add(new ReplicationDef(GUIDS[4], GUIDS[1], GUIDS[0]));
 
         REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(0),
                                                 new RepositoryStats(12, 3, 2, ImmutableMap.of("contentType", 9L,
@@ -211,11 +213,13 @@ public final class TestData {
 
         REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(1)));
 
-        REPLICATION_INFOS.add(new ReplicationInfo(REPOSITORY_DEFS.get(0),
+        REPLICATION_INFOS.add(new ReplicationInfo(GUIDS[3],
+                                                  REPOSITORY_DEFS.get(0),
                                                   REPOSITORY_DEFS.get(1),
                                                   new AgentInfo(15, 17, AgentState.RUNNING)));
 
-        REPLICATION_INFOS.add(new ReplicationInfo(REPOSITORY_DEFS.get(0),
+        REPLICATION_INFOS.add(new ReplicationInfo(GUIDS[4],
+                                                  REPOSITORY_DEFS.get(0),
                                                   REPOSITORY_DEFS.get(1)));
 
         NODE_DEFS.add(new NodeDef("alpha",

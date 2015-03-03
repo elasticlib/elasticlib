@@ -146,7 +146,7 @@ public class ReplicationsService {
                 Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
                 Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
 
-                ReplicationDef def = new ReplicationDef(srcId, destId);
+                ReplicationDef def = new ReplicationDef(Guid.random(), srcId, destId);
                 if (replicationsDao.createReplicationDef(def)) {
                     createReplication(def);
                 }
@@ -254,9 +254,14 @@ public class ReplicationsService {
         Guid destId = replicationDef.getDestination();
         if (agents.containsKey(srcId) && agents.get(srcId).containsKey(destId)) {
             AgentInfo agentInfo = agents.get(srcId).get(destId).info();
-            return new ReplicationInfo(repositoryDefs.get(srcId), repositoryDefs.get(destId), agentInfo);
+            return new ReplicationInfo(replicationDef.getGuid(),
+                                       repositoryDefs.get(srcId),
+                                       repositoryDefs.get(destId),
+                                       agentInfo);
         }
-        return new ReplicationInfo(repositoryDefs.get(srcId), repositoryDefs.get(destId));
+        return new ReplicationInfo(replicationDef.getGuid(),
+                                   repositoryDefs.get(srcId),
+                                   repositoryDefs.get(destId));
     }
 
     private void createReplication(ReplicationDef def) {

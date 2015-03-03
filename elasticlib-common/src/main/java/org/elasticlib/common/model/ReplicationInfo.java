@@ -18,6 +18,7 @@ package org.elasticlib.common.model;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import java.util.Map;
 import static java.util.Objects.hash;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.util.EqualsBuilder;
@@ -29,6 +30,7 @@ import org.elasticlib.common.value.Value;
  */
 public final class ReplicationInfo implements Mappable {
 
+    private static final String GUID = "guid";
     private static final String SOURCE_DEF = "sourceDef";
     private static final String DESTINATION_DEF = "destinationDef";
     private static final String AGENT_INFO = "agentInfo";
@@ -36,6 +38,8 @@ public final class ReplicationInfo implements Mappable {
     private static final String DESTINATION = "destination";
     private static final String STARTED = "started";
     private static final String AGENT = "agent";
+
+    private final Guid guid;
     private final RepositoryDef sourceDef;
     private final RepositoryDef destinationdef;
     private final AgentInfo agentInfo;
@@ -43,11 +47,13 @@ public final class ReplicationInfo implements Mappable {
     /**
      * Constructor for an started replication.
      *
+     * @param guid Replication GUID.
      * @param sourceDef Source repository definition.
      * @param destinationdef Destination repository definition.
      * @param agentInfo Replication agent info.
      */
-    public ReplicationInfo(RepositoryDef sourceDef, RepositoryDef destinationdef, AgentInfo agentInfo) {
+    public ReplicationInfo(Guid guid, RepositoryDef sourceDef, RepositoryDef destinationdef, AgentInfo agentInfo) {
+        this.guid = guid;
         this.sourceDef = sourceDef;
         this.destinationdef = destinationdef;
         this.agentInfo = agentInfo;
@@ -56,11 +62,12 @@ public final class ReplicationInfo implements Mappable {
     /**
      * Constructor for a stopped replication.
      *
+     * @param guid Replication GUID.
      * @param sourceDef Source repository definition.
      * @param destinationdef Destination repository definition.
      */
-    public ReplicationInfo(RepositoryDef sourceDef, RepositoryDef destinationdef) {
-        this(sourceDef, destinationdef, null);
+    public ReplicationInfo(Guid guid, RepositoryDef sourceDef, RepositoryDef destinationdef) {
+        this(guid, sourceDef, destinationdef, null);
     }
 
     /**
@@ -68,6 +75,13 @@ public final class ReplicationInfo implements Mappable {
      */
     public boolean isStarted() {
         return agentInfo != null;
+    }
+
+    /**
+     * @return The replication GUID.
+     */
+    public Guid getGuid() {
+        return guid;
     }
 
     /**
@@ -97,6 +111,7 @@ public final class ReplicationInfo implements Mappable {
     @Override
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
+                .put(GUID, guid)
                 .put(SOURCE, sourceDef.toMap())
                 .put(DESTINATION, destinationdef.toMap())
                 .put(STARTED, isStarted());
@@ -115,10 +130,12 @@ public final class ReplicationInfo implements Mappable {
      */
     public static ReplicationInfo fromMap(Map<String, Value> map) {
         if (!map.get(STARTED).asBoolean()) {
-            return new ReplicationInfo(RepositoryDef.fromMap(map.get(SOURCE).asMap()),
+            return new ReplicationInfo(map.get(GUID).asGuid(),
+                                       RepositoryDef.fromMap(map.get(SOURCE).asMap()),
                                        RepositoryDef.fromMap(map.get(DESTINATION).asMap()));
         }
-        return new ReplicationInfo(RepositoryDef.fromMap(map.get(SOURCE).asMap()),
+        return new ReplicationInfo(map.get(GUID).asGuid(),
+                                   RepositoryDef.fromMap(map.get(SOURCE).asMap()),
                                    RepositoryDef.fromMap(map.get(DESTINATION).asMap()),
                                    AgentInfo.fromMap(map.get(AGENT).asMap()));
     }
@@ -126,6 +143,7 @@ public final class ReplicationInfo implements Mappable {
     @Override
     public String toString() {
         return toStringHelper(this)
+                .add(GUID, guid)
                 .add(SOURCE_DEF, sourceDef)
                 .add(DESTINATION_DEF, destinationdef)
                 .add(AGENT_INFO, agentInfo)
@@ -144,6 +162,7 @@ public final class ReplicationInfo implements Mappable {
         }
         ReplicationInfo other = (ReplicationInfo) obj;
         return new EqualsBuilder()
+                .append(guid, other.guid)
                 .append(sourceDef, other.sourceDef)
                 .append(destinationdef, other.destinationdef)
                 .append(agentInfo, other.agentInfo)

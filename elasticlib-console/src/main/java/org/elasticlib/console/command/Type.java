@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,10 @@ enum Type {
      * A repository name or GUID.
      */
     REPOSITORY,
+    /**
+     * A replication GUID.
+     */
+    REPLICATION,
     /**
      * A hash.
      */

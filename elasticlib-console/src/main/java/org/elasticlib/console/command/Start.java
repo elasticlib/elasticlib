@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 package org.elasticlib.console.command;
 
 import java.util.List;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
 import org.elasticlib.console.http.Session;
@@ -23,7 +24,7 @@ import org.elasticlib.console.http.Session;
 class Start extends AbstractCommand {
 
     Start() {
-        super(Category.REPLICATIONS, Type.REPOSITORY, Type.REPOSITORY);
+        super(Category.REPLICATIONS, Type.REPLICATION);
     }
 
     @Override
@@ -35,7 +36,7 @@ class Start extends AbstractCommand {
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .replications()
-                .start(params.get(0), params.get(1));
+                .start(new Guid(params.get(0)));
 
         display.printOk();
     }

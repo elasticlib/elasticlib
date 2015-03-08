@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.elasticlib.common.config.Config;
+import org.elasticlib.common.exception.ReplicationAlreadyExistsException;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.SelfReplicationException;
 import org.elasticlib.common.exception.UnknownReplicationException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.CommandResult;
@@ -54,13 +56,13 @@ public class ReplicationsServiceTest {
 
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
-    private static final String OTHER = "other";
 
     private Path path;
     private ManagerModule managerModule;
     private RepositoriesService repositoriesService;
     private ReplicationsService replicationsService;
-    private TestContent content;
+    private volatile TestContent content;
+    private volatile Guid guid;
 
     /**
      * Initialization.
@@ -94,7 +96,6 @@ public class ReplicationsServiceTest {
 
         repositoriesService.createRepository(path.resolve(SOURCE));
         repositoriesService.createRepository(path.resolve(DESTINATION));
-        repositoriesService.createRepository(path.resolve(OTHER));
 
         content = LOREM_IPSUM;
     }
@@ -120,6 +121,8 @@ public class ReplicationsServiceTest {
         addSourceContent();
         replicationsService.createReplication(SOURCE, DESTINATION);
 
+        guid = replicationsService.listReplicationInfos().get(0).getGuid();
+
         assertReplicationStarted();
         assertDestinationUpToDate();
     }
@@ -143,8 +146,8 @@ public class ReplicationsServiceTest {
     /**
      * Test.
      */
-    @Test(dependsOnMethods = "createReplicationTest")
-    public void createReplicationIsIdempotentTest() {
+    @Test(dependsOnMethods = "createReplicationTest", expectedExceptions = ReplicationAlreadyExistsException.class)
+    public void createReplicationAlreadyExistingTest() {
         replicationsService.createReplication(SOURCE, DESTINATION);
     }
 
@@ -162,7 +165,7 @@ public class ReplicationsServiceTest {
      */
     @Test(dependsOnMethods = "newRepositoryEventTest")
     public void stopReplicationTest() {
-        replicationsService.stopReplication(SOURCE, DESTINATION);
+        replicationsService.stopReplication(guid);
         TestContent previousContent = content;
         updateSourceContent("stopReplicationTest");
 
@@ -175,7 +178,7 @@ public class ReplicationsServiceTest {
      */
     @Test(dependsOnMethods = "stopReplicationTest")
     public void startReplicationTest() {
-        replicationsService.startReplication(SOURCE, DESTINATION);
+        replicationsService.startReplication(guid);
 
         assertReplicationStarted();
         assertDestinationUpToDate();
@@ -186,7 +189,15 @@ public class ReplicationsServiceTest {
      */
     @Test(dependsOnMethods = "stopReplicationTest", expectedExceptions = UnknownReplicationException.class)
     public void startReplicationUnknownTest() {
-        replicationsService.startReplication(SOURCE, OTHER);
+        replicationsService.startReplication(unknown());
+    }
+
+    private Guid unknown() {
+        Guid unknown = Guid.random();
+        while (unknown.equals(guid)) {
+            unknown = Guid.random();
+        }
+        return unknown;
     }
 
     /**
@@ -203,7 +214,7 @@ public class ReplicationsServiceTest {
      */
     @Test(dependsOnMethods = "closeRepositoryTest", expectedExceptions = RepositoryClosedException.class)
     public void startReplicationWithClosedRepositoryTest() {
-        replicationsService.startReplication(SOURCE, DESTINATION);
+        replicationsService.startReplication(guid);
     }
 
     /**
@@ -243,6 +254,7 @@ public class ReplicationsServiceTest {
         // Restore previous state.
         repositoriesService.addRepository(path.resolve(repositoryName));
         replicationsService.createReplication(SOURCE, DESTINATION);
+        guid = replicationsService.listReplicationInfos().get(0).getGuid();
 
         assertReplicationStarted();
         assertDestinationUpToDate();
@@ -253,16 +265,16 @@ public class ReplicationsServiceTest {
      */
     @Test(dependsOnMethods = "removeDestinationRepositoryTest")
     public void deleteReplicationTest() {
-        replicationsService.deleteReplication(SOURCE, DESTINATION);
+        replicationsService.deleteReplication(guid);
         assertThat(replicationsService.listReplicationInfos()).isEmpty();
     }
 
     /**
      * Test.
      */
-    @Test(dependsOnMethods = "deleteReplicationTest")
-    public void deleteReplicationIsIdempotentTest() {
-        replicationsService.deleteReplication(SOURCE, DESTINATION);
+    @Test(dependsOnMethods = "deleteReplicationTest", expectedExceptions = UnknownReplicationException.class)
+    public void deleteReplicationUnknownTest() {
+        replicationsService.deleteReplication(guid);
     }
 
     private ReplicationInfo replicationInfo() {

@@ -40,6 +40,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReplicationsResourceTest.class);
     private final ReplicationsService replicationsService = mock(ReplicationsService.class);
+    private final Guid guid = Guid.random();
     private final String source = "source";
     private final String destination = "destination";
 
@@ -80,9 +81,9 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
     @Test
     public void deleteReplicationTest() {
         try (Client client = newClient()) {
-            client.replications().delete(source, destination);
+            client.replications().delete(guid);
         }
-        verify(replicationsService).deleteReplication(source, destination);
+        verify(replicationsService).deleteReplication(guid);
     }
 
     /**
@@ -91,9 +92,9 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
     @Test
     public void startReplicationTest() {
         try (Client client = newClient()) {
-            client.replications().start(source, destination);
+            client.replications().start(guid);
         }
-        verify(replicationsService).startReplication(source, destination);
+        verify(replicationsService).startReplication(guid);
     }
 
     /**
@@ -102,9 +103,9 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
     @Test
     public void stopReplicationTest() {
         try (Client client = newClient()) {
-            client.replications().stop(source, destination);
+            client.replications().stop(guid);
         }
-        verify(replicationsService).stopReplication(source, destination);
+        verify(replicationsService).stopReplication(guid);
     }
 
     /**

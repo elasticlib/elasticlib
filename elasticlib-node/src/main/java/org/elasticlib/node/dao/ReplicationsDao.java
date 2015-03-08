@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import org.elasticlib.common.exception.ReplicationAlreadyExistsException;
 import org.elasticlib.common.exception.UnknownReplicationException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.ReplicationDef;
@@ -51,52 +52,40 @@ public class ReplicationsDao {
     }
 
     /**
-     * Optionally creates a ReplicationDef, if it does not already exist.
+     * Creates a new ReplicationDef. Fails if it does already exist.
      *
      * @param def A ReplicationDef.
-     * @return If it has actually been created.
      */
-    public boolean createReplicationDef(ReplicationDef def) {
-        return replicationDefs.putNoOverwrite(storageManager.currentTransaction(),
-                                              entry(def.getSource(), def.getDestination()),
-                                              entry(def)) == OperationStatus.SUCCESS;
+    public void createReplicationDef(ReplicationDef def) {
+        if (any(x -> x.getSource().equals(def.getSource()) &&
+                x.getDestination().equals(def.getDestination()))) {
+            throw new ReplicationAlreadyExistsException();
+        }
+        replicationDefs.put(storageManager.currentTransaction(), entry(def.getGuid()), entry(def));
     }
 
     /**
-     * Optionally deletes a ReplicationDef.
+     * Deletes a ReplicationDef. Fails if it does not exists
      *
-     * @param source Source repository GUID.
-     * @param destination Destination repository GUID.
-     * @return If corresponding ReplicationDef has been found and deleted.
+     * @param guid Replication GUID.
      */
-    public boolean deleteReplicationDef(Guid source, Guid destination) {
-        OperationStatus status = replicationDefs.delete(storageManager.currentTransaction(),
-                                                        entry(source, destination));
-        return status == OperationStatus.SUCCESS;
+    public void deleteReplicationDef(Guid guid) {
+        OperationStatus status = replicationDefs.delete(storageManager.currentTransaction(), entry(guid));
+        if (status != OperationStatus.SUCCESS) {
+            throw new UnknownReplicationException();
+        }
     }
 
     /**
-     * Deletes all replication definitions from/to repository whose GUID is supplied.
+     * Loads a ReplicationDef. Fails if no replication is associated with supplied GUID.
      *
-     * @param guid Repository GUID.
-     */
-    public void deleteAllReplicationDefs(Guid guid) {
-        listReplicationDefs(guid)
-                .stream()
-                .forEach(def -> deleteReplicationDef(def.getSource(), def.getDestination()));
-    }
-
-    /**
-     * Loads a ReplicationDef. Fails if no replication is associated with supplied repository GUIDs.
-     *
-     * @param source Source repository GUID.
-     * @param destination Destination repository GUID.
+     * @param guid Replication GUID.
      * @return Corresponding ReplicationDef.
      */
-    public ReplicationDef getReplicationDef(Guid source, Guid destination) {
+    public ReplicationDef getReplicationDef(Guid guid) {
         DatabaseEntry entry = new DatabaseEntry();
         OperationStatus status = replicationDefs.get(storageManager.currentTransaction(),
-                                                     entry(source, destination),
+                                                     entry(guid),
                                                      entry,
                                                      LockMode.DEFAULT);
         if (status != OperationStatus.SUCCESS) {
@@ -111,7 +100,17 @@ public class ReplicationsDao {
      * @return All stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs() {
-        return listReplicationDefs(x -> true);
+        return list(x -> true);
+    }
+
+    /**
+     * Loads all ReplicationDef from repository whose GUID is supplied.
+     *
+     * @param guid Source repository GUID.
+     * @return All matching stored replication definitions.
+     */
+    public List<ReplicationDef> listReplicationDefsFrom(Guid guid) {
+        return list(def -> def.getSource().equals(guid));
     }
 
     /**
@@ -121,10 +120,24 @@ public class ReplicationsDao {
      * @return All matching stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs(Guid guid) {
-        return listReplicationDefs(def -> def.getSource().equals(guid) || def.getDestination().equals(guid));
+        return list(def -> def.getSource().equals(guid) || def.getDestination().equals(guid));
     }
 
-    private List<ReplicationDef> listReplicationDefs(Predicate<ReplicationDef> predicate) {
+    private boolean any(Predicate<ReplicationDef> predicate) {
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry data = new DatabaseEntry();
+        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
+            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                ReplicationDef def = asMappable(data, ReplicationDef.class);
+                if (predicate.test(def)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private List<ReplicationDef> list(Predicate<ReplicationDef> predicate) {
         DatabaseEntry key = new DatabaseEntry();
         DatabaseEntry data = new DatabaseEntry();
         List<ReplicationDef> list = new ArrayList<>();

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,20 +61,6 @@ public final class DatabaseEntries {
      */
     public static DatabaseEntry entry(String val) {
         return new DatabaseEntry(val.getBytes(Charsets.UTF_8));
-    }
-
-    /**
-     * Builds a new database entry wrapping a pair of GUID.
-     *
-     * @param val1 First value of the pair to wrap.
-     * @param val2 second value of the pair to wrap.
-     * @return A new database entry.
-     */
-    public static DatabaseEntry entry(Guid val1, Guid val2) {
-        return new DatabaseEntry(new BsonWriter()
-                .put("1", val1)
-                .put("2", val2)
-                .build());
     }
 
     /**

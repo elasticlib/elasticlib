@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,14 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.elasticlib.common.exception.BadRequestException;
+import org.elasticlib.common.hash.Guid;
 import static org.elasticlib.common.json.JsonValidation.hasStringValue;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.node.service.ReplicationsService;
@@ -44,22 +45,26 @@ public class ReplicationsResource {
     private static final String ACTION = "action";
     private static final String SOURCE = "source";
     private static final String TARGET = "target";
+    private static final String REPLICATION = "replication";
+
     @Inject
     private ReplicationsService replicationsService;
     @Context
     private UriInfo uriInfo;
 
     /**
-     * Create a new replication.
+     * Alters state of a replication.
      * <p>
      * Input:<br>
      * - source (String): Source name or encoded GUID.<br>
      * - target (String): Target name or encoded GUID.
      * <p>
      * Response:<br>
-     * - 201 CREATED: Operation succeeded.<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 201 CREATED: Creation succeeded.<br>
      * - 400 BAD REQUEST: Invalid JSON data.<br>
-     * - 404 NOT FOUND: Source or target was not found.<br>
+     * - 404 NOT FOUND: Source or target repository, or replication was not found.<br>
+     * - 412 PRECONDITION FAILED: Replication to create already exists.
      *
      * @param json input JSON data
      * @return HTTP response
@@ -67,21 +72,16 @@ public class ReplicationsResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response postReplication(JsonObject json) {
-        if (!hasStringValue(json, SOURCE) || !hasStringValue(json, TARGET)) {
-            throw newInvalidJsonException();
-        }
         Action action = Action.of(json);
-        String source = json.getString(SOURCE);
-        String target = json.getString(TARGET);
         switch (action) {
             case CREATE:
-                return createReplication(source, target);
+                return createReplication(json);
             case START:
-                return startReplication(source, target);
+                return startReplication(json);
             case STOP:
-                return stopReplication(source, target);
+                return stopReplication(json);
             case DELETE:
-                return deleteReplication(source, target);
+                return deleteReplication(json);
             default:
                 throw new AssertionError();
         }
@@ -105,7 +105,10 @@ public class ReplicationsResource {
         }
     }
 
-    private Response createReplication(String source, String target) {
+    private Response createReplication(JsonObject json) {
+        String source = string(json, SOURCE);
+        String target = string(json, TARGET);
+
         replicationsService.createReplication(source, target);
         URI location = uriInfo.getAbsolutePathBuilder()
                 .queryParam(SOURCE, source)
@@ -116,43 +119,54 @@ public class ReplicationsResource {
 
     }
 
-    private Response startReplication(String source, String target) {
-        replicationsService.startReplication(source, target);
+    private Response startReplication(JsonObject json) {
+        replicationsService.startReplication(guid(json, REPLICATION));
         return Response.ok().build();
     }
 
-    private Response stopReplication(String source, String target) {
-        replicationsService.stopReplication(source, target);
+    private Response stopReplication(JsonObject json) {
+        replicationsService.stopReplication(guid(json, REPLICATION));
         return Response.ok().build();
+    }
+
+    private Response deleteReplication(JsonObject json) {
+        return deleteReplication(guid(json, REPLICATION));
+    }
+
+    private static String string(JsonObject json, String key) {
+        if (!hasStringValue(json, key)) {
+            throw newInvalidJsonException();
+        }
+        return json.getString(key);
+    }
+
+    private static Guid guid(JsonObject json, String key) {
+        String hexValue = string(json, key);
+        if (!Guid.isValid(hexValue)) {
+            throw newInvalidJsonException();
+        }
+        return new Guid(hexValue);
     }
 
     /**
-     * Delete a replication.
-     * <p>
-     * Input:<br>
-     * - source (String): Source name or encoded GUID.<br>
-     * - target (String): Target name or encoded GUID.
+     * Deletes a replication.
      * <p>
      * Response:<br>
-     * - 201 CREATED: Operation succeeded.<br>
-     * - 400 BAD REQUEST: Invalid query parameters.<br>
-     * - 404 NOT FOUND: Source or target was not found.<br>
+     * - 20O OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Replication was not found.<br>
      *
-     * @param source source name
-     * @param target target name.
+     * @param guid Replication GUID
      * @return HTTP response
      */
     @DELETE
-    public Response deleteReplication(@QueryParam(SOURCE) String source, @QueryParam(TARGET) String target) {
-        if (source == null || target == null) {
-            throw new BadRequestException();
-        }
-        replicationsService.deleteReplication(source, target);
+    @Path("{replication}")
+    public Response deleteReplication(@PathParam(REPLICATION) Guid guid) {
+        replicationsService.deleteReplication(guid);
         return Response.ok().build();
     }
 
     /**
-     * List info about existing replications.
+     * Lists info about existing replications.
      * <p>
      * Response:<br>
      * - 200 OK: Operation succeeded.<br>

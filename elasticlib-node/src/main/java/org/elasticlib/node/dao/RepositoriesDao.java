@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,6 +84,20 @@ public class RepositoriesDao {
     }
 
     /**
+     * Loads a RepositoryDef. Fails it if it does not exist.
+     *
+     * @param guid Repository GUID.
+     * @return Corresponding RepositoryDef.
+     */
+    public RepositoryDef getRepositoryDef(Guid guid) {
+        RepositoryDef def = repositoryDef(guid);
+        if (def == null) {
+            throw new UnknownRepositoryException();
+        }
+        return def;
+    }
+
+    /**
      * Loads a RepositoryDef. If key represents a valid encoded GUID, first try to resolve def by GUID. Otherwise
      * returns the first def matching by name with key. Fails if no matching def is found after this second step.
      *
@@ -92,13 +106,9 @@ public class RepositoriesDao {
      */
     public RepositoryDef getRepositoryDef(String key) {
         if (Guid.isValid(key)) {
-            DatabaseEntry entry = new DatabaseEntry();
-            OperationStatus status = repositoryDefs.get(storageManager.currentTransaction(),
-                                                        entry(new Guid(key)),
-                                                        entry,
-                                                        LockMode.DEFAULT);
-            if (status == OperationStatus.SUCCESS) {
-                return asMappable(entry, RepositoryDef.class);
+            RepositoryDef def = repositoryDef(new Guid(key));
+            if (def != null) {
+                return def;
             }
         }
         for (RepositoryDef def : listRepositoryDefs()) {
@@ -107,6 +117,18 @@ public class RepositoriesDao {
             }
         }
         throw new UnknownRepositoryException();
+    }
+
+    private RepositoryDef repositoryDef(Guid guid) {
+        DatabaseEntry entry = new DatabaseEntry();
+        OperationStatus status = repositoryDefs.get(storageManager.currentTransaction(),
+                                                    entry(guid),
+                                                    entry,
+                                                    LockMode.DEFAULT);
+        if (status != OperationStatus.SUCCESS) {
+            return null;
+        }
+        return asMappable(entry, RepositoryDef.class);
     }
 
     /**

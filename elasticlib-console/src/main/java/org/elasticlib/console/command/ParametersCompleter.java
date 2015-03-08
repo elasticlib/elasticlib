@@ -80,6 +80,9 @@ class ParametersCompleter {
                 case REPOSITORY:
                     return completeRepository(param);
 
+                case REPLICATION:
+                    return completeReplication(param);
+
                 case HASH:
                     return completeHash(param);
 
@@ -130,6 +133,17 @@ class ParametersCompleter {
             repositories.add(def.getGuid().asHexadecimalString());
         });
         return filterStartWith(repositories, param);
+    }
+
+    private List<String> completeReplication(String param) {
+        Collection<String> replications = session.getClient()
+                .replications()
+                .listInfos()
+                .stream()
+                .map(x -> x.getGuid().asHexadecimalString())
+                .collect(toList());
+
+        return filterStartWith(replications, param);
     }
 
     private List<String> completeHash(String param) {

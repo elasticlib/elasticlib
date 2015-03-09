@@ -44,6 +44,7 @@ import org.elasticlib.node.manager.message.RepositoryOpened;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.TaskManager;
+import org.elasticlib.node.repository.LocalRepository;
 import org.elasticlib.node.repository.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +108,7 @@ public class RepositoriesService {
 
     private void openRepository(RepositoryDef repositoryDef) {
         Path path = Paths.get(repositoryDef.getPath());
-        Repository repository = Repository.open(path, config, taskManager, messageManager);
+        Repository repository = LocalRepository.open(path, config, taskManager, messageManager);
         RepositoryDef updatedDef = repository.getDef();
         repositories.put(updatedDef.getGuid(), repository);
         repositoriesDao.updateRepositoryDef(updatedDef);
@@ -140,7 +141,7 @@ public class RepositoriesService {
                 if (hasRepositoryAt(path)) {
                     throw new RepositoryAlreadyExistsException();
                 }
-                Repository repository = Repository.create(path, config, taskManager, messageManager);
+                Repository repository = LocalRepository.create(path, config, taskManager, messageManager);
                 RepositoryDef def = repository.getDef();
                 repositoriesDao.createRepositoryDef(def);
                 repositories.put(def.getGuid(), repository);
@@ -163,7 +164,7 @@ public class RepositoriesService {
                 if (hasRepositoryAt(path)) {
                     throw new RepositoryAlreadyExistsException();
                 }
-                Repository repository = Repository.open(path, config, taskManager, messageManager);
+                Repository repository = LocalRepository.open(path, config, taskManager, messageManager);
                 RepositoryDef def = repository.getDef();
                 repositoriesDao.createRepositoryDef(def);
                 repositories.put(def.getGuid(), repository);

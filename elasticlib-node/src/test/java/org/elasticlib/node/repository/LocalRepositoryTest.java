@@ -61,9 +61,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Repository integration tests.
+ * Local Repository integration tests.
  */
-public class RepositoryTest {
+public class LocalRepositoryTest {
 
     private static final String CREATE_REPOSITORY = "createRepository";
     private static final String CREATE_REPOSITORY_CHECKS = "createRepositoryChecks";
@@ -124,10 +124,10 @@ public class RepositoryTest {
      */
     @Test(groups = CREATE_REPOSITORY)
     public void createRepositoryTest() {
-        repository = Repository.create(repositoryPath,
-                                       config,
-                                       managerModule.getTaskManager(),
-                                       managerModule.getMessageManager());
+        repository = LocalRepository.create(repositoryPath,
+                                            config,
+                                            managerModule.getTaskManager(),
+                                            managerModule.getMessageManager());
 
         def = repository.getDef();
         assertThat(def.getName()).isEqualTo(REPOSITORY);
@@ -152,10 +152,10 @@ public class RepositoryTest {
           dependsOnGroups = CREATE_REPOSITORY,
           expectedExceptions = InvalidRepositoryPathException.class)
     public void createRepositoryAlreadyExistsTest() {
-        Repository.create(repositoryPath,
-                          config,
-                          managerModule.getTaskManager(),
-                          managerModule.getMessageManager());
+        LocalRepository.create(repositoryPath,
+                               config,
+                               managerModule.getTaskManager(),
+                               managerModule.getMessageManager());
     }
 
     /**
@@ -488,10 +488,10 @@ public class RepositoryTest {
      */
     @Test(groups = OPEN_REPOSITORY, dependsOnGroups = CLOSE_REPOSITORY_CHECKS)
     public void openRepositoryTest() {
-        repository = Repository.open(repositoryPath,
-                                     config,
-                                     managerModule.getTaskManager(),
-                                     managerModule.getMessageManager());
+        repository = LocalRepository.open(repositoryPath,
+                                          config,
+                                          managerModule.getTaskManager(),
+                                          managerModule.getMessageManager());
 
         assertThat(repository.getInfo().isOpen()).isTrue();
 
@@ -506,10 +506,10 @@ public class RepositoryTest {
           dependsOnGroups = OPEN_REPOSITORY,
           expectedExceptions = InvalidRepositoryPathException.class)
     public void openRepositoryUnknownTest() {
-        repository = Repository.open(path.resolve("unknown"),
-                                     config,
-                                     managerModule.getTaskManager(),
-                                     managerModule.getMessageManager());
+        repository = LocalRepository.open(path.resolve("unknown"),
+                                          config,
+                                          managerModule.getTaskManager(),
+                                          managerModule.getMessageManager());
     }
 
     /**

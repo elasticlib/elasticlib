@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Splitter;
 import com.google.common.net.HttpHeaders;
 import java.io.InputStream;
+import java.util.Collection;
+import static java.util.Collections.emptyList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -112,6 +114,19 @@ public class RepositoryClient {
                 .path(REVISIONS)
                 .request()
                 .post(json(write(revision))));
+    }
+
+    /**
+     * Merges supplied revision tree with existing one,
+     *
+     * @param tree Revision tree to merge
+     * @return Actual command result.
+     */
+    public CommandResult mergeTree(RevisionTree tree) {
+        return result(resource
+                .path(REVISIONS)
+                .request()
+                .post(json(write(tree))));
     }
 
     /**
@@ -223,13 +238,38 @@ public class RepositoryClient {
      * @return Corresponding head revisions.
      */
     public List<Revision> getHead(Hash hash) {
+        return getRevisions(hash, HEAD);
+    }
+
+    /**
+     * Provides some revisions of a given content.
+     *
+     * @param hash Content hash.
+     * @param revs Requested revision hashes.
+     * @return Corresponding revisions.
+     */
+    public List<Revision> getRevisions(Hash hash, Collection<Hash> revs) {
+        if (revs.isEmpty()) {
+            return emptyList();
+        }
+        return getRevisions(hash, join(revs));
+    }
+
+    private List<Revision> getRevisions(Hash hash, String rev) {
         Response response = resource.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
-                .queryParam(REV, HEAD)
+                .queryParam(REV, rev)
                 .request()
                 .get();
 
         return readAll(response, Revision.class);
+    }
+
+    private static String join(Collection<Hash> revs) {
+        return revs.stream()
+                .map(r -> r.asHexadecimalString())
+                .reduce((x, y) -> x + "-" + y)
+                .get();
     }
 
     /**

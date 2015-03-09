@@ -21,9 +21,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import static java.time.Instant.now;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.SortedSet;
+import static java.util.stream.Collectors.toList;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import org.elasticlib.common.client.Client;
@@ -47,6 +49,7 @@ import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
+import org.elasticlib.common.value.Value;
 import static org.elasticlib.node.TestUtil.LOREM_IPSUM;
 import org.elasticlib.node.repository.Repository;
 import org.elasticlib.node.service.RepositoriesService;
@@ -289,6 +292,22 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Test.
      */
     @Test
+    public void mergeTreeTest() {
+        RevisionTree tree = LOREM_IPSUM.getTree();
+
+        Repository repository = newRepositoryMock();
+        when(repository.mergeTree(tree)).thenReturn(result);
+
+        try (Client client = newClient()) {
+            CommandResult actual = client.repositories().get(guid).mergeTree(tree);
+            assertThat(actual).isEqualTo(result);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
     public void deleteContentTest() {
         SortedSet<Hash> head = LOREM_IPSUM.getHead();
 
@@ -403,6 +422,38 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
 
         try (Client client = newClient()) {
             assertThat(client.repositories().get(guid).getHead(hash)).isEqualTo(head);
+        }
+    }
+
+    /**
+     * @return Test data.
+     */
+    public Object[][] getRevisionsDataProvider() {
+        Revision base = LOREM_IPSUM.getRevision();
+        Object updated = LOREM_IPSUM.add("test", Value.of("updated")).getRevision();
+        return new Object[][]{
+            {asList()},
+            {asList(base)},
+            {asList(base, updated)}
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param expected Expected revisions.
+     */
+    @Test(dataProvider = "getRevisionsDataProvider")
+    public void getRevisionsTest(List<Revision> expected) {
+        List<Hash> revs = expected.stream()
+                .map(x -> x.getRevision())
+                .collect(toList());
+
+        Repository repository = newRepositoryMock();
+        when(repository.getRevisions(hash, revs)).thenReturn(expected);
+
+        try (Client client = newClient()) {
+            assertThat(client.repositories().get(guid).getRevisions(hash, revs)).isEqualTo(expected);
         }
     }
 

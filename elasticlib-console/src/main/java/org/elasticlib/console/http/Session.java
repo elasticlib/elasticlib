@@ -109,7 +109,8 @@ public class Session implements Closeable {
         printingHandler.setEnabled(true);
         try {
             RepositoryDef def = client.repositories()
-                    .getInfo(repository)
+                    .get(repository)
+                    .getInfo()
                     .getDef();
 
             repositoryDef = def;

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
+import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
@@ -85,6 +86,19 @@ public class RepositoryClient {
      */
     RepositoryClient(WebTarget resource) {
         this.resource = resource;
+    }
+
+    /**
+     * Provides info about this repository.
+     *
+     * @return A RepositoryInfo instance.
+     */
+    public RepositoryInfo getInfo() {
+        Response response = resource
+                .request()
+                .get();
+
+        return read(response, RepositoryInfo.class);
     }
 
     /**

@@ -22,7 +22,6 @@ import static javax.ws.rs.client.Entity.json;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import static org.elasticlib.common.client.ClientUtil.ensureSuccess;
-import static org.elasticlib.common.client.ClientUtil.read;
 import static org.elasticlib.common.client.ClientUtil.readAll;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryInfo;
@@ -173,31 +172,6 @@ public class RepositoriesClient {
                 .get();
 
         return readAll(response, RepositoryInfo.class);
-    }
-
-    /**
-     * Provides info about a repository.
-     *
-     * @param repository Repository name or encoded GUID.
-     * @return Corresponding info.
-     */
-    public RepositoryInfo getInfo(String repository) {
-        Response response = resource.path(REPOSITORY_TEMPLATE)
-                .resolveTemplate(REPOSITORY, repository)
-                .request()
-                .get();
-
-        return read(response, RepositoryInfo.class);
-    }
-
-    /**
-     * Provides info about a repository.
-     *
-     * @param guid Repository GUID.
-     * @return Corresponding info.
-     */
-    public RepositoryInfo getInfo(Guid guid) {
-        return getInfo(guid.asHexadecimalString());
     }
 
     /**

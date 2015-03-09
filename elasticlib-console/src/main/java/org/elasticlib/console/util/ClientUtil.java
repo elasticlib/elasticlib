@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,7 +88,8 @@ public final class ClientUtil {
      */
     public static Guid resolveRepositoryGuid(Client client, String repository) {
         return client.repositories()
-                .getInfo(repository)
+                .get(repository)
+                .getInfo()
                 .getDef()
                 .getGuid();
     }

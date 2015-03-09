@@ -189,7 +189,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     public void getRepositoryTest() {
         when(repositoriesService.getRepositoryInfo(guid.asHexadecimalString())).thenReturn(repositoryInfo);
         try (Client client = newClient()) {
-            assertThat(client.repositories().getInfo(guid)).isEqualTo(repositoryInfo);
+            assertThat(client.repositories().get(guid).getInfo()).isEqualTo(repositoryInfo);
         }
     }
 
@@ -202,7 +202,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
                 .thenThrow(new UnknownRepositoryException());
 
         try (Client client = newClient()) {
-            client.repositories().getInfo(guid);
+            client.repositories().get(guid).getInfo();
         }
     }
 

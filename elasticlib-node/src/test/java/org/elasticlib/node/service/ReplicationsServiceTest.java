@@ -79,11 +79,15 @@ public class ReplicationsServiceTest {
         RepositoriesDao repositoriesDao = new RepositoriesDao(managerModule.getStorageManager());
         ReplicationsDao replicationsDao = new ReplicationsDao(managerModule.getStorageManager());
 
-        repositoriesService = new RepositoriesService(config,
-                                                      managerModule.getTaskManager(),
-                                                      managerModule.getStorageManager(),
+        LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config,
+                                                                        managerModule.getTaskManager(),
+                                                                        managerModule.getMessageManager());
+
+        LocalRepositoriesPool pool = new LocalRepositoriesPool(repositoriesDao, factory);
+
+        repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
-                                                      repositoriesDao);
+                                                      pool);
 
         replicationsService = new ReplicationsService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),

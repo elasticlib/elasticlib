@@ -51,15 +51,18 @@ public class ServiceModule {
         RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
         ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
 
+        LocalRepositoriesFactory localRepositoriesFactory = new LocalRepositoriesFactory(config,
+                                                                                         taskManager,
+                                                                                         messageManager);
+        LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao,
+                                                                                localRepositoriesFactory);
         NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
         PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
         NodePingHandler nodePingHandler = new NodePingHandler();
 
-        repositoriesService = new RepositoriesService(config,
-                                                      taskManager,
-                                                      storageManager,
+        repositoriesService = new RepositoriesService(storageManager,
                                                       messageManager,
-                                                      repositoriesDao);
+                                                      localRepositoriesPool);
 
         replicationsService = new ReplicationsService(storageManager,
                                                       messageManager,

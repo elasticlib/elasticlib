@@ -15,11 +15,14 @@ import static org.elasticlib.node.TestUtil.recursiveDelete;
 import static org.elasticlib.node.config.NodeConfig.NODE_NAME;
 import static org.elasticlib.node.config.NodeConfig.NODE_URIS;
 import org.elasticlib.node.dao.AttributesDao;
-import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -64,11 +67,7 @@ public class NodeServiceTest {
 
         managerModule = new ManagerModule(path.resolve("home"), config);
 
-        repositoriesService = new RepositoriesService(config,
-                                                      managerModule.getTaskManager(),
-                                                      managerModule.getStorageManager(),
-                                                      managerModule.getMessageManager(),
-                                                      new RepositoriesDao(managerModule.getStorageManager()));
+        repositoriesService = mock(RepositoriesService.class);
 
         nodeService = new NodeService(managerModule.getStorageManager(),
                                       new AttributesDao(managerModule.getStorageManager()),
@@ -85,6 +84,14 @@ public class NodeServiceTest {
         nodeService.stop();
         repositoriesService.stop();
         managerModule.stop();
+    }
+
+    /**
+     * Reset mocks.
+     */
+    @BeforeMethod
+    public void resetMocks() {
+        reset(repositoriesService);
     }
 
     /**
@@ -120,6 +127,7 @@ public class NodeServiceTest {
      */
     @Test
     public void getNodeInfoTest() {
+        when(repositoriesService.listRepositoryInfos()).thenReturn(emptyList());
         assertThat(nodeService.getNodeInfo()).isEqualTo(expectedInfo());
     }
 

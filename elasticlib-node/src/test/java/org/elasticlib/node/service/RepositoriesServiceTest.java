@@ -74,11 +74,18 @@ public class RepositoriesServiceTest {
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         repositoryPath = path.resolve(REPOSITORY);
         managerModule = new ManagerModule(path.resolve("home"), config);
-        repositoriesService = new RepositoriesService(config,
-                                                      managerModule.getTaskManager(),
-                                                      managerModule.getStorageManager(),
+
+        RepositoriesDao repositoriesDao = new RepositoriesDao(managerModule.getStorageManager());
+
+        LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config,
+                                                                        managerModule.getTaskManager(),
+                                                                        managerModule.getMessageManager());
+
+        LocalRepositoriesPool pool = new LocalRepositoriesPool(repositoriesDao, factory);
+
+        repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
-                                                      new RepositoriesDao(managerModule.getStorageManager()));
+                                                      pool);
 
         managerModule.start();
         repositoriesService.start();

@@ -71,7 +71,7 @@ public class ServiceModule {
 
         nodeService = new NodeService(storageManager,
                                       attributesDao,
-                                      repositoriesService,
+                                      localRepositoriesPool,
                                       nodeNameProvider,
                                       publishUrisProvider);
 

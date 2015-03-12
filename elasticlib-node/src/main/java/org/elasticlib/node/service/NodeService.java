@@ -17,7 +17,7 @@ public class NodeService {
 
     private final StorageManager storageManager;
     private final AttributesDao attributesDao;
-    private final RepositoriesService repositoriesService;
+    private final LocalRepositoriesPool localRepositoriesPool;
     private final NodeNameProvider nodeNameProvider;
     private final PublishUrisProvider publishUrisProvider;
     private Guid guid;
@@ -27,19 +27,19 @@ public class NodeService {
      *
      * @param storageManager Persistent storage provider.
      * @param attributesDao Attributes DAO.
-     * @param repositoriesService Repositories service.
+     * @param localRepositoriesPool Local repositories pool.
      * @param nodeNameProvider Node name provider.
      * @param publishUrisProvider Publish URI(s) provider.
      */
     public NodeService(StorageManager storageManager,
                        AttributesDao attributesDao,
-                       RepositoriesService repositoriesService,
+                       LocalRepositoriesPool localRepositoriesPool,
                        NodeNameProvider nodeNameProvider,
                        PublishUrisProvider publishUrisProvider) {
 
         this.storageManager = storageManager;
         this.attributesDao = attributesDao;
-        this.repositoriesService = repositoriesService;
+        this.localRepositoriesPool = localRepositoriesPool;
         this.nodeNameProvider = nodeNameProvider;
         this.publishUrisProvider = publishUrisProvider;
     }
@@ -79,7 +79,8 @@ public class NodeService {
      */
     public NodeInfo getNodeInfo() {
         LOG.info("Returning local node info");
-        return new NodeInfo(nodeDef(), repositoriesService.listRepositoryInfos());
+        return new NodeInfo(nodeDef(),
+                            storageManager.inTransaction(localRepositoriesPool::listRepositoryInfos));
     }
 
     private NodeDef nodeDef() {

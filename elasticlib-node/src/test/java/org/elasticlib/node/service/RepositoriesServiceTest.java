@@ -21,7 +21,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import org.elasticlib.common.config.Config;
+import org.elasticlib.common.exception.RepositoryAlreadyClosedException;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
+import org.elasticlib.common.exception.RepositoryAlreadyOpenException;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.hash.Guid;
@@ -171,8 +173,10 @@ public class RepositoriesServiceTest {
     /**
      * Test.
      */
-    @Test(groups = CLOSE_REPOSITORY_CHECKS, dependsOnGroups = CLOSE_REPOSITORY)
-    public void closeRepositoryIsIndempotentTest() {
+    @Test(groups = CLOSE_REPOSITORY_CHECKS,
+          dependsOnGroups = CLOSE_REPOSITORY,
+          expectedExceptions = RepositoryAlreadyClosedException.class)
+    public void closeRepositoryAlreadyClosedTest() {
         repositoriesService.closeRepository(REPOSITORY);
     }
 
@@ -215,8 +219,10 @@ public class RepositoriesServiceTest {
     /**
      * Test.
      */
-    @Test(groups = OPEN_REPOSITORY_CHECKS, dependsOnGroups = OPEN_REPOSITORY)
-    public void openRepositoryIsIndempotentTest() {
+    @Test(groups = OPEN_REPOSITORY_CHECKS,
+          dependsOnGroups = OPEN_REPOSITORY,
+          expectedExceptions = RepositoryAlreadyOpenException.class)
+    public void openRepositoryAlreadyOpenTest() {
         repositoriesService.openRepository(REPOSITORY);
     }
 

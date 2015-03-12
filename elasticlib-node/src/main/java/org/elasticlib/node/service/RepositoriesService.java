@@ -32,7 +32,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static java.util.stream.Collectors.toList;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.exception.NodeException;
+import org.elasticlib.common.exception.RepositoryAlreadyClosedException;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
+import org.elasticlib.common.exception.RepositoryAlreadyOpenException;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
@@ -186,7 +188,7 @@ public class RepositoriesService {
             storageManager.inTransaction(() -> {
                 RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                 if (repositories.containsKey(def.getGuid())) {
-                    return;
+                    throw new RepositoryAlreadyOpenException();
                 }
                 openRepository(def);
                 messageManager.post(new RepositoryOpened(def.getGuid()));
@@ -208,7 +210,7 @@ public class RepositoriesService {
             storageManager.inTransaction(() -> {
                 RepositoryDef def = repositoriesDao.getRepositoryDef(key);
                 if (!repositories.containsKey(def.getGuid())) {
-                    return;
+                    throw new RepositoryAlreadyClosedException();
                 }
                 repositories.remove(def.getGuid()).close();
                 messageManager.post(new RepositoryClosed(def.getGuid()));

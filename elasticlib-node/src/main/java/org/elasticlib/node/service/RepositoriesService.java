@@ -17,8 +17,6 @@ package org.elasticlib.node.service;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
-import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.node.manager.message.MessageManager;
@@ -178,15 +176,5 @@ public class RepositoriesService {
      */
     public Repository getRepository(String key) {
         return storageManager.inTransaction(() -> localRepositoriesPool.getRepository(key));
-    }
-
-    /**
-     * Provides a repository if it exists and is currently opened.
-     *
-     * @param guid Repository GUID.
-     * @return Corresponding repository, if available.
-     */
-    public Optional<Repository> tryGetRepository(Guid guid) {
-        return localRepositoriesPool.tryGetRepository(guid);
     }
 }

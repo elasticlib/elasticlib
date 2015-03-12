@@ -91,9 +91,8 @@ public class ReplicationsServiceTest {
 
         replicationsService = new ReplicationsService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
-                                                      repositoriesDao,
                                                       replicationsDao,
-                                                      repositoriesService);
+                                                      pool);
         managerModule.start();
         repositoriesService.start();
         replicationsService.start();

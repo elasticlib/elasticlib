@@ -66,9 +66,8 @@ public class ServiceModule {
 
         replicationsService = new ReplicationsService(storageManager,
                                                       messageManager,
-                                                      repositoriesDao,
                                                       replicationsDao,
-                                                      repositoriesService);
+                                                      localRepositoriesPool);
 
         nodeService = new NodeService(storageManager,
                                       attributesDao,

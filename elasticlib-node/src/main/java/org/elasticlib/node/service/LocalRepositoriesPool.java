@@ -252,6 +252,21 @@ public class LocalRepositoriesPool {
     }
 
     /**
+     * Provides definition of all currently defined repositories.
+     *
+     * @return A list of repository info.
+     */
+    public List<RepositoryDef> listRepositoryDefs() {
+        lock.readLock().lock();
+        try {
+            return repositoriesDao.listRepositoryDefs();
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
      * Provides info about all currently defined repositories.
      *
      * @return A list of repository info.
@@ -263,6 +278,22 @@ public class LocalRepositoriesPool {
                     .stream()
                     .map(this::repositoryInfoOf)
                     .collect(toList()));
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Provides definition of an existing repository. Fails it if it does not exist.
+     *
+     * @param key Repository name or encoded GUID.
+     * @return Corresponding RepositoryDef.
+     */
+    public RepositoryDef getRepositoryDef(String key) {
+        lock.readLock().lock();
+        try {
+            return repositoriesDao.getRepositoryDef(key);
 
         } finally {
             lock.readLock().unlock();

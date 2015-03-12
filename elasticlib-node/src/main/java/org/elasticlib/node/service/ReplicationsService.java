@@ -33,7 +33,6 @@ import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.node.dao.ReplicationsDao;
-import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.NewRepositoryEvent;
@@ -57,9 +56,8 @@ public class ReplicationsService {
 
     private final StorageManager storageManager;
     private final MessageManager messageManager;
-    private final RepositoriesDao repositoriesDao;
     private final ReplicationsDao replicationsDao;
-    private final RepositoriesService repositoriesService;
+    private final LocalRepositoriesPool localRepositoriesPool;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<Guid, Agent> agents = new HashMap<>();
     private Database curSeqsDb;
@@ -69,20 +67,17 @@ public class ReplicationsService {
      *
      * @param storageManager Persistent storage provider.
      * @param messageManager Messaging infrastructure manager.
-     * @param repositoriesDao Repositories definitions DAO.
      * @param replicationsDao Replications definitions DAO.
-     * @param repositoriesService Repositories Service.
+     * @param localRepositoriesPool Local repositories pool.
      */
     public ReplicationsService(StorageManager storageManager,
                                MessageManager messageManager,
-                               RepositoriesDao repositoriesDao,
                                ReplicationsDao replicationsDao,
-                               RepositoriesService repositoriesService) {
+                               LocalRepositoriesPool localRepositoriesPool) {
         this.storageManager = storageManager;
         this.messageManager = messageManager;
-        this.repositoriesDao = repositoriesDao;
         this.replicationsDao = replicationsDao;
-        this.repositoriesService = repositoriesService;
+        this.localRepositoriesPool = localRepositoriesPool;
     }
 
     /**
@@ -134,8 +129,8 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                Guid srcId = repositoriesDao.getRepositoryDef(source).getGuid();
-                Guid destId = repositoriesDao.getRepositoryDef(destination).getGuid();
+                Guid srcId = localRepositoriesPool.getRepositoryDef(source).getGuid();
+                Guid destId = localRepositoriesPool.getRepositoryDef(destination).getGuid();
                 if (srcId.equals(destId)) {
                     throw new SelfReplicationException();
                 }
@@ -213,7 +208,7 @@ public class ReplicationsService {
         lock.readLock().lock();
         try {
             return storageManager.inTransaction(() -> {
-                Map<Guid, RepositoryDef> repositoryDefs = repositoriesDao.listRepositoryDefs()
+                Map<Guid, RepositoryDef> repositoryDefs = localRepositoriesPool.listRepositoryDefs()
                         .stream()
                         .collect(toMap(RepositoryDef::getGuid, d -> d));
 
@@ -265,8 +260,8 @@ public class ReplicationsService {
     }
 
     private Optional<Agent> newAgent(ReplicationDef def, boolean resetCursor) {
-        Optional<Repository> source = repositoriesService.tryGetRepository(def.getSource());
-        Optional<Repository> destination = repositoriesService.tryGetRepository(def.getDestination());
+        Optional<Repository> source = localRepositoriesPool.tryGetRepository(def.getSource());
+        Optional<Repository> destination = localRepositoriesPool.tryGetRepository(def.getDestination());
         if (!source.isPresent() || !destination.isPresent()) {
             return Optional.empty();
         }

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.exception.RepositoryAlreadyClosedException;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
@@ -161,16 +160,6 @@ public class RepositoriesServiceTest {
     /**
      * Test.
      */
-    @Test(groups = CREATE_REPOSITORY_CHECKS, dependsOnGroups = CREATE_REPOSITORY)
-    public void tryGetRepositoryTest() {
-        Optional<Repository> repository = repositoriesService.tryGetRepository(guid());
-        assertThat(repository.isPresent()).isTrue();
-        assertOpen(repository.get().getInfo());
-    }
-
-    /**
-     * Test.
-     */
     @Test(groups = CLOSE_REPOSITORY, dependsOnGroups = CREATE_REPOSITORY_CHECKS)
     public void closeRepositoryTest() {
         repositoriesService.closeRepository(REPOSITORY);
@@ -203,15 +192,6 @@ public class RepositoriesServiceTest {
           expectedExceptions = RepositoryClosedException.class)
     public void getRepositoryAfterCloseTest() {
         repositoriesService.getRepository(REPOSITORY);
-    }
-
-    /**
-     * Test.
-     */
-    @Test(groups = CLOSE_REPOSITORY_CHECKS, dependsOnGroups = CLOSE_REPOSITORY)
-    public void tryGetRepositoryAfterCloseTest() {
-        Optional<Repository> repository = repositoriesService.tryGetRepository(guid());
-        assertThat(repository.isPresent()).isFalse();
     }
 
     /**

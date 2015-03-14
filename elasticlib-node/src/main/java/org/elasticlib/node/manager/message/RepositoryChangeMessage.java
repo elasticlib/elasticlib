@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ import org.elasticlib.common.hash.Guid;
 /**
  * Base class for messages related to a repository state change.
  */
-abstract class RepositoryChangeMessage {
+public abstract class RepositoryChangeMessage {
 
     private final Guid repositoryGuid;
 

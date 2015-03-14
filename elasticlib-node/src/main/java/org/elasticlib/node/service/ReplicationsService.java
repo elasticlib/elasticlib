@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import org.elasticlib.common.exception.SelfReplicationException;
@@ -32,6 +33,7 @@ import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.NewRepositoryEvent;
+import org.elasticlib.node.manager.message.RepositoryChangeMessage;
 import org.elasticlib.node.manager.message.RepositoryClosed;
 import org.elasticlib.node.manager.message.RepositoryOpened;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
@@ -85,10 +87,17 @@ public class ReplicationsService {
                 replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::startAgent);
             });
 
-            messageManager.register(NewRepositoryEvent.class, new SignalAgentsAction());
-            messageManager.register(RepositoryOpened.class, new StartReplicationsAction());
-            messageManager.register(RepositoryClosed.class, new StopReplicationsAction());
-            messageManager.register(RepositoryRemoved.class, new DeleteReplicationsAction());
+            messageManager.register(NewRepositoryEvent.class,
+                                    newAction("Signaling replication agents", this::signalAgents));
+
+            messageManager.register(RepositoryOpened.class,
+                                    newAction("Starting replications", this::startReplications));
+
+            messageManager.register(RepositoryClosed.class,
+                                    newAction("Stopping replications", this::stopReplications));
+
+            messageManager.register(RepositoryRemoved.class,
+                                    newAction("Deleting replications", this::deleteReplications));
 
         } finally {
             lock.writeLock().unlock();
@@ -228,96 +237,74 @@ public class ReplicationsService {
                                    repositoryDefs.get(destId));
     }
 
-    private class SignalAgentsAction implements Action<NewRepositoryEvent> {
-
-        @Override
-        public String description() {
-            return "Signaling replication agents";
-        }
-
-        @Override
-        public void apply(NewRepositoryEvent message) {
-            lock.readLock().lock();
-            try {
-                storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefsFrom(message.getRepositoryGuid())
-                            .stream()
-                            .map(ReplicationDef::getGuid)
-                            .forEach(replicationAgentsPool::signalAgent);
-                });
-            } finally {
-                lock.readLock().unlock();
-            }
+    private void signalAgents(Guid repositoryGuid) {
+        lock.readLock().lock();
+        try {
+            storageManager.inTransaction(() -> {
+                replicationsDao.listReplicationDefsFrom(repositoryGuid)
+                        .stream()
+                        .map(ReplicationDef::getGuid)
+                        .forEach(replicationAgentsPool::signalAgent);
+            });
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
-    private class StartReplicationsAction implements Action<RepositoryOpened> {
-
-        @Override
-        public String description() {
-            return "Starting replications";
-        }
-
-        @Override
-        public void apply(RepositoryOpened message) {
-            lock.writeLock().lock();
-            try {
-                storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
-                            .forEach(replicationAgentsPool::tryStartAgent);
-                });
-            } finally {
-                lock.writeLock().unlock();
-            }
+    private void startReplications(Guid repositoryGuid) {
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(() -> {
+                replicationsDao.listReplicationDefs(repositoryGuid)
+                        .forEach(replicationAgentsPool::tryStartAgent);
+            });
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    private class StopReplicationsAction implements Action<RepositoryClosed> {
-
-        @Override
-        public String description() {
-            return "Stopping replications";
-        }
-
-        @Override
-        public void apply(RepositoryClosed message) {
-            lock.writeLock().lock();
-            try {
-                storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
-                            .stream()
-                            .map(ReplicationDef::getGuid)
-                            .forEach(replicationAgentsPool::stopAgent);
-                });
-            } finally {
-                lock.writeLock().unlock();
-            }
+    private void stopReplications(Guid repositoryGuid) {
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(() -> {
+                replicationsDao.listReplicationDefs(repositoryGuid)
+                        .stream()
+                        .map(ReplicationDef::getGuid)
+                        .forEach(replicationAgentsPool::stopAgent);
+            });
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    private class DeleteReplicationsAction implements Action<RepositoryRemoved> {
-
-        @Override
-        public String description() {
-            return "Deleting replications";
+    private void deleteReplications(Guid repositoryGuid) {
+        lock.writeLock().lock();
+        try {
+            storageManager.inTransaction(() -> {
+                replicationsDao.listReplicationDefs(repositoryGuid)
+                        .stream()
+                        .map(ReplicationDef::getGuid)
+                        .forEach(guid -> {
+                            replicationAgentsPool.deleteAgent(guid);
+                            replicationsDao.deleteReplicationDef(guid);
+                        });
+            });
+        } finally {
+            lock.writeLock().unlock();
         }
+    }
 
-        @Override
-        public void apply(RepositoryRemoved message) {
-            lock.writeLock().lock();
-            try {
-                storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
-                            .stream()
-                            .map(ReplicationDef::getGuid)
-                            .forEach(guid -> {
-                                replicationAgentsPool.deleteAgent(guid);
-                                replicationsDao.deleteReplicationDef(guid);
-                            });
-                });
-            } finally {
-                lock.writeLock().unlock();
+    private static <T extends RepositoryChangeMessage> Action<T> newAction(String description, Consumer<Guid> action) {
+        return new Action<T>() {
+            @Override
+            public String description() {
+                return description;
             }
-        }
+
+            @Override
+            public void apply(T message) {
+                action.accept(message.getRepositoryGuid());
+            }
+        };
     }
 }

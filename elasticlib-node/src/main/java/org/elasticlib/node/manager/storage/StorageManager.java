@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  */
 package org.elasticlib.node.manager.storage;
 
+import static com.google.common.base.Preconditions.checkState;
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
@@ -260,6 +261,8 @@ public class StorageManager {
 
     private synchronized TransactionContext beginTransaction() {
         ensureStarted();
+        checkState(currentTxContext.get() != null, "Nested transactions are not supported");
+
         TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
         txContexts.add(ctx);
         currentTxContext.set(ctx);

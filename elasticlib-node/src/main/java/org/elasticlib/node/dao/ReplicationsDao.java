@@ -22,6 +22,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.elasticlib.common.exception.ReplicationAlreadyExistsException;
 import org.elasticlib.common.exception.UnknownReplicationException;
@@ -106,21 +107,41 @@ public class ReplicationsDao {
     /**
      * Loads all ReplicationDef from repository whose GUID is supplied.
      *
-     * @param guid Source repository GUID.
+     * @param repositoryGuid Source repository GUID.
      * @return All matching stored replication definitions.
      */
-    public List<ReplicationDef> listReplicationDefsFrom(Guid guid) {
-        return list(def -> def.getSource().equals(guid));
+    public List<ReplicationDef> listReplicationDefsFrom(Guid repositoryGuid) {
+        return list(def -> def.getSource().equals(repositoryGuid));
     }
 
     /**
      * Loads all ReplicationDef from/to repository whose GUID is supplied.
      *
-     * @param guid Repository GUID.
+     * @param repositoryGuid Repository GUID.
      * @return All matching stored replication definitions.
      */
-    public List<ReplicationDef> listReplicationDefs(Guid guid) {
-        return list(def -> def.getSource().equals(guid) || def.getDestination().equals(guid));
+    public List<ReplicationDef> listReplicationDefs(Guid repositoryGuid) {
+        return list(def -> def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid));
+    }
+
+    /**
+     * Deletes all replicationDef from/to repository whose GUID is supplied.
+     *
+     * @param repositoryGuid Repository GUID.
+     * @param cleanup Cleanup to be performed for each replicationDef deletion.
+     */
+    public void deleteReplicationDefs(Guid repositoryGuid, Consumer<ReplicationDef> cleanup) {
+        DatabaseEntry key = new DatabaseEntry();
+        DatabaseEntry data = new DatabaseEntry();
+        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
+            while (cursor.getNext(key, data, LockMode.RMW) == OperationStatus.SUCCESS) {
+                ReplicationDef def = asMappable(data, ReplicationDef.class);
+                if (def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid)) {
+                    cursor.delete();
+                    cleanup.accept(def);
+                }
+            }
+        }
     }
 
     private boolean any(Predicate<ReplicationDef> predicate) {

@@ -281,13 +281,9 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                replicationsDao.listReplicationDefs(repositoryGuid)
-                        .stream()
-                        .map(ReplicationDef::getGuid)
-                        .forEach(guid -> {
-                            replicationAgentsPool.deleteAgent(guid);
-                            replicationsDao.deleteReplicationDef(guid);
-                        });
+                replicationsDao.deleteReplicationDefs(repositoryGuid, def -> {
+                    replicationAgentsPool.deleteAgent(def.getGuid());
+                });
             });
         } finally {
             lock.writeLock().unlock();

@@ -54,8 +54,13 @@ public class ServiceModule {
         LocalRepositoriesFactory localRepositoriesFactory = new LocalRepositoriesFactory(config,
                                                                                          taskManager,
                                                                                          messageManager);
+
         LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao,
                                                                                 localRepositoriesFactory);
+
+        ReplicationAgentsPool replicationAgentsPool = new ReplicationAgentsPool(managerModule.getStorageManager(),
+                                                                                localRepositoriesPool);
+
         NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
         PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
         NodePingHandler nodePingHandler = new NodePingHandler();
@@ -67,7 +72,8 @@ public class ServiceModule {
         replicationsService = new ReplicationsService(storageManager,
                                                       messageManager,
                                                       replicationsDao,
-                                                      localRepositoriesPool);
+                                                      localRepositoriesPool,
+                                                      replicationAgentsPool);
 
         nodeService = new NodeService(storageManager,
                                       attributesDao,

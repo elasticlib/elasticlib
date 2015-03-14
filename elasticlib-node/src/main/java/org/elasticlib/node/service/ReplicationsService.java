@@ -15,9 +15,6 @@
  */
 package org.elasticlib.node.service;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +22,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.SelfReplicationException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
@@ -39,28 +35,23 @@ import org.elasticlib.node.manager.message.NewRepositoryEvent;
 import org.elasticlib.node.manager.message.RepositoryClosed;
 import org.elasticlib.node.manager.message.RepositoryOpened;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
 import org.elasticlib.node.manager.storage.StorageManager;
-import org.elasticlib.node.repository.Agent;
-import org.elasticlib.node.repository.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages replication between repositories.
+ * Manages replications between repositories.
  */
 public class ReplicationsService {
 
-    private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(ReplicationsService.class);
 
     private final StorageManager storageManager;
     private final MessageManager messageManager;
     private final ReplicationsDao replicationsDao;
     private final LocalRepositoriesPool localRepositoriesPool;
+    private final ReplicationAgentsPool replicationAgentsPool;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Map<Guid, Agent> agents = new HashMap<>();
-    private Database curSeqsDb;
 
     /**
      * Constructor.
@@ -69,15 +60,18 @@ public class ReplicationsService {
      * @param messageManager Messaging infrastructure manager.
      * @param replicationsDao Replications definitions DAO.
      * @param localRepositoriesPool Local repositories pool.
+     * @param replicationAgentsPool Replication agents pool.
      */
     public ReplicationsService(StorageManager storageManager,
                                MessageManager messageManager,
                                ReplicationsDao replicationsDao,
-                               LocalRepositoriesPool localRepositoriesPool) {
+                               LocalRepositoriesPool localRepositoriesPool,
+                               ReplicationAgentsPool replicationAgentsPool) {
         this.storageManager = storageManager;
         this.messageManager = messageManager;
         this.replicationsDao = replicationsDao;
         this.localRepositoriesPool = localRepositoriesPool;
+        this.replicationAgentsPool = replicationAgentsPool;
     }
 
     /**
@@ -86,16 +80,16 @@ public class ReplicationsService {
     public void start() {
         lock.writeLock().lock();
         try {
-            curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
+            replicationAgentsPool.start();
+            storageManager.inTransaction(() -> {
+                replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::startAgent);
+            });
 
             messageManager.register(NewRepositoryEvent.class, new SignalAgentsAction());
             messageManager.register(RepositoryOpened.class, new StartReplicationsAction());
             messageManager.register(RepositoryClosed.class, new StopReplicationsAction());
             messageManager.register(RepositoryRemoved.class, new DeleteReplicationsAction());
 
-            storageManager.inTransaction(() -> {
-                replicationsDao.listReplicationDefs().forEach(this::startAgent);
-            });
         } finally {
             lock.writeLock().unlock();
         }
@@ -107,11 +101,7 @@ public class ReplicationsService {
     public void stop() {
         lock.writeLock().lock();
         try {
-            agents.values()
-                    .stream()
-                    .forEach(Agent::stop);
-
-            agents.clear();
+            replicationAgentsPool.stop();
 
         } finally {
             lock.writeLock().unlock();
@@ -119,7 +109,8 @@ public class ReplicationsService {
     }
 
     /**
-     * Creates a new replication from source to destination. Fails if such a replication already exist.
+     * Creates a new replication from source to destination. Fails if such a replication already exists. Immediately
+     * starts the replication, if possible.
      *
      * @param source Source repository name or encoded GUID.
      * @param destination Destination repository name or encoded GUID.
@@ -136,7 +127,7 @@ public class ReplicationsService {
                 }
                 ReplicationDef def = new ReplicationDef(Guid.random(), srcId, destId);
                 replicationsDao.createReplicationDef(def);
-                createAgent(def);
+                replicationAgentsPool.createAgent(def);
             });
         } finally {
             lock.writeLock().unlock();
@@ -154,7 +145,7 @@ public class ReplicationsService {
         try {
             storageManager.inTransaction(() -> {
                 replicationsDao.deleteReplicationDef(guid);
-                deleteAgent(guid);
+                replicationAgentsPool.deleteAgent(guid);
             });
         } finally {
             lock.writeLock().unlock();
@@ -163,7 +154,7 @@ public class ReplicationsService {
 
     /**
      * Starts an existing replication. Does nothing if it is already started. Fails if it does not exist or if source or
-     * destination repositories are not started.
+     * destination repositories are not available.
      *
      * @param guid Replication GUID.
      */
@@ -172,9 +163,8 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                if (!startAgent(replicationsDao.getReplicationDef(guid))) {
-                    throw new RepositoryClosedException();
-                }
+                ReplicationDef def = replicationsDao.getReplicationDef(guid);
+                replicationAgentsPool.startAgent(def);
             });
         } finally {
             lock.writeLock().unlock();
@@ -191,7 +181,7 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                stopAgent(guid);
+                replicationAgentsPool.stopAgent(guid);
             });
         } finally {
             lock.writeLock().unlock();
@@ -226,68 +216,16 @@ public class ReplicationsService {
         Guid id = replicationDef.getGuid();
         Guid srcId = replicationDef.getSource();
         Guid destId = replicationDef.getDestination();
-        if (agents.containsKey(id)) {
-            AgentInfo agentInfo = agents.get(id).info();
+        Optional<AgentInfo> agentInfo = replicationAgentsPool.getAgentInfo(id);
+        if (agentInfo.isPresent()) {
             return new ReplicationInfo(id,
                                        repositoryDefs.get(srcId),
                                        repositoryDefs.get(destId),
-                                       agentInfo);
+                                       agentInfo.get());
         }
         return new ReplicationInfo(id,
                                    repositoryDefs.get(srcId),
                                    repositoryDefs.get(destId));
-    }
-
-    private void createAgent(ReplicationDef def) {
-        startAgent(def, true);
-    }
-
-    private boolean startAgent(ReplicationDef def) {
-        return startAgent(def, false);
-    }
-
-    private boolean startAgent(ReplicationDef def, boolean resetCursor) {
-        if (agents.containsKey(def.getGuid())) {
-            return true;
-        }
-        Optional<Agent> agent = newAgent(def, resetCursor);
-        if (!agent.isPresent()) {
-            return false;
-        }
-        agents.put(def.getGuid(), agent.get());
-        agent.get().start();
-        return true;
-    }
-
-    private Optional<Agent> newAgent(ReplicationDef def, boolean resetCursor) {
-        Optional<Repository> source = localRepositoriesPool.tryGetRepository(def.getSource());
-        Optional<Repository> destination = localRepositoriesPool.tryGetRepository(def.getDestination());
-        if (!source.isPresent() || !destination.isPresent()) {
-            return Optional.empty();
-        }
-        DatabaseEntry curSeqKey = entry(def.getGuid());
-        if (resetCursor) {
-            // Ensures agent won't see a stale value.
-            curSeqsDb.delete(null, curSeqKey);
-        }
-        return Optional.<Agent>of(new ReplicationAgent(source.get(), destination.get(), curSeqsDb, curSeqKey));
-    }
-
-    private void stopAgent(Guid guid) {
-        if (!agents.containsKey(guid)) {
-            return;
-        }
-        Agent agent = agents.remove(guid);
-        if (agent != null) {
-            agent.stop();
-        }
-    }
-
-    private void deleteAgent(Guid guid) {
-        stopAgent(guid);
-
-        // Can't use a transaction on a deffered write database :(
-        curSeqsDb.delete(null, entry(guid));
     }
 
     private class SignalAgentsAction implements Action<NewRepositoryEvent> {
@@ -302,9 +240,10 @@ public class ReplicationsService {
             lock.readLock().lock();
             try {
                 storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefsFrom(message.getRepositoryGuid()).forEach(def -> {
-                        agents.get(def.getGuid()).signal();
-                    });
+                    replicationsDao.listReplicationDefsFrom(message.getRepositoryGuid())
+                            .stream()
+                            .map(ReplicationDef::getGuid)
+                            .forEach(replicationAgentsPool::signalAgent);
                 });
             } finally {
                 lock.readLock().unlock();
@@ -324,9 +263,8 @@ public class ReplicationsService {
             lock.writeLock().lock();
             try {
                 storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid()).forEach(def -> {
-                        startAgent(def);
-                    });
+                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
+                            .forEach(replicationAgentsPool::tryStartAgent);
                 });
             } finally {
                 lock.writeLock().unlock();
@@ -346,9 +284,10 @@ public class ReplicationsService {
             lock.writeLock().lock();
             try {
                 storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid()).forEach(def -> {
-                        stopAgent(def.getGuid());
-                    });
+                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
+                            .stream()
+                            .map(ReplicationDef::getGuid)
+                            .forEach(replicationAgentsPool::stopAgent);
                 });
             } finally {
                 lock.writeLock().unlock();
@@ -368,10 +307,13 @@ public class ReplicationsService {
             lock.writeLock().lock();
             try {
                 storageManager.inTransaction(() -> {
-                    replicationsDao.listReplicationDefs(message.getRepositoryGuid()).forEach(def -> {
-                        replicationsDao.deleteReplicationDef(def.getGuid());
-                        deleteAgent(def.getGuid());
-                    });
+                    replicationsDao.listReplicationDefs(message.getRepositoryGuid())
+                            .stream()
+                            .map(ReplicationDef::getGuid)
+                            .forEach(guid -> {
+                                replicationAgentsPool.deleteAgent(guid);
+                                replicationsDao.deleteReplicationDef(guid);
+                            });
                 });
             } finally {
                 lock.writeLock().unlock();

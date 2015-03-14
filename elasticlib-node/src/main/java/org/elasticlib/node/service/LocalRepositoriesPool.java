@@ -332,15 +332,34 @@ public class LocalRepositoriesPool {
     public Repository getRepository(String key) {
         lock.readLock().lock();
         try {
-            RepositoryDef def = repositoriesDao.getRepositoryDef(key);
-            if (!repositories.containsKey(def.getGuid())) {
-                throw new RepositoryClosedException();
-            }
-            return repositories.get(def.getGuid());
+            return repositoryOf(repositoriesDao.getRepositoryDef(key));
 
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    /**
+     * Provides a repository.
+     *
+     * @param guid Repository GUID.
+     * @return Corresponding repository.
+     */
+    public Repository getRepository(Guid guid) {
+        lock.readLock().lock();
+        try {
+            return repositoryOf(repositoriesDao.getRepositoryDef(guid));
+
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private Repository repositoryOf(RepositoryDef def) {
+        if (!repositories.containsKey(def.getGuid())) {
+            throw new RepositoryClosedException();
+        }
+        return repositories.get(def.getGuid());
     }
 
     /**

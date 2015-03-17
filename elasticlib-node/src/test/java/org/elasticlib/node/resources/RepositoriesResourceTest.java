@@ -65,6 +65,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -428,6 +429,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     /**
      * @return Test data.
      */
+    @DataProvider(name = "getRevisionsDataProvider")
     public Object[][] getRevisionsDataProvider() {
         Revision base = LOREM_IPSUM.getRevision();
         Object updated = LOREM_IPSUM.add("test", Value.of("updated")).getRevision();

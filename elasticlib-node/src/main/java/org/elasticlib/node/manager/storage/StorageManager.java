@@ -261,7 +261,7 @@ public class StorageManager {
 
     private synchronized TransactionContext beginTransaction() {
         ensureStarted();
-        checkState(currentTxContext.get() != null, "Nested transactions are not supported");
+        checkState(currentTxContext.get() == null, "Nested transactions are not supported");
 
         TransactionContext ctx = new TransactionContext(environment.beginTransaction(null, TransactionConfig.DEFAULT));
         txContexts.add(ctx);

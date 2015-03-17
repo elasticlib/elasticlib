@@ -68,10 +68,8 @@ public class RemotesServiceTest {
     private static final RemoteInfo REMOTE_INFO = remoteInfo(REMOTE_DEF, TEST_URI);
 
     private Path path;
-
     private ManagerModule managerModule;
     private NodePingHandler nodePingHandler;
-    private NodeService nodeService;
     private RemotesService remotesService;
 
     private static RemoteInfo remoteInfo(NodeDef def, URI transportUri) {
@@ -113,15 +111,14 @@ public class RemotesServiceTest {
         nodePingHandler = mock(NodePingHandler.class, CALLS_REAL_METHODS);
         doThrow(AssertionError.class).when(nodePingHandler).ping(any(URI.class));
 
-        nodeService = mock(NodeService.class);
-        when(nodeService.getGuid()).thenReturn(LOCAL_GUID);
-        when(nodeService.getNodeDef()).thenReturn(LOCAL_DEF);
+        NodeGuidProvider nodeGuidProvider = mock(NodeGuidProvider.class);
+        when(nodeGuidProvider.guid()).thenReturn(LOCAL_GUID);
 
         remotesService = new RemotesService(config,
                                             null,
                                             managerModule.getStorageManager(),
                                             new RemotesDao(managerModule.getStorageManager()),
-                                            nodeService,
+                                            nodeGuidProvider,
                                             nodePingHandler);
 
         managerModule.start();

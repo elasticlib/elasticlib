@@ -62,6 +62,7 @@ public class ServiceModule {
                                                                                 localRepositoriesPool);
 
         NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
+        NodeGuidProvider nodeGuidProvider = new NodeGuidProvider(attributesDao);
         PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
         NodePingHandler nodePingHandler = new NodePingHandler();
 
@@ -76,16 +77,16 @@ public class ServiceModule {
                                                       replicationAgentsPool);
 
         nodeService = new NodeService(storageManager,
-                                      attributesDao,
                                       localRepositoriesPool,
                                       nodeNameProvider,
+                                      nodeGuidProvider,
                                       publishUrisProvider);
 
         remotesService = new RemotesService(config,
                                             taskManager,
                                             storageManager,
                                             remotesDao,
-                                            nodeService,
+                                            nodeGuidProvider,
                                             nodePingHandler);
     }
 

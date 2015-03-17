@@ -48,7 +48,7 @@ public class RemotesService {
     private final TaskManager taskManager;
     private final StorageManager storageManager;
     private final RemotesDao remotesDao;
-    private final NodeService nodeService;
+    private final NodeGuidProvider nodeGuidProvider;
     private final NodePingHandler nodePingHandler;
     private final AtomicBoolean started = new AtomicBoolean();
     private Task pingTask;
@@ -60,22 +60,22 @@ public class RemotesService {
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
-     * @param remotesDao remote nodes DAO.
-     * @param nodeService Node service.
-     * @param nodePingHandler remote nodes ping handler.
+     * @param remotesDao Remote nodes DAO.
+     * @param nodeGuidProvider Local node GUID provider.
+     * @param nodePingHandler Remote nodes ping handler.
      */
     public RemotesService(Config config,
                           TaskManager taskManager,
                           StorageManager storageManager,
                           RemotesDao remotesDao,
-                          NodeService nodeService,
+                          NodeGuidProvider nodeGuidProvider,
                           NodePingHandler nodePingHandler) {
 
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
         this.remotesDao = remotesDao;
-        this.nodeService = nodeService;
+        this.nodeGuidProvider = nodeGuidProvider;
         this.nodePingHandler = nodePingHandler;
     }
 
@@ -127,7 +127,7 @@ public class RemotesService {
      * @param expected Remote node GUID.
      */
     public void saveRemote(List<URI> uris, Guid expected) {
-        if (expected.equals(nodeService.getGuid()) || isAlreadyStored(expected)) {
+        if (expected.equals(nodeGuidProvider.guid()) || isAlreadyStored(expected)) {
             return;
         }
         Optional<RemoteInfo> info = nodePingHandler.ping(uris, expected);
@@ -153,7 +153,7 @@ public class RemotesService {
      */
     public void saveRemote(URI uri) {
         Optional<RemoteInfo> info = nodePingHandler.ping(uri);
-        if (info.isPresent() && !info.get().getGuid().equals(nodeService.getGuid())) {
+        if (info.isPresent() && !info.get().getGuid().equals(nodeGuidProvider.guid())) {
             LOG.info("Saving remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
@@ -168,7 +168,7 @@ public class RemotesService {
     public void addRemote(List<URI> uris) {
         Optional<RemoteInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
-            if (info.get().getGuid().equals(nodeService.getGuid())) {
+            if (info.get().getGuid().equals(nodeGuidProvider.guid())) {
                 throw new SelfTrackingException();
             }
             LOG.info("Adding remote node {}", info.get().getName());

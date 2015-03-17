@@ -15,6 +15,7 @@
  */
 package org.elasticlib.node.service;
 
+import static com.sleepycat.je.EnvironmentConfig.LOG_MEM_ONLY;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import org.elasticlib.common.config.Config;
-import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import static org.elasticlib.node.TestUtil.config;
@@ -34,12 +34,15 @@ import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * node service integration tests.
+ * Node service integration tests.
  */
+@Test(singleThreaded = true)
 public class NodeServiceTest {
 
     private static final String NAME = "test";
@@ -48,6 +51,7 @@ public class NodeServiceTest {
     private Path path;
     private ManagerModule managerModule;
     private LocalRepositoriesPool localRepositoriesPool;
+    private NodeGuidProvider nodeGuidProvider;
     private NodeService nodeService;
 
     /**
@@ -58,7 +62,6 @@ public class NodeServiceTest {
     @BeforeClass
     public void init() throws IOException {
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
-        start();
     }
 
     /**
@@ -68,14 +71,18 @@ public class NodeServiceTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
-        stop();
         recursiveDelete(path);
     }
 
-    private void start() {
+    /**
+     * Creates and starts services.
+     */
+    @BeforeMethod
+    public void startServices() {
         Config config = config()
                 .set(NODE_NAME, NAME)
-                .set(NODE_URIS, LOCALHOST);
+                .set(NODE_URIS, LOCALHOST)
+                .set(LOG_MEM_ONLY, "true");
 
         managerModule = new ManagerModule(path.resolve("home"), config);
 
@@ -85,43 +92,27 @@ public class NodeServiceTest {
                                              managerModule.getTaskManager(),
                                              managerModule.getMessageManager()));
 
+        nodeGuidProvider = new NodeGuidProvider(new AttributesDao(managerModule.getStorageManager()));
+
         nodeService = new NodeService(managerModule.getStorageManager(),
-                                      new AttributesDao(managerModule.getStorageManager()),
                                       localRepositoriesPool,
                                       new NodeNameProvider(config),
+                                      nodeGuidProvider,
                                       new PublishUrisProvider(config));
 
         managerModule.start();
-        managerModule.getStorageManager().inTransaction(() -> {
-            localRepositoriesPool.start();
-        });
+        managerModule.getStorageManager().inTransaction(localRepositoriesPool::start);
         nodeService.start();
     }
 
-    private void stop() {
+    /**
+     * Stops services.
+     */
+    @AfterMethod
+    public void stopServices() {
         nodeService.stop();
         localRepositoriesPool.stop();
         managerModule.stop();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void getGuidTest() {
-        assertThat(nodeService.getGuid()).isNotNull();
-    }
-
-    /**
-     * Test.
-     */
-    @Test
-    public void getGuidAfterRestartTest() {
-        Guid expected = nodeService.getGuid();
-        stop();
-        start();
-
-        assertThat(nodeService.getGuid()).isEqualTo(expected);
     }
 
     /**
@@ -141,7 +132,7 @@ public class NodeServiceTest {
     }
 
     private NodeDef expectedDef() {
-        return new NodeDef(NAME, nodeService.getGuid(), singletonList(URI.create(LOCALHOST)));
+        return new NodeDef(NAME, nodeGuidProvider.guid(), singletonList(URI.create(LOCALHOST)));
     }
 
     private NodeInfo expectedInfo() {

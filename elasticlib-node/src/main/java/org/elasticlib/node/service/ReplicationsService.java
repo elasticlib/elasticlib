@@ -16,19 +16,16 @@
 package org.elasticlib.node.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import org.elasticlib.common.exception.SelfReplicationException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
-import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
@@ -129,8 +126,8 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                Guid srcId = localRepositoriesPool.getRepositoryDef(source).getGuid();
-                Guid destId = localRepositoriesPool.getRepositoryDef(destination).getGuid();
+                Guid srcId = localRepositoriesPool.getRepositoryGuid(source);
+                Guid destId = localRepositoriesPool.getRepositoryGuid(destination);
                 if (srcId.equals(destId)) {
                     throw new SelfReplicationException();
                 }
@@ -207,13 +204,9 @@ public class ReplicationsService {
         lock.readLock().lock();
         try {
             return storageManager.inTransaction(() -> {
-                Map<Guid, RepositoryDef> repositoryDefs = localRepositoriesPool.listRepositoryDefs()
-                        .stream()
-                        .collect(toMap(RepositoryDef::getGuid, d -> d));
-
                 return replicationsDao.listReplicationDefs()
                         .stream()
-                        .map(def -> replicationInfo(def, repositoryDefs))
+                        .map(this::replicationInfo)
                         .collect(toList());
             });
         } finally {
@@ -221,20 +214,20 @@ public class ReplicationsService {
         }
     }
 
-    private ReplicationInfo replicationInfo(ReplicationDef replicationDef, Map<Guid, RepositoryDef> repositoryDefs) {
+    private ReplicationInfo replicationInfo(ReplicationDef replicationDef) {
         Guid id = replicationDef.getGuid();
         Guid srcId = replicationDef.getSource();
         Guid destId = replicationDef.getDestination();
         Optional<AgentInfo> agentInfo = replicationAgentsPool.getAgentInfo(id);
         if (agentInfo.isPresent()) {
             return new ReplicationInfo(id,
-                                       repositoryDefs.get(srcId),
-                                       repositoryDefs.get(destId),
+                                       localRepositoriesPool.getRepositoryDef(srcId),
+                                       localRepositoriesPool.getRepositoryDef(destId),
                                        agentInfo.get());
         }
         return new ReplicationInfo(id,
-                                   repositoryDefs.get(srcId),
-                                   repositoryDefs.get(destId));
+                                   localRepositoriesPool.getRepositoryDef(srcId),
+                                   localRepositoriesPool.getRepositoryDef(destId));
     }
 
     private void signalAgents(Guid repositoryGuid) {

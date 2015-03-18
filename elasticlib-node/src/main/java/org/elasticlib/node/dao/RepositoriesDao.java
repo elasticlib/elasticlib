@@ -22,6 +22,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.hash.Guid;
@@ -84,20 +85,6 @@ public class RepositoriesDao {
     }
 
     /**
-     * Loads a RepositoryDef. Fails it if it does not exist.
-     *
-     * @param guid Repository GUID.
-     * @return Corresponding RepositoryDef.
-     */
-    public RepositoryDef getRepositoryDef(Guid guid) {
-        RepositoryDef def = repositoryDef(guid);
-        if (def == null) {
-            throw new UnknownRepositoryException();
-        }
-        return def;
-    }
-
-    /**
      * Loads a RepositoryDef. If key represents a valid encoded GUID, first try to resolve def by GUID. Otherwise
      * returns the first def matching by name with key. Fails if no matching def is found after this second step.
      *
@@ -105,30 +92,47 @@ public class RepositoriesDao {
      * @return Corresponding RepositoryDef.
      */
     public RepositoryDef getRepositoryDef(String key) {
+        return tryGetRepositoryDef(key).orElseThrow(UnknownRepositoryException::new);
+    }
+
+    /**
+     * Loads a RepositoryDef, if it exists. If key represents a valid encoded GUID, first try to resolve def by GUID.
+     * Otherwise returns the first def matching by name with key.
+     *
+     * @param key Repository name or encoded GUID.
+     * @return Corresponding RepositoryDef, if any.
+     */
+    public Optional<RepositoryDef> tryGetRepositoryDef(String key) {
         if (Guid.isValid(key)) {
-            RepositoryDef def = repositoryDef(new Guid(key));
-            if (def != null) {
+            Optional<RepositoryDef> def = tryGetRepositoryDef(new Guid(key));
+            if (def.isPresent()) {
                 return def;
             }
         }
         for (RepositoryDef def : listRepositoryDefs()) {
             if (def.getName().equals(key)) {
-                return def;
+                return Optional.of(def);
             }
         }
-        throw new UnknownRepositoryException();
+        return Optional.empty();
     }
 
-    private RepositoryDef repositoryDef(Guid guid) {
+    /**
+     * Loads a RepositoryDef, if it exists.
+     *
+     * @param guid Repository GUID.
+     * @return Corresponding RepositoryDef, if any.
+     */
+    public Optional<RepositoryDef> tryGetRepositoryDef(Guid guid) {
         DatabaseEntry entry = new DatabaseEntry();
         OperationStatus status = repositoryDefs.get(storageManager.currentTransaction(),
                                                     entry(guid),
                                                     entry,
                                                     LockMode.DEFAULT);
         if (status != OperationStatus.SUCCESS) {
-            return null;
+            return Optional.empty();
         }
-        return asMappable(entry, RepositoryDef.class);
+        return Optional.of(asMappable(entry, RepositoryDef.class));
     }
 
     /**

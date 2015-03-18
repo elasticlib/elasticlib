@@ -36,7 +36,7 @@ public class ReplicationAgentsPool {
     private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
 
     private final StorageManager storageManager;
-    private final LocalRepositoriesPool localRepositoriesPool;
+    private final RepositoriesProvider repositoriesProvider;
     private final Map<Guid, Agent> agents = new HashMap<>();
     private Database curSeqsDb;
 
@@ -44,11 +44,11 @@ public class ReplicationAgentsPool {
      * Constructor.
      *
      * @param storageManager Persistent storage provider.
-     * @param localRepositoriesPool Local repositories pool.
+     * @param repositoriesProvider Repositories provider.
      */
-    public ReplicationAgentsPool(StorageManager storageManager, LocalRepositoriesPool localRepositoriesPool) {
+    public ReplicationAgentsPool(StorageManager storageManager, RepositoriesProvider repositoriesProvider) {
         this.storageManager = storageManager;
-        this.localRepositoriesPool = localRepositoriesPool;
+        this.repositoriesProvider = repositoriesProvider;
     }
 
     /**
@@ -87,8 +87,8 @@ public class ReplicationAgentsPool {
             return;
         }
         startAgent(def.getGuid(),
-                   localRepositoriesPool.getRepository(def.getSource()),
-                   localRepositoriesPool.getRepository(def.getDestination()));
+                   repositoriesProvider.getRepository(def.getSource()),
+                   repositoriesProvider.getRepository(def.getDestination()));
     }
 
     /**
@@ -101,8 +101,8 @@ public class ReplicationAgentsPool {
         if (agents.containsKey(def.getGuid())) {
             return;
         }
-        Optional<Repository> source = localRepositoriesPool.tryGetRepository(def.getSource());
-        Optional<Repository> destination = localRepositoriesPool.tryGetRepository(def.getDestination());
+        Optional<Repository> source = repositoriesProvider.tryGetRepository(def.getSource());
+        Optional<Repository> destination = repositoriesProvider.tryGetRepository(def.getDestination());
         if (!source.isPresent() || !destination.isPresent()) {
             return;
         }

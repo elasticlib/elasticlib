@@ -285,38 +285,6 @@ public class LocalRepositoriesPool {
     }
 
     /**
-     * Resolves GUID of an existing repository. Fails it if it does not exist.
-     *
-     * @param key Repository name or encoded GUID.
-     * @return Corresponding RepositoryDef.
-     */
-    public Guid getRepositoryGuid(String key) {
-        lock.readLock().lock();
-        try {
-            return repositoriesDao.getRepositoryDef(key).getGuid();
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    /**
-     * Provides definition of an existing repository. Fails it if it does not exist.
-     *
-     * @param guid Repository GUID.
-     * @return Corresponding RepositoryDef.
-     */
-    public RepositoryDef getRepositoryDef(Guid guid) {
-        lock.readLock().lock();
-        try {
-            return repositoriesDao.getRepositoryDef(guid);
-
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    /**
      * Provides info about an existing repository.
      *
      * @param key Repository name or encoded GUID.
@@ -355,27 +323,64 @@ public class LocalRepositoriesPool {
         }
     }
 
+    private Repository repositoryOf(RepositoryDef def) {
+        if (!repositories.containsKey(def.getGuid())) {
+            throw new RepositoryClosedException();
+        }
+        return repositories.get(def.getGuid());
+    }
+
     /**
-     * Provides a repository.
+     * Resolves GUID of an existing repository, if it exists.
      *
-     * @param guid Repository GUID.
-     * @return Corresponding repository.
+     * @param key Repository name or encoded GUID.
+     * @return Corresponding RepositoryDef, if any.
      */
-    public Repository getRepository(Guid guid) {
+    public Optional<Guid> tryGetRepositoryGuid(String key) {
         lock.readLock().lock();
         try {
-            return repositoryOf(repositoriesDao.getRepositoryDef(guid));
+            return repositoriesDao.tryGetRepositoryDef(key)
+                    .map(RepositoryDef::getGuid);
 
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private Repository repositoryOf(RepositoryDef def) {
-        if (!repositories.containsKey(def.getGuid())) {
-            throw new RepositoryClosedException();
+    /**
+     * Provides definition of an existing repository, if it exists.
+     *
+     * @param guid Repository GUID.
+     * @return Corresponding RepositoryDef, if any.
+     */
+    public Optional<RepositoryDef> tryGetRepositoryDef(Guid guid) {
+        lock.readLock().lock();
+        try {
+            return repositoriesDao.tryGetRepositoryDef(guid);
+
+        } finally {
+            lock.readLock().unlock();
         }
-        return repositories.get(def.getGuid());
+    }
+
+    /**
+     * Provides a repository, if it exists. Fails if it exists but is closed.
+     *
+     * @param guid Repository GUID.
+     * @return Corresponding repository, if any.
+     */
+    public Optional<Repository> tryGetRepositoryIfOpen(Guid guid) {
+        lock.readLock().lock();
+        try {
+            Optional<RepositoryDef> def = repositoriesDao.tryGetRepositoryDef(guid);
+            if (!def.isPresent()) {
+                return Optional.empty();
+            }
+            return Optional.of(repositoryOf(def.get()));
+
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**

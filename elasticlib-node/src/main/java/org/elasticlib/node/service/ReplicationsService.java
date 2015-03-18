@@ -48,7 +48,7 @@ public class ReplicationsService {
     private final StorageManager storageManager;
     private final MessageManager messageManager;
     private final ReplicationsDao replicationsDao;
-    private final LocalRepositoriesPool localRepositoriesPool;
+    private final RepositoriesProvider repositoriesProvider;
     private final ReplicationAgentsPool replicationAgentsPool;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -58,18 +58,18 @@ public class ReplicationsService {
      * @param storageManager Persistent storage provider.
      * @param messageManager Messaging infrastructure manager.
      * @param replicationsDao Replications definitions DAO.
-     * @param localRepositoriesPool Local repositories pool.
+     * @param repositoriesProvider Repositories provider.
      * @param replicationAgentsPool Replication agents pool.
      */
     public ReplicationsService(StorageManager storageManager,
                                MessageManager messageManager,
                                ReplicationsDao replicationsDao,
-                               LocalRepositoriesPool localRepositoriesPool,
+                               RepositoriesProvider repositoriesProvider,
                                ReplicationAgentsPool replicationAgentsPool) {
         this.storageManager = storageManager;
         this.messageManager = messageManager;
         this.replicationsDao = replicationsDao;
-        this.localRepositoriesPool = localRepositoriesPool;
+        this.repositoriesProvider = repositoriesProvider;
         this.replicationAgentsPool = replicationAgentsPool;
     }
 
@@ -126,8 +126,8 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                Guid srcId = localRepositoriesPool.getRepositoryGuid(source);
-                Guid destId = localRepositoriesPool.getRepositoryGuid(destination);
+                Guid srcId = repositoriesProvider.getRepositoryGuid(source);
+                Guid destId = repositoriesProvider.getRepositoryGuid(destination);
                 if (srcId.equals(destId)) {
                     throw new SelfReplicationException();
                 }
@@ -221,13 +221,13 @@ public class ReplicationsService {
         Optional<AgentInfo> agentInfo = replicationAgentsPool.getAgentInfo(id);
         if (agentInfo.isPresent()) {
             return new ReplicationInfo(id,
-                                       localRepositoriesPool.getRepositoryDef(srcId),
-                                       localRepositoriesPool.getRepositoryDef(destId),
+                                       repositoriesProvider.getRepositoryDef(srcId),
+                                       repositoriesProvider.getRepositoryDef(destId),
                                        agentInfo.get());
         }
         return new ReplicationInfo(id,
-                                   localRepositoriesPool.getRepositoryDef(srcId),
-                                   localRepositoriesPool.getRepositoryDef(destId));
+                                   repositoriesProvider.getRepositoryDef(srcId),
+                                   repositoriesProvider.getRepositoryDef(destId));
     }
 
     private void signalAgents(Guid repositoryGuid) {

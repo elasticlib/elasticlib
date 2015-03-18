@@ -84,9 +84,13 @@ public class ReplicationsServiceTest {
                                                                         managerModule.getMessageManager());
 
         LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
+        RemoteRepositoriesPool remoteRepositoriesPool = new RemoteRepositoriesPool();
+
+        RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
+                                                                             remoteRepositoriesPool);
 
         ReplicationAgentsPool replicationAgentsPool = new ReplicationAgentsPool(managerModule.getStorageManager(),
-                                                                                localRepositoriesPool);
+                                                                                repositoriesProvider);
 
         repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
@@ -95,7 +99,7 @@ public class ReplicationsServiceTest {
         replicationsService = new ReplicationsService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
                                                       replicationsDao,
-                                                      localRepositoriesPool,
+                                                      repositoriesProvider,
                                                       replicationAgentsPool);
         managerModule.start();
         repositoriesService.start();

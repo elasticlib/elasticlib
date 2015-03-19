@@ -19,7 +19,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
@@ -136,12 +135,7 @@ public class RepositoriesDao {
      * @return All stored repository definitions.
      */
     public List<RepositoryDef> listRepositoryDefs() {
-        List<RepositoryDef> list = new ArrayList<>();
-        stream().each(def -> {
-            list.add(def);
-        });
-        list.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return list;
+        return stream().orderBy(RepositoryDef::getName).list();
     }
 
     private DatabaseStream<RepositoryDef> stream() {

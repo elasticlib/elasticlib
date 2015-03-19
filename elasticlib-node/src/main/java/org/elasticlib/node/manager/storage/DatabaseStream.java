@@ -21,11 +21,13 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import org.elasticlib.common.mappable.Mappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
@@ -42,6 +44,7 @@ public class DatabaseStream<T extends Mappable> {
     private final StorageManager storageManager;
     private final Database database;
     private final Class<T> clazz;
+    private Comparator<T> comparator;
 
     /**
      * Constructor.
@@ -67,6 +70,18 @@ public class DatabaseStream<T extends Mappable> {
             }
         }
         return false;
+    }
+
+    /**
+     * Builds a comparator for listing operations using the supplied key selector.
+     *
+     * @param <K> Keys type.
+     * @param keySelector Extracts keys used to compare values.
+     * @return This stream.
+     */
+    public <K extends Comparable<K>> DatabaseStream<T> orderBy(Function<T, K> keySelector) {
+        comparator = (x, y) -> keySelector.apply(x).compareTo(keySelector.apply(y));
+        return this;
     }
 
     /**
@@ -131,5 +146,33 @@ public class DatabaseStream<T extends Mappable> {
             return false;
         });
         return list.stream().findFirst();
+    }
+
+    /**
+     * Lists all values in the stream that match supplied predicate.
+     *
+     * @param predicate The predicate to be applied.
+     * @return All matching values.
+     */
+    public List<T> list(Predicate<T> predicate) {
+        List<T> list = new ArrayList<>();
+        each(value -> {
+            if (predicate.test(value)) {
+                list.add(value);
+            }
+        });
+        if (comparator != null) {
+            list.sort(comparator);
+        }
+        return list;
+    }
+
+    /**
+     * Lists all values in the stream.
+     *
+     * @return All values.
+     */
+    public List<T> list() {
+        return list(x -> true);
     }
 }

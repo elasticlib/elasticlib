@@ -19,10 +19,8 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import org.elasticlib.common.exception.ReplicationAlreadyExistsException;
 import org.elasticlib.common.exception.UnknownReplicationException;
 import org.elasticlib.common.hash.Guid;
@@ -101,7 +99,7 @@ public class ReplicationsDao {
      * @return All stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs() {
-        return list(x -> true);
+        return stream().list();
     }
 
     /**
@@ -111,7 +109,7 @@ public class ReplicationsDao {
      * @return All matching stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefsFrom(Guid repositoryGuid) {
-        return list(def -> def.getSource().equals(repositoryGuid));
+        return stream().list(def -> def.getSource().equals(repositoryGuid));
     }
 
     /**
@@ -121,17 +119,8 @@ public class ReplicationsDao {
      * @return All matching stored replication definitions.
      */
     public List<ReplicationDef> listReplicationDefs(Guid repositoryGuid) {
-        return list(def -> def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid));
-    }
-
-    private List<ReplicationDef> list(Predicate<ReplicationDef> predicate) {
-        List<ReplicationDef> list = new ArrayList<>();
-        stream().each(def -> {
-            if (predicate.test(def)) {
-                list.add(def);
-            }
-        });
-        return list;
+        return stream().list(def -> def.getSource().equals(repositoryGuid) ||
+                def.getDestination().equals(repositoryGuid));
     }
 
     /**

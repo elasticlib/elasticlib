@@ -19,7 +19,6 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import org.elasticlib.common.exception.NodeAlreadyTrackedException;
@@ -131,14 +130,7 @@ public class RemotesDao {
      * @return Matching stored node infos.
      */
     public List<RemoteInfo> listRemoteInfos(Predicate<RemoteInfo> predicate) {
-        List<RemoteInfo> list = new ArrayList<>();
-        stream().each(info -> {
-            if (predicate.test(info)) {
-                list.add(info);
-            }
-        });
-        list.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return list;
+        return stream().orderBy(RemoteInfo::getName).list(predicate);
     }
 
     private DatabaseStream<RemoteInfo> stream() {

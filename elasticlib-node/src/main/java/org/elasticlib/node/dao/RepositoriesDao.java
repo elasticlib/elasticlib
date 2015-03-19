@@ -15,7 +15,6 @@
  */
 package org.elasticlib.node.dao;
 
-import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
@@ -29,6 +28,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
+import org.elasticlib.node.manager.storage.DatabaseStream;
 import org.elasticlib.node.manager.storage.StorageManager;
 
 /**
@@ -109,12 +109,7 @@ public class RepositoriesDao {
                 return def;
             }
         }
-        for (RepositoryDef def : listRepositoryDefs()) {
-            if (def.getName().equals(key)) {
-                return Optional.of(def);
-            }
-        }
-        return Optional.empty();
+        return stream().first(def -> def.getName().equals(key));
     }
 
     /**
@@ -141,15 +136,15 @@ public class RepositoriesDao {
      * @return All stored repository definitions.
      */
     public List<RepositoryDef> listRepositoryDefs() {
-        DatabaseEntry key = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
         List<RepositoryDef> list = new ArrayList<>();
-        try (Cursor cursor = storageManager.openCursor(repositoryDefs)) {
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                list.add(asMappable(data, RepositoryDef.class));
-            }
-        }
+        stream().each(def -> {
+            list.add(def);
+        });
         list.sort((a, b) -> a.getName().compareTo(b.getName()));
         return list;
+    }
+
+    private DatabaseStream<RepositoryDef> stream() {
+        return storageManager.stream(repositoryDefs, RepositoryDef.class);
     }
 }

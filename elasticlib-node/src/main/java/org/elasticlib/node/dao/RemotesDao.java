@@ -15,7 +15,6 @@
  */
 package org.elasticlib.node.dao;
 
-import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
@@ -27,8 +26,8 @@ import org.elasticlib.common.exception.NodeAlreadyTrackedException;
 import org.elasticlib.common.exception.UnknownNodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
+import org.elasticlib.node.manager.storage.DatabaseStream;
 import org.elasticlib.node.manager.storage.StorageManager;
 
 /**
@@ -102,34 +101,27 @@ public class RemotesDao {
                 return;
             }
         }
-        DatabaseEntry curKey = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
-            while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                RemoteInfo info = asMappable(data, RemoteInfo.class);
-                if (info.getName().equals(key)) {
-                    cursor.delete();
-                    return;
-                }
+        boolean found = stream().any((cursor, info) -> {
+            if (info.getName().equals(key)) {
+                cursor.delete();
+                return true;
             }
+            return false;
+        });
+        if (!found) {
+            throw new UnknownNodeException();
         }
-        throw new UnknownNodeException();
     }
 
     /**
      * Deletes info of all unreachable nodes.
      */
     public void deleteUnreachableRemoteInfos() {
-        DatabaseEntry curKey = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
-            while (cursor.getNext(curKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                RemoteInfo info = asMappable(data, RemoteInfo.class);
-                if (!info.isReachable()) {
-                    cursor.delete();
-                }
+        stream().each((cursor, info) -> {
+            if (!info.isReachable()) {
+                cursor.delete();
             }
-        }
+        });
     }
 
     /**
@@ -140,17 +132,16 @@ public class RemotesDao {
      */
     public List<RemoteInfo> listRemoteInfos(Predicate<RemoteInfo> predicate) {
         List<RemoteInfo> list = new ArrayList<>();
-        DatabaseEntry key = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(remoteInfos)) {
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                RemoteInfo info = asMappable(data, RemoteInfo.class);
-                if (predicate.test(info)) {
-                    list.add(asMappable(data, RemoteInfo.class));
-                }
+        stream().each(info -> {
+            if (predicate.test(info)) {
+                list.add(info);
             }
-        }
+        });
         list.sort((a, b) -> a.getName().compareTo(b.getName()));
         return list;
+    }
+
+    private DatabaseStream<RemoteInfo> stream() {
+        return storageManager.stream(remoteInfos, RemoteInfo.class);
     }
 }

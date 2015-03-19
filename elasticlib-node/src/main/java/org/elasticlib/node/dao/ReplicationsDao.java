@@ -15,7 +15,6 @@
  */
 package org.elasticlib.node.dao;
 
-import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
@@ -30,6 +29,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.ReplicationDef;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
+import org.elasticlib.node.manager.storage.DatabaseStream;
 import org.elasticlib.node.manager.storage.StorageManager;
 
 /**
@@ -58,7 +58,7 @@ public class ReplicationsDao {
      * @param def A ReplicationDef.
      */
     public void createReplicationDef(ReplicationDef def) {
-        if (any(x -> x.getSource().equals(def.getSource()) &&
+        if (stream().any(x -> x.getSource().equals(def.getSource()) &&
                 x.getDestination().equals(def.getDestination()))) {
             throw new ReplicationAlreadyExistsException();
         }
@@ -124,6 +124,16 @@ public class ReplicationsDao {
         return list(def -> def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid));
     }
 
+    private List<ReplicationDef> list(Predicate<ReplicationDef> predicate) {
+        List<ReplicationDef> list = new ArrayList<>();
+        stream().each(def -> {
+            if (predicate.test(def)) {
+                list.add(def);
+            }
+        });
+        return list;
+    }
+
     /**
      * Deletes all replicationDef from/to repository whose GUID is supplied.
      *
@@ -131,45 +141,15 @@ public class ReplicationsDao {
      * @param cleanup Cleanup to be performed for each replicationDef deletion.
      */
     public void deleteReplicationDefs(Guid repositoryGuid, Consumer<ReplicationDef> cleanup) {
-        DatabaseEntry key = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
-            while (cursor.getNext(key, data, LockMode.RMW) == OperationStatus.SUCCESS) {
-                ReplicationDef def = asMappable(data, ReplicationDef.class);
-                if (def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid)) {
-                    cursor.delete();
-                    cleanup.accept(def);
-                }
+        stream().each((cursor, def) -> {
+            if (def.getSource().equals(repositoryGuid) || def.getDestination().equals(repositoryGuid)) {
+                cursor.delete();
+                cleanup.accept(def);
             }
-        }
+        });
     }
 
-    private boolean any(Predicate<ReplicationDef> predicate) {
-        DatabaseEntry key = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                ReplicationDef def = asMappable(data, ReplicationDef.class);
-                if (predicate.test(def)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    private List<ReplicationDef> list(Predicate<ReplicationDef> predicate) {
-        DatabaseEntry key = new DatabaseEntry();
-        DatabaseEntry data = new DatabaseEntry();
-        List<ReplicationDef> list = new ArrayList<>();
-        try (Cursor cursor = storageManager.openCursor(replicationDefs)) {
-            while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                ReplicationDef def = asMappable(data, ReplicationDef.class);
-                if (predicate.test(def)) {
-                    list.add(def);
-                }
-            }
-            return list;
-        }
+    private DatabaseStream<ReplicationDef> stream() {
+        return storageManager.stream(replicationDefs, ReplicationDef.class);
     }
 }

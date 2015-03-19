@@ -36,6 +36,7 @@ import org.elasticlib.common.config.Config;
 import static org.elasticlib.common.config.ConfigUtil.duration;
 import static org.elasticlib.common.config.ConfigUtil.unit;
 import org.elasticlib.common.exception.RepositoryClosedException;
+import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.value.Value;
 import org.elasticlib.node.config.NodeConfig;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
@@ -308,6 +309,18 @@ public class StorageManager {
         Cursor cursor = database.openCursor(ctx.getTransaction(), CursorConfig.READ_COMMITTED);
         ctx.add(cursor);
         return cursor;
+    }
+
+    /**
+     * Provides a stream on the supplied database.
+     *
+     * @param <T> Database values type.
+     * @param database A database.
+     * @param clazz Database values class.
+     * @return A stream on this database.
+     */
+    public <T extends Mappable> DatabaseStream<T> stream(Database database, Class<T> clazz) {
+        return new DatabaseStream<>(this, database, clazz);
     }
 
     private void ensureStarted() {

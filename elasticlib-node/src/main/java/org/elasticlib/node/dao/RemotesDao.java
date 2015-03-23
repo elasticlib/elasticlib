@@ -20,6 +20,7 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import org.elasticlib.common.exception.NodeAlreadyTrackedException;
 import org.elasticlib.common.exception.UnknownNodeException;
@@ -131,6 +132,16 @@ public class RemotesDao {
      */
     public List<RemoteInfo> listRemoteInfos(Predicate<RemoteInfo> predicate) {
         return stream().orderBy(RemoteInfo::getName).list(predicate);
+    }
+
+    /**
+     * Loads a RemoteInfo that matches supplied predicate, if any.
+     *
+     * @param predicate Filtering predicate.
+     * @return Matching remote node info, if any.
+     */
+    public Optional<RemoteInfo> tryGetRemoteInfo(Predicate<RemoteInfo> predicate) {
+        return stream().first(predicate);
     }
 
     private DatabaseStream<RemoteInfo> stream() {

@@ -40,6 +40,7 @@ import static org.elasticlib.node.TestUtil.LOREM_IPSUM;
 import static org.elasticlib.node.TestUtil.async;
 import static org.elasticlib.node.TestUtil.config;
 import static org.elasticlib.node.TestUtil.recursiveDelete;
+import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
@@ -59,6 +60,7 @@ public class ReplicationsServiceTest {
 
     private Path path;
     private ManagerModule managerModule;
+    private RemoteRepositoriesPool remoteRepositoriesPool;
     private RepositoriesService repositoriesService;
     private ReplicationsService replicationsService;
     private volatile TestContent content;
@@ -78,13 +80,14 @@ public class ReplicationsServiceTest {
 
         RepositoriesDao repositoriesDao = new RepositoriesDao(managerModule.getStorageManager());
         ReplicationsDao replicationsDao = new ReplicationsDao(managerModule.getStorageManager());
+        RemotesDao remotesDao = new RemotesDao(managerModule.getStorageManager());
 
         LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config,
                                                                         managerModule.getTaskManager(),
                                                                         managerModule.getMessageManager());
 
         LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
-        RemoteRepositoriesPool remoteRepositoriesPool = new RemoteRepositoriesPool();
+        remoteRepositoriesPool = new RemoteRepositoriesPool(remotesDao);
 
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
                                                                              remoteRepositoriesPool);
@@ -102,6 +105,7 @@ public class ReplicationsServiceTest {
                                                       repositoriesProvider,
                                                       replicationAgentsPool);
         managerModule.start();
+        remoteRepositoriesPool.start();
         repositoriesService.start();
         replicationsService.start();
 
@@ -120,6 +124,7 @@ public class ReplicationsServiceTest {
     public void cleanUp() throws IOException {
         replicationsService.stop();
         repositoriesService.stop();
+        remoteRepositoriesPool.stop();
         managerModule.stop();
         recursiveDelete(path);
     }

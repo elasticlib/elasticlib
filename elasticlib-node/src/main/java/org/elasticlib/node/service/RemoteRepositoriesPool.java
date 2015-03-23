@@ -15,16 +15,58 @@
  */
 package org.elasticlib.node.service;
 
+import com.google.common.base.Splitter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
+import org.elasticlib.common.client.Client;
+import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
+import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.hash.Guid;
+import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.RepositoryDef;
+import org.elasticlib.common.model.RepositoryInfo;
+import org.elasticlib.node.dao.RemotesDao;
+import org.elasticlib.node.repository.RemoteRepository;
 import org.elasticlib.node.repository.Repository;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Manages remote repositories.
  */
 public class RemoteRepositoriesPool {
+
+    private static final String SEPARATOR = ".";
+
+    private final RemotesDao remotesDao;
+    private final Map<Guid, Repository> repositories = new HashMap<>();
+
+    /**
+     * Constructor.
+     *
+     * @param remotesDao Remotes nodes DAO.
+     */
+    public RemoteRepositoriesPool(RemotesDao remotesDao) {
+        this.remotesDao = remotesDao;
+    }
+
+    /**
+     * Starts this component.
+     */
+    public void start() {
+        // Nothing to do.
+    }
+
+    /**
+     * Closes all managed repositories, releasing underlying resources.
+     */
+    public synchronized void stop() {
+        repositories.values().forEach(Repository::close);
+        repositories.clear();
+    }
 
     /**
      * Resolves GUID of a remote repository. Fails it if it is unknown.
@@ -33,8 +75,29 @@ public class RemoteRepositoriesPool {
      * @return Corresponding Repository GUID.
      */
     public Guid getRepositoryGuid(String key) {
-        // TODO this is a stub !
-        throw new UnknownRepositoryException();
+        Optional<RemoteInfo> remoteInfo = remotesDao.tryGetRemoteInfo(x -> repositoryGuid(x, key).isPresent());
+        if (!remoteInfo.isPresent()) {
+            throw new UnknownRepositoryException();
+        }
+        return repositoryGuid(remoteInfo.get(), key).get();
+    }
+
+    private static Optional<Guid> repositoryGuid(RemoteInfo remoteInfo, String key) {
+        if (!key.contains(SEPARATOR)) {
+            return repositoryDefs(remoteInfo)
+                    .filter(x -> matches(x.getGuid(), x.getName(), key))
+                    .map(RepositoryDef::getGuid)
+                    .findFirst();
+        }
+        List<String> parts = Splitter.on(SEPARATOR).splitToList(key);
+        if (parts.size() != 2 || !matches(remoteInfo.getGuid(), remoteInfo.getName(), parts.get(0))) {
+            return Optional.empty();
+        }
+        return repositoryGuid(remoteInfo, parts.get(1));
+    }
+
+    private static boolean matches(Guid guid, String name, String key) {
+        return key.equals(name) || (Guid.isValid(key) && new Guid(key).equals(guid));
     }
 
     /**
@@ -44,8 +107,23 @@ public class RemoteRepositoriesPool {
      * @return Corresponding RepositoryDef, if any.
      */
     public Optional<RepositoryDef> tryGetRepositoryDef(Guid guid) {
-        // TODO this is a stub !
-        return Optional.empty();
+        Optional<RemoteInfo> remoteInfo = remotesDao.tryGetRemoteInfo(x -> hasRepository(x, guid));
+        if (!remoteInfo.isPresent()) {
+            return Optional.empty();
+        }
+        return repositoryDefs(remoteInfo.get())
+                .filter(x -> x.getGuid().equals(guid))
+                .findFirst();
+    }
+
+    private static boolean hasRepository(RemoteInfo remoteInfo, Guid guid) {
+        return repositoryDefs(remoteInfo).anyMatch(x -> x.getGuid().equals(guid));
+    }
+
+    private static Stream<RepositoryDef> repositoryDefs(RemoteInfo remoteInfo) {
+        return remoteInfo.listRepositoryInfos()
+                .stream()
+                .map(RepositoryInfo::getDef);
     }
 
     /**
@@ -55,8 +133,17 @@ public class RemoteRepositoriesPool {
      * @return Corresponding repository.
      */
     public Repository getRepository(Guid guid) {
-        // TODO this is a stub !
-        throw new UnknownRepositoryException();
+        Optional<RemoteInfo> remoteInfo = remotesDao.tryGetRemoteInfo(x -> hasRepository(x, guid));
+        if (!remoteInfo.isPresent()) {
+            throw new UnknownRepositoryException();
+        }
+        if (!remoteInfo.get().isReachable()) {
+            throw new UnreachableNodeException();
+        }
+        if (!isRepositoryOpen(remoteInfo.get(), guid)) {
+            throw new RepositoryClosedException();
+        }
+        return repository(remoteInfo.get(), guid);
     }
 
     /**
@@ -66,7 +153,34 @@ public class RemoteRepositoriesPool {
      * @return Corresponding repository, if any.
      */
     public Optional<Repository> tryGetRepository(Guid guid) {
-        // TODO this is a stub !
-        return Optional.empty();
+        Optional<RemoteInfo> remoteInfo = remotesDao.tryGetRemoteInfo(x -> hasRepository(x, guid));
+        if (!remoteInfo.isPresent()) {
+            return Optional.empty();
+        }
+        if (!remoteInfo.get().isReachable()) {
+            return Optional.empty();
+        }
+        if (!isRepositoryOpen(remoteInfo.get(), guid)) {
+            return Optional.empty();
+        }
+        return Optional.of(repository(remoteInfo.get(), guid));
+    }
+
+    private static boolean isRepositoryOpen(RemoteInfo remoteInfo, Guid guid) {
+        return remoteInfo.listRepositoryInfos()
+                .stream()
+                .filter(x -> x.getDef().getGuid().equals(guid))
+                .findFirst()
+                .get()
+                .isOpen();
+    }
+
+    private synchronized Repository repository(RemoteInfo remoteInfo, Guid guid) {
+        if (!repositories.containsKey(guid)) {
+            Client client = new Client(remoteInfo.getTransportUri(),
+                                       new ClientLoggingHandler(getLogger(RemoteRepository.class)));
+            repositories.put(guid, new RemoteRepository(client, guid));
+        }
+        return repositories.get(guid);
     }
 }

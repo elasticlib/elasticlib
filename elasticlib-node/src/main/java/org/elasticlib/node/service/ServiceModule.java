@@ -30,6 +30,7 @@ import org.elasticlib.node.manager.task.TaskManager;
  */
 public class ServiceModule {
 
+    private final RemoteRepositoriesPool remoteRepositoriesPool;
     private final RepositoriesService repositoriesService;
     private final ReplicationsService replicationsService;
     private final NodeService nodeService;
@@ -58,7 +59,7 @@ public class ServiceModule {
         LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao,
                                                                                 localRepositoriesFactory);
 
-        RemoteRepositoriesPool remoteRepositoriesPool = new RemoteRepositoriesPool();
+        remoteRepositoriesPool = new RemoteRepositoriesPool(remotesDao);
 
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
                                                                              remoteRepositoriesPool);
@@ -99,6 +100,7 @@ public class ServiceModule {
      * Starts the module.
      */
     public void start() {
+        remoteRepositoriesPool.start();
         repositoriesService.start();
         replicationsService.start();
         nodeService.start();
@@ -113,6 +115,7 @@ public class ServiceModule {
         nodeService.stop();
         replicationsService.stop();
         repositoriesService.stop();
+        remoteRepositoriesPool.stop();
     }
 
     /**

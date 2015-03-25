@@ -17,6 +17,10 @@ package org.elasticlib.node.service;
 
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
+import org.elasticlib.node.components.LocalRepositoriesPool;
+import org.elasticlib.node.components.NodeGuidProvider;
+import org.elasticlib.node.components.NodeNameProvider;
+import org.elasticlib.node.components.PublishUrisProvider;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,20 +58,6 @@ public class NodeService {
         this.nodeNameProvider = nodeNameProvider;
         this.nodeGuidProvider = nodeGuidProvider;
         this.publishUrisProvider = publishUrisProvider;
-    }
-
-    /**
-     * Starts this service.
-     */
-    public void start() {
-        storageManager.inTransaction(nodeGuidProvider::start);
-    }
-
-    /**
-     * Properly stops this service.
-     */
-    public void stop() {
-        nodeGuidProvider.stop();
     }
 
     /**

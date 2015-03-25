@@ -27,6 +27,11 @@ import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
 import static org.elasticlib.node.TestUtil.config;
 import static org.elasticlib.node.TestUtil.recursiveDelete;
+import org.elasticlib.node.components.LocalRepositoriesFactory;
+import org.elasticlib.node.components.LocalRepositoriesPool;
+import org.elasticlib.node.components.NodeGuidProvider;
+import org.elasticlib.node.components.NodeNameProvider;
+import org.elasticlib.node.components.PublishUrisProvider;
 import static org.elasticlib.node.config.NodeConfig.NODE_NAME;
 import static org.elasticlib.node.config.NodeConfig.NODE_URIS;
 import org.elasticlib.node.dao.AttributesDao;
@@ -102,7 +107,7 @@ public class NodeServiceTest {
 
         managerModule.start();
         managerModule.getStorageManager().inTransaction(localRepositoriesPool::start);
-        nodeService.start();
+        managerModule.getStorageManager().inTransaction(nodeGuidProvider::start);
     }
 
     /**
@@ -110,7 +115,7 @@ public class NodeServiceTest {
      */
     @AfterMethod
     public void stopServices() {
-        nodeService.stop();
+        nodeGuidProvider.stop();
         localRepositoriesPool.stop();
         managerModule.stop();
     }

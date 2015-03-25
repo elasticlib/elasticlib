@@ -36,6 +36,8 @@ import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.common.model.RemoteInfo;
 import static org.elasticlib.node.TestUtil.config;
 import static org.elasticlib.node.TestUtil.recursiveDelete;
+import org.elasticlib.node.components.NodeGuidProvider;
+import org.elasticlib.node.components.NodePingHandler;
 import static org.elasticlib.node.config.NodeConfig.REMOTES_CLEANUP_ENABLED;
 import static org.elasticlib.node.config.NodeConfig.REMOTES_PING_ENABLED;
 import org.elasticlib.node.dao.RemotesDao;

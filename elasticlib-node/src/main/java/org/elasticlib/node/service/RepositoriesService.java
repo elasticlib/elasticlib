@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.List;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
+import org.elasticlib.node.components.LocalRepositoriesPool;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.RepositoryClosed;
 import org.elasticlib.node.manager.message.RepositoryOpened;
@@ -53,22 +54,6 @@ public class RepositoriesService {
         this.storageManager = storageManager;
         this.messageManager = messageManager;
         this.localRepositoriesPool = localRepositoriesPool;
-    }
-
-    /**
-     * Opens all repositories..
-     */
-    public void start() {
-        storageManager.inTransaction(() -> {
-            localRepositoriesPool.start();
-        });
-    }
-
-    /**
-     * Closes all managed repositories, releasing underlying resources.
-     */
-    public void stop() {
-        localRepositoriesPool.stop();
     }
 
     /**

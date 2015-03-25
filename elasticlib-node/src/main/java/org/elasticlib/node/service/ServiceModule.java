@@ -16,21 +16,15 @@
 package org.elasticlib.node.service;
 
 import org.elasticlib.common.config.Config;
-import org.elasticlib.node.dao.AttributesDao;
-import org.elasticlib.node.dao.RemotesDao;
-import org.elasticlib.node.dao.ReplicationsDao;
-import org.elasticlib.node.dao.RepositoriesDao;
+import org.elasticlib.node.components.ComponentsModule;
+import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.manager.ManagerModule;
-import org.elasticlib.node.manager.message.MessageManager;
-import org.elasticlib.node.manager.storage.StorageManager;
-import org.elasticlib.node.manager.task.TaskManager;
 
 /**
  * Manages services life-cycle.
  */
 public class ServiceModule {
 
-    private final RemoteRepositoriesPool remoteRepositoriesPool;
     private final RepositoriesService repositoriesService;
     private final ReplicationsService replicationsService;
     private final NodeService nodeService;
@@ -41,69 +35,43 @@ public class ServiceModule {
      *
      * @param config Configuration holder.
      * @param managerModule Manager module.
+     * @param daoModule DAO module.
+     * @param componentsModule Components module.
      */
-    public ServiceModule(Config config, ManagerModule managerModule) {
-        TaskManager taskManager = managerModule.getTaskManager();
-        StorageManager storageManager = managerModule.getStorageManager();
-        MessageManager messageManager = managerModule.getMessageManager();
+    public ServiceModule(Config config,
+                         ManagerModule managerModule,
+                         DaoModule daoModule,
+                         ComponentsModule componentsModule) {
 
-        AttributesDao attributesDao = new AttributesDao(storageManager);
-        RemotesDao remotesDao = new RemotesDao(storageManager);
-        RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
-        ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
+        repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
+                                                      managerModule.getMessageManager(),
+                                                      componentsModule.getLocalRepositoriesPool());
 
-        LocalRepositoriesFactory localRepositoriesFactory = new LocalRepositoriesFactory(config,
-                                                                                         taskManager,
-                                                                                         messageManager);
+        replicationsService = new ReplicationsService(managerModule.getStorageManager(),
+                                                      managerModule.getMessageManager(),
+                                                      daoModule.getReplicationsDao(),
+                                                      componentsModule.getRepositoriesProvider(),
+                                                      componentsModule.getReplicationAgentsPool());
 
-        LocalRepositoriesPool localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao,
-                                                                                localRepositoriesFactory);
-
-        remoteRepositoriesPool = new RemoteRepositoriesPool(remotesDao);
-
-        RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
-                                                                             remoteRepositoriesPool);
-
-        ReplicationAgentsPool replicationAgentsPool = new ReplicationAgentsPool(managerModule.getStorageManager(),
-                                                                                repositoriesProvider);
-
-        NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
-        NodeGuidProvider nodeGuidProvider = new NodeGuidProvider(attributesDao);
-        PublishUrisProvider publishUrisProvider = new PublishUrisProvider(config);
-        NodePingHandler nodePingHandler = new NodePingHandler();
-
-        repositoriesService = new RepositoriesService(storageManager,
-                                                      messageManager,
-                                                      localRepositoriesPool);
-
-        replicationsService = new ReplicationsService(storageManager,
-                                                      messageManager,
-                                                      replicationsDao,
-                                                      repositoriesProvider,
-                                                      replicationAgentsPool);
-
-        nodeService = new NodeService(storageManager,
-                                      localRepositoriesPool,
-                                      nodeNameProvider,
-                                      nodeGuidProvider,
-                                      publishUrisProvider);
+        nodeService = new NodeService(managerModule.getStorageManager(),
+                                      componentsModule.getLocalRepositoriesPool(),
+                                      componentsModule.getNodeNameProvider(),
+                                      componentsModule.getNodeGuidProvider(),
+                                      componentsModule.getPublishUrisProvider());
 
         remotesService = new RemotesService(config,
-                                            taskManager,
-                                            storageManager,
-                                            remotesDao,
-                                            nodeGuidProvider,
-                                            nodePingHandler);
+                                            managerModule.getTaskManager(),
+                                            managerModule.getStorageManager(),
+                                            daoModule.getRemotesDao(),
+                                            componentsModule.getNodeGuidProvider(),
+                                            componentsModule.getNodePingHandler());
     }
 
     /**
      * Starts the module.
      */
     public void start() {
-        remoteRepositoriesPool.start();
-        repositoriesService.start();
         replicationsService.start();
-        nodeService.start();
         remotesService.start();
     }
 
@@ -112,10 +80,7 @@ public class ServiceModule {
      */
     public void stop() {
         remotesService.stop();
-        nodeService.stop();
         replicationsService.stop();
-        repositoriesService.stop();
-        remoteRepositoriesPool.stop();
     }
 
     /**

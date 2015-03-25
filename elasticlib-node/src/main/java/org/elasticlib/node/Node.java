@@ -21,7 +21,9 @@ import java.net.URI;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
 import org.elasticlib.common.config.Config;
+import org.elasticlib.node.components.ComponentsModule;
 import org.elasticlib.node.config.NodeConfig;
+import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.discovery.DiscoveryModule;
 import org.elasticlib.node.manager.ManagerModule;
 import org.elasticlib.node.providers.LoggingFilter;
@@ -47,6 +49,8 @@ public class Node {
     private final Path home;
     private final Config config;
     private final ManagerModule managerModule;
+    private final DaoModule daoModule;
+    private final ComponentsModule componentsModule;
     private final ServiceModule serviceModule;
     private final DiscoveryModule discoveryModule;
     private final HttpServer httpServer;
@@ -62,7 +66,9 @@ public class Node {
         config = NodeConfig.load(home.resolve("config.yml"));
 
         managerModule = new ManagerModule(home, config);
-        serviceModule = new ServiceModule(config, managerModule);
+        daoModule = new DaoModule(managerModule);
+        componentsModule = new ComponentsModule(config, managerModule, daoModule);
+        serviceModule = new ServiceModule(config, managerModule, daoModule, componentsModule);
         discoveryModule = new DiscoveryModule(config, managerModule, serviceModule);
 
         ResourceConfig resourceConfig = new ResourceConfig()
@@ -103,6 +109,7 @@ public class Node {
         LOG.info(startingMessage());
         try {
             managerModule.start();
+            componentsModule.start();
             serviceModule.start();
             discoveryModule.start();
             httpServer.start();
@@ -143,6 +150,7 @@ public class Node {
         httpServer.shutdown();
         discoveryModule.stop();
         serviceModule.stop();
+        componentsModule.stop();
         managerModule.stop();
         LOG.info("Stopped");
     }

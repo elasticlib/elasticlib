@@ -26,6 +26,8 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
+import org.elasticlib.node.components.ReplicationAgentsPool;
+import org.elasticlib.node.components.RepositoriesProvider;
 import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
@@ -79,7 +81,6 @@ public class ReplicationsService {
     public void start() {
         lock.writeLock().lock();
         try {
-            replicationAgentsPool.start();
             storageManager.inTransaction(() -> {
                 replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::startAgent);
             });
@@ -105,13 +106,7 @@ public class ReplicationsService {
      * Properly stops this service.
      */
     public void stop() {
-        lock.writeLock().lock();
-        try {
-            replicationAgentsPool.stop();
-
-        } finally {
-            lock.writeLock().unlock();
-        }
+        // Nothing to do.
     }
 
     /**

@@ -29,6 +29,8 @@ import org.elasticlib.common.exception.SelfTrackingException;
 import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
+import org.elasticlib.node.components.NodeGuidProvider;
+import org.elasticlib.node.components.NodePingHandler;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.manager.storage.StorageManager;

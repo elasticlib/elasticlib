@@ -30,6 +30,8 @@ import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import static org.elasticlib.node.TestUtil.config;
 import static org.elasticlib.node.TestUtil.recursiveDelete;
+import org.elasticlib.node.components.LocalRepositoriesFactory;
+import org.elasticlib.node.components.LocalRepositoriesPool;
 import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
 import org.elasticlib.node.repository.Repository;
@@ -60,6 +62,7 @@ public class RepositoriesServiceTest {
     private Path path;
     private Path repositoryPath;
     private ManagerModule managerModule;
+    private LocalRepositoriesPool localRepositoriesPool;
     private RepositoriesService repositoriesService;
 
     /**
@@ -80,14 +83,14 @@ public class RepositoriesServiceTest {
                                                                         managerModule.getTaskManager(),
                                                                         managerModule.getMessageManager());
 
-        LocalRepositoriesPool pool = new LocalRepositoriesPool(repositoriesDao, factory);
+        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
 
         repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),
-                                                      pool);
+                                                      localRepositoriesPool);
 
         managerModule.start();
-        repositoriesService.start();
+        managerModule.getStorageManager().inTransaction(localRepositoriesPool::start);
     }
 
     /**
@@ -97,7 +100,7 @@ public class RepositoriesServiceTest {
      */
     @AfterClass
     public void cleanUp() throws IOException {
-        repositoriesService.stop();
+        localRepositoriesPool.stop();
         managerModule.stop();
         recursiveDelete(path);
     }

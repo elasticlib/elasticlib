@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticlib.node.service;
+package org.elasticlib.node.components;
 
 import java.nio.file.Path;
 import org.elasticlib.common.config.Config;

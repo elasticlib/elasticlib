@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticlib.node.service;
+package org.elasticlib.node.components;
 
 import static java.lang.System.lineSeparator;
 import org.elasticlib.common.client.LoggingHandler;

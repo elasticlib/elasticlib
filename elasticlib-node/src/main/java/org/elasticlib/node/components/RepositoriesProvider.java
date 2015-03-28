@@ -16,7 +16,6 @@
 package org.elasticlib.node.components;
 
 import java.util.Optional;
-import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.node.repository.Repository;
@@ -63,18 +62,17 @@ public class RepositoriesProvider {
     }
 
     /**
-     * Provides definition of a repository. Fails if it is unknown.
+     * Provides definition of a repository, if it is known and currently reachable.
      *
      * @param guid Repository GUID.
-     * @return Corresponding RepositoryDef.
+     * @return Corresponding RepositoryDef, if available.
      */
-    public RepositoryDef getRepositoryDef(Guid guid) {
+    public Optional<RepositoryDef> tryGetRepositoryDef(Guid guid) {
         Optional<RepositoryDef> local = localRepositoriesPool.tryGetRepositoryDef(guid);
         if (local.isPresent()) {
-            return local.get();
+            return local;
         }
-        return remoteRepositoriesPool.tryGetRepositoryDef(guid)
-                .orElseThrow(UnknownRepositoryException::new);
+        return remoteRepositoriesPool.tryGetRepositoryDef(guid);
     }
 
     /**

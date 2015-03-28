@@ -21,6 +21,7 @@ import javax.ws.rs.core.Application;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.ReplicationInfo;
+import org.elasticlib.common.model.ReplicationInfo.ReplicationInfoBuilder;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.node.service.ReplicationsService;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -113,7 +114,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
      */
     @Test
     public void listReplicationsTest() {
-        List<ReplicationInfo> infos = singletonList(new ReplicationInfo(Guid.random(), def(source), def(destination)));
+        List<ReplicationInfo> infos = singletonList(newReplicationInfo(source, destination));
 
         when(replicationsService.listReplicationInfos()).thenReturn(infos);
         try (Client client = newClient()) {
@@ -121,7 +122,16 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
         }
     }
 
-    private static RepositoryDef def(String name) {
+    private static ReplicationInfo newReplicationInfo(String source, String destination) {
+        RepositoryDef sourceDef = newRepositoryDef(source);
+        RepositoryDef destinationDef = newRepositoryDef(destination);
+        return new ReplicationInfoBuilder(Guid.random(), sourceDef.getGuid(), destinationDef.getGuid())
+                .withSourceDef(sourceDef)
+                .withDestinationDef(destinationDef)
+                .build();
+    }
+
+    private static RepositoryDef newRepositoryDef(String name) {
         return new RepositoryDef(name, Guid.random(), "/tmp/" + name);
     }
 }

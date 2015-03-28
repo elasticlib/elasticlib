@@ -47,6 +47,7 @@ import org.elasticlib.common.model.Operation;
 import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
+import org.elasticlib.common.model.ReplicationInfo.ReplicationInfoBuilder;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.RepositoryStats;
@@ -213,14 +214,18 @@ public final class TestData {
 
         REPOSITORY_INFOS.add(new RepositoryInfo(REPOSITORY_DEFS.get(1)));
 
-        REPLICATION_INFOS.add(new ReplicationInfo(GUIDS[3],
-                                                  REPOSITORY_DEFS.get(0),
-                                                  REPOSITORY_DEFS.get(1),
-                                                  new AgentInfo(15, 17, AgentState.RUNNING)));
+        REPLICATION_INFOS.add(new ReplicationInfoBuilder(GUIDS[3],
+                                                         REPOSITORY_DEFS.get(0).getGuid(),
+                                                         REPOSITORY_DEFS.get(1).getGuid())
+                .withSourceDef(REPOSITORY_DEFS.get(0))
+                .withDestinationDef(REPOSITORY_DEFS.get(1))
+                .withAgentInfo(new AgentInfo(15, 17, AgentState.RUNNING))
+                .build());
 
-        REPLICATION_INFOS.add(new ReplicationInfo(GUIDS[4],
-                                                  REPOSITORY_DEFS.get(0),
-                                                  REPOSITORY_DEFS.get(1)));
+        REPLICATION_INFOS.add(new ReplicationInfoBuilder(GUIDS[4],
+                                                         REPOSITORY_DEFS.get(0).getGuid(),
+                                                         REPOSITORY_DEFS.get(1).getGuid())
+                .build());
 
         NODE_DEFS.add(new NodeDef("alpha",
                                   GUIDS[0],

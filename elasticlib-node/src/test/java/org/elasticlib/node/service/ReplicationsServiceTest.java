@@ -340,8 +340,8 @@ public class ReplicationsServiceTest {
         ReplicationInfo info = replicationInfo();
 
         assertThat(info.isStarted()).isEqualTo(expected);
-        assertThat(info.getSourceDef().getName()).isEqualTo(SOURCE);
-        assertThat(info.getDestinationdef().getName()).isEqualTo(DESTINATION);
+        assertThat(info.getSourceDef().get().getName()).isEqualTo(SOURCE);
+        assertThat(info.getDestinationdef().get().getName()).isEqualTo(DESTINATION);
     }
 
     private void assertDestinationUpToDate() {

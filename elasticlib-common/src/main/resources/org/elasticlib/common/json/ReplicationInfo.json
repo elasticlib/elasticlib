@@ -8,27 +8,51 @@
         "source": {
             "type": "object",
             "properties": {
-                "name": {"type": "string"},
-                "guid": {"type": "guid"},
-                "path": {"type": "string"}
+                "name": {
+                    "type": "string",
+                    "optional": true
+                },
+                "guid": {
+                    "type": "guid"
+                },
+                "path": {
+                    "type": "string",
+                    "optional": true
+                }
             }
         },
         "destination": {
             "type": "object",
             "properties": {
-                "name": {"type": "string"},
-                "guid": {"type": "guid"},
-                "path": {"type": "string"}
+                "name": {
+                    "type": "string",
+                    "optional": true
+                },
+                "guid": {
+                    "type": "guid"
+                },
+                "path": {
+                    "type": "string",
+                    "optional": true
+                }
             }
         },
-        "started": {"type": "boolean"},
+        "started": {
+            "type": "boolean"
+        },
         "agent": {
             "type": "object",
             "optional": true,
             "properties": {
-                "curSeq": {"type": "integer"},
-                "maxSeq": {"type": "integer"},
-                "state": {"type": "string"}
+                "curSeq": {
+                    "type": "integer"
+                },
+                "maxSeq": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                }
             }
         }
     }

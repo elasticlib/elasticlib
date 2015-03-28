@@ -16,16 +16,15 @@
 package org.elasticlib.node.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
 import org.elasticlib.common.exception.SelfReplicationException;
 import org.elasticlib.common.hash.Guid;
-import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.ReplicationDef;
 import org.elasticlib.common.model.ReplicationInfo;
+import org.elasticlib.common.model.ReplicationInfo.ReplicationInfoBuilder;
 import org.elasticlib.node.components.ReplicationAgentsPool;
 import org.elasticlib.node.components.RepositoriesProvider;
 import org.elasticlib.node.dao.ReplicationsDao;
@@ -213,16 +212,11 @@ public class ReplicationsService {
         Guid id = replicationDef.getGuid();
         Guid srcId = replicationDef.getSource();
         Guid destId = replicationDef.getDestination();
-        Optional<AgentInfo> agentInfo = replicationAgentsPool.getAgentInfo(id);
-        if (agentInfo.isPresent()) {
-            return new ReplicationInfo(id,
-                                       repositoriesProvider.getRepositoryDef(srcId),
-                                       repositoriesProvider.getRepositoryDef(destId),
-                                       agentInfo.get());
-        }
-        return new ReplicationInfo(id,
-                                   repositoriesProvider.getRepositoryDef(srcId),
-                                   repositoriesProvider.getRepositoryDef(destId));
+        return new ReplicationInfoBuilder(id, srcId, destId)
+                .withSourceDef(repositoriesProvider.tryGetRepositoryDef(srcId).orElse(null))
+                .withDestinationDef(repositoriesProvider.tryGetRepositoryDef(destId).orElse(null))
+                .withAgentInfo(replicationAgentsPool.tryGetAgentInfo(id).orElse(null))
+                .build();
     }
 
     private void signalAgents(Guid repositoryGuid) {

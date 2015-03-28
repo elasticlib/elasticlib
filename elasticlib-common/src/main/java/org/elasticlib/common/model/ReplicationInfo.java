@@ -18,6 +18,8 @@ package org.elasticlib.common.model;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import java.util.Map;
 import static java.util.Objects.hash;
+import static java.util.Objects.requireNonNull;
+import java.util.Optional;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
@@ -31,43 +33,28 @@ import org.elasticlib.common.value.Value;
 public final class ReplicationInfo implements Mappable {
 
     private static final String GUID = "guid";
+    private static final String SOURCE = "source";
+    private static final String DESTINATION = "destination";
     private static final String SOURCE_DEF = "sourceDef";
     private static final String DESTINATION_DEF = "destinationDef";
     private static final String AGENT_INFO = "agentInfo";
-    private static final String SOURCE = "source";
-    private static final String DESTINATION = "destination";
     private static final String STARTED = "started";
     private static final String AGENT = "agent";
 
     private final Guid guid;
+    private final Guid source;
+    private final Guid destination;
     private final RepositoryDef sourceDef;
     private final RepositoryDef destinationdef;
     private final AgentInfo agentInfo;
 
-    /**
-     * Constructor for an started replication.
-     *
-     * @param guid Replication GUID.
-     * @param sourceDef Source repository definition.
-     * @param destinationdef Destination repository definition.
-     * @param agentInfo Replication agent info.
-     */
-    public ReplicationInfo(Guid guid, RepositoryDef sourceDef, RepositoryDef destinationdef, AgentInfo agentInfo) {
-        this.guid = guid;
-        this.sourceDef = sourceDef;
-        this.destinationdef = destinationdef;
-        this.agentInfo = agentInfo;
-    }
-
-    /**
-     * Constructor for a stopped replication.
-     *
-     * @param guid Replication GUID.
-     * @param sourceDef Source repository definition.
-     * @param destinationdef Destination repository definition.
-     */
-    public ReplicationInfo(Guid guid, RepositoryDef sourceDef, RepositoryDef destinationdef) {
-        this(guid, sourceDef, destinationdef, null);
+    private ReplicationInfo(ReplicationInfoBuilder builder) {
+        this.guid = builder.guid;
+        this.source = builder.source;
+        this.destination = builder.destination;
+        this.sourceDef = builder.sourceDef;
+        this.destinationdef = builder.destinationdef;
+        this.agentInfo = builder.agentInfo;
     }
 
     /**
@@ -85,17 +72,31 @@ public final class ReplicationInfo implements Mappable {
     }
 
     /**
+     * @return The source repository GUID.
+     */
+    public Guid getSource() {
+        return source;
+    }
+
+    /**
+     * @return The destination repository GUID.
+     */
+    public Guid getDestination() {
+        return destination;
+    }
+
+    /**
      * @return The source repository definition.
      */
-    public RepositoryDef getSourceDef() {
-        return sourceDef;
+    public Optional<RepositoryDef> getSourceDef() {
+        return Optional.ofNullable(sourceDef);
     }
 
     /**
      * @return The destination repository definition.
      */
-    public RepositoryDef getDestinationdef() {
-        return destinationdef;
+    public Optional<RepositoryDef> getDestinationdef() {
+        return Optional.ofNullable(destinationdef);
     }
 
     /**
@@ -112,14 +113,21 @@ public final class ReplicationInfo implements Mappable {
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
                 .put(GUID, guid)
-                .put(SOURCE, sourceDef.toMap())
-                .put(DESTINATION, destinationdef.toMap())
+                .put(SOURCE, map(source, sourceDef))
+                .put(DESTINATION, map(destination, destinationdef))
                 .put(STARTED, isStarted());
 
         if (isStarted()) {
             builder.put(AGENT, agentInfo.toMap());
         }
         return builder.build();
+    }
+
+    private static Map<String, Value> map(Guid guid, RepositoryDef def) {
+        if (def == null) {
+            return new MapBuilder().put(GUID, guid).build();
+        }
+        return def.toMap();
     }
 
     /**
@@ -129,21 +137,29 @@ public final class ReplicationInfo implements Mappable {
      * @return A new instance.
      */
     public static ReplicationInfo fromMap(Map<String, Value> map) {
-        if (!map.get(STARTED).asBoolean()) {
-            return new ReplicationInfo(map.get(GUID).asGuid(),
-                                       RepositoryDef.fromMap(map.get(SOURCE).asMap()),
-                                       RepositoryDef.fromMap(map.get(DESTINATION).asMap()));
+        Map<String, Value> sourceMap = map.get(SOURCE).asMap();
+        Map<String, Value> destinationMap = map.get(DESTINATION).asMap();
+        ReplicationInfoBuilder builder = new ReplicationInfoBuilder(map.get(GUID).asGuid(),
+                                                                    sourceMap.get(GUID).asGuid(),
+                                                                    destinationMap.get(GUID).asGuid());
+        if (sourceMap.size() > 1) {
+            builder.withSourceDef(RepositoryDef.fromMap(sourceMap));
         }
-        return new ReplicationInfo(map.get(GUID).asGuid(),
-                                   RepositoryDef.fromMap(map.get(SOURCE).asMap()),
-                                   RepositoryDef.fromMap(map.get(DESTINATION).asMap()),
-                                   AgentInfo.fromMap(map.get(AGENT).asMap()));
+        if (destinationMap.size() > 1) {
+            builder.withDestinationDef(RepositoryDef.fromMap(destinationMap));
+        }
+        if (map.get(STARTED).asBoolean()) {
+            builder.withAgentInfo(AgentInfo.fromMap(map.get(AGENT).asMap()));
+        }
+        return builder.build();
     }
 
     @Override
     public String toString() {
         return toStringHelper(this)
                 .add(GUID, guid)
+                .add(SOURCE, source)
+                .add(DESTINATION, destination)
                 .add(SOURCE_DEF, sourceDef)
                 .add(DESTINATION_DEF, destinationdef)
                 .add(AGENT_INFO, agentInfo)
@@ -152,7 +168,7 @@ public final class ReplicationInfo implements Mappable {
 
     @Override
     public int hashCode() {
-        return hash(sourceDef, destinationdef, agentInfo);
+        return hash(guid, source, destination, sourceDef, destinationdef, agentInfo);
     }
 
     @Override
@@ -163,9 +179,79 @@ public final class ReplicationInfo implements Mappable {
         ReplicationInfo other = (ReplicationInfo) obj;
         return new EqualsBuilder()
                 .append(guid, other.guid)
+                .append(source, other.source)
+                .append(destination, other.destination)
                 .append(sourceDef, other.sourceDef)
                 .append(destinationdef, other.destinationdef)
                 .append(agentInfo, other.agentInfo)
                 .build();
+    }
+
+    /**
+     * Builder.
+     */
+    public static class ReplicationInfoBuilder {
+
+        private final Guid guid;
+        private final Guid source;
+        private final Guid destination;
+        private RepositoryDef sourceDef;
+        private RepositoryDef destinationdef;
+        private AgentInfo agentInfo;
+
+        /**
+         * Constructor.
+         *
+         * @param guid Replication GUID.
+         * @param source Source repository GUID.
+         * @param destination Destination repository GUID.
+         */
+        public ReplicationInfoBuilder(Guid guid, Guid source, Guid destination) {
+            this.guid = requireNonNull(guid);
+            this.source = requireNonNull(source);
+            this.destination = requireNonNull(destination);
+        }
+
+        /**
+         * Set source repository definition.
+         *
+         * @param def Source repository definition.
+         * @return this.
+         */
+        public ReplicationInfoBuilder withSourceDef(RepositoryDef def) {
+            sourceDef = def;
+            return this;
+        }
+
+        /**
+         * Set destination repository definition.
+         *
+         * @param def Destination repository definition.
+         * @return this.
+         */
+        public ReplicationInfoBuilder withDestinationDef(RepositoryDef def) {
+            destinationdef = def;
+            return this;
+        }
+
+        /**
+         * Set replication agent info.
+         *
+         * @param info Replication agent info.
+         * @return this.
+         */
+        public ReplicationInfoBuilder withAgentInfo(AgentInfo info) {
+            agentInfo = info;
+            return this;
+        }
+
+        /**
+         * Build.
+         *
+         * @return A new ReplicationInfo instance.
+         */
+        public ReplicationInfo build() {
+            return new ReplicationInfo(this);
+        }
     }
 }

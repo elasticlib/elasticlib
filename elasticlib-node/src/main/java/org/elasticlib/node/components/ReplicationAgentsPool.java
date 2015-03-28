@@ -154,12 +154,12 @@ public class ReplicationAgentsPool {
     }
 
     /**
-     * Provides info about an existing agent.
+     * Provides info about an existing agent, if it is started.
      *
      * @param guid GUID of the related replication.
      * @return Associated agent info, if any.
      */
-    public Optional<AgentInfo> getAgentInfo(Guid guid) {
+    public Optional<AgentInfo> tryGetAgentInfo(Guid guid) {
         if (!agents.containsKey(guid)) {
             return Optional.empty();
         }

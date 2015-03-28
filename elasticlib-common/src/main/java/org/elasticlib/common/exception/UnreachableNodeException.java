@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import javax.ws.rs.core.Response.StatusType;
 
 /**
- * Thrown when trying to connect to a remote node if none of its publish hosts responds.
+ * Thrown if a remote operation fails because target node is unreachable.
  */
 public final class UnreachableNodeException extends NodeException {
 
@@ -28,6 +28,22 @@ public final class UnreachableNodeException extends NodeException {
     @Override
     public StatusType getStatus() {
         return SERVICE_UNAVAILABLE;
+    }
+
+    /**
+     * Constructor.
+     */
+    public UnreachableNodeException() {
+        super();
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param cause Cause exception to wrap.
+     */
+    public UnreachableNodeException(Throwable cause) {
+        super(cause);
     }
 
     @Override

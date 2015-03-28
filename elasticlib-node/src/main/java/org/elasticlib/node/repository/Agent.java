@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.UnexpectedFailureException;
+import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.Event;
@@ -200,6 +201,10 @@ public abstract class Agent {
                 LOG.info("Repository closed, stopping");
                 updateInfo(AgentState.STOPPED);
 
+            } catch (UnreachableNodeException e) {
+                LOG.info("Remote node unreachable, stopping");
+                updateInfo(AgentState.STOPPED);
+
             } catch (NodeException e) {
                 LOG.error("Unexpected error, stopping", e);
                 updateInfo(AgentState.ERROR);
@@ -210,7 +215,10 @@ public abstract class Agent {
             try {
                 return process(event);
 
-            } catch (IOFailureException | UnexpectedFailureException | RepositoryClosedException e) {
+            } catch (IOFailureException |
+                    UnexpectedFailureException |
+                    RepositoryClosedException |
+                    UnreachableNodeException e) {
                 throw e;
 
             } catch (NodeException e) {

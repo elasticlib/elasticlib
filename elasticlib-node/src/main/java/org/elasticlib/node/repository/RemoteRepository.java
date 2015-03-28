@@ -17,16 +17,19 @@ package org.elasticlib.node.repository;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
+import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.client.RepositoryClient;
 import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.RepositoryClosedException;
+import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.CommandResult;
@@ -152,6 +155,13 @@ public class RemoteRepository implements Repository {
                 throw new RepositoryClosedException();
             }
             return supplier.get();
+
+        } catch (ProcessingException e) {
+            if (e.getCause() instanceof SocketException) {
+                throw new UnreachableNodeException(e);
+            }
+            throw e;
+
         } finally {
             lock.readLock().unlock();
         }
@@ -189,38 +199,48 @@ public class RemoteRepository implements Repository {
         }
 
         @Override
-        public int read() throws IOException {
-            return readLocked(() -> delegate.read());
+        public int read() {
+            return readLocked(() -> {
+                if (closed) {
+                    throw new RepositoryClosedException();
+                }
+                return delegate.read();
+            });
         }
 
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            return readLocked(() -> delegate.read(b, off, len));
+        public int read(byte[] b, int off, int len) {
+            return readLocked(() -> {
+                if (closed) {
+                    throw new RepositoryClosedException();
+                }
+                return delegate.read(b, off, len);
+            });
+        }
+
+        @Override
+        public void close() {
+            readLocked(() -> {
+                delegate.close();
+                return 0;
+            });
         }
 
         private int readLocked(IOReader reader) {
             lock.readLock().lock();
             try {
-                if (closed) {
-                    throw new RepositoryClosedException();
-                }
                 try {
                     return reader.read();
+
+                } catch (ProcessingException e) {
+                    if (e.getCause() instanceof SocketException) {
+                        throw new UnreachableNodeException(e);
+                    }
+                    throw e;
 
                 } catch (IOException e) {
                     throw new IOFailureException(e);
                 }
-            } finally {
-                lock.readLock().unlock();
-            }
-        }
-
-        @Override
-        public void close() throws IOException {
-            lock.readLock().lock();
-            try {
-                delegate.close();
-
             } finally {
                 lock.readLock().unlock();
             }

@@ -21,9 +21,9 @@ import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.node.components.LocalRepositoriesPool;
 import org.elasticlib.node.manager.message.MessageManager;
-import org.elasticlib.node.manager.message.RepositoryClosed;
-import org.elasticlib.node.manager.message.RepositoryOpened;
+import org.elasticlib.node.manager.message.RepositoryAvailable;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
+import org.elasticlib.node.manager.message.RepositoryUnavailable;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.repository.Repository;
 import org.slf4j.Logger;
@@ -90,7 +90,7 @@ public class RepositoriesService {
         RepositoryDef def = storageManager.inTransaction(() -> {
             return localRepositoriesPool.openRepository(key);
         });
-        messageManager.post(new RepositoryOpened(def.getGuid()));
+        messageManager.post(new RepositoryAvailable(def.getGuid()));
     }
 
     /**
@@ -103,7 +103,7 @@ public class RepositoriesService {
         RepositoryDef def = storageManager.inTransaction(() -> {
             return localRepositoriesPool.closeRepository(key);
         });
-        messageManager.post(new RepositoryClosed(def.getGuid()));
+        messageManager.post(new RepositoryUnavailable(def.getGuid()));
     }
 
     /**

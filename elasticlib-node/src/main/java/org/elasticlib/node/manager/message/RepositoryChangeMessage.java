@@ -15,6 +15,9 @@
  */
 package org.elasticlib.node.manager.message;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.hash;
+import static java.util.Objects.requireNonNull;
 import org.elasticlib.common.hash.Guid;
 
 /**
@@ -30,7 +33,7 @@ public abstract class RepositoryChangeMessage {
      * @param repositoryGuid The repository GUID.
      */
     public RepositoryChangeMessage(Guid repositoryGuid) {
-        this.repositoryGuid = repositoryGuid;
+        this.repositoryGuid = requireNonNull(repositoryGuid);
     }
 
     /**
@@ -38,5 +41,26 @@ public abstract class RepositoryChangeMessage {
      */
     public Guid getRepositoryGuid() {
         return repositoryGuid;
+    }
+
+    @Override
+    public int hashCode() {
+        return hash(repositoryGuid);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        RepositoryChangeMessage other = (RepositoryChangeMessage) obj;
+        return repositoryGuid.equals(other.repositoryGuid);
+    }
+
+    @Override
+    public String toString() {
+        return toStringHelper(this)
+                .addValue(repositoryGuid)
+                .toString();
     }
 }

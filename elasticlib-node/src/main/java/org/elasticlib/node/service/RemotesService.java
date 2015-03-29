@@ -31,8 +31,10 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.components.NodeGuidProvider;
 import org.elasticlib.node.components.NodePingHandler;
+import org.elasticlib.node.components.RemoteNodesMessagesFactory;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.dao.RemotesDao;
+import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -49,9 +51,11 @@ public class RemotesService {
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
+    private final MessageManager messageManager;
     private final RemotesDao remotesDao;
     private final NodeGuidProvider nodeGuidProvider;
     private final NodePingHandler nodePingHandler;
+    private final RemoteNodesMessagesFactory remoteNodesMessagesFactory;
     private final AtomicBoolean started = new AtomicBoolean();
     private Task pingTask;
     private Task cleanupTask;
@@ -62,23 +66,29 @@ public class RemotesService {
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
+     * @param messageManager Messaging infrastructure manager.
      * @param remotesDao Remote nodes DAO.
      * @param nodeGuidProvider Local node GUID provider.
      * @param nodePingHandler Remote nodes ping handler.
+     * @param remoteNodesMessagesFactory Remote nodes messages factory.
      */
     public RemotesService(Config config,
                           TaskManager taskManager,
                           StorageManager storageManager,
+                          MessageManager messageManager,
                           RemotesDao remotesDao,
                           NodeGuidProvider nodeGuidProvider,
-                          NodePingHandler nodePingHandler) {
+                          NodePingHandler nodePingHandler,
+                          RemoteNodesMessagesFactory remoteNodesMessagesFactory) {
 
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
+        this.messageManager = messageManager;
         this.remotesDao = remotesDao;
         this.nodeGuidProvider = nodeGuidProvider;
         this.nodePingHandler = nodePingHandler;
+        this.remoteNodesMessagesFactory = remoteNodesMessagesFactory;
     }
 
     /**
@@ -223,14 +233,11 @@ public class RemotesService {
             if (!started.get()) {
                 return;
             }
-            Optional<RemoteInfo> updated = nodePingHandler.ping(uris(current), current.getGuid());
-            storageManager.inTransaction(() -> {
-                if (updated.isPresent()) {
-                    remotesDao.saveRemoteInfo(updated.get());
-                } else {
-                    remotesDao.saveRemoteInfo(current.asUnreachable());
-                }
-            });
+            RemoteInfo updated = nodePingHandler.ping(uris(current), current.getGuid())
+                    .orElse(current.asUnreachable());
+
+            storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(updated));
+            remoteNodesMessagesFactory.messages(current, updated).forEach(messageManager::post);
         }
     }
 

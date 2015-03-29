@@ -17,6 +17,7 @@ package org.elasticlib.node.service;
 
 import org.elasticlib.common.config.Config;
 import org.elasticlib.node.components.ComponentsModule;
+import org.elasticlib.node.components.RemoteNodesMessagesFactory;
 import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.manager.ManagerModule;
 
@@ -62,9 +63,11 @@ public class ServiceModule {
         remotesService = new RemotesService(config,
                                             managerModule.getTaskManager(),
                                             managerModule.getStorageManager(),
+                                            managerModule.getMessageManager(),
                                             daoModule.getRemotesDao(),
                                             componentsModule.getNodeGuidProvider(),
-                                            componentsModule.getNodePingHandler());
+                                            componentsModule.getNodePingHandler(),
+                                            new RemoteNodesMessagesFactory());
     }
 
     /**

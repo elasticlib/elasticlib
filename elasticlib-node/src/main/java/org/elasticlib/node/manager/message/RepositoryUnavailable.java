@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,16 @@ package org.elasticlib.node.manager.message;
 import org.elasticlib.common.hash.Guid;
 
 /**
- * Message indicating that a repository has been opened.
+ * Message indicating that a repository has been closed or is unreachable.
  */
-public final class RepositoryOpened extends RepositoryChangeMessage {
+public class RepositoryUnavailable extends RepositoryChangeMessage {
 
     /**
      * Constructor.
      *
      * @param repositoryGuid The repository GUID.
      */
-    public RepositoryOpened(Guid repositoryGuid) {
+    public RepositoryUnavailable(Guid repositoryGuid) {
         super(repositoryGuid);
     }
 }

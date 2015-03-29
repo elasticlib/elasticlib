@@ -31,10 +31,10 @@ import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.NewRepositoryEvent;
+import org.elasticlib.node.manager.message.RepositoryAvailable;
 import org.elasticlib.node.manager.message.RepositoryChangeMessage;
-import org.elasticlib.node.manager.message.RepositoryClosed;
-import org.elasticlib.node.manager.message.RepositoryOpened;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
+import org.elasticlib.node.manager.message.RepositoryUnavailable;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,10 +87,10 @@ public class ReplicationsService {
             messageManager.register(NewRepositoryEvent.class,
                                     newAction("Signaling replication agents", this::signalAgents));
 
-            messageManager.register(RepositoryOpened.class,
+            messageManager.register(RepositoryAvailable.class,
                                     newAction("Starting replications", this::startReplications));
 
-            messageManager.register(RepositoryClosed.class,
+            messageManager.register(RepositoryUnavailable.class,
                                     newAction("Stopping replications", this::stopReplications));
 
             messageManager.register(RepositoryRemoved.class,

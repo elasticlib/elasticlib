@@ -30,6 +30,9 @@ import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.node.dao.RemotesDao;
+import org.elasticlib.node.manager.message.MessageManager;
+import org.elasticlib.node.manager.message.RepositoryRemoved;
+import org.elasticlib.node.manager.message.RepositoryUnavailable;
 import org.elasticlib.node.repository.RemoteRepository;
 import org.elasticlib.node.repository.Repository;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -41,15 +44,18 @@ public class RemoteRepositoriesPool {
 
     private static final String SEPARATOR = ".";
 
+    private final MessageManager messageManager;
     private final RemotesDao remotesDao;
     private final Map<Guid, Repository> repositories = new HashMap<>();
 
     /**
      * Constructor.
      *
+     * @param messageManager Messaging infrastructure manager.
      * @param remotesDao Remotes nodes DAO.
      */
-    public RemoteRepositoriesPool(RemotesDao remotesDao) {
+    public RemoteRepositoriesPool(MessageManager messageManager, RemotesDao remotesDao) {
+        this.messageManager = messageManager;
         this.remotesDao = remotesDao;
     }
 
@@ -57,7 +63,8 @@ public class RemoteRepositoriesPool {
      * Starts this component.
      */
     public void start() {
-        // Nothing to do.
+        messageManager.register(RepositoryUnavailable.class, "Closing remote repository", this::tryCloseRepository);
+        messageManager.register(RepositoryRemoved.class, "Closing remote repository", this::tryCloseRepository);
     }
 
     /**
@@ -182,5 +189,12 @@ public class RemoteRepositoriesPool {
             repositories.put(guid, new RemoteRepository(client, guid));
         }
         return repositories.get(guid);
+    }
+
+    private synchronized void tryCloseRepository(Guid guid) {
+        if (!repositories.containsKey(guid)) {
+            return;
+        }
+        repositories.remove(guid).close();
     }
 }

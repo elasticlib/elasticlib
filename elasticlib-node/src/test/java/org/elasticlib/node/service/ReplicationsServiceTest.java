@@ -94,7 +94,7 @@ public class ReplicationsServiceTest {
                                                                         managerModule.getMessageManager());
 
         localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
-        remoteRepositoriesPool = new RemoteRepositoriesPool(remotesDao);
+        remoteRepositoriesPool = new RemoteRepositoriesPool(managerModule.getMessageManager(), remotesDao);
 
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
                                                                              remoteRepositoriesPool);

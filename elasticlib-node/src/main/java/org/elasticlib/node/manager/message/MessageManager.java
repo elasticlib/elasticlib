@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.node.manager.task.TaskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +77,30 @@ public class MessageManager {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    /**
+     * Convenience overload to register an action for a repository change message.
+     *
+     * @param <T> Class of the message to listen to.
+     * @param messageType Message type to listen to.
+     * @param description Action description.
+     * @param action Action implementation. Consume the message repository GUID.
+     */
+    public <T extends RepositoryChangeMessage> void register(Class<T> messageType,
+                                                             String description,
+                                                             Consumer<Guid> action) {
+        register(messageType, new Action<T>() {
+            @Override
+            public String description() {
+                return description;
+            }
+
+            @Override
+            public void apply(T message) {
+                action.accept(message.getRepositoryGuid());
+            }
+        });
     }
 
     /**

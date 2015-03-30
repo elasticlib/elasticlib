@@ -18,7 +18,6 @@ package org.elasticlib.node.service;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 import static java.util.stream.Collectors.toList;
 import org.elasticlib.common.exception.SelfReplicationException;
 import org.elasticlib.common.hash.Guid;
@@ -28,11 +27,9 @@ import org.elasticlib.common.model.ReplicationInfo.ReplicationInfoBuilder;
 import org.elasticlib.node.components.ReplicationAgentsPool;
 import org.elasticlib.node.components.RepositoriesProvider;
 import org.elasticlib.node.dao.ReplicationsDao;
-import org.elasticlib.node.manager.message.Action;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.NewRepositoryEvent;
 import org.elasticlib.node.manager.message.RepositoryAvailable;
-import org.elasticlib.node.manager.message.RepositoryChangeMessage;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
 import org.elasticlib.node.manager.message.RepositoryUnavailable;
 import org.elasticlib.node.manager.storage.StorageManager;
@@ -84,17 +81,10 @@ public class ReplicationsService {
                 replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::startAgent);
             });
 
-            messageManager.register(NewRepositoryEvent.class,
-                                    newAction("Signaling replication agents", this::signalAgents));
-
-            messageManager.register(RepositoryAvailable.class,
-                                    newAction("Starting replications", this::startReplications));
-
-            messageManager.register(RepositoryUnavailable.class,
-                                    newAction("Stopping replications", this::stopReplications));
-
-            messageManager.register(RepositoryRemoved.class,
-                                    newAction("Deleting replications", this::deleteReplications));
+            messageManager.register(NewRepositoryEvent.class, "Signaling replication agents", this::signalAgents);
+            messageManager.register(RepositoryAvailable.class, "Starting replications", this::startReplications);
+            messageManager.register(RepositoryUnavailable.class, "Stopping replications", this::stopReplications);
+            messageManager.register(RepositoryRemoved.class, "Deleting replications", this::deleteReplications);
 
         } finally {
             lock.writeLock().unlock();
@@ -270,19 +260,5 @@ public class ReplicationsService {
         } finally {
             lock.writeLock().unlock();
         }
-    }
-
-    private static <T extends RepositoryChangeMessage> Action<T> newAction(String description, Consumer<Guid> action) {
-        return new Action<T>() {
-            @Override
-            public String description() {
-                return description;
-            }
-
-            @Override
-            public void apply(T message) {
-                action.accept(message.getRepositoryGuid());
-            }
-        };
     }
 }

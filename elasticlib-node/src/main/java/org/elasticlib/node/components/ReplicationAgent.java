@@ -20,6 +20,7 @@ import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Math.min;
+import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Event;
@@ -39,9 +40,13 @@ class ReplicationAgent extends Agent {
     private final Repository source;
     private final Repository destination;
 
-    public ReplicationAgent(Repository source, Repository destination, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("replication-" + source.getDef().getName() + ">" + destination.getDef().getName(),
-              source, curSeqsDb, curSeqKey);
+    public ReplicationAgent(Guid guid,
+                            Repository source,
+                            Repository destination,
+                            Database curSeqsDb,
+                            DatabaseEntry curSeqKey) {
+
+        super("replication-" + guid.asHexadecimalString(), source, curSeqsDb, curSeqKey);
 
         this.source = source;
         this.destination = destination;

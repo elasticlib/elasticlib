@@ -120,7 +120,7 @@ public class ReplicationAgentsPool {
 
     private void startAgent(Guid guid, Repository source, Repository destination) {
         DatabaseEntry curSeqKey = entry(guid);
-        Agent agent = new ReplicationAgent(source, destination, curSeqsDb, curSeqKey);
+        Agent agent = new ReplicationAgent(guid, source, destination, curSeqsDb, curSeqKey);
 
         Agent previous = agents.put(guid, agent);
         if (previous != null) {

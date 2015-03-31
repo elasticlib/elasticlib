@@ -1,0 +1,12 @@
+{
+    "title": "digest",
+    "type": "object",
+    "properties": {
+        "hash": {
+            "type": "hash"
+        },
+        "length": {
+            "type": "integer"
+        }
+    }
+}

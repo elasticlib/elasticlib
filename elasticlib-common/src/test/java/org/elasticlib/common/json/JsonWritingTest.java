@@ -17,6 +17,7 @@ package org.elasticlib.common.json;
 
 import static org.elasticlib.common.TestData.COMMAND_RESULTS;
 import static org.elasticlib.common.TestData.CONTENT_INFO;
+import static org.elasticlib.common.TestData.DIGEST;
 import static org.elasticlib.common.TestData.EVENTS;
 import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
@@ -32,6 +33,7 @@ import static org.elasticlib.common.TestData.REVISION_TREE;
 import static org.elasticlib.common.TestData.STAGING_INFO;
 import static org.elasticlib.common.json.JsonTestData.COMMAND_RESULTS_JSON;
 import static org.elasticlib.common.json.JsonTestData.CONTENT_INFO_JSON;
+import static org.elasticlib.common.json.JsonTestData.DIGEST_JSON;
 import static org.elasticlib.common.json.JsonTestData.EVENTS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -54,6 +56,14 @@ import org.testng.annotations.Test;
  * Unit tests.
  */
 public class JsonWritingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeDigestTest() {
+        assertThat(write(DIGEST)).isEqualTo(DIGEST_JSON);
+    }
 
     /**
      * Test.

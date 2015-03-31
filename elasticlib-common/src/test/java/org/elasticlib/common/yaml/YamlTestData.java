@@ -25,6 +25,7 @@ final class YamlTestData {
     private static final String MAC_EOL = "\r";
     private static final String WINDOWS_EOL = "\r\n";
 
+    public static final String DIGEST_YAML;
     public static final String STAGING_INFO_YAML;
     public static final List<String> REVISIONS_YAML = new ArrayList<>();
     public static final String REVISION_TREE_YAML;
@@ -43,6 +44,8 @@ final class YamlTestData {
 
     static {
         Class<?> clazz = YamlTestData.class;
+
+        DIGEST_YAML = readYaml(clazz, "digest.yml");
 
         STAGING_INFO_YAML = readYaml(clazz, "stagingInfo.yml");
 

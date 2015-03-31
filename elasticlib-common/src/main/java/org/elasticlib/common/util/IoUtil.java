@@ -18,8 +18,8 @@ package org.elasticlib.common.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.elasticlib.common.hash.Digest;
-import org.elasticlib.common.hash.Digest.DigestBuilder;
+import org.elasticlib.common.model.Digest;
+import org.elasticlib.common.model.DigestBuilder;
 
 /**
  * IO utilities.

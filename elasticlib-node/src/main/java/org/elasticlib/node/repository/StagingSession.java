@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,8 @@
  */
 package org.elasticlib.node.repository;
 
-import org.elasticlib.common.hash.Digest.DigestBuilder;
 import org.elasticlib.common.hash.Guid;
+import org.elasticlib.common.model.DigestBuilder;
 
 /**
  * Represents a content staging session.

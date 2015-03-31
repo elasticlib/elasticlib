@@ -17,6 +17,7 @@ package org.elasticlib.common.json;
 
 import static org.elasticlib.common.TestData.COMMAND_RESULTS;
 import static org.elasticlib.common.TestData.CONTENT_INFO;
+import static org.elasticlib.common.TestData.DIGEST;
 import static org.elasticlib.common.TestData.EVENTS;
 import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
@@ -36,6 +37,7 @@ import static org.elasticlib.common.json.JsonReading.read;
 import static org.elasticlib.common.json.JsonReading.readAll;
 import static org.elasticlib.common.json.JsonTestData.COMMAND_RESULTS_JSON;
 import static org.elasticlib.common.json.JsonTestData.CONTENT_INFO_JSON;
+import static org.elasticlib.common.json.JsonTestData.DIGEST_JSON;
 import static org.elasticlib.common.json.JsonTestData.EVENTS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -51,6 +53,7 @@ import static org.elasticlib.common.json.JsonTestData.REVISION_TREE_JSON;
 import static org.elasticlib.common.json.JsonTestData.STAGING_INFO_JSON;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
@@ -70,6 +73,14 @@ import org.testng.annotations.Test;
  * Unit tests.
  */
 public class JsonReadingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readDigestTest() {
+        assertThat(read(DIGEST_JSON, Digest.class)).isEqualTo(DIGEST);
+    }
 
     /**
      * Test.

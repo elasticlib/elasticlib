@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import org.elasticlib.common.client.RepositoryClient;
 import org.elasticlib.common.exception.NodeException;
-import org.elasticlib.common.hash.Digest;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.metadata.MetadataUtil;
 import org.elasticlib.common.metadata.Properties.Common;
@@ -41,6 +40,7 @@ import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
 import static org.elasticlib.common.model.ContentState.PRESENT;
 import static org.elasticlib.common.model.ContentState.STAGING;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.Revision.RevisionBuilder;
 import org.elasticlib.common.model.StagingInfo;

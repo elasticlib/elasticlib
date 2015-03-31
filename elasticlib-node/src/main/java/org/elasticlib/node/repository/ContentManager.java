@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,10 +36,10 @@ import org.elasticlib.common.exception.InvalidRepositoryPathException;
 import org.elasticlib.common.exception.PendingStagingSessionException;
 import org.elasticlib.common.exception.StagingCompletedException;
 import org.elasticlib.common.exception.UnknownContentException;
-import org.elasticlib.common.hash.Digest;
-import org.elasticlib.common.hash.Digest.DigestBuilder;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
+import org.elasticlib.common.model.Digest;
+import org.elasticlib.common.model.DigestBuilder;
 import org.elasticlib.common.model.StagingInfo;
 import org.elasticlib.common.util.BoundedInputStream;
 import static org.elasticlib.common.util.IoUtil.copyAndDigest;

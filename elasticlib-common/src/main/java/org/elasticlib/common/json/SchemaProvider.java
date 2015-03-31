@@ -29,6 +29,7 @@ import org.elasticlib.common.json.schema.Schema;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
@@ -52,6 +53,7 @@ final class SchemaProvider {
 
     static {
         register(CommandResult.class,
+                 Digest.class,
                  StagingInfo.class,
                  ContentInfo.class,
                  Revision.class,

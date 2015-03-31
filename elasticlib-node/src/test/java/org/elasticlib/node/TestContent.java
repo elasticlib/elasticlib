@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +24,10 @@ import static java.lang.Thread.currentThread;
 import java.util.Arrays;
 import static java.util.Arrays.copyOfRange;
 import java.util.SortedSet;
-import org.elasticlib.common.hash.Digest;
 import org.elasticlib.common.hash.Hash;
 import static org.elasticlib.common.metadata.Properties.Common.CONTENT_TYPE;
 import static org.elasticlib.common.metadata.Properties.Common.FILE_NAME;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.Revision.RevisionBuilder;
 import org.elasticlib.common.model.RevisionTree;

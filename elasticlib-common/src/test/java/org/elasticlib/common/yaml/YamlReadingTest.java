@@ -20,6 +20,7 @@ import java.io.StringReader;
 import java.util.List;
 import static org.elasticlib.common.TestData.COMMAND_RESULTS;
 import static org.elasticlib.common.TestData.CONTENT_INFO;
+import static org.elasticlib.common.TestData.DIGEST;
 import static org.elasticlib.common.TestData.EVENTS;
 import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
@@ -38,6 +39,7 @@ import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
@@ -52,6 +54,7 @@ import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
 import static org.elasticlib.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.CONTENT_INFO_YAML;
+import static org.elasticlib.common.yaml.YamlTestData.DIGEST_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.EVENTS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -72,6 +75,14 @@ import org.testng.annotations.Test;
  * Unit tests.
  */
 public class YamlReadingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void readDigestTest() {
+        assertThat(read(DIGEST_YAML, Digest.class)).isEqualTo(DIGEST);
+    }
 
     /**
      * Test.

@@ -28,6 +28,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import static org.elasticlib.common.json.JsonTestData.COMMAND_RESULTS_JSON;
 import static org.elasticlib.common.json.JsonTestData.CONTENT_INFO_JSON;
+import static org.elasticlib.common.json.JsonTestData.DIGEST_JSON;
 import static org.elasticlib.common.json.JsonTestData.EVENTS_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.INDEX_ENTRIES_ARRAY;
 import static org.elasticlib.common.json.JsonTestData.NODE_DEFS_ARRAY;
@@ -46,6 +47,7 @@ import static org.elasticlib.common.json.JsonValidation.isValid;
 import org.elasticlib.common.json.schema.Schema;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.NodeDef;
@@ -148,6 +150,15 @@ public class JsonValidationTest {
                 .build();
 
         assertThat(isValid(json, schema)).as(value.type().name().toLowerCase()).isTrue();
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void isValidDigestTest() {
+        assertThat(isValid(DIGEST_JSON, Digest.class)).isTrue();
+        assertThat(isValid(REVISION_TREE_JSON, Digest.class)).isFalse();
     }
 
     /**

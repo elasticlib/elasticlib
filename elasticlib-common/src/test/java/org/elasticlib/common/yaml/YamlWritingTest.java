@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.util.List;
 import static org.elasticlib.common.TestData.COMMAND_RESULTS;
 import static org.elasticlib.common.TestData.CONTENT_INFO;
+import static org.elasticlib.common.TestData.DIGEST;
 import static org.elasticlib.common.TestData.EVENTS;
 import static org.elasticlib.common.TestData.INDEX_ENTRIES;
 import static org.elasticlib.common.TestData.NODE_DEFS;
@@ -37,6 +38,7 @@ import static org.elasticlib.common.TestData.STAGING_INFO;
 import org.elasticlib.common.mappable.Mappable;
 import static org.elasticlib.common.yaml.YamlTestData.COMMAND_RESULTS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.CONTENT_INFO_YAML;
+import static org.elasticlib.common.yaml.YamlTestData.DIGEST_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.EVENTS_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.INDEX_ENTRIES_YAML;
 import static org.elasticlib.common.yaml.YamlTestData.NODE_DEFS_YAML;
@@ -58,6 +60,14 @@ import static org.yaml.snakeyaml.DumperOptions.LineBreak.UNIX;
  * Unit tests.
  */
 public class YamlWritingTest {
+
+    /**
+     * Test.
+     */
+    @Test
+    public void writeDigestTest() {
+        assertThat(write(DIGEST)).isEqualTo(DIGEST_YAML);
+    }
 
     /**
      * Test.

@@ -24,6 +24,7 @@ import static org.elasticlib.common.TestUtil.readJsonObject;
 
 final class JsonTestData {
 
+    public static final JsonObject DIGEST_JSON;
     public static final JsonObject STAGING_INFO_JSON;
     public static final List<JsonObject> REVISIONS_JSON = new ArrayList<>();
     public static final JsonObject REVISION_TREE_JSON;
@@ -42,6 +43,8 @@ final class JsonTestData {
 
     static {
         Class<?> clazz = JsonTestData.class;
+
+        DIGEST_JSON = readJsonObject(clazz, "digestTest.json");
 
         STAGING_INFO_JSON = readJsonObject(clazz, "stagingInfoTest.json");
 

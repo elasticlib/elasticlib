@@ -30,7 +30,6 @@ import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.exception.UnexpectedFailureException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
-import org.elasticlib.common.hash.Digest.DigestBuilder;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.AgentInfo;
@@ -38,6 +37,8 @@ import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
+import org.elasticlib.common.model.Digest;
+import org.elasticlib.common.model.DigestBuilder;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.Event.EventBuilder;
 import org.elasticlib.common.model.IndexEntry;
@@ -63,6 +64,10 @@ import org.elasticlib.common.value.Value;
  */
 public final class TestData {
 
+    /**
+     * A Digest instance.
+     */
+    public static final Digest DIGEST;
     /**
      * A StagingInfo instance.
      */
@@ -137,6 +142,8 @@ public final class TestData {
                                   new Guid("39819150ee99549a8c0a59782169bb3b"),
                                   new Guid("eac7690f2ca05940e9239d5300037551"),
                                   new Guid("da8d63a4a8bd8760a203b18a948fab75")};
+
+        DIGEST = new Digest(new Hash(HASHES[0]), 10L);
 
         STAGING_INFO = new StagingInfo(GUIDS[0], new Hash(HASHES[1]), 123456L);
 

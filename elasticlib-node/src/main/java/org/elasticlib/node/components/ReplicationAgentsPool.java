@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
+import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.ReplicationDef;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
 import org.elasticlib.node.manager.storage.StorageManager;
@@ -83,7 +84,7 @@ public class ReplicationAgentsPool {
      * @param def Definition of the related replication.
      */
     public void startAgent(ReplicationDef def) {
-        if (agents.containsKey(def.getGuid())) {
+        if (isStarted(def.getGuid())) {
             return;
         }
         startAgent(def.getGuid(),
@@ -98,7 +99,7 @@ public class ReplicationAgentsPool {
      * @param def Definition of the related replication.
      */
     public void tryStartAgent(ReplicationDef def) {
-        if (agents.containsKey(def.getGuid())) {
+        if (isStarted(def.getGuid())) {
             return;
         }
         Optional<Repository> source = repositoriesProvider.tryGetRepository(def.getSource());
@@ -109,11 +110,22 @@ public class ReplicationAgentsPool {
         startAgent(def.getGuid(), source.get(), destination.get());
     }
 
+    private boolean isStarted(Guid guid) {
+        if (!agents.containsKey(guid)) {
+            return false;
+        }
+        AgentState state = agents.get(guid).info().getState();
+        return state != AgentState.STOPPED && state != AgentState.ERROR;
+    }
+
     private void startAgent(Guid guid, Repository source, Repository destination) {
         DatabaseEntry curSeqKey = entry(guid);
         Agent agent = new ReplicationAgent(source, destination, curSeqsDb, curSeqKey);
 
-        agents.put(guid, agent);
+        Agent previous = agents.put(guid, agent);
+        if (previous != null) {
+            previous.stop();
+        }
         agent.start();
     }
 

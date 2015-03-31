@@ -78,7 +78,7 @@ public class ReplicationsService {
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
-                replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::startAgent);
+                replicationsDao.listReplicationDefs().forEach(replicationAgentsPool::tryStartAgent);
             });
 
             messageManager.register(NewRepositoryEvent.class, "Signaling replication agents", this::signalAgents);

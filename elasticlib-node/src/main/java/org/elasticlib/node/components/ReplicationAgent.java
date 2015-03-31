@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.Math.min;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Event;
@@ -71,7 +72,7 @@ class ReplicationAgent extends Agent {
                 if (isStopped()) {
                     return false;
                 }
-                stagingInfo = writeChunk(content, stagingInfo);
+                stagingInfo = writeChunk(content, length, stagingInfo);
             }
             return true;
 
@@ -95,9 +96,10 @@ class ReplicationAgent extends Agent {
         }
     }
 
-    private StagingInfo writeChunk(Hash content, StagingInfo stagingInfo) throws IOException {
+    private StagingInfo writeChunk(Hash content, long totalLength, StagingInfo stagingInfo) throws IOException {
         long offset = stagingInfo.getLength();
-        try (InputStream inputStream = source.getContent(content, offset, offset + CHUNK_SIZE)) {
+        long length = min(CHUNK_SIZE, totalLength - offset);
+        try (InputStream inputStream = source.getContent(content, offset, length)) {
             return destination.writeContent(content, stagingInfo.getSessionId(), inputStream, offset);
         }
     }

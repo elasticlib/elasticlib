@@ -23,6 +23,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.RepositoryDef;
@@ -147,6 +148,24 @@ public interface Repository {
      * @return An input stream on this content.
      */
     public InputStream getContent(Hash hash, long offset, long length);
+
+    /**
+     * Provides the digest of a content in this repository.
+     *
+     * @param hash Hash of the content.
+     * @return Actually computed digest of this content.
+     */
+    public Digest getDigest(Hash hash);
+
+    /**
+     * Provides a partial digest of a content in this repository.
+     *
+     * @param hash Hash of the content.
+     * @param offset The position of the first byte to digest, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to digest. Expected to be positive or zero.
+     * @return Actually computed digest.
+     */
+    public Digest getDigest(Hash hash, long offset, long length);
 
     /**
      * Provides a paginated view of the history of this repository.

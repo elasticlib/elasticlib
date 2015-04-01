@@ -38,6 +38,7 @@ import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.Operation;
@@ -254,6 +255,38 @@ public class LocalRepositoryTest {
           expectedExceptions = UnknownContentException.class)
     public void getContentWithUnknownHashTest() {
         repository.getContent(UNKNOWN_HASH, 0, Long.MAX_VALUE);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getDigestTest() {
+        Digest expected = LOREM_IPSUM.getDigest();
+        Digest actual = repository.getDigest(LOREM_IPSUM.getHash());
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS, dependsOnGroups = ADD_CONTENT)
+    public void getDigestPartialTest() {
+        Digest expected = LOREM_IPSUM.getDigest(100, 100);
+        Digest actual = repository.getDigest(LOREM_IPSUM.getHash(), 100, 100);
+
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Test.
+     */
+    @Test(groups = ADD_CONTENT_CHECKS,
+          dependsOnGroups = ADD_CONTENT,
+          expectedExceptions = UnknownContentException.class)
+    public void getDigestWithUnkownHashTest() {
+        repository.getDigest(UNKNOWN_HASH);
     }
 
     /**

@@ -40,6 +40,7 @@ import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.Operation;
@@ -360,6 +361,20 @@ public class LocalRepository implements Repository {
         ensureOpen();
         log("Returning content {}, offset {}, length {}", hash, offset, length);
         return contentManager.get(hash, offset, length);
+    }
+
+    @Override
+    public Digest getDigest(Hash hash) {
+        ensureOpen();
+        log("Returning digest of content {}", hash);
+        return contentManager.getDigest(hash);
+    }
+
+    @Override
+    public Digest getDigest(Hash hash, long offset, long length) {
+        ensureOpen();
+        log("Returning digest of content {}, offset {}, length {}", hash, offset, length);
+        return contentManager.getDigest(hash, offset, length);
     }
 
     @Override

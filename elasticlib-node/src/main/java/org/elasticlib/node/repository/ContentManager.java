@@ -141,7 +141,7 @@ class ContentManager {
     public StagingInfo stageContent(Hash hash) {
         lockManager.writeLock(hash);
         try {
-            DigestBuilder digest = loadDigest(hash);
+            DigestBuilder digest = loadStagingDigest(hash);
             Guid sessionId = Guid.random();
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
@@ -154,12 +154,12 @@ class ContentManager {
         }
     }
 
-    private DigestBuilder loadDigest(Hash hash) throws IOException {
+    private DigestBuilder loadStagingDigest(Hash hash) throws IOException {
         Optional<StagingSession> session = sessions.get(hash);
         if (session.isPresent()) {
             return reuseDigest(session.get(), hash);
         }
-        DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
+        DigestBuilder digest = computeStagingDigest(hash, Long.MAX_VALUE);
         if (digest.getHash().equals(hash)) {
             throw new StagingCompletedException();
         }
@@ -218,7 +218,7 @@ class ContentManager {
         }
     }
 
-    private DigestBuilder computeDigest(Hash hash, long limit) throws IOException {
+    private DigestBuilder computeStagingDigest(Hash hash, long limit) throws IOException {
         Path path = stagingPath(hash);
         if (!Files.exists(path)) {
             return new DigestBuilder();
@@ -245,7 +245,7 @@ class ContentManager {
         }
         if (position < digest.getLength()) {
             truncate = true;
-            digest = computeDigest(hash, position);
+            digest = computeStagingDigest(hash, position);
         }
         try (RandomAccessFile file = new RandomAccessFile(stagingPath(hash).toFile(), "rw")) {
             file.seek(position);
@@ -281,7 +281,13 @@ class ContentManager {
 
     private void ensureStaged(Hash hash) throws IOException {
         Optional<StagingSession> session = sessions.get(hash);
-        DigestBuilder digest = session.isPresent() ? session.get().getDigest() : computeDigest(hash, Long.MAX_VALUE);
+        DigestBuilder digest;
+        if (session.isPresent()) {
+            digest = session.get().getDigest();
+        } else {
+            digest = computeStagingDigest(hash, Long.MAX_VALUE);
+        }
+
         if (digest.getLength() == 0) {
             throw new UnknownContentException();
         }
@@ -345,7 +351,7 @@ class ContentManager {
                 DigestBuilder digest = session.getDigest();
                 return new StagingInfo(session.getSessionId(), digest.getHash(), digest.getLength());
             }
-            DigestBuilder digest = computeDigest(hash, Long.MAX_VALUE);
+            DigestBuilder digest = computeStagingDigest(hash, Long.MAX_VALUE);
             return new StagingInfo(null, digest.getHash(), digest.getLength());
 
         } catch (IOException e) {
@@ -353,6 +359,33 @@ class ContentManager {
 
         } finally {
             lockManager.readUnlock(hash);
+        }
+    }
+
+    /**
+     * Provides the digest of a given content.
+     *
+     * @param hash Hash of the content.
+     * @return Actually computed digest.
+     */
+    public Digest getDigest(Hash hash) {
+        return getDigest(hash, 0, Long.MAX_VALUE);
+    }
+
+    /**
+     * Provides a partial digest of a given content.
+     *
+     * @param hash Hash of the content.
+     * @param offset The position of the first byte to digest, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to digest. Expected to be positive or zero.
+     * @return Actually computed digest.
+     */
+    public Digest getDigest(Hash hash, long offset, long length) {
+        try (InputStream inputStream = get(hash, offset, length)) {
+            return copyAndDigest(inputStream, sink());
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
         }
     }
 

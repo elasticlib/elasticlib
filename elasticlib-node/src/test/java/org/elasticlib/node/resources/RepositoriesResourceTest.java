@@ -39,6 +39,7 @@ import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.DigestBuilder;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.Event.EventBuilder;
@@ -83,6 +84,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     private final StagingInfo stagingInfo = new StagingInfo(guid, hash, position);
     private final CommandResult result = CommandResult.noOp(LOREM_IPSUM.getHash(), LOREM_IPSUM.getHead());
     private final RepositoryInfo repositoryInfo = new RepositoryInfo(new RepositoryDef("test", guid, path.toString()));
+    private final long offset = 100;
+    private final long length = 200;
     private final int first = 0;
     private final int size = 20;
     private final String query = "lorem ipsum";
@@ -349,9 +352,6 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void getPartialContentTest() throws IOException {
-        long offset = 100;
-        long length = 200;
-
         Repository repository = newRepositoryMock();
         when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
         when(repository.getContent(hash, offset, length)).thenReturn(LOREM_IPSUM.getInputStream(offset, length));
@@ -361,6 +361,36 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
                 InputStream expected = LOREM_IPSUM.getInputStream(offset, length)) {
 
             assertThat(content.getInputStream()).hasContentEqualTo(expected);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getDigestTest() {
+        Digest expected = LOREM_IPSUM.getDigest();
+        Repository repository = newRepositoryMock();
+        when(repository.getDigest(hash)).thenReturn(expected);
+
+        try (Client client = newClient()) {
+            Digest actual = client.repositories().get(guid).getDigest(hash);
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    /**
+     * Test.
+     */
+    @Test
+    public void getPartialDigestTest() {
+        Digest expected = LOREM_IPSUM.getDigest(offset, length);
+        Repository repository = newRepositoryMock();
+        when(repository.getDigest(hash, offset, length)).thenReturn(expected);
+
+        try (Client client = newClient()) {
+            Digest actual = client.repositories().get(guid).getDigest(hash, offset, length);
+            assertThat(actual).isEqualTo(expected);
         }
     }
 

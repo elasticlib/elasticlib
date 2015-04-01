@@ -34,6 +34,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.RepositoryDef;
@@ -132,6 +133,16 @@ public class RemoteRepository implements Repository {
             InputStream inputStream = repository().getContent(hash, offset, length).getInputStream();
             return new RemoteContent(inputStream);
         });
+    }
+
+    @Override
+    public Digest getDigest(Hash hash) {
+        return readLocked(() -> repository().getDigest(hash));
+    }
+
+    @Override
+    public Digest getDigest(Hash hash, long offset, long length) {
+        return readLocked(() -> repository().getDigest(hash, offset, length));
     }
 
     @Override

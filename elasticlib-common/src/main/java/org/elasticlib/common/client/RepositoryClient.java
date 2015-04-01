@@ -41,6 +41,7 @@ import org.elasticlib.common.hash.Hash;
 import static org.elasticlib.common.json.JsonWriting.write;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.RepositoryInfo;
@@ -65,6 +66,7 @@ public class RepositoryClient {
     private static final String STAGE_TEMPLATE = "stage/{hash}";
     private static final String WRITE_TEMPLATE = "stage/{hash}/{sessionId}";
     private static final String CONTENTS_TEMPLATE = "contents/{hash}";
+    private static final String DIGEST_TEMPLATE = "digests/{hash}";
     private static final String REVISIONS_TEMPLATE = "revisions/{hash}";
     private static final String SESSION_ID = "sessionId";
     private static final String POSITION = "position";
@@ -73,6 +75,8 @@ public class RepositoryClient {
     private static final String HEAD = "head";
     private static final String CONTENT_DISPOSITION = "Content-Disposition";
     private static final String FILENAME = "filename";
+    private static final String OFFSET = "offset";
+    private static final String LENGTH = "length";
     private static final String QUERY = "query";
     private static final String FROM = "from";
     private static final String SIZE = "size";
@@ -303,6 +307,10 @@ public class RepositoryClient {
                 .header(HttpHeaders.RANGE, range(offset, length)));
     }
 
+    private static String range(long offset, long length) {
+        return String.format("bytes=%d-%d", offset, offset + length - 1);
+    }
+
     private static Content getContent(Invocation.Builder invocation) {
         Response response = invocation.get();
 
@@ -311,10 +319,6 @@ public class RepositoryClient {
                            response.getMediaType(),
                            response.getLength(),
                            response.readEntity(InputStream.class));
-    }
-
-    private static String range(long offset, long length) {
-        return String.format("bytes=%d-%d", offset, offset + length - 1);
     }
 
     private static Optional<String> fileName(Response response) {
@@ -336,6 +340,43 @@ public class RepositoryClient {
                 .trimResults()
                 .omitEmptyStrings()
                 .splitToList(text);
+    }
+
+    /**
+     * Provides the digest of a content of this repository.
+     *
+     * @param hash Hash of the content.
+     * @return Actually computed digest of this content.
+     */
+    public Digest getDigest(Hash hash) {
+        Response response = resource.path(DIGEST_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .request()
+                .get();
+
+        return read(response, Digest.class);
+    }
+
+    /**
+     * Provides a partial digest of a content of this repository.
+     *
+     * @param hash Hash of the content.
+     * @param offset The position of the first byte to digest, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to digest. Expected to be positive or zero.
+     * @return Actually computed digest.
+     */
+    public Digest getDigest(Hash hash, long offset, long length) {
+        checkArgument(offset >= 0, "Offset is negative");
+        checkArgument(length >= 0, "Length is negative");
+
+        Response response = resource.path(DIGEST_TEMPLATE)
+                .resolveTemplate(HASH, hash)
+                .queryParam(OFFSET, offset)
+                .queryParam(LENGTH, length)
+                .request()
+                .get();
+
+        return read(response, Digest.class);
     }
 
     /**

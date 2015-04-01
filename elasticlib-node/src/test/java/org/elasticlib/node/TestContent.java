@@ -33,6 +33,7 @@ import org.elasticlib.common.model.Revision.RevisionBuilder;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.RevisionTree.RevisionTreeBuilder;
 import static org.elasticlib.common.util.IoUtil.copyAndDigest;
+import static org.elasticlib.common.util.SinkOutputStream.sink;
 import org.elasticlib.common.value.Value;
 
 /**
@@ -164,6 +165,29 @@ public final class TestContent {
      */
     public long getLength() {
         return tree.getLength();
+    }
+
+    /**
+     * @return This content's digest.
+     */
+    public Digest getDigest() {
+        return new Digest(getHash(), getLength());
+    }
+
+    /**
+     * Provides a partial digest of this content.
+     *
+     * @return A new computed digest instance.
+     * @param offset The position of first byte to digest, inclusive. Expected to be positive or zero.
+     * @param length The amount of bytes to digest. Expected to be positive or zero.
+     */
+    public Digest getDigest(long offset, long length) {
+        try (InputStream input = getInputStream(offset, length)) {
+            return copyAndDigest(input, sink());
+
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**

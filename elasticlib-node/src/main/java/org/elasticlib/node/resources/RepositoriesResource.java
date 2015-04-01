@@ -54,6 +54,7 @@ import static org.elasticlib.common.json.JsonValidation.isValid;
 import org.elasticlib.common.metadata.Properties.Common;
 import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
+import org.elasticlib.common.model.Digest;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.IndexEntry;
 import org.elasticlib.common.model.RepositoryInfo;
@@ -82,6 +83,8 @@ public class RepositoriesResource {
     private static final String POSITION = "position";
     private static final String HEAD = "head";
     private static final String CONTENT = "content";
+    private static final String OFFSET = "offset";
+    private static final String LENGTH = "length";
     private static final String QUERY = "query";
     private static final String SORT = "sort";
     private static final String FROM = "from";
@@ -401,6 +404,41 @@ public class RepositoriesResource {
     }
 
     /**
+     * Provides digest of a content.
+     * <p>
+     * Response:<br>
+     * - 200 OK: Operation succeeded.<br>
+     * - 404 NOT FOUND: Repository or content was not found.<br>
+     * - 503 SERVICE UNAVAILABLE: Repository is not started.
+     *
+     * @param repositoryKey repository name or encoded GUID
+     * @param hash content hash
+     * @param offset The position of the first byte to digest, inclusive. Optional. Expected to be positive or zero.
+     * @param length The amount of bytes to digest. Optional. Expected to be positive or zero.
+     * @return Corresponding digest
+     */
+    @GET
+    @Path("{repository}/digests/{hash}")
+    public Digest getDigest(@PathParam(REPOSITORY) String repositoryKey,
+                            @PathParam(HASH) Hash hash,
+                            @QueryParam(OFFSET) Long offset,
+                            @QueryParam(LENGTH) Long length) {
+
+        if (offset == null && length == null) {
+            return repository(repositoryKey).getDigest(hash);
+        }
+        long off = unbox(OFFSET, offset, 0);
+        long len = unbox(LENGTH, length, Long.MAX_VALUE);
+        return repository(repositoryKey).getDigest(hash, off, len);
+    }
+
+    private static long unbox(String name, Long value, long defaultValue) {
+        long unboxed = value != null ? value : defaultValue;
+        check(unboxed >= 0, name + " has to be a positive value");
+        return unboxed;
+    }
+
+    /**
      * Provides a given content.
      * <p>
      * Response:<br>
@@ -612,6 +650,12 @@ public class RepositoriesResource {
 
     private Repository repository(String name) {
         return repositoriesService.getRepository(name);
+    }
+
+    private static void check(boolean expression, String message) {
+        if (!expression) {
+            throw new BadRequestException(message);
+        }
     }
 
     private static BadRequestException newInvalidJsonException() {

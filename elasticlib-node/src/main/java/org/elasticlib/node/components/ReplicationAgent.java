@@ -26,8 +26,6 @@ import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
-import static org.elasticlib.common.util.IoUtil.copyAndDigest;
-import static org.elasticlib.common.util.SinkOutputStream.sink;
 import org.elasticlib.node.repository.Agent;
 import org.elasticlib.node.repository.Repository;
 
@@ -93,12 +91,10 @@ class ReplicationAgent extends Agent {
         if (stagingInfo.getLength() == 0) {
             return stagingInfo;
         }
-        try (InputStream inputStream = source.getContent(content, 0, stagingInfo.getLength())) {
-            Hash expected = stagingInfo.getHash();
-            Hash actual = copyAndDigest(inputStream, sink()).getHash();
+        Hash expected = stagingInfo.getHash();
+        Hash actual = source.getDigest(content, 0, stagingInfo.getLength()).getHash();
 
-            return expected.equals(actual) ? stagingInfo : new StagingInfo(stagingInfo.getSessionId(), null, 0L);
-        }
+        return expected.equals(actual) ? stagingInfo : new StagingInfo(stagingInfo.getSessionId(), null, 0L);
     }
 
     private StagingInfo writeChunk(Hash content, long totalLength, StagingInfo stagingInfo) throws IOException {

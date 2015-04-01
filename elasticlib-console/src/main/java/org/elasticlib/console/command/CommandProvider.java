@@ -54,6 +54,7 @@ final class CommandProvider {
                                                                          new Update(),
                                                                          new Delete(),
                                                                          new Get(),
+                                                                         new Digest(),
                                                                          new Revisions(),
                                                                          new Head(),
                                                                          new Tree(),

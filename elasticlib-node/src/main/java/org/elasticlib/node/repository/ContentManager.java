@@ -19,11 +19,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import static java.nio.file.Files.newOutputStream;
 import java.nio.file.Path;
 import java.util.Deque;
 import java.util.Optional;
@@ -293,27 +291,6 @@ class ContentManager {
         }
         if (!digest.getHash().equals(hash)) {
             throw new IntegrityCheckingFailedException();
-        }
-    }
-
-    /**
-     * Stores a new content.
-     *
-     * @param hash Content hash.
-     * @param source Content bytes.
-     */
-    public void add(Hash hash, InputStream source) {
-        lockManager.writeLock(hash);
-        try (OutputStream target = newOutputStream(contentPath(hash))) {
-            Digest digest = copyAndDigest(source, target);
-            if (!hash.equals(digest.getHash())) {
-                throw new IntegrityCheckingFailedException();
-            }
-        } catch (IOException e) {
-            throw new IOFailureException(e);
-
-        } finally {
-            lockManager.writeUnlock(hash);
         }
     }
 

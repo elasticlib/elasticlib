@@ -160,6 +160,7 @@ public class RepositoriesService {
      * @return Corresponding repository
      */
     public Repository getRepository(String key) {
+        LOG.info("Returning repository {}", key);
         return storageManager.inTransaction(() -> localRepositoriesPool.getRepository(key));
     }
 }

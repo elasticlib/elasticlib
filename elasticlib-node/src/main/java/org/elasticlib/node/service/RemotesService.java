@@ -15,6 +15,7 @@
  */
 package org.elasticlib.node.service;
 
+import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
@@ -139,12 +140,12 @@ public class RemotesService {
      * @param expected Remote node GUID.
      */
     public void saveRemote(List<URI> uris, Guid expected) {
+        LOG.info("Saving remote node {} at [{}]", expected, on(", ").join(uris));
         if (expected.equals(nodeGuidProvider.guid()) || isAlreadyStored(expected)) {
             return;
         }
         Optional<RemoteInfo> info = nodePingHandler.ping(uris, expected);
         if (info.isPresent()) {
-            LOG.info("Saving remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
@@ -164,9 +165,9 @@ public class RemotesService {
      * @param uri Remote node URI.
      */
     public void saveRemote(URI uri) {
+        LOG.info("Saving remote node at [{}]", uri);
         Optional<RemoteInfo> info = nodePingHandler.ping(uri);
         if (info.isPresent() && !info.get().getGuid().equals(nodeGuidProvider.guid())) {
-            LOG.info("Saving remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
         }
     }
@@ -178,12 +179,12 @@ public class RemotesService {
      * @param uris URI(s) of the remote node.
      */
     public void addRemote(List<URI> uris) {
+        LOG.info("Adding remote node at [{}]", on(", ").join(uris));
         Optional<RemoteInfo> info = nodePingHandler.ping(uris);
         if (info.isPresent()) {
             if (info.get().getGuid().equals(nodeGuidProvider.guid())) {
                 throw new SelfTrackingException();
             }
-            LOG.info("Adding remote node {}", info.get().getName());
             storageManager.inTransaction(() -> remotesDao.createRemoteInfo(info.get()));
             return;
         }

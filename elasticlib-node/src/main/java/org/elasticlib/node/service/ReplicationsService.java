@@ -210,6 +210,7 @@ public class ReplicationsService {
     }
 
     private void signalAgents(Guid repositoryGuid) {
+        LOG.info("Signaling agents for repository {}", repositoryGuid);
         lock.readLock().lock();
         try {
             storageManager.inTransaction(() -> {
@@ -224,6 +225,7 @@ public class ReplicationsService {
     }
 
     private void startReplications(Guid repositoryGuid) {
+        LOG.info("Starting replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
@@ -236,6 +238,7 @@ public class ReplicationsService {
     }
 
     private void stopReplications(Guid repositoryGuid) {
+        LOG.info("Stopping replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {
@@ -250,6 +253,7 @@ public class ReplicationsService {
     }
 
     private void deleteReplications(Guid repositoryGuid) {
+        LOG.info("Deleting replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {
             storageManager.inTransaction(() -> {

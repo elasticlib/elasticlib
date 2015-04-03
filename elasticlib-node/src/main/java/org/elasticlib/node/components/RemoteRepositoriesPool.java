@@ -201,7 +201,12 @@ public class RemoteRepositoriesPool {
         return String.join(SEPARATOR, remoteInfo.getName(), repositoryName);
     }
 
-    private synchronized void tryCloseRepository(Guid guid) {
+    /**
+     * Closes repository matching supplied GUID, if any.
+     *
+     * @param guid Repository GUID.
+     */
+    public synchronized void tryCloseRepository(Guid guid) {
         if (!repositories.containsKey(guid)) {
             return;
         }

@@ -209,7 +209,12 @@ public class ReplicationsService {
                 .build();
     }
 
-    private void signalAgents(Guid repositoryGuid) {
+    /**
+     * Signals agents of all replications from a given repository.
+     *
+     * @param repositoryGuid Repository GUID.
+     */
+    public void signalAgents(Guid repositoryGuid) {
         LOG.info("Signaling agents for repository {}", repositoryGuid);
         lock.readLock().lock();
         try {
@@ -224,7 +229,12 @@ public class ReplicationsService {
         }
     }
 
-    private void startReplications(Guid repositoryGuid) {
+    /**
+     * Starts all replications from or to a given repository
+     *
+     * @param repositoryGuid Repository GUID.
+     */
+    public void startReplications(Guid repositoryGuid) {
         LOG.info("Starting replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {
@@ -237,7 +247,12 @@ public class ReplicationsService {
         }
     }
 
-    private void stopReplications(Guid repositoryGuid) {
+    /**
+     * Stops all replications from or to a given repository
+     *
+     * @param repositoryGuid Repository GUID.
+     */
+    public void stopReplications(Guid repositoryGuid) {
         LOG.info("Stopping replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {
@@ -252,7 +267,12 @@ public class ReplicationsService {
         }
     }
 
-    private void deleteReplications(Guid repositoryGuid) {
+    /**
+     * Deletes all replications from or to a given repository
+     *
+     * @param repositoryGuid Repository GUID.
+     */
+    public void deleteReplications(Guid repositoryGuid) {
         LOG.info("Deleting replications for repository {}", repositoryGuid);
         lock.writeLock().lock();
         try {

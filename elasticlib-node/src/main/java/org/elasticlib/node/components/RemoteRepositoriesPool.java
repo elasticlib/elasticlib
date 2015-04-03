@@ -186,9 +186,19 @@ public class RemoteRepositoriesPool {
         if (!repositories.containsKey(guid)) {
             Client client = new Client(remoteInfo.getTransportUri(),
                                        new ClientLoggingHandler(getLogger(RemoteRepository.class)));
-            repositories.put(guid, new RemoteRepository(client, guid));
+            repositories.put(guid, new RemoteRepository(client, repositoryName(remoteInfo, guid), guid));
         }
         return repositories.get(guid);
+    }
+
+    private static String repositoryName(RemoteInfo remoteInfo, Guid guid) {
+        String repositoryName = repositoryDefs(remoteInfo)
+                .filter(x -> x.getGuid().equals(guid))
+                .map(RepositoryDef::getName)
+                .findFirst()
+                .get();
+
+        return String.join(SEPARATOR, remoteInfo.getName(), repositoryName);
     }
 
     private synchronized void tryCloseRepository(Guid guid) {

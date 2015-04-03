@@ -174,6 +174,7 @@ public class LocalRepository implements Repository {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
+        log("Closing");
         indexingAgent.stop();
         statsAgent.stop();
         index.close();
@@ -380,13 +381,14 @@ public class LocalRepository implements Repository {
     @Override
     public List<Event> history(boolean chronological, long first, int number) {
         ensureOpen();
-        log("Returning history{}, first {}, count {}", chronological ? "" : ", reverse", first, number);
+        log("Returning history, {}, first {}, number {}", chronological ? "asc" : "desc", first, number);
         return storageManager.inTransaction(() -> historyManager.history(chronological, first, number));
     }
 
     @Override
     public List<IndexEntry> find(String query, int first, int number) {
         ensureOpen();
+        log("Returning index entries for '{}', first {}, number {}", query, first, number);
         return index.find(query, first, number);
     }
 

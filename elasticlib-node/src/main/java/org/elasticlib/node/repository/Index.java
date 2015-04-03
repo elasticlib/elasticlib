@@ -317,7 +317,6 @@ class Index {
      * @return A list of content hashes.
      */
     public List<IndexEntry> find(String query, int first, int number) {
-        LOG.info("[{}] Finding {}, first {}, count {}", name, query, first, number);
         try {
             if (first < 0) {
                 number += first;

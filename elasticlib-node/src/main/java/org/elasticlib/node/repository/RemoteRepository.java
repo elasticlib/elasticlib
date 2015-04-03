@@ -15,8 +15,10 @@
  */
 package org.elasticlib.node.repository;
 
+import static com.google.common.base.Joiner.on;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.String.join;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.List;
@@ -42,13 +44,18 @@ import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * View of a remote repository.
  */
 public class RemoteRepository implements Repository {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RemoteRepository.class);
+
     private final Client client;
+    private final String name;
     private final Guid guid;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private boolean closed = false;
@@ -57,36 +64,51 @@ public class RemoteRepository implements Repository {
      * Constructor.
      *
      * @param client HTTP client on the remote repository.
+     * @param name Remote repository name.
      * @param guid Remote repository GUID.
      */
-    public RemoteRepository(Client client, Guid guid) {
+    public RemoteRepository(Client client, String name, Guid guid) {
         this.client = client;
+        this.name = name;
         this.guid = guid;
     }
 
     @Override
     public RepositoryDef getDef() {
-        return readLocked(() -> getInfo().getDef());
+        return readLocked(() -> {
+            log("Returning repository def");
+            return getInfo().getDef();
+        });
     }
 
     @Override
     public RepositoryInfo getInfo() {
-        return readLocked(() -> repository().getInfo());
+        return readLocked(() -> {
+            log("Returning repository info");
+            return repository().getInfo();
+        });
     }
 
     @Override
     public StagingInfo stageContent(Hash hash) {
-        return readLocked(() -> repository().stageContent(hash));
+        return readLocked(() -> {
+            log("Staging content {}", hash);
+            return repository().stageContent(hash);
+        });
     }
 
     @Override
     public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position) {
-        return readLocked(() -> repository().writeContent(hash, sessionId, source, position));
+        return readLocked(() -> {
+            log("Writing to staged content {}", hash);
+            return repository().writeContent(hash, sessionId, source, position);
+        });
     }
 
     @Override
     public void unstageContent(Hash hash, Guid sessionId) {
         readLocked(() -> {
+            log("Ending staging staging session {}", sessionId);
             repository().unstageContent(hash, sessionId);
             return null;
         });
@@ -94,42 +116,64 @@ public class RemoteRepository implements Repository {
 
     @Override
     public CommandResult addRevision(Revision revision) {
-        return readLocked(() -> repository().addRevision(revision));
+        return readLocked(() -> {
+            log("Adding revision to {}, with head {}", revision.getContent(), revision.getParents());
+            return repository().addRevision(revision);
+        });
     }
 
     @Override
     public CommandResult mergeTree(RevisionTree tree) {
-        return readLocked(() -> repository().mergeTree(tree));
+        return readLocked(() -> {
+            log("Merging revision tree of {}", tree.getContent());
+            return repository().mergeTree(tree);
+        });
     }
 
     @Override
     public CommandResult deleteContent(Hash hash, SortedSet<Hash> head) {
-        return readLocked(() -> repository().deleteContent(hash, head));
+        return readLocked(() -> {
+            log("Deleting content {}, with head {}", hash, head);
+            return repository().deleteContent(hash, head);
+        });
     }
 
     @Override
     public ContentInfo getContentInfo(Hash hash) {
-        return readLocked(() -> repository().getContentInfo(hash));
+        return readLocked(() -> {
+            log("Returning content info of {}", hash);
+            return repository().getContentInfo(hash);
+        });
     }
 
     @Override
     public RevisionTree getTree(Hash hash) {
-        return readLocked(() -> repository().getTree(hash));
+        return readLocked(() -> {
+            log("Returning revision tree of {}", hash);
+            return repository().getTree(hash);
+        });
     }
 
     @Override
     public List<Revision> getHead(Hash hash) {
-        return readLocked(() -> repository().getHead(hash));
+        return readLocked(() -> {
+            log("Returning head revisions of {}", hash);
+            return repository().getHead(hash);
+        });
     }
 
     @Override
     public List<Revision> getRevisions(Hash hash, Collection<Hash> revs) {
-        return readLocked(() -> repository().getRevisions(hash, revs));
+        return readLocked(() -> {
+            log("Returning revisions of {} [{}]", hash, on(", ").join(revs));
+            return repository().getRevisions(hash, revs);
+        });
     }
 
     @Override
     public InputStream getContent(Hash hash, long offset, long length) {
         return readLocked(() -> {
+            log("Returning content {}, offset {}, length {}", hash, offset, length);
             InputStream inputStream = repository().getContent(hash, offset, length).getInputStream();
             return new RemoteContent(inputStream);
         });
@@ -137,22 +181,34 @@ public class RemoteRepository implements Repository {
 
     @Override
     public Digest getDigest(Hash hash) {
-        return readLocked(() -> repository().getDigest(hash));
+        return readLocked(() -> {
+            log("Returning digest of content {}", hash);
+            return repository().getDigest(hash);
+        });
     }
 
     @Override
     public Digest getDigest(Hash hash, long offset, long length) {
-        return readLocked(() -> repository().getDigest(hash, offset, length));
+        return readLocked(() -> {
+            log("Returning digest of content {}, offset {}, length {}", hash, offset, length);
+            return repository().getDigest(hash, offset, length);
+        });
     }
 
     @Override
     public List<Event> history(boolean chronological, long first, int number) {
-        return readLocked(() -> repository().history(chronological, first, number));
+        return readLocked(() -> {
+            log("Returning history, {}, first {}, number {}", chronological ? "asc" : "desc", first, number);
+            return repository().history(chronological, first, number);
+        });
     }
 
     @Override
     public List<IndexEntry> find(String query, int first, int number) {
-        return readLocked(() -> repository().find(query, first, number));
+        return readLocked(() -> {
+            log("Returning index entries for '{}', first {}, number {}", query, first, number);
+            return repository().find(query, first, number);
+        });
     }
 
     private RepositoryClient repository() {
@@ -185,12 +241,20 @@ public class RemoteRepository implements Repository {
             if (closed) {
                 return;
             }
+            log("Closing");
             closed = true;
             client.close();
 
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    private void log(String format, Object... args) {
+        if (!LOG.isInfoEnabled()) {
+            return;
+        }
+        LOG.info(join("", "[", name, "] ", format), args);
     }
 
     /**

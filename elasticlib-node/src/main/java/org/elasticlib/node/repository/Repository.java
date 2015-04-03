@@ -42,14 +42,14 @@ public interface Repository {
      *
      * @return A RepositoryDef instance.
      */
-    public RepositoryDef getDef();
+    RepositoryDef getDef();
 
     /**
      * Provides various info about this repository.
      *
      * @return A RepositoryInfo instance.
      */
-    public RepositoryInfo getInfo();
+    RepositoryInfo getInfo();
 
     /**
      * Prepares to add a new content in this repository.
@@ -57,7 +57,7 @@ public interface Repository {
      * @param hash Hash of the content to be added latter.
      * @return Info about the staging session created.
      */
-    public StagingInfo stageContent(Hash hash);
+    StagingInfo stageContent(Hash hash);
 
     /**
      * Writes bytes to a staged content.
@@ -68,7 +68,7 @@ public interface Repository {
      * @param position Position in staged content at which write should begin.
      * @return Updated info of the staging session.
      */
-    public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position);
+    StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position);
 
     /**
      * Terminates a content staging session. Actually, this only releases the session, but leaves staged content as it.
@@ -77,7 +77,7 @@ public interface Repository {
      * @param hash Hash of the staged content (when staging is completed).
      * @param sessionId Staging session identifier.
      */
-    public void unstageContent(Hash hash, Guid sessionId);
+    void unstageContent(Hash hash, Guid sessionId);
 
     /**
      * Adds a revision. If associated content is not present, started transaction is suspended so that caller may latter
@@ -86,7 +86,7 @@ public interface Repository {
      * @param revision revision.
      * @return Actual operation result.
      */
-    public CommandResult addRevision(Revision revision);
+    CommandResult addRevision(Revision revision);
 
     /**
      * Merges supplied revision tree with existing one, if any. If associated content is not present, started
@@ -95,7 +95,7 @@ public interface Repository {
      * @param tree Revision tree.
      * @return Actual operation result.
      */
-    public CommandResult mergeTree(RevisionTree tree);
+    CommandResult mergeTree(RevisionTree tree);
 
     /**
      * Deletes a content.
@@ -104,7 +104,7 @@ public interface Repository {
      * @param head Hashes of expected head revisions of the info associated with the content.
      * @return Actual operation result.
      */
-    public CommandResult deleteContent(Hash hash, SortedSet<Hash> head);
+    CommandResult deleteContent(Hash hash, SortedSet<Hash> head);
 
     /**
      * Provides info about a given content.
@@ -112,7 +112,7 @@ public interface Repository {
      * @param hash Hash of the content.
      * @return Corresponding content info.
      */
-    public ContentInfo getContentInfo(Hash hash);
+    ContentInfo getContentInfo(Hash hash);
 
     /**
      * Provides revision tree associated with supplied hash.
@@ -120,7 +120,7 @@ public interface Repository {
      * @param hash Hash of the content.
      * @return Corresponding revision tree.
      */
-    public RevisionTree getTree(Hash hash);
+    RevisionTree getTree(Hash hash);
 
     /**
      * Provides head revisions associated with supplied hash.
@@ -128,7 +128,7 @@ public interface Repository {
      * @param hash Hash of the content.
      * @return Corresponding head revisions.
      */
-    public List<Revision> getHead(Hash hash);
+    List<Revision> getHead(Hash hash);
 
     /**
      * Provides requested revisions associated with supplied hash.
@@ -137,7 +137,7 @@ public interface Repository {
      * @param revs Hash of the revisions to return.
      * @return Corresponding revisions.
      */
-    public List<Revision> getRevisions(Hash hash, Collection<Hash> revs);
+    List<Revision> getRevisions(Hash hash, Collection<Hash> revs);
 
     /**
      * Provides an input stream on a content in this repository.
@@ -147,7 +147,7 @@ public interface Repository {
      * @param length The maximum amount of bytes to returns. Expected to be positive or zero.
      * @return An input stream on this content.
      */
-    public InputStream getContent(Hash hash, long offset, long length);
+    InputStream getContent(Hash hash, long offset, long length);
 
     /**
      * Provides the digest of a content in this repository.
@@ -155,7 +155,7 @@ public interface Repository {
      * @param hash Hash of the content.
      * @return Actually computed digest of this content.
      */
-    public Digest getDigest(Hash hash);
+    Digest getDigest(Hash hash);
 
     /**
      * Provides a partial digest of a content in this repository.
@@ -165,7 +165,7 @@ public interface Repository {
      * @param length The amount of bytes to digest. Expected to be positive or zero.
      * @return Actually computed digest.
      */
-    public Digest getDigest(Hash hash, long offset, long length);
+    Digest getDigest(Hash hash, long offset, long length);
 
     /**
      * Provides a paginated view of the history of this repository.
@@ -175,7 +175,7 @@ public interface Repository {
      * @param number Number of events to return.
      * @return A list of events.
      */
-    public List<Event> history(boolean chronological, long first, int number);
+    List<Event> history(boolean chronological, long first, int number);
 
     /**
      * Finds index entries matching supplied query.
@@ -185,11 +185,11 @@ public interface Repository {
      * @param number Number of results to return.
      * @return A list of content hashes.
      */
-    public List<IndexEntry> find(String query, int first, int number);
+    List<IndexEntry> find(String query, int first, int number);
 
     /**
      * Close this repository, releasing underlying resources. Does nothing if it already closed. Any latter operation
      * will fail.
      */
-    public void close();
+    void close();
 }

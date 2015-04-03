@@ -32,8 +32,7 @@ import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.Revision.RevisionBuilder;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.RevisionTree.RevisionTreeBuilder;
-import static org.elasticlib.common.util.IoUtil.copyAndDigest;
-import static org.elasticlib.common.util.SinkOutputStream.sink;
+import static org.elasticlib.common.util.IoUtil.copy;
 import org.elasticlib.common.value.Value;
 
 /**
@@ -57,20 +56,24 @@ public final class TestContent {
      * @return A content on this resource.
      */
     public static TestContent of(String filename, String contentType) {
-        try (InputStream inputStream = currentThread().getContextClassLoader().getResourceAsStream(filename);
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        byte[] bytes = readFromClassPath(filename);
+        Digest digest = Digest.of(bytes);
+        Revision revision = new RevisionBuilder()
+                .withLength(digest.getLength())
+                .withContent(digest.getHash())
+                .with(FILE_NAME.key(), Value.of(filename))
+                .with(CONTENT_TYPE.key(), Value.of(contentType))
+                .computeRevisionAndBuild();
 
-            Digest digest = copyAndDigest(inputStream, outputStream);
+        return new TestContent(bytes, new RevisionTreeBuilder().add(revision).build());
+    }
 
-            Revision revision = new RevisionBuilder()
-                    .withLength(digest.getLength())
-                    .withContent(digest.getHash())
-                    .with(FILE_NAME.key(), Value.of(filename))
-                    .with(CONTENT_TYPE.key(), Value.of(contentType))
-                    .computeRevisionAndBuild();
+    private static byte[] readFromClassPath(String filename) {
+        try (InputStream input = currentThread().getContextClassLoader().getResourceAsStream(filename);
+                ByteArrayOutputStream output = new ByteArrayOutputStream()) {
 
-            return new TestContent(outputStream.toByteArray(),
-                                   new RevisionTreeBuilder().add(revision).build());
+            copy(input, output);
+            return output.toByteArray();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -183,7 +186,7 @@ public final class TestContent {
      */
     public Digest getDigest(long offset, long length) {
         try (InputStream input = getInputStream(offset, length)) {
-            return copyAndDigest(input, sink());
+            return Digest.of(input);
 
         } catch (IOException e) {
             throw new AssertionError(e);

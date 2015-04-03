@@ -37,12 +37,11 @@ import org.elasticlib.common.exception.UnknownContentException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.Digest;
-import org.elasticlib.common.model.DigestBuilder;
+import org.elasticlib.common.model.DigestOutputStream;
 import org.elasticlib.common.model.StagingInfo;
 import org.elasticlib.common.util.BoundedInputStream;
-import static org.elasticlib.common.util.IoUtil.copyAndDigest;
+import static org.elasticlib.common.util.IoUtil.copy;
 import org.elasticlib.common.util.RandomAccessFileOutputStream;
-import static org.elasticlib.common.util.SinkOutputStream.sink;
 import org.elasticlib.node.manager.task.TaskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +138,7 @@ class ContentManager {
     public StagingInfo stageContent(Hash hash) {
         lockManager.writeLock(hash);
         try {
-            DigestBuilder digest = loadStagingDigest(hash);
+            DigestOutputStream digest = loadStagingDigest(hash);
             Guid sessionId = Guid.random();
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
@@ -152,19 +151,19 @@ class ContentManager {
         }
     }
 
-    private DigestBuilder loadStagingDigest(Hash hash) throws IOException {
+    private DigestOutputStream loadStagingDigest(Hash hash) throws IOException {
         Optional<StagingSession> session = sessions.get(hash);
         if (session.isPresent()) {
             return reuseDigest(session.get(), hash);
         }
-        DigestBuilder digest = computeStagingDigest(hash, Long.MAX_VALUE);
+        DigestOutputStream digest = computeStagingDigest(hash, Long.MAX_VALUE);
         if (digest.getHash().equals(hash)) {
             throw new StagingCompletedException();
         }
         return digest;
     }
 
-    private static DigestBuilder reuseDigest(StagingSession session, Hash hash) {
+    private static DigestOutputStream reuseDigest(StagingSession session, Hash hash) {
         if (session.getDigest().getHash().equals(hash)) {
             throw new StagingCompletedException();
         }
@@ -187,7 +186,7 @@ class ContentManager {
         lockManager.writeLock(hash);
         try {
             StagingSession session = sessions.load(hash, sessionId);
-            DigestBuilder digest = write(hash, session, source, position);
+            DigestOutputStream digest = write(hash, session, source, position);
 
             sessions.save(hash, new StagingSession(sessionId, digest));
             return new StagingInfo(sessionId, digest.getHash(), digest.getLength());
@@ -216,23 +215,23 @@ class ContentManager {
         }
     }
 
-    private DigestBuilder computeStagingDigest(Hash hash, long limit) throws IOException {
+    private DigestOutputStream computeStagingDigest(Hash hash, long limit) throws IOException {
         Path path = stagingPath(hash);
         if (!Files.exists(path)) {
-            return new DigestBuilder();
+            return new DigestOutputStream();
         }
-        try (InputStream inputStream = Files.newInputStream(path)) {
-            DigestBuilder builder = new DigestBuilder();
-            copyAndDigest(new BoundedInputStream(inputStream, limit), sink(), builder);
-            return builder;
+        try (InputStream input = Files.newInputStream(path)) {
+            DigestOutputStream output = new DigestOutputStream();
+            copy(new BoundedInputStream(input, limit), output);
+            return output;
         }
     }
 
-    private DigestBuilder write(Hash hash,
-                                StagingSession session,
-                                InputStream source,
-                                long position) throws IOException {
-        DigestBuilder digest = session.getDigest();
+    private DigestOutputStream write(Hash hash,
+                                     StagingSession session,
+                                     InputStream source,
+                                     long position) throws IOException {
+        DigestOutputStream digest = session.getDigest();
         boolean truncate = false;
 
         if (digest.getHash().equals(hash)) {
@@ -247,7 +246,7 @@ class ContentManager {
         }
         try (RandomAccessFile file = new RandomAccessFile(stagingPath(hash).toFile(), "rw")) {
             file.seek(position);
-            copyAndDigest(source, new RandomAccessFileOutputStream(file), digest);
+            copy(source, new RandomAccessFileOutputStream(file), digest);
             if (truncate) {
                 try (FileChannel channel = file.getChannel()) {
                     channel.truncate(digest.getLength());
@@ -279,7 +278,7 @@ class ContentManager {
 
     private void ensureStaged(Hash hash) throws IOException {
         Optional<StagingSession> session = sessions.get(hash);
-        DigestBuilder digest;
+        DigestOutputStream digest;
         if (session.isPresent()) {
             digest = session.get().getDigest();
         } else {
@@ -325,10 +324,10 @@ class ContentManager {
             Optional<StagingSession> sessionOpt = sessions.get(hash);
             if (sessionOpt.isPresent()) {
                 StagingSession session = sessionOpt.get();
-                DigestBuilder digest = session.getDigest();
+                DigestOutputStream digest = session.getDigest();
                 return new StagingInfo(session.getSessionId(), digest.getHash(), digest.getLength());
             }
-            DigestBuilder digest = computeStagingDigest(hash, Long.MAX_VALUE);
+            DigestOutputStream digest = computeStagingDigest(hash, Long.MAX_VALUE);
             return new StagingInfo(null, digest.getHash(), digest.getLength());
 
         } catch (IOException e) {
@@ -359,7 +358,7 @@ class ContentManager {
      */
     public Digest getDigest(Hash hash, long offset, long length) {
         try (InputStream inputStream = get(hash, offset, length)) {
-            return copyAndDigest(inputStream, sink());
+            return Digest.of(inputStream);
 
         } catch (IOException e) {
             throw new AssertionError(e);

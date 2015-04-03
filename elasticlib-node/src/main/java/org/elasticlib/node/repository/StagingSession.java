@@ -16,7 +16,7 @@
 package org.elasticlib.node.repository;
 
 import org.elasticlib.common.hash.Guid;
-import org.elasticlib.common.model.DigestBuilder;
+import org.elasticlib.common.model.DigestOutputStream;
 
 /**
  * Represents a content staging session.
@@ -24,7 +24,7 @@ import org.elasticlib.common.model.DigestBuilder;
 class StagingSession {
 
     private final Guid sessionId;
-    private final DigestBuilder digest;
+    private final DigestOutputStream digest;
 
     /**
      * Constructor.
@@ -32,7 +32,7 @@ class StagingSession {
      * @param sessionId Staging session identifier.
      * @param digest Current digest.
      */
-    public StagingSession(Guid sessionId, DigestBuilder digest) {
+    public StagingSession(Guid sessionId, DigestOutputStream digest) {
         this.sessionId = sessionId;
         this.digest = digest;
     }
@@ -47,7 +47,7 @@ class StagingSession {
     /**
      * @return Current digest of this session.
      */
-    public DigestBuilder getDigest() {
+    public DigestOutputStream getDigest() {
         return digest;
     }
 }

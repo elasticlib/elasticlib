@@ -16,12 +16,15 @@
 package org.elasticlib.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import static java.util.Objects.hash;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.mappable.MapBuilder;
 import org.elasticlib.common.mappable.Mappable;
 import org.elasticlib.common.util.EqualsBuilder;
+import static org.elasticlib.common.util.IoUtil.copy;
 import org.elasticlib.common.value.Value;
 
 /**
@@ -68,13 +71,38 @@ public class Digest implements Mappable {
     }
 
     /**
-     * Read a new instance from supplied map of values.
+     * Reads a new instance from supplied map of values.
      *
      * @param map A map of values.
      * @return A new instance.
      */
     public static Digest fromMap(Map<String, Value> map) {
         return new Digest(map.get(HASH).asHash(), map.get(LENGTH).asLong());
+    }
+
+    /**
+     * Creates a digest by consuming supplied input.
+     *
+     * @param input An input stream.
+     * @return A new Digest instance.
+     * @throws IOException If an IO error happens.
+     */
+    public static Digest of(InputStream input) throws IOException {
+        DigestOutputStream output = new DigestOutputStream();
+        copy(input, output);
+        return output.getDigest();
+    }
+
+    /**
+     * Provides a digest of supplied bytes.
+     *
+     * @param bytes Some bytes.
+     * @return A new Digest instance.
+     */
+    public static Digest of(byte[] bytes) {
+        DigestOutputStream output = new DigestOutputStream();
+        output.write(bytes, 0, bytes.length);
+        return output.getDigest();
     }
 
     @Override

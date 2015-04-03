@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,6 @@
 package org.elasticlib.common.model;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSortedSet;
 import java.util.Map;
@@ -35,8 +33,6 @@ import org.elasticlib.common.mappable.Mappable;
 import static org.elasticlib.common.mappable.MappableUtil.fromList;
 import static org.elasticlib.common.mappable.MappableUtil.toList;
 import org.elasticlib.common.util.EqualsBuilder;
-import org.elasticlib.common.util.IoUtil;
-import static org.elasticlib.common.util.SinkOutputStream.sink;
 import org.elasticlib.common.value.Value;
 
 /**
@@ -307,14 +303,9 @@ public class Revision implements Mappable {
                 writer.put(DELETED, deleted);
             }
             writer.put(METADATA, metadata);
-            try {
-                revision = IoUtil.copyAndDigest(new ByteArrayInputStream(writer.build()), sink()).getHash();
-                return new Revision(this);
 
-            } catch (IOException e) {
-                // Actually impossible.
-                throw new AssertionError(e);
-            }
+            revision = Digest.of(writer.build()).getHash();
+            return new Revision(this);
         }
 
         /**

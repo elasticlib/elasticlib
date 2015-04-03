@@ -45,8 +45,6 @@ import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.Revision.RevisionBuilder;
 import org.elasticlib.common.model.StagingInfo;
 import org.elasticlib.common.util.BoundedInputStream;
-import static org.elasticlib.common.util.IoUtil.copyAndDigest;
-import static org.elasticlib.common.util.SinkOutputStream.sink;
 import org.elasticlib.common.value.Value;
 import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
@@ -160,7 +158,7 @@ class Put extends AbstractCommand {
 
         private Digest digest(Path filepath) throws IOException {
             try (InputStream inputStream = read("Computing content digest", filepath)) {
-                return copyAndDigest(inputStream, sink());
+                return Digest.of(inputStream);
             }
         }
 
@@ -190,7 +188,7 @@ class Put extends AbstractCommand {
             }
             try (InputStream inputStream = read("Checking content digest", filepath, length)) {
                 Hash expected = stagingInfo.getHash();
-                Hash actual = copyAndDigest(new BoundedInputStream(inputStream, length), sink()).getHash();
+                Hash actual = Digest.of(new BoundedInputStream(inputStream, length)).getHash();
 
                 return expected.equals(actual) ? length : 0;
             }

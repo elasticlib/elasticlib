@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@ package org.elasticlib.common.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.elasticlib.common.model.Digest;
-import org.elasticlib.common.model.DigestBuilder;
 
 /**
  * IO utilities.
@@ -32,46 +30,19 @@ public final class IoUtil {
     }
 
     /**
-     * Writes all bytes read from input-stream to output-stream.
+     * Writes all bytes read from input to each output.
      *
      * @param input Source input-stream.
-     * @param output Destination output-stream.
+     * @param outputs Destination output-stream(s).
      * @throws IOException If an IO error happens.
      */
-    public static void copy(InputStream input, OutputStream output) throws IOException {
-        copyAndDigest(input, output, null);
-    }
-
-    /**
-     * Writes all bytes read from input-stream to output-stream, and provides a digest of these bytes.
-     *
-     * @param input Source input-stream.
-     * @param output Destination output-stream.
-     * @return A digest of copied bytes.
-     * @throws IOException If an IO error happens.
-     */
-    public static Digest copyAndDigest(InputStream input, OutputStream output) throws IOException {
-        DigestBuilder builder = new DigestBuilder();
-        copyAndDigest(input, output, builder);
-        return builder.build();
-    }
-
-    /**
-     * Writes all bytes read from input-stream to supplied output-stream and digest.
-     *
-     * @param input Source input-stream.
-     * @param output Destination output-stream.
-     * @param digest Mutable digest to write to.
-     * @throws IOException If an IO error happens.
-     */
-    public static void copyAndDigest(InputStream input, OutputStream output, DigestBuilder digest) throws IOException {
+    public static void copy(InputStream input, OutputStream... outputs) throws IOException {
         byte[] buffer = new byte[BUFFER_SIZE];
         int len = input.read(buffer);
         while (len != -1) {
-            if (digest != null) {
-                digest.add(buffer, len);
+            for (OutputStream output : outputs) {
+                output.write(buffer, 0, len);
             }
-            output.write(buffer, 0, len);
             len = input.read(buffer);
         }
     }

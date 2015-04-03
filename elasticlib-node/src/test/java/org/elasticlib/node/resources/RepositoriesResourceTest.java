@@ -40,7 +40,6 @@ import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Digest;
-import org.elasticlib.common.model.DigestBuilder;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.Event.EventBuilder;
 import org.elasticlib.common.model.IndexEntry;
@@ -413,7 +412,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void getContentInfoTest() {
         ContentInfo contentInfo = new ContentInfo(ContentState.PRESENT,
-                                                  new DigestBuilder().getHash(),
+                                                  new Hash("da39a3ee5e6b4b0d3255bfef95601890afd80709"),
                                                   0,
                                                   singletonList(LOREM_IPSUM.getRevision()));
 

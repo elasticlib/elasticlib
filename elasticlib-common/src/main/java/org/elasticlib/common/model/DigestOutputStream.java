@@ -15,14 +15,15 @@
  */
 package org.elasticlib.common.model;
 
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import org.elasticlib.common.hash.Hash;
 
 /**
- * Builder. Compute a digest from a given input.
+ * An output stream that compute a digest from supplied bytes.
  */
-public class DigestBuilder {
+public class DigestOutputStream extends OutputStream {
 
     private static final String ALGORITHM = "SHA";
 
@@ -32,7 +33,7 @@ public class DigestBuilder {
     /**
      * Constructor.
      */
-    public DigestBuilder() {
+    public DigestOutputStream() {
         try {
             messageDigest = MessageDigest.getInstance(ALGORITHM);
 
@@ -42,28 +43,27 @@ public class DigestBuilder {
         }
     }
 
-    /**
-     * Add data to computed digest.
-     *
-     * @param bytes Input bytes array.
-     * @param length Number of bytes to read from supplied array (no offset).
-     * @return This builder instance.
-     */
-    public DigestBuilder add(byte[] bytes, int length) {
+    @Override
+    public void write(int b) {
+        messageDigest.update((byte) b);
+        totalLength += 1;
+    }
+
+    @Override
+    public void write(byte bytes[], int offset, int length) {
         messageDigest.update(bytes, 0, length);
         totalLength += length;
-        return this;
     }
 
     /**
-     * @return the total number of previously added bytes.
+     * @return The total number of previously written bytes.
      */
     public long getLength() {
         return totalLength;
     }
 
     /**
-     * @return The Hash of previously added bytes.
+     * @return The Hash of previously written bytes.
      */
     public Hash getHash() {
         try {
@@ -76,12 +76,12 @@ public class DigestBuilder {
     }
 
     /**
-     * Create a new digest. Does not affect this builder state, so more data may be added after this operation in order
+     * Creates a new digest. Does not affect this stream state, so more data may be added after this operation in order
      * to build other digests.
      *
      * @return A new Digest instance.
      */
-    public Digest build() {
+    public Digest getDigest() {
         return new Digest(getHash(), getLength());
     }
 }

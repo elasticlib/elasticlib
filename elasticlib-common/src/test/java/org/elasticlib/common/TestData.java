@@ -38,7 +38,6 @@ import org.elasticlib.common.model.CommandResult;
 import org.elasticlib.common.model.ContentInfo;
 import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Digest;
-import org.elasticlib.common.model.DigestBuilder;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.Event.EventBuilder;
 import org.elasticlib.common.model.IndexEntry;
@@ -132,7 +131,7 @@ public final class TestData {
     static {
         String[] HASHES = new String[]{"8d5f3c77e94a0cad3a32340d342135f43dbb7cbb",
                                        "0827c43f0aad546501f99b11f0bd44be42d68870",
-                                       "39819150ee99549a8c0a59782169bb3be65b46a4"};
+                                       "da39a3ee5e6b4b0d3255bfef95601890afd80709"};
 
         String[] REVS = new String[]{"0d99dd9895a2a1c485e0c75f79f92cc14457bb62",
                                      "a0b87ac4b04a0bed394517d0b01792635531aa42"};
@@ -169,7 +168,7 @@ public final class TestData {
                 .build();
 
         CONTENT_INFO = new ContentInfo(ContentState.PRESENT,
-                                       new DigestBuilder().getHash(),
+                                       new Hash(HASHES[2]),
                                        0,
                                        singletonList(REVISIONS.get(0)));
 

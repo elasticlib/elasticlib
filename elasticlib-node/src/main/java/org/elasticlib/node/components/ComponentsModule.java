@@ -21,6 +21,7 @@ import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
+import org.elasticlib.node.manager.client.ClientsManager;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -49,6 +50,7 @@ public class ComponentsModule {
      */
     public ComponentsModule(Config config, ManagerModule managerModule, DaoModule daoModule) {
         storageManager = managerModule.getStorageManager();
+        ClientsManager clientsManager = managerModule.getClientsManager();
         TaskManager taskManager = managerModule.getTaskManager();
         MessageManager messageManager = managerModule.getMessageManager();
 
@@ -59,14 +61,14 @@ public class ComponentsModule {
         nodeNameProvider = new NodeNameProvider(config);
         nodeGuidProvider = new NodeGuidProvider(attributesDao);
         publishUrisProvider = new PublishUrisProvider(config);
-        nodePingHandler = new NodePingHandler();
+        nodePingHandler = new NodePingHandler(clientsManager);
 
         LocalRepositoriesFactory localRepositoriesFactory = new LocalRepositoriesFactory(config,
                                                                                          taskManager,
                                                                                          messageManager);
 
         localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, localRepositoriesFactory);
-        remoteRepositoriesPool = new RemoteRepositoriesPool(messageManager, remotesDao);
+        remoteRepositoriesPool = new RemoteRepositoriesPool(clientsManager, messageManager, remotesDao);
         repositoriesProvider = new RepositoriesProvider(localRepositoriesPool, remoteRepositoriesPool);
         replicationAgentsPool = new ReplicationAgentsPool(storageManager, repositoriesProvider);
     }

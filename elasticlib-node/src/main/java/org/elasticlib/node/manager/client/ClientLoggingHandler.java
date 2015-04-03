@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticlib.node.components;
+package org.elasticlib.node.manager.client;
 
 import static java.lang.System.lineSeparator;
 import org.elasticlib.common.client.LoggingHandler;

@@ -31,12 +31,12 @@ import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.RemoteInfo;
-import org.elasticlib.node.components.ClientLoggingHandler;
 import org.elasticlib.node.config.NodeConfig;
+import org.elasticlib.node.manager.client.ClientsManager;
+import org.elasticlib.node.manager.client.ProcessingExceptionHandler;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
 import org.elasticlib.node.service.NodeService;
-import org.elasticlib.node.components.ProcessingExceptionHandler;
 import org.elasticlib.node.service.RemotesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +52,10 @@ import org.slf4j.LoggerFactory;
 public class UnicastDiscoveryClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(UnicastDiscoveryClient.class);
-    private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
 
     private final Config config;
+    private final ClientsManager clientsManager;
     private final TaskManager taskManager;
     private final NodeService nodeService;
     private final RemotesService remotesService;
@@ -66,15 +66,18 @@ public class UnicastDiscoveryClient {
      * Constructor.
      *
      * @param config Config.
+     * @param clientsManager Node clients manager.
      * @param taskManager Asynchronous tasks manager.
      * @param nodeService Local node service.
      * @param remotesService Remote nodes service.
      */
     public UnicastDiscoveryClient(Config config,
+                                  ClientsManager clientsManager,
                                   TaskManager taskManager,
                                   NodeService nodeService,
                                   RemotesService remotesService) {
         this.config = config;
+        this.clientsManager = clientsManager;
         this.taskManager = taskManager;
         this.nodeService = nodeService;
         this.remotesService = remotesService;
@@ -146,7 +149,7 @@ public class UnicastDiscoveryClient {
         }
 
         private void process(URI target) {
-            try (Client client = new Client(target, LOGGING_HANDLER)) {
+            try (Client client = clientsManager.getClient(target)) {
                 if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(target))) {
                     remotesService.saveRemote(target);
                 }

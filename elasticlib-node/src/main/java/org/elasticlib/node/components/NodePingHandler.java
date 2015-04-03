@@ -24,6 +24,8 @@ import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.common.model.RemoteInfo;
+import org.elasticlib.node.manager.client.ClientsManager;
+import org.elasticlib.node.manager.client.ProcessingExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +35,18 @@ import org.slf4j.LoggerFactory;
 public class NodePingHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodePingHandler.class);
-    private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
+
+    private final ClientsManager clientsManager;
+
+    /**
+     * Constructor.
+     *
+     * @param clientsManager Node clients manager.
+     */
+    public NodePingHandler(ClientsManager clientsManager) {
+        this.clientsManager = clientsManager;
+    }
 
     /**
      * Calls the supplied URI and returns info of the associated node if it responds.
@@ -43,7 +55,7 @@ public class NodePingHandler {
      * @return Info about the associated node.
      */
     public Optional<RemoteInfo> ping(URI uri) {
-        try (Client client = new Client(uri, LOGGING_HANDLER)) {
+        try (Client client = clientsManager.getClient(uri)) {
             NodeInfo info = client.node().getInfo();
             return Optional.of(new RemoteInfo(info, uri, now()));
 

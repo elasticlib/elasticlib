@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.exception.IOFailureException;
+import org.elasticlib.node.manager.client.ClientsManager;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -31,6 +32,7 @@ public class ManagerModule {
 
     private static final String STORAGE = "storage";
     private static final String SERVICES = "services";
+    private final ClientsManager clientsManager;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
     private final MessageManager messageManager;
@@ -42,6 +44,7 @@ public class ManagerModule {
      * @param config Configuration holder.
      */
     public ManagerModule(Path home, Config config) {
+        clientsManager = new ClientsManager();
         taskManager = new TaskManager(config);
         storageManager = newStorageManager(home.resolve(STORAGE), config, taskManager);
         messageManager = new MessageManager(taskManager);
@@ -71,6 +74,13 @@ public class ManagerModule {
     public void stop() {
         storageManager.stop();
         taskManager.stop();
+    }
+
+    /**
+     * @return The node clients manager.
+     */
+    public ClientsManager getClientsManager() {
+        return clientsManager;
     }
 
     /**

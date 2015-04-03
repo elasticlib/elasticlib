@@ -20,7 +20,7 @@ import static java.util.Arrays.asList;
 import java.util.List;
 import javax.ws.rs.core.Application;
 import org.elasticlib.common.client.Client;
-import org.elasticlib.node.components.ClientLoggingHandler;
+import org.elasticlib.node.manager.client.ClientLoggingHandler;
 import org.elasticlib.node.providers.HttpExceptionMapper;
 import org.elasticlib.node.providers.MappableBodyWriter;
 import org.elasticlib.node.providers.MappableListBodyWriter;

@@ -30,12 +30,12 @@ import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.node.dao.RemotesDao;
+import org.elasticlib.node.manager.client.ClientsManager;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
 import org.elasticlib.node.manager.message.RepositoryUnavailable;
 import org.elasticlib.node.repository.RemoteRepository;
 import org.elasticlib.node.repository.Repository;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Manages remote repositories.
@@ -44,6 +44,7 @@ public class RemoteRepositoriesPool {
 
     private static final String SEPARATOR = ".";
 
+    private final ClientsManager clientsManager;
     private final MessageManager messageManager;
     private final RemotesDao remotesDao;
     private final Map<Guid, Repository> repositories = new HashMap<>();
@@ -51,10 +52,12 @@ public class RemoteRepositoriesPool {
     /**
      * Constructor.
      *
+     * @param clientsManager Node clients manager.
      * @param messageManager Messaging infrastructure manager.
      * @param remotesDao Remotes nodes DAO.
      */
-    public RemoteRepositoriesPool(MessageManager messageManager, RemotesDao remotesDao) {
+    public RemoteRepositoriesPool(ClientsManager clientsManager, MessageManager messageManager, RemotesDao remotesDao) {
+        this.clientsManager = clientsManager;
         this.messageManager = messageManager;
         this.remotesDao = remotesDao;
     }
@@ -184,8 +187,7 @@ public class RemoteRepositoriesPool {
 
     private synchronized Repository repository(RemoteInfo remoteInfo, Guid guid) {
         if (!repositories.containsKey(guid)) {
-            Client client = new Client(remoteInfo.getTransportUri(),
-                                       new ClientLoggingHandler(getLogger(RemoteRepository.class)));
+            Client client = clientsManager.getClient(remoteInfo.getTransportUri());
             repositories.put(guid, new RemoteRepository(client, repositoryName(remoteInfo, guid), guid));
         }
         return repositories.get(guid);

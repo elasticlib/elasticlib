@@ -44,6 +44,7 @@ public class DiscoveryModule {
                                                                 serviceModule.getRemotesService());
 
         unicastDiscoveryClient = new UnicastDiscoveryClient(config,
+                                                            managerModule.getClientsManager(),
                                                             managerModule.getTaskManager(),
                                                             serviceModule.getNodeService(),
                                                             serviceModule.getRemotesService());

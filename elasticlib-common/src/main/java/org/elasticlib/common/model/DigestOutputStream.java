@@ -50,7 +50,7 @@ public class DigestOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte bytes[], int offset, int length) {
+    public void write(byte[] bytes, int offset, int length) {
         messageDigest.update(bytes, 0, length);
         totalLength += length;
     }

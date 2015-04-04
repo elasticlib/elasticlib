@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,9 @@
  */
 package org.elasticlib.common.client;
 
-import com.google.common.base.Joiner;
+import static java.lang.String.join;
 import static java.lang.System.lineSeparator;
-import java.util.List;
-import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -37,8 +36,12 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
 
     private static final String SPACE = " ";
     private static final String DASH = " - ";
+    private static final String COLON = ": ";
+    private static final String COMMA = ",";
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
+    private static final String ID_PROPERTY = ClientLoggingFilter.class.getName() + ".id";
+    private static final AtomicLong ID = new AtomicLong();
 
     private final LoggingHandler handler;
 
@@ -53,49 +56,54 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
 
     @Override
     public void filter(ClientRequestContext context) {
-        StringBuilder builder = new StringBuilder()
-                .append(REQUEST_PREFIX)
+        long currentId = ID.incrementAndGet();
+        context.setProperty(ID_PROPERTY, currentId);
+
+        StringBuilder builder = prefix(new StringBuilder(), currentId, REQUEST_PREFIX)
                 .append(context.getMethod())
                 .append(SPACE)
                 .append(context.getUri().toASCIIString())
                 .append(lineSeparator());
 
-        printPrefixedHeaders(builder, REQUEST_PREFIX, context.getStringHeaders());
+        printPrefixedHeaders(builder, currentId, REQUEST_PREFIX, context.getStringHeaders());
 
         handler.logRequest(builder.toString());
     }
 
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) {
-        StringBuilder builder = new StringBuilder()
-                .append(RESPONSE_PREFIX)
+        long currentId = (long) requestContext.getProperty(ID_PROPERTY);
+
+        StringBuilder builder = prefix(new StringBuilder(), currentId, RESPONSE_PREFIX)
                 .append(responseContext.getStatus())
                 .append(DASH)
                 .append(responseContext.getStatusInfo().getReasonPhrase())
                 .append(lineSeparator());
 
-        printPrefixedHeaders(builder, RESPONSE_PREFIX, responseContext.getHeaders());
+        printPrefixedHeaders(builder, currentId, RESPONSE_PREFIX, responseContext.getHeaders());
 
         handler.logResponse(builder.toString());
     }
 
-    private void printPrefixedHeaders(StringBuilder builder, String prefix, MultivaluedMap<String, String> headers) {
+    private static void printPrefixedHeaders(StringBuilder builder,
+                                             long id,
+                                             String prefix,
+                                             MultivaluedMap<String, String> headers) {
         headers.entrySet()
                 .stream()
-                .sorted((o1, o2) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(o1.getKey(), o2.getKey()))
+                .sorted((x, y) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(x.getKey(), y.getKey()))
                 .forEach(header -> {
-                    builder.append(prefix)
+                    prefix(builder, id, prefix)
                     .append(header.getKey())
-                    .append(": ")
-                    .append(value(header))
+                    .append(COLON)
+                    .append(join(COMMA, header.getValue()))
                     .append(lineSeparator());
                 });
     }
 
-    private static String value(Entry<String, List<String>> header) {
-        if (header.getValue().size() == 1) {
-            return header.getValue().get(0);
-        }
-        return Joiner.on(',').join(header.getValue());
+    private static StringBuilder prefix(StringBuilder builder, long id, String prefix) {
+        return builder.append(Long.toString(id))
+                .append(SPACE)
+                .append(prefix);
     }
 }

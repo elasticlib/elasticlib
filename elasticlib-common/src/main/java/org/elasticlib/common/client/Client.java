@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ import java.net.URI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -32,18 +31,13 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 public class Client implements AutoCloseable {
 
     private final javax.ws.rs.client.Client client;
-    private final NodeClient nodeClient;
-    private final RemotesClient remotesClient;
-    private final RepositoriesClient repositoriesClient;
-    private final ReplicationsClient replicationsClient;
 
     /**
      * Constructor.
      *
-     * @param uri Node base URI.
      * @param loggingHandler Logging handler.
      */
-    public Client(URI uri, LoggingHandler loggingHandler) {
+    public Client(LoggingHandler loggingHandler) {
         Logger logger = Logger.getGlobal();
         logger.setLevel(Level.OFF);
 
@@ -56,40 +50,16 @@ public class Client implements AutoCloseable {
                 .register(new ClientLoggingFilter(loggingHandler));
 
         client = ClientBuilder.newClient(clientConfig);
-
-        WebTarget resource = client.target(uri);
-        nodeClient = new NodeClient(resource);
-        remotesClient = new RemotesClient(resource);
-        repositoriesClient = new RepositoriesClient(resource);
-        replicationsClient = new ReplicationsClient(resource);
     }
 
     /**
-     * @return The node API client.
+     * Provides a base API on a given node.
+     *
+     * @param uri Node base URI.
+     * @return a new base API instance.
      */
-    public NodeClient node() {
-        return nodeClient;
-    }
-
-    /**
-     * @return The remotes API client.
-     */
-    public RemotesClient remotes() {
-        return remotesClient;
-    }
-
-    /**
-     * @return The repositories API client.
-     */
-    public RepositoriesClient repositories() {
-        return repositoriesClient;
-    }
-
-    /**
-     * @return The replications API client.
-     */
-    public ReplicationsClient replications() {
-        return replicationsClient;
+    public ClientTarget target(URI uri) {
+        return new ClientTarget(client.target(uri));
     }
 
     @Override

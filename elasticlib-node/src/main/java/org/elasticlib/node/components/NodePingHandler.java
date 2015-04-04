@@ -20,11 +20,10 @@ import static java.time.Instant.now;
 import java.util.Optional;
 import java.util.function.Predicate;
 import javax.ws.rs.ProcessingException;
-import org.elasticlib.common.client.Client;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeInfo;
 import org.elasticlib.common.model.RemoteInfo;
-import org.elasticlib.node.manager.client.ClientsManager;
+import org.elasticlib.node.manager.client.ClientManager;
 import org.elasticlib.node.manager.client.ProcessingExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +36,15 @@ public class NodePingHandler {
     private static final Logger LOG = LoggerFactory.getLogger(NodePingHandler.class);
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
 
-    private final ClientsManager clientsManager;
+    private final ClientManager clientManager;
 
     /**
      * Constructor.
      *
-     * @param clientsManager Node clients manager.
+     * @param clientManager Node HTTP client manager.
      */
-    public NodePingHandler(ClientsManager clientsManager) {
-        this.clientsManager = clientsManager;
+    public NodePingHandler(ClientManager clientManager) {
+        this.clientManager = clientManager;
     }
 
     /**
@@ -55,8 +54,12 @@ public class NodePingHandler {
      * @return Info about the associated node.
      */
     public Optional<RemoteInfo> ping(URI uri) {
-        try (Client client = clientsManager.getClient(uri)) {
-            NodeInfo info = client.node().getInfo();
+        try {
+            NodeInfo info = clientManager.getClient()
+                    .target(uri)
+                    .node()
+                    .getInfo();
+
             return Optional.of(new RemoteInfo(info, uri, now()));
 
         } catch (ProcessingException e) {

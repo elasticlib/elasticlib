@@ -15,26 +15,32 @@
  */
 package org.elasticlib.node.manager.client;
 
-import java.net.URI;
 import org.elasticlib.common.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides node API clients.
+ * Provides node HTTP client.
  */
-public class ClientsManager {
+public class ClientManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientsManager.class);
-    private static final ClientLoggingHandler LOGGING_HANDLER = new ClientLoggingHandler(LOG);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientManager.class);
+
+    private final Client client = new Client(new ClientLoggingHandler(LOG));
 
     /**
-     * Provides a client targeting node at supplied URI.
+     * Provides node HTTP client.
      *
-     * @param uri A node URI.
-     * @return A client on this node.
+     * @return A client.
      */
-    public Client getClient(URI uri) {
-        return new Client(uri, LOGGING_HANDLER);
+    public Client getClient() {
+        return client;
+    }
+
+    /**
+     * Stops this manager.
+     */
+    public void stop() {
+        client.close();
     }
 }

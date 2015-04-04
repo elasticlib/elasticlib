@@ -21,20 +21,21 @@ import static org.elasticlib.common.client.ClientUtil.read;
 import org.elasticlib.common.model.NodeInfo;
 
 /**
- * Current node API client.
+ * Local node API.
  */
-public class NodeClient {
+public class NodeTarget {
 
     private static final String NODE = "node";
-    private final WebTarget resource;
+
+    private final WebTarget target;
 
     /**
      * Constructor.
      *
-     * @param resource Base web-resource.
+     * @param target Underlying resource target.
      */
-    NodeClient(WebTarget resource) {
-        this.resource = resource.path(NODE);
+    NodeTarget(WebTarget target) {
+        this.target = target.path(NODE);
     }
 
     /**
@@ -43,7 +44,7 @@ public class NodeClient {
      * @return A node definition.
      */
     public NodeInfo getInfo() {
-        Response response = resource.request().get();
+        Response response = target.request().get();
         return read(response, NodeInfo.class);
     }
 }

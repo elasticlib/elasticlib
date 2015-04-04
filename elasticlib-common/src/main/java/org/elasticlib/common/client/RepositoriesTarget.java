@@ -15,9 +15,11 @@
  */
 package org.elasticlib.common.client;
 
+import static com.google.common.collect.ImmutableMap.of;
 import java.util.List;
+import java.util.Map;
 import static javax.json.Json.createObjectBuilder;
-import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import static javax.ws.rs.client.Entity.json;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
@@ -27,9 +29,9 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryInfo;
 
 /**
- * Repositories API client.
+ * Repositories API.
  */
-public class RepositoriesClient {
+public class RepositoriesTarget {
 
     private static final String REPOSITORIES = "repositories";
     private static final String REPOSITORY = "repository";
@@ -41,15 +43,16 @@ public class RepositoriesClient {
     private static final String OPEN = "open";
     private static final String CLOSE = "close";
     private static final String REMOVE = "remove";
-    private final WebTarget resource;
+
+    private final WebTarget target;
 
     /**
      * Constructor.
      *
-     * @param resource Base web-resource.
+     * @param target Underlying resource target.
      */
-    RepositoriesClient(WebTarget resource) {
-        this.resource = resource.path(REPOSITORIES);
+    RepositoriesTarget(WebTarget target) {
+        this.target = target.path(REPOSITORIES);
     }
 
     /**
@@ -58,10 +61,8 @@ public class RepositoriesClient {
      * @param path Repository path (from node perspective).
      */
     public void create(String path) {
-        post(createObjectBuilder()
-                .add(ACTION, CREATE)
-                .add(PATH, path)
-                .build());
+        post(of(ACTION, CREATE,
+                PATH, path));
     }
 
     /**
@@ -70,10 +71,8 @@ public class RepositoriesClient {
      * @param path Repository path (from node perspective).
      */
     public void add(String path) {
-        post(createObjectBuilder()
-                .add(ACTION, ADD)
-                .add(PATH, path)
-                .build());
+        post(of(ACTION, ADD,
+                PATH, path));
     }
 
     /**
@@ -82,10 +81,8 @@ public class RepositoriesClient {
      * @param repository Repository name or encoded GUID.
      */
     public void open(String repository) {
-        post(createObjectBuilder()
-                .add(ACTION, OPEN)
-                .add(REPOSITORY, repository)
-                .build());
+        post(of(ACTION, OPEN,
+                REPOSITORY, repository));
     }
 
     /**
@@ -103,10 +100,8 @@ public class RepositoriesClient {
      * @param repository Repository name or encoded GUID.
      */
     public void close(String repository) {
-        post(createObjectBuilder()
-                .add(ACTION, CLOSE)
-                .add(REPOSITORY, repository)
-                .build());
+        post(of(ACTION, CLOSE,
+                REPOSITORY, repository));
     }
 
     /**
@@ -124,10 +119,8 @@ public class RepositoriesClient {
      * @param repository Repository name or encoded GUID.
      */
     public void remove(String repository) {
-        post(createObjectBuilder()
-                .add(ACTION, REMOVE)
-                .add(REPOSITORY, repository)
-                .build());
+        post(of(ACTION, REMOVE,
+                REPOSITORY, repository));
     }
 
     /**
@@ -145,7 +138,7 @@ public class RepositoriesClient {
      * @param repository Repository name or encoded GUID.
      */
     public void delete(String repository) {
-        ensureSuccess(resource
+        ensureSuccess(target
                 .path(REPOSITORY_TEMPLATE)
                 .resolveTemplate(REPOSITORY, repository)
                 .request()
@@ -167,7 +160,7 @@ public class RepositoriesClient {
      * @return A list of repository infos.
      */
     public List<RepositoryInfo> listInfos() {
-        Response response = resource
+        Response response = target
                 .request()
                 .get();
 
@@ -175,30 +168,33 @@ public class RepositoriesClient {
     }
 
     /**
-     * Provides a repository client.
+     * Provides an API on a given repository.
      *
      * @param repository Repository name or encoded GUID.
-     * @return A client for this repository.
+     * @return A new API on this repository.
      */
-    public RepositoryClient get(String repository) {
-        return new RepositoryClient(resource
+    public RepositoryTarget get(String repository) {
+        return new RepositoryTarget(target
                 .path(REPOSITORY_TEMPLATE)
                 .resolveTemplate(REPOSITORY, repository));
     }
 
     /**
-     * Provides a repository client.
+     * Provides an API on a given repository.
      *
      * @param guid Repository GUID.
-     * @return A client for this repository.
+     * @return A new API on this repository.
      */
-    public RepositoryClient get(Guid guid) {
+    public RepositoryTarget get(Guid guid) {
         return get(guid.asHexadecimalString());
     }
 
-    private void post(JsonObject json) {
-        ensureSuccess(resource
+    private void post(Map<String, String> values) {
+        JsonObjectBuilder builder = createObjectBuilder();
+        values.forEach(builder::add);
+
+        ensureSuccess(target
                 .request()
-                .post(json(json)));
+                .post(json(builder.build())));
     }
 }

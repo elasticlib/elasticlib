@@ -20,7 +20,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 import static java.util.stream.Collectors.toSet;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ClientTarget;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.Revision;
@@ -86,7 +86,7 @@ public final class ClientUtil {
      * @param repository Repository name or encoded GUID.
      * @return GUID of this repository.
      */
-    public static Guid resolveRepositoryGuid(Client client, String repository) {
+    public static Guid resolveRepositoryGuid(ClientTarget client, String repository) {
         return client.repositories()
                 .get(repository)
                 .getInfo()

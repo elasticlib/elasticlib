@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import java.util.List;
 import javax.ws.rs.core.Application;
 import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ClientTarget;
 import org.elasticlib.node.manager.client.ClientLoggingHandler;
 import org.elasticlib.node.providers.HttpExceptionMapper;
 import org.elasticlib.node.providers.MappableBodyWriter;
@@ -32,6 +33,7 @@ import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 
 /**
@@ -39,8 +41,8 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractResourceTest extends ContainerPerClassTest {
 
-    private final Logger logger;
-    private final List<Object> mocks = new ArrayList<>();
+    private final Client client;
+    private final List<Object> mocks;
 
     static {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -58,7 +60,8 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
         // Specifies the test container to dynamically bind to an available port
         // instead of using the fixed default one.
         set(TestProperties.CONTAINER_PORT, 0);
-        this.logger = logger;
+        client = new Client(new ClientLoggingHandler(logger));
+        mocks = new ArrayList<>();
     }
 
     @Override
@@ -72,6 +75,13 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
                 .registerClasses(testConfig.getClasses())
                 .registerInstances(testConfig.getSingletons())
                 .addProperties(testConfig.getProperties());
+    }
+
+    @AfterClass
+    @Override
+    public final void tearDown() throws Exception {
+        client.close();
+        super.tearDown();
     }
 
     /**
@@ -92,7 +102,7 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
     }
 
     /**
-     * Allows actual test implemetation to supply specific configuration, typically tested resource class and mocked
+     * Allows actual test implementation to supply specific configuration, typically tested resource class and mocked
      * services bindings. Returned value is expected to be non null.
      *
      * @return Actual test specific configuration.
@@ -100,11 +110,11 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
     protected abstract Application testConfiguration();
 
     /**
-     * Provides a pre-configured client.
+     * Provides a pre-configured base client API.
      *
-     * @return A new node client instance.
+     * @return A new base API instance.
      */
-    protected Client newClient() {
-        return new Client(getBaseUri(), new ClientLoggingHandler(logger));
+    protected ClientTarget clientTarget() {
+        return client.target(getBaseUri());
     }
 }

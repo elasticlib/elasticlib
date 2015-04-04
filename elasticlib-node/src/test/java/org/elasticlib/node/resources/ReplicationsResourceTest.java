@@ -18,7 +18,7 @@ package org.elasticlib.node.resources;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import javax.ws.rs.core.Application;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ReplicationsTarget;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.ReplicationInfo;
 import org.elasticlib.common.model.ReplicationInfo.ReplicationInfoBuilder;
@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -44,6 +45,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
     private final Guid guid = Guid.random();
     private final String source = "source";
     private final String destination = "destination";
+    private ReplicationsTarget replications;
 
     /**
      * Constructor.
@@ -65,14 +67,19 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
                 });
     }
 
+    @BeforeClass
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        replications = clientTarget().replications();
+    }
+
     /**
      * Test.
      */
     @Test
     public void createReplicationTest() {
-        try (Client client = newClient()) {
-            client.replications().create(source, destination);
-        }
+        replications.create(source, destination);
         verify(replicationsService).createReplication(source, destination);
     }
 
@@ -81,9 +88,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
      */
     @Test
     public void deleteReplicationTest() {
-        try (Client client = newClient()) {
-            client.replications().delete(guid);
-        }
+        replications.delete(guid);
         verify(replicationsService).deleteReplication(guid);
     }
 
@@ -92,9 +97,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
      */
     @Test
     public void startReplicationTest() {
-        try (Client client = newClient()) {
-            client.replications().start(guid);
-        }
+        replications.start(guid);
         verify(replicationsService).startReplication(guid);
     }
 
@@ -103,9 +106,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
      */
     @Test
     public void stopReplicationTest() {
-        try (Client client = newClient()) {
-            client.replications().stop(guid);
-        }
+        replications.stop(guid);
         verify(replicationsService).stopReplication(guid);
     }
 
@@ -117,9 +118,7 @@ public class ReplicationsResourceTest extends AbstractResourceTest {
         List<ReplicationInfo> infos = singletonList(newReplicationInfo(source, destination));
 
         when(replicationsService.listReplicationInfos()).thenReturn(infos);
-        try (Client client = newClient()) {
-            assertThat(client.replications().listInfos()).isEqualTo(infos);
-        }
+        assertThat(replications.listInfos()).isEqualTo(infos);
     }
 
     private static ReplicationInfo newReplicationInfo(String source, String destination) {

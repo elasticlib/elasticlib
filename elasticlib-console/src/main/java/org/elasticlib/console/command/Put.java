@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import org.elasticlib.common.client.RepositoryClient;
+import org.elasticlib.common.client.RepositoryTarget;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.metadata.MetadataUtil;
@@ -95,19 +95,19 @@ class Put extends AbstractCommand {
 
         private final Display display;
         private final ConsoleConfig config;
-        private final RepositoryClient client;
+        private final RepositoryTarget repository;
 
         /**
          * Constructor.
          *
          * @param display Display.
          * @param config Config.
-         * @param client Repository client to use.
+         * @param repository Repository API to use.
          */
-        public ContentUploader(Display display, ConsoleConfig config, RepositoryClient client) {
+        public ContentUploader(Display display, ConsoleConfig config, RepositoryTarget repository) {
             this.display = display;
             this.config = config;
-            this.client = client;
+            this.repository = repository;
         }
 
         /**
@@ -121,7 +121,7 @@ class Put extends AbstractCommand {
         public CommandResult put(Path filepath, Map<String, Value> metadata) {
             try {
                 Digest digest = digest(filepath);
-                ContentInfo contentInfo = client.getContentInfo(digest.getHash());
+                ContentInfo contentInfo = repository.getContentInfo(digest.getHash());
                 checkState(contentInfo);
 
                 Revision revision = new RevisionBuilder()
@@ -135,7 +135,7 @@ class Put extends AbstractCommand {
                 if (contentInfo.getState() != ContentState.STAGED) {
                     addContent(filepath, digest);
                 }
-                return client.addRevision(revision);
+                return repository.addRevision(revision);
 
             } catch (IOException e) {
                 throw new RequestFailedException(e);
@@ -169,15 +169,15 @@ class Put extends AbstractCommand {
         }
 
         private void addContent(Path filepath, Digest digest) throws IOException {
-            StagingInfo stagingInfo = client.stageContent(digest.getHash());
+            StagingInfo stagingInfo = repository.stageContent(digest.getHash());
             try {
                 long offset = offset(filepath, stagingInfo);
                 try (InputStream inputStream = read("Uploading content", filepath)) {
                     skip(inputStream, offset);
-                    client.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, offset);
+                    repository.writeContent(digest.getHash(), stagingInfo.getSessionId(), inputStream, offset);
                 }
             } finally {
-                client.unstageContent(digest.getHash(), stagingInfo.getSessionId());
+                repository.unstageContent(digest.getHash(), stagingInfo.getSessionId());
             }
         }
 

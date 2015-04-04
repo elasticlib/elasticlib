@@ -31,24 +31,25 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
 
 /**
- * Remotes API client.
+ * Remote nodes API.
  */
-public class RemotesClient {
+public class RemotesTarget {
 
     private static final String REMOTES = "remotes";
     private static final String NODE_TEMPLATE = "{node}";
     private static final String URI = "uri";
     private static final String URIS = "uris";
     private static final String NODE = "node";
-    private final WebTarget resource;
+
+    private final WebTarget target;
 
     /**
      * Constructor.
      *
-     * @param resource Base web-resource.
+     * @param target Underlying resource target.
      */
-    RemotesClient(WebTarget resource) {
-        this.resource = resource.path(REMOTES);
+    RemotesTarget(WebTarget target) {
+        this.target = target.path(REMOTES);
     }
 
     /**
@@ -57,7 +58,7 @@ public class RemotesClient {
      * @return A list of node definitions.
      */
     public List<RemoteInfo> listInfos() {
-        Response response = resource.request().get();
+        Response response = target.request().get();
         return readAll(response, RemoteInfo.class);
     }
 
@@ -76,7 +77,7 @@ public class RemotesClient {
      * @param uris Remote node URI(s)
      */
     public void add(List<URI> uris) {
-        ensureSuccess(resource
+        ensureSuccess(target
                 .request()
                 .post(json(addRemoteBody(uris))));
     }
@@ -104,7 +105,8 @@ public class RemotesClient {
      * @param node Remote node name or encoded GUID.
      */
     public void remove(String node) {
-        ensureSuccess(resource.path(NODE_TEMPLATE)
+        ensureSuccess(target
+                .path(NODE_TEMPLATE)
                 .resolveTemplate(NODE, node)
                 .request()
                 .delete());

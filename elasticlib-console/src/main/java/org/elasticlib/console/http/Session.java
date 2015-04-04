@@ -18,7 +18,8 @@ package org.elasticlib.console.http;
 import java.io.Closeable;
 import java.net.URI;
 import org.elasticlib.common.client.Client;
-import org.elasticlib.common.client.RepositoryClient;
+import org.elasticlib.common.client.ClientTarget;
+import org.elasticlib.common.client.RepositoryTarget;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.console.config.ConsoleConfig;
@@ -35,8 +36,9 @@ public class Session implements Closeable {
 
     private final ConsoleConfig config;
     private final PrintingHandler printingHandler;
-    private Client client;
-    private String node;
+    private final Client client;
+    private URI nodeUri;
+    private String nodeName;
     private RepositoryDef repositoryDef;
 
     /**
@@ -48,6 +50,7 @@ public class Session implements Closeable {
     public Session(Display display, ConsoleConfig config) {
         this.config = config;
         printingHandler = new PrintingHandler(display, config);
+        client = new Client(printingHandler);
     }
 
     /**
@@ -65,23 +68,6 @@ public class Session implements Closeable {
     }
 
     /**
-     * Connects to node at supplied URI.
-     *
-     * @param uri Node URI.
-     */
-    public void connect(URI uri) {
-        close();
-        client = new Client(uri, printingHandler);
-        printingHandler.setEnabled(true);
-        try {
-            node = client.node().getInfo().getName();
-
-        } finally {
-            printingHandler.setEnabled(false);
-        }
-    }
-
-    /**
      * Set if HTTP dialog should be printed.
      *
      * @param val If this feature should be activated.
@@ -91,10 +77,29 @@ public class Session implements Closeable {
     }
 
     /**
-     * Disconnects from current server. Idempotent.
+     * Connects to node at supplied URI.
+     *
+     * @param uri Node URI.
+     */
+    public void connect(URI uri) {
+        nodeUri = uri;
+        printingHandler.setEnabled(true);
+        try {
+            nodeName = client.target(nodeUri)
+                    .node()
+                    .getInfo()
+                    .getName();
+
+        } finally {
+            printingHandler.setEnabled(false);
+        }
+    }
+
+    /**
+     * Disconnects from current node. Idempotent.
      */
     public void disconnect() {
-        close();
+        nodeUri = null;
     }
 
     /**
@@ -103,17 +108,17 @@ public class Session implements Closeable {
      * @param repository Repository name or encoded GUID.
      */
     public void use(String repository) {
-        if (client == null) {
+        if (nodeUri == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
         printingHandler.setEnabled(true);
         try {
-            RepositoryDef def = client.repositories()
+            repositoryDef = client.target(nodeUri)
+                    .repositories()
                     .get(repository)
                     .getInfo()
                     .getDef();
 
-            repositoryDef = def;
         } finally {
             printingHandler.setEnabled(false);
         }
@@ -144,26 +149,28 @@ public class Session implements Closeable {
      *
      * @return A node client.
      */
-    public Client getClient() {
-        if (client == null) {
+    public ClientTarget getClient() {
+        if (nodeUri == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
-        return client;
+        return client.target(nodeUri);
     }
 
     /**
-     * Provides a client on current repository. Fails if there is currently no selected repository.
+     * Provides an API on current repository. Fails if there is currently no selected repository.
      *
      * @return A repository client.
      */
-    public RepositoryClient getRepository() {
-        if (client == null) {
+    public RepositoryTarget getRepository() {
+        if (nodeUri == null) {
             throw new RequestFailedException(NOT_CONNECTED);
         }
         if (repositoryDef == null) {
             throw new RequestFailedException(NO_REPOSITORY);
         }
-        return client.repositories().get(repositoryDef.getGuid());
+        return client.target(nodeUri)
+                .repositories()
+                .get(repositoryDef.getGuid());
     }
 
     /**
@@ -173,22 +180,17 @@ public class Session implements Closeable {
      * @return A string describing the current connection.
      */
     public String getConnectionString() {
-        if (node == null) {
+        if (nodeName == null) {
             return "";
         }
         if (repositoryDef == null) {
-            return node;
+            return nodeName;
         }
-        return String.join("/", node, repositoryDef.getName());
+        return String.join("/", nodeName, repositoryDef.getName());
     }
 
     @Override
     public void close() {
-        node = null;
-        repositoryDef = null;
-        if (client != null) {
-            client.close();
-            client = null;
-        }
+        client.close();
     }
 }

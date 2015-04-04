@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import javax.ws.rs.ProcessingException;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.RemotesTarget;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigUtil;
 import static org.elasticlib.common.config.ConfigUtil.duration;
@@ -32,7 +32,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.node.config.NodeConfig;
-import org.elasticlib.node.manager.client.ClientsManager;
+import org.elasticlib.node.manager.client.ClientManager;
 import org.elasticlib.node.manager.client.ProcessingExceptionHandler;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
@@ -55,7 +55,7 @@ public class UnicastDiscoveryClient {
     private static final ProcessingExceptionHandler EXCEPTION_HANDLER = new ProcessingExceptionHandler(LOG);
 
     private final Config config;
-    private final ClientsManager clientsManager;
+    private final ClientManager clientManager;
     private final TaskManager taskManager;
     private final NodeService nodeService;
     private final RemotesService remotesService;
@@ -66,18 +66,18 @@ public class UnicastDiscoveryClient {
      * Constructor.
      *
      * @param config Config.
-     * @param clientsManager Node clients manager.
+     * @param clientManager Node HTTP client manager.
      * @param taskManager Asynchronous tasks manager.
      * @param nodeService Local node service.
      * @param remotesService Remote nodes service.
      */
     public UnicastDiscoveryClient(Config config,
-                                  ClientsManager clientsManager,
+                                  ClientManager clientManager,
                                   TaskManager taskManager,
                                   NodeService nodeService,
                                   RemotesService remotesService) {
         this.config = config;
-        this.clientsManager = clientsManager;
+        this.clientManager = clientManager;
         this.taskManager = taskManager;
         this.nodeService = nodeService;
         this.remotesService = remotesService;
@@ -148,27 +148,31 @@ public class UnicastDiscoveryClient {
                     .collect(toList());
         }
 
-        private void process(URI target) {
-            try (Client client = clientsManager.getClient(target)) {
-                if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(target))) {
-                    remotesService.saveRemote(target);
+        private void process(URI uri) {
+            try {
+                RemotesTarget remotesTarget = clientManager.getClient()
+                        .target(uri)
+                        .remotes();
+
+                if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(uri))) {
+                    remotesService.saveRemote(uri);
                 }
 
-                List<RemoteInfo> targetRemotes = client.remotes().listInfos();
+                List<RemoteInfo> targetRemotes = remotesTarget.listInfos();
                 targetRemotes.stream()
                         .filter(remote -> !knownNodes.contains(remote.getGuid()))
                         .forEach(remote -> remotesService.saveRemote(remote.getPublishUris(), remote.getGuid()));
 
                 if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
                     try {
-                        client.remotes().add(local.getPublishUris());
+                        remotesTarget.add(local.getPublishUris());
 
                     } catch (NodeException e) {
-                        LOG.warn("Failed to add local node to {}. Remote responded: {}", target, e.getMessage());
+                        LOG.warn("Failed to add local node to {}. Remote responded: {}", uri, e.getMessage());
                     }
                 }
             } catch (ProcessingException e) {
-                EXCEPTION_HANDLER.log(target, e);
+                EXCEPTION_HANDLER.log(uri, e);
             }
         }
     }

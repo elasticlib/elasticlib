@@ -28,8 +28,8 @@ import java.util.SortedSet;
 import static java.util.stream.Collectors.toList;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
-import org.elasticlib.common.client.Client;
 import org.elasticlib.common.client.Content;
+import org.elasticlib.common.client.RepositoriesTarget;
 import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.RangeNotSatisfiableException;
 import org.elasticlib.common.exception.UnknownContentException;
@@ -65,6 +65,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -88,6 +89,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     private final int first = 0;
     private final int size = 20;
     private final String query = "lorem ipsum";
+    private RepositoriesTarget repositories;
 
     /**
      * Constructor.
@@ -109,14 +111,19 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
                 });
     }
 
+    @BeforeClass
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        repositories = clientTarget().repositories();
+    }
+
     /**
      * Test.
      */
     @Test
     public void createRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().create(path.toString());
-        }
+        repositories.create(path.toString());
         verify(repositoriesService).createRepository(path);
     }
 
@@ -125,9 +132,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void addRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().add(path.toString());
-        }
+        repositories.add(path.toString());
         verify(repositoriesService).addRepository(path);
     }
 
@@ -136,9 +141,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void openRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().open(guid);
-        }
+        repositories.open(guid);
         verify(repositoriesService).openRepository(guid.asHexadecimalString());
     }
 
@@ -147,9 +150,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void closeRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().close(guid);
-        }
+        repositories.close(guid);
         verify(repositoriesService).closeRepository(guid.asHexadecimalString());
     }
 
@@ -158,9 +159,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void removeRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().remove(guid);
-        }
+        repositories.remove(guid);
         verify(repositoriesService).removeRepository(guid.asHexadecimalString());
     }
 
@@ -169,9 +168,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      */
     @Test
     public void deleteRepositoryTest() {
-        try (Client client = newClient()) {
-            client.repositories().delete(guid);
-        }
+        repositories.delete(guid);
         verify(repositoriesService).deleteRepository(guid.asHexadecimalString());
     }
 
@@ -183,9 +180,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         List<RepositoryInfo> repositoryInfos = singletonList(repositoryInfo);
 
         when(repositoriesService.listRepositoryInfos()).thenReturn(repositoryInfos);
-        try (Client client = newClient()) {
-            assertThat(client.repositories().listInfos()).isEqualTo(repositoryInfos);
-        }
+        assertThat(repositories.listInfos()).isEqualTo(repositoryInfos);
     }
 
     /**
@@ -194,9 +189,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void getRepositoryTest() {
         when(repositoriesService.getRepositoryInfo(guid.asHexadecimalString())).thenReturn(repositoryInfo);
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getInfo()).isEqualTo(repositoryInfo);
-        }
+        assertThat(repositories.get(guid).getInfo()).isEqualTo(repositoryInfo);
     }
 
     /**
@@ -207,9 +200,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repositoriesService.getRepositoryInfo(guid.asHexadecimalString()))
                 .thenThrow(new UnknownRepositoryException());
 
-        try (Client client = newClient()) {
-            client.repositories().get(guid).getInfo();
-        }
+        repositories.get(guid).getInfo();
     }
 
     /**
@@ -220,10 +211,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.stageContent(hash)).thenReturn(stagingInfo);
 
-        try (Client client = newClient()) {
-            StagingInfo actual = client.repositories().get(guid).stageContent(hash);
-            assertThat(actual).isEqualTo(stagingInfo);
-        }
+        StagingInfo actual = repositories.get(guid).stageContent(hash);
+        assertThat(actual).isEqualTo(stagingInfo);
     }
 
     /**
@@ -237,10 +226,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.writeContent(eq(hash), eq(guid), matches(LOREM_IPSUM.getBytes()), eq(position)))
                 .thenReturn(stagingInfo);
 
-        try (Client client = newClient();
-                InputStream input = LOREM_IPSUM.getInputStream()) {
-
-            StagingInfo actual = client.repositories().get(guid).writeContent(hash, guid, input, position);
+        try (InputStream input = LOREM_IPSUM.getInputStream()) {
+            StagingInfo actual = repositories.get(guid).writeContent(hash, guid, input, position);
             assertThat(actual).isEqualTo(stagingInfo);
         }
     }
@@ -256,10 +243,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.writeContent(eq(hash), eq(guid), matches(LOREM_IPSUM.getBytes()), eq(position)))
                 .thenThrow(new IOFailureException("test"));
 
-        try (Client client = newClient();
-                InputStream input = LOREM_IPSUM.getInputStream()) {
-
-            client.repositories().get(guid).writeContent(hash, guid, input, position);
+        try (InputStream input = LOREM_IPSUM.getInputStream()) {
+            repositories.get(guid).writeContent(hash, guid, input, position);
         }
     }
 
@@ -269,9 +254,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
     @Test
     public void unstageContentTest() {
         Repository repository = newRepositoryMock();
-        try (Client client = newClient()) {
-            client.repositories().get(guid).unstageContent(hash, guid);
-        }
+        repositories.get(guid).unstageContent(hash, guid);
         verify(repository).unstageContent(hash, guid);
     }
 
@@ -285,10 +268,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.addRevision(revision)).thenReturn(result);
 
-        try (Client client = newClient()) {
-            CommandResult actual = client.repositories().get(guid).addRevision(revision);
-            assertThat(actual).isEqualTo(result);
-        }
+        CommandResult actual = repositories.get(guid).addRevision(revision);
+        assertThat(actual).isEqualTo(result);
     }
 
     /**
@@ -301,10 +282,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.mergeTree(tree)).thenReturn(result);
 
-        try (Client client = newClient()) {
-            CommandResult actual = client.repositories().get(guid).mergeTree(tree);
-            assertThat(actual).isEqualTo(result);
-        }
+        CommandResult actual = repositories.get(guid).mergeTree(tree);
+        assertThat(actual).isEqualTo(result);
     }
 
     /**
@@ -317,10 +296,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.deleteContent(hash, head)).thenReturn(result);
 
-        try (Client client = newClient()) {
-            CommandResult actual = client.repositories().get(guid).deleteContent(hash, head);
-            assertThat(actual).isEqualTo(result);
-        }
+        CommandResult actual = repositories.get(guid).deleteContent(hash, head);
+        assertThat(actual).isEqualTo(result);
     }
 
     /**
@@ -334,8 +311,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
         when(repository.getContent(hash, 0, LOREM_IPSUM.getLength())).thenReturn(LOREM_IPSUM.getInputStream());
 
-        try (Client client = newClient();
-                Content content = client.repositories().get(guid).getContent(hash);
+        try (Content content = repositories.get(guid).getContent(hash);
                 InputStream expected = LOREM_IPSUM.getInputStream()) {
 
             assertThat(content.getFileName().get()).isEqualTo(LOREM_IPSUM.filename());
@@ -355,8 +331,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
         when(repository.getContent(hash, offset, length)).thenReturn(LOREM_IPSUM.getInputStream(offset, length));
 
-        try (Client client = newClient();
-                Content content = client.repositories().get(guid).getContent(hash, offset, length);
+        try (Content content = repositories.get(guid).getContent(hash, offset, length);
                 InputStream expected = LOREM_IPSUM.getInputStream(offset, length)) {
 
             assertThat(content.getInputStream()).hasContentEqualTo(expected);
@@ -372,10 +347,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getDigest(hash)).thenReturn(expected);
 
-        try (Client client = newClient()) {
-            Digest actual = client.repositories().get(guid).getDigest(hash);
-            assertThat(actual).isEqualTo(expected);
-        }
+        Digest actual = repositories.get(guid).getDigest(hash);
+        assertThat(actual).isEqualTo(expected);
     }
 
     /**
@@ -387,10 +360,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getDigest(hash, offset, length)).thenReturn(expected);
 
-        try (Client client = newClient()) {
-            Digest actual = client.repositories().get(guid).getDigest(hash, offset, length);
-            assertThat(actual).isEqualTo(expected);
-        }
+        Digest actual = repositories.get(guid).getDigest(hash, offset, length);
+        assertThat(actual).isEqualTo(expected);
     }
 
     /**
@@ -401,9 +372,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getTree(hash)).thenReturn(LOREM_IPSUM.getTree());
 
-        try (Client client = newClient()) {
-            client.repositories().get(guid).getContent(hash, 0, LOREM_IPSUM.getLength() + 1);
-        }
+        repositories.get(guid).getContent(hash, 0, LOREM_IPSUM.getLength() + 1);
     }
 
     /**
@@ -419,10 +388,8 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getContentInfo(hash)).thenReturn(contentInfo);
 
-        try (Client client = newClient()) {
-            ContentInfo actual = client.repositories().get(guid).getContentInfo(hash);
-            assertThat(actual).isEqualTo(contentInfo);
-        }
+        ContentInfo actual = repositories.get(guid).getContentInfo(hash);
+        assertThat(actual).isEqualTo(contentInfo);
     }
 
     /**
@@ -435,9 +402,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getTree(hash)).thenReturn(tree);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getTree(hash)).isEqualTo(tree);
-        }
+        assertThat(repositories.get(guid).getTree(hash)).isEqualTo(tree);
     }
 
     /**
@@ -450,9 +415,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getHead(hash)).thenReturn(head);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getHead(hash)).isEqualTo(head);
-        }
+        assertThat(repositories.get(guid).getHead(hash)).isEqualTo(head);
     }
 
     /**
@@ -483,9 +446,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.getRevisions(hash, revs)).thenReturn(expected);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).getRevisions(hash, revs)).isEqualTo(expected);
-        }
+        assertThat(repositories.get(guid).getRevisions(hash, revs)).isEqualTo(expected);
     }
 
     /**
@@ -505,9 +466,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.history(asc, first, size)).thenReturn(history);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).history(asc, first, size)).isEqualTo(history);
-        }
+        assertThat(repositories.get(guid).history(asc, first, size)).isEqualTo(history);
     }
 
     /**
@@ -520,9 +479,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         Repository repository = newRepositoryMock();
         when(repository.find(query, first, size)).thenReturn(entries);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).find(query, first, size)).isEqualTo(entries);
-        }
+        assertThat(repositories.get(guid).find(query, first, size)).isEqualTo(entries);
     }
 
     /**
@@ -537,9 +494,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.find(query, first, size)).thenReturn(entries);
         when(repository.getRevisions(hash, LOREM_IPSUM.getHead())).thenReturn(revisions);
 
-        try (Client client = newClient()) {
-            assertThat(client.repositories().get(guid).findRevisions(query, first, size)).isEqualTo(revisions);
-        }
+        assertThat(repositories.get(guid).findRevisions(query, first, size)).isEqualTo(revisions);
     }
 
     /**
@@ -553,9 +508,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
         when(repository.find(query, first, size)).thenReturn(entries);
         when(repository.getRevisions(hash, LOREM_IPSUM.getHead())).thenThrow(new UnknownContentException());
 
-        try (Client client = newClient()) {
-            client.repositories().get(guid).findRevisions(query, first, size);
-        }
+        repositories.get(guid).findRevisions(query, first, size);
     }
 
     private Repository newRepositoryMock() {

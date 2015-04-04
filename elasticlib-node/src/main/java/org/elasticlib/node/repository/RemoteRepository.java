@@ -23,12 +23,12 @@ import java.net.SocketException;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import javax.ws.rs.ProcessingException;
-import org.elasticlib.common.client.Client;
-import org.elasticlib.common.client.RepositoryClient;
+import org.elasticlib.common.client.RepositoryTarget;
 import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.UnreachableNodeException;
@@ -54,28 +54,25 @@ public class RemoteRepository implements Repository {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRepository.class);
 
-    private final Client client;
+    private final RepositoryTarget repository;
     private final String name;
-    private final Guid guid;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private boolean closed = false;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
      * Constructor.
      *
-     * @param client HTTP client on the remote repository.
-     * @param name Remote repository name.
-     * @param guid Remote repository GUID.
+     * @param repository HTTP client on the remote repository.
+     * @param name Remote repository name (for logging).
      */
-    public RemoteRepository(Client client, String name, Guid guid) {
-        this.client = client;
+    public RemoteRepository(RepositoryTarget repository, String name) {
+        this.repository = repository;
         this.name = name;
-        this.guid = guid;
     }
 
     @Override
     public RepositoryDef getDef() {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning repository def");
             return getInfo().getDef();
         });
@@ -83,144 +80,139 @@ public class RemoteRepository implements Repository {
 
     @Override
     public RepositoryInfo getInfo() {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning repository info");
-            return repository().getInfo();
+            return repository.getInfo();
         });
     }
 
     @Override
     public StagingInfo stageContent(Hash hash) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Staging content {}", hash);
-            return repository().stageContent(hash);
+            return repository.stageContent(hash);
         });
     }
 
     @Override
     public StagingInfo writeContent(Hash hash, Guid sessionId, InputStream source, long position) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Writing to staged content {}", hash);
-            return repository().writeContent(hash, sessionId, source, position);
+            return repository.writeContent(hash, sessionId, source, position);
         });
     }
 
     @Override
     public void unstageContent(Hash hash, Guid sessionId) {
-        readLocked(() -> {
+        fetch(() -> {
             log("Ending staging staging session {}", sessionId);
-            repository().unstageContent(hash, sessionId);
+            repository.unstageContent(hash, sessionId);
             return null;
         });
     }
 
     @Override
     public CommandResult addRevision(Revision revision) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Adding revision to {}, with head {}", revision.getContent(), revision.getParents());
-            return repository().addRevision(revision);
+            return repository.addRevision(revision);
         });
     }
 
     @Override
     public CommandResult mergeTree(RevisionTree tree) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Merging revision tree of {}", tree.getContent());
-            return repository().mergeTree(tree);
+            return repository.mergeTree(tree);
         });
     }
 
     @Override
     public CommandResult deleteContent(Hash hash, SortedSet<Hash> head) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Deleting content {}, with head {}", hash, head);
-            return repository().deleteContent(hash, head);
+            return repository.deleteContent(hash, head);
         });
     }
 
     @Override
     public ContentInfo getContentInfo(Hash hash) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning content info of {}", hash);
-            return repository().getContentInfo(hash);
+            return repository.getContentInfo(hash);
         });
     }
 
     @Override
     public RevisionTree getTree(Hash hash) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning revision tree of {}", hash);
-            return repository().getTree(hash);
+            return repository.getTree(hash);
         });
     }
 
     @Override
     public List<Revision> getHead(Hash hash) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning head revisions of {}", hash);
-            return repository().getHead(hash);
+            return repository.getHead(hash);
         });
     }
 
     @Override
     public List<Revision> getRevisions(Hash hash, Collection<Hash> revs) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning revisions of {} [{}]", hash, on(", ").join(revs));
-            return repository().getRevisions(hash, revs);
+            return repository.getRevisions(hash, revs);
         });
     }
 
     @Override
     public InputStream getContent(Hash hash, long offset, long length) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning content {}, offset {}, length {}", hash, offset, length);
-            InputStream inputStream = repository().getContent(hash, offset, length).getInputStream();
+            InputStream inputStream = repository.getContent(hash, offset, length).getInputStream();
             return new RemoteContent(inputStream);
         });
     }
 
     @Override
     public Digest getDigest(Hash hash) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning digest of content {}", hash);
-            return repository().getDigest(hash);
+            return repository.getDigest(hash);
         });
     }
 
     @Override
     public Digest getDigest(Hash hash, long offset, long length) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning digest of content {}, offset {}, length {}", hash, offset, length);
-            return repository().getDigest(hash, offset, length);
+            return repository.getDigest(hash, offset, length);
         });
     }
 
     @Override
     public List<Event> history(boolean chronological, long first, int number) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning history, {}, first {}, number {}", chronological ? "asc" : "desc", first, number);
-            return repository().history(chronological, first, number);
+            return repository.history(chronological, first, number);
         });
     }
 
     @Override
     public List<IndexEntry> find(String query, int first, int number) {
-        return readLocked(() -> {
+        return fetch(() -> {
             log("Returning index entries for '{}', first {}, number {}", query, first, number);
-            return repository().find(query, first, number);
+            return repository.find(query, first, number);
         });
     }
 
-    private RepositoryClient repository() {
-        return client.repositories().get(guid);
-    }
-
-    private <T> T readLocked(Supplier<T> supplier) {
-        lock.readLock().lock();
+    private <T> T fetch(Supplier<T> supplier) {
+        if (closed.get()) {
+            throw new RepositoryClosedException();
+        }
         try {
-            if (closed) {
-                throw new RepositoryClosedException();
-            }
             return supplier.get();
 
         } catch (ProcessingException e) {
@@ -228,25 +220,13 @@ public class RemoteRepository implements Repository {
                 throw new UnreachableNodeException(e);
             }
             throw e;
-
-        } finally {
-            lock.readLock().unlock();
         }
     }
 
     @Override
     public void close() {
-        lock.writeLock().lock();
-        try {
-            if (closed) {
-                return;
-            }
+        if (closed.compareAndSet(false, true)) {
             log("Closing");
-            closed = true;
-            client.close();
-
-        } finally {
-            lock.writeLock().unlock();
         }
     }
 
@@ -275,8 +255,8 @@ public class RemoteRepository implements Repository {
 
         @Override
         public int read() {
-            return readLocked(() -> {
-                if (closed) {
+            return read(() -> {
+                if (closed.get()) {
                     throw new RepositoryClosedException();
                 }
                 return delegate.read();
@@ -285,8 +265,8 @@ public class RemoteRepository implements Repository {
 
         @Override
         public int read(byte[] b, int off, int len) {
-            return readLocked(() -> {
-                if (closed) {
+            return read(() -> {
+                if (closed.get()) {
                     throw new RepositoryClosedException();
                 }
                 return delegate.read(b, off, len);
@@ -295,29 +275,24 @@ public class RemoteRepository implements Repository {
 
         @Override
         public void close() {
-            readLocked(() -> {
+            read(() -> {
                 delegate.close();
                 return 0;
             });
         }
 
-        private int readLocked(IOReader reader) {
-            lock.readLock().lock();
+        private int read(IOReader reader) {
             try {
-                try {
-                    return reader.read();
+                return reader.read();
 
-                } catch (ProcessingException e) {
-                    if (e.getCause() instanceof SocketException) {
-                        throw new UnreachableNodeException(e);
-                    }
-                    throw e;
-
-                } catch (IOException e) {
-                    throw new IOFailureException(e);
+            } catch (ProcessingException e) {
+                if (e.getCause() instanceof SocketException) {
+                    throw new UnreachableNodeException(e);
                 }
-            } finally {
-                lock.readLock().unlock();
+                throw e;
+
+            } catch (IOException e) {
+                throw new IOFailureException(e);
             }
         }
     }

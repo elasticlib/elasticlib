@@ -22,7 +22,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import java.util.List;
 import javax.ws.rs.core.Application;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.RemotesTarget;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
 import org.elasticlib.common.model.NodeInfo;
@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -46,6 +47,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemotesResourceTest.class);
     private final RemotesService remotesService = mock(RemotesService.class);
+    private RemotesTarget remotes;
 
     /**
      * Constructor.
@@ -65,6 +67,13 @@ public class RemotesResourceTest extends AbstractResourceTest {
                         bind(remotesService).to(RemotesService.class);
                     }
                 });
+    }
+
+    @BeforeClass
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        remotes = clientTarget().remotes();
     }
 
     /**
@@ -95,9 +104,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
      */
     @Test(dataProvider = "addRemoteDataProvider")
     public void addRemoteTest(List<URI> uris) {
-        try (Client client = newClient()) {
-            client.remotes().add(uris);
-        }
+        remotes.add(uris);
         verify(remotesService).addRemote(uris);
     }
 
@@ -107,9 +114,8 @@ public class RemotesResourceTest extends AbstractResourceTest {
     @Test
     public void removeRemoteTest() {
         Guid guid = Guid.random();
-        try (Client client = newClient()) {
-            client.remotes().remove(guid);
-        }
+
+        remotes.remove(guid);
         verify(remotesService).removeRemote(guid.asHexadecimalString());
     }
 
@@ -120,11 +126,9 @@ public class RemotesResourceTest extends AbstractResourceTest {
     public void listRemotesTest() {
         NodeDef def = new NodeDef("test", Guid.random(), singletonList(getBaseUri()));
         NodeInfo info = new NodeInfo(def, emptyList());
-        List<RemoteInfo> remotes = singletonList(new RemoteInfo(info, now()));
+        List<RemoteInfo> expected = singletonList(new RemoteInfo(info, now()));
 
-        when(remotesService.listRemotes()).thenReturn(remotes);
-        try (Client client = newClient()) {
-            assertThat(client.remotes().listInfos()).isEqualTo(remotes);
-        }
+        when(remotesService.listRemotes()).thenReturn(expected);
+        assertThat(remotes.listInfos()).isEqualTo(expected);
     }
 }

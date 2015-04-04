@@ -18,7 +18,7 @@ package org.elasticlib.node.resources;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import javax.ws.rs.core.Application;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.NodeTarget;
 import org.elasticlib.common.exception.UnexpectedFailureException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.NodeDef;
@@ -31,6 +31,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -40,6 +41,7 @@ public class NodeResourceTest extends AbstractResourceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeResourceTest.class);
     private final NodeService nodeService = mock(NodeService.class);
+    private NodeTarget node;
 
     /**
      * Constructor.
@@ -61,6 +63,13 @@ public class NodeResourceTest extends AbstractResourceTest {
                 });
     }
 
+    @BeforeClass
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        node = clientTarget().node();
+    }
+
     /**
      * Test.
      */
@@ -70,9 +79,7 @@ public class NodeResourceTest extends AbstractResourceTest {
         NodeInfo info = new NodeInfo(def, emptyList());
 
         when(nodeService.getNodeInfo()).thenReturn(info);
-        try (Client client = newClient()) {
-            assertThat(client.node().getInfo()).isEqualTo(info);
-        }
+        assertThat(node.getInfo()).isEqualTo(info);
     }
 
     /**
@@ -81,8 +88,6 @@ public class NodeResourceTest extends AbstractResourceTest {
     @Test(expectedExceptions = UnexpectedFailureException.class)
     public void getNodeInfoWithUnexpectedFailureTest() {
         when(nodeService.getNodeInfo()).thenThrow(new NullPointerException());
-        try (Client client = newClient()) {
-            client.node().getInfo();
-        }
+        node.getInfo();
     }
 }

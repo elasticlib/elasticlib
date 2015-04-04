@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import static javax.json.Json.createObjectBuilder;
 import javax.json.JsonObjectBuilder;
-import javax.ws.rs.client.Entity;
+import static javax.ws.rs.client.Entity.json;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import static org.elasticlib.common.client.ClientUtil.ensureSuccess;
@@ -29,9 +29,9 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.ReplicationInfo;
 
 /**
- * Replications API client.
+ * Replications API.
  */
-public class ReplicationsClient {
+public class ReplicationsTarget {
 
     private static final String REPLICATIONS = "replications";
     private static final String REPLICATION = "replication";
@@ -42,15 +42,16 @@ public class ReplicationsClient {
     private static final String STOP = "stop";
     private static final String SOURCE = "source";
     private static final String TARGET = "target";
-    private final WebTarget resource;
+
+    private final WebTarget target;
 
     /**
      * Constructor.
      *
-     * @param resource Base web-resource.
+     * @param target Underlying resource target.
      */
-    ReplicationsClient(WebTarget resource) {
-        this.resource = resource.path(REPLICATIONS);
+    ReplicationsTarget(WebTarget target) {
+        this.target = target.path(REPLICATIONS);
     }
 
     /**
@@ -89,9 +90,9 @@ public class ReplicationsClient {
         JsonObjectBuilder builder = createObjectBuilder();
         values.forEach(builder::add);
 
-        ensureSuccess(resource
+        ensureSuccess(target
                 .request()
-                .post(Entity.json(builder.build())));
+                .post(json(builder.build())));
     }
 
     /**
@@ -100,7 +101,7 @@ public class ReplicationsClient {
      * @param replication Replication GUID.
      */
     public void delete(Guid replication) {
-        ensureSuccess(resource
+        ensureSuccess(target
                 .path(REPLICATION_TEMPLATE)
                 .resolveTemplate(REPLICATION, replication.asHexadecimalString())
                 .request()
@@ -113,7 +114,7 @@ public class ReplicationsClient {
      * @return A list of replication infos.
      */
     public List<ReplicationInfo> listInfos() {
-        Response response = resource
+        Response response = target
                 .request()
                 .get();
 

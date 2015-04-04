@@ -16,12 +16,13 @@
 package org.elasticlib.node.components;
 
 import com.google.common.base.Splitter;
+import static java.lang.String.join;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.RepositoryTarget;
 import org.elasticlib.common.exception.RepositoryClosedException;
 import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.exception.UnreachableNodeException;
@@ -30,7 +31,7 @@ import org.elasticlib.common.model.RemoteInfo;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.node.dao.RemotesDao;
-import org.elasticlib.node.manager.client.ClientsManager;
+import org.elasticlib.node.manager.client.ClientManager;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.RepositoryRemoved;
 import org.elasticlib.node.manager.message.RepositoryUnavailable;
@@ -44,7 +45,7 @@ public class RemoteRepositoriesPool {
 
     private static final String SEPARATOR = ".";
 
-    private final ClientsManager clientsManager;
+    private final ClientManager clientManager;
     private final MessageManager messageManager;
     private final RemotesDao remotesDao;
     private final Map<Guid, Repository> repositories = new HashMap<>();
@@ -52,12 +53,12 @@ public class RemoteRepositoriesPool {
     /**
      * Constructor.
      *
-     * @param clientsManager Node clients manager.
+     * @param clientManager Node HTTP client manager.
      * @param messageManager Messaging infrastructure manager.
      * @param remotesDao Remotes nodes DAO.
      */
-    public RemoteRepositoriesPool(ClientsManager clientsManager, MessageManager messageManager, RemotesDao remotesDao) {
-        this.clientsManager = clientsManager;
+    public RemoteRepositoriesPool(ClientManager clientManager, MessageManager messageManager, RemotesDao remotesDao) {
+        this.clientManager = clientManager;
         this.messageManager = messageManager;
         this.remotesDao = remotesDao;
     }
@@ -187,20 +188,22 @@ public class RemoteRepositoriesPool {
 
     private synchronized Repository repository(RemoteInfo remoteInfo, Guid guid) {
         if (!repositories.containsKey(guid)) {
-            Client client = clientsManager.getClient(remoteInfo.getTransportUri());
-            repositories.put(guid, new RemoteRepository(client, repositoryName(remoteInfo, guid), guid));
+            RepositoryTarget target = clientManager.getClient()
+                    .target(remoteInfo.getTransportUri())
+                    .repositories()
+                    .get(guid);
+
+            String repositoryName = repositoryDefs(remoteInfo)
+                    .filter(x -> x.getGuid().equals(guid))
+                    .map(RepositoryDef::getName)
+                    .findFirst()
+                    .get();
+
+            String name = join(SEPARATOR, remoteInfo.getName(), repositoryName);
+
+            repositories.put(guid, new RemoteRepository(target, name));
         }
         return repositories.get(guid);
-    }
-
-    private static String repositoryName(RemoteInfo remoteInfo, Guid guid) {
-        String repositoryName = repositoryDefs(remoteInfo)
-                .filter(x -> x.getGuid().equals(guid))
-                .map(RepositoryDef::getName)
-                .findFirst()
-                .get();
-
-        return String.join(SEPARATOR, remoteInfo.getName(), repositoryName);
     }
 
     /**

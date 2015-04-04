@@ -54,9 +54,9 @@ import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 
 /**
- * Client to a remote repository.
+ * API on a given repository.
  */
-public class RepositoryClient {
+public class RepositoryTarget {
 
     private static final String CONTENT = "content";
     private static final String REVISIONS = "revisions";
@@ -83,15 +83,16 @@ public class RepositoryClient {
     private static final String SORT = "sort";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
-    private final WebTarget resource;
+
+    private final WebTarget target;
 
     /**
      * Constructor.
      *
-     * @param resource Base web-resource.
+     * @param target Underlying resource target.
      */
-    RepositoryClient(WebTarget resource) {
-        this.resource = resource;
+    RepositoryTarget(WebTarget target) {
+        this.target = target;
     }
 
     /**
@@ -100,7 +101,7 @@ public class RepositoryClient {
      * @return A RepositoryInfo instance.
      */
     public RepositoryInfo getInfo() {
-        Response response = resource
+        Response response = target
                 .request()
                 .get();
 
@@ -114,7 +115,7 @@ public class RepositoryClient {
      * @return Actual command result.
      */
     public CommandResult addRevision(Revision revision) {
-        return result(resource
+        return result(target
                 .path(REVISIONS)
                 .request()
                 .post(json(write(revision))));
@@ -127,7 +128,7 @@ public class RepositoryClient {
      * @return Actual command result.
      */
     public CommandResult mergeTree(RevisionTree tree) {
-        return result(resource
+        return result(target
                 .path(REVISIONS)
                 .request()
                 .post(json(write(tree))));
@@ -140,7 +141,7 @@ public class RepositoryClient {
      * @return Info about the staging session created.
      */
     public StagingInfo stageContent(Hash hash) {
-        Response response = resource.path(STAGE_TEMPLATE)
+        Response response = target.path(STAGE_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .post(null);
@@ -164,7 +165,7 @@ public class RepositoryClient {
                                                  CONTENT,
                                                  MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
-        Response response = resource.path(WRITE_TEMPLATE)
+        Response response = target.path(WRITE_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .resolveTemplate(SESSION_ID, sessionId)
                 .queryParam(POSITION, position)
@@ -182,7 +183,7 @@ public class RepositoryClient {
      * @param sessionId Staging session identifier.
      */
     public void unstageContent(Hash hash, Guid sessionId) {
-        ensureSuccess(resource.path(WRITE_TEMPLATE)
+        ensureSuccess(target.path(WRITE_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .resolveTemplate(SESSION_ID, sessionId)
                 .request()
@@ -197,7 +198,7 @@ public class RepositoryClient {
      * @return Actual command result.
      */
     public CommandResult deleteContent(Hash hash, Set<Hash> head) {
-        return result(resource
+        return result(target
                 .path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, Joiner.on('-').join(head))
@@ -212,7 +213,7 @@ public class RepositoryClient {
      * @return Corresponding content info.
      */
     public ContentInfo getContentInfo(Hash hash) {
-        Response response = resource.path(INFO_TEMPLATE)
+        Response response = target.path(INFO_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -227,7 +228,7 @@ public class RepositoryClient {
      * @return Corresponding revision tree.
      */
     public RevisionTree getTree(Hash hash) {
-        Response response = resource.path(REVISIONS_TEMPLATE)
+        Response response = target.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -260,7 +261,7 @@ public class RepositoryClient {
     }
 
     private List<Revision> getRevisions(Hash hash, String rev) {
-        Response response = resource.path(REVISIONS_TEMPLATE)
+        Response response = target.path(REVISIONS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(REV, rev)
                 .request()
@@ -283,7 +284,7 @@ public class RepositoryClient {
      * @return Corresponding content.
      */
     public Content getContent(Hash hash) {
-        return getContent(resource.path(CONTENTS_TEMPLATE)
+        return getContent(target.path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request());
     }
@@ -301,7 +302,7 @@ public class RepositoryClient {
         checkArgument(offset >= 0, "Offset is negative");
         checkArgument(length >= 0, "Length is negative");
 
-        return getContent(resource.path(CONTENTS_TEMPLATE)
+        return getContent(target.path(CONTENTS_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .header(HttpHeaders.RANGE, range(offset, length)));
@@ -349,7 +350,7 @@ public class RepositoryClient {
      * @return Actually computed digest of this content.
      */
     public Digest getDigest(Hash hash) {
-        Response response = resource.path(DIGEST_TEMPLATE)
+        Response response = target.path(DIGEST_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .request()
                 .get();
@@ -369,7 +370,7 @@ public class RepositoryClient {
         checkArgument(offset >= 0, "Offset is negative");
         checkArgument(length >= 0, "Length is negative");
 
-        Response response = resource.path(DIGEST_TEMPLATE)
+        Response response = target.path(DIGEST_TEMPLATE)
                 .resolveTemplate(HASH, hash)
                 .queryParam(OFFSET, offset)
                 .queryParam(LENGTH, length)
@@ -388,7 +389,7 @@ public class RepositoryClient {
      * @return A list of index entries.
      */
     public List<IndexEntry> find(String query, int from, int size) {
-        Response response = resource.path(INDEX)
+        Response response = target.path(INDEX)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)
@@ -407,7 +408,7 @@ public class RepositoryClient {
      * @return A list of content infos.
      */
     public List<Revision> findRevisions(String query, int from, int size) {
-        Response response = resource.path(REVISIONS)
+        Response response = target.path(REVISIONS)
                 .queryParam(QUERY, query)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)
@@ -426,7 +427,7 @@ public class RepositoryClient {
      * @return A list of history events.
      */
     public List<Event> history(boolean asc, long from, int size) {
-        Response response = resource.path(HISTORY)
+        Response response = target.path(HISTORY)
                 .queryParam(SORT, asc ? ASC : DESC)
                 .queryParam(FROM, from)
                 .queryParam(SIZE, size)

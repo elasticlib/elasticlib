@@ -41,8 +41,8 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
     private static final String ID_PROPERTY = ClientLoggingFilter.class.getName() + ".id";
-    private static final AtomicLong ID = new AtomicLong();
 
+    private final AtomicLong id;
     private final LoggingHandler handler;
 
     /**
@@ -51,12 +51,13 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
      * @param handler Logging adapter.
      */
     ClientLoggingFilter(LoggingHandler handler) {
+        id = new AtomicLong();
         this.handler = handler;
     }
 
     @Override
     public void filter(ClientRequestContext context) {
-        long currentId = ID.incrementAndGet();
+        long currentId = id.incrementAndGet();
         context.setProperty(ID_PROPERTY, currentId);
 
         StringBuilder builder = prefix(new StringBuilder(), currentId, REQUEST_PREFIX)

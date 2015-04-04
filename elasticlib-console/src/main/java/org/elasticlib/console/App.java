@@ -61,8 +61,8 @@ public final class App {
 
         try (Session session = new Session(display, config)) {
             try {
-                config.init();
                 display.println(about());
+                config.init();
                 session.init();
 
             } catch (NodeException e) {
@@ -71,6 +71,7 @@ public final class App {
                 display.print(e);
             } catch (ProcessingException e) {
                 display.print(e);
+                session.disconnect();
             }
 
             discoveryClient.start();

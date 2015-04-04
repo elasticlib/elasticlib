@@ -61,6 +61,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     private static final String REQUEST_NOTE = "Server has received a request";
     private static final String RESPONSE_NOTE = "Server responded with a response";
     private static final String ENTITY_LOGGER_PROPERTY = LoggingFilter.class.getName() + ".entityLogger";
+    private static final String ID_PROPERTY = LoggingFilter.class.getName() + ".id";
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
     private static final Logger LOG = LoggerFactory.getLogger(LoggingFilter.class);
 
@@ -69,6 +70,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     @Override
     public void filter(ContainerRequestContext requestCtx) throws IOException {
         long currentId = id.incrementAndGet();
+        requestCtx.setProperty(ID_PROPERTY, currentId);
         StringBuilder builder = new StringBuilder();
 
         printRequestLine(builder,
@@ -93,7 +95,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
 
     @Override
     public void filter(ContainerRequestContext requestCtx, ContainerResponseContext responseCtx) throws IOException {
-        long currentId = id.incrementAndGet();
+        long currentId = (long) requestCtx.getProperty(ID_PROPERTY);
         StringBuilder builder = new StringBuilder();
 
         printResponseLine(builder,

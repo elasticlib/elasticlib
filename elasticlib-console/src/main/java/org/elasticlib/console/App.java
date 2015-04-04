@@ -51,13 +51,8 @@ public final class App {
         Display display = new Display(consoleReader, config);
         DiscoveryClient discoveryClient = new DiscoveryClient(config);
 
-        getRuntime().addShutdownHook(new Thread("shutdown") {
-            @Override
-            public void run() {
-                // Do not shutdown the consoleReader here, it deadlocks otherwise.
-                discoveryClient.stop();
-            }
-        });
+        // Do not shutdown the consoleReader here, it deadlocks otherwise.
+        getRuntime().addShutdownHook(new Thread(discoveryClient::stop, "shutdown"));
 
         try (Session session = new Session(display, config)) {
             try {

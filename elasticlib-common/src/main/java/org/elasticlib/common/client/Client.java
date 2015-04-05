@@ -16,14 +16,8 @@
 package org.elasticlib.common.client;
 
 import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ws.rs.client.ClientBuilder;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.filter.LoggingFilter;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 /**
  * A node HTTP client.
@@ -35,21 +29,10 @@ public class Client implements AutoCloseable {
     /**
      * Constructor.
      *
-     * @param loggingHandler Logging handler.
+     * @param config Client configuration.
      */
-    public Client(LoggingHandler loggingHandler) {
-        Logger logger = Logger.getGlobal();
-        logger.setLevel(Level.OFF);
-
-        ClientConfig clientConfig = new ClientConfig()
-                .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024)
-                .connectorProvider(new ApacheConnectorProvider())
-                .register(MultiPartFeature.class)
-                .register(new HeaderRestoringWriterInterceptor())
-                .register(new LoggingFilter(logger, true))
-                .register(new ClientLoggingFilter(loggingHandler));
-
-        client = ClientBuilder.newClient(clientConfig);
+    Client(ClientConfig config) {
+        client = ClientBuilder.newClient(config);
     }
 
     /**

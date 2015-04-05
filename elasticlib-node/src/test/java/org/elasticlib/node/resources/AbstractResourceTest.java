@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import java.util.List;
 import javax.ws.rs.core.Application;
 import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ClientBuilder;
 import org.elasticlib.common.client.ClientTarget;
 import org.elasticlib.node.manager.client.ClientLoggingHandler;
 import org.elasticlib.node.providers.HttpExceptionMapper;
@@ -41,8 +42,8 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractResourceTest extends ContainerPerClassTest {
 
-    private final Client client;
     private final List<Object> mocks;
+    private final Client client;
 
     static {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -60,8 +61,10 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
         // Specifies the test container to dynamically bind to an available port
         // instead of using the fixed default one.
         set(TestProperties.CONTAINER_PORT, 0);
-        client = new Client(new ClientLoggingHandler(logger));
         mocks = new ArrayList<>();
+        client = new ClientBuilder()
+                .withLoggingHandler(new ClientLoggingHandler(logger))
+                .build();
     }
 
     @Override

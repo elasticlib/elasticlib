@@ -16,6 +16,7 @@
 package org.elasticlib.node.manager.client;
 
 import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,16 @@ public class ClientManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientManager.class);
 
-    private final Client client = new Client(new ClientLoggingHandler(LOG));
+    private final Client client;
+
+    /**
+     * Constructor.
+     */
+    public ClientManager() {
+        client = new ClientBuilder()
+                .withLoggingHandler(new ClientLoggingHandler(LOG))
+                .build();
+    }
 
     /**
      * Provides node HTTP client.

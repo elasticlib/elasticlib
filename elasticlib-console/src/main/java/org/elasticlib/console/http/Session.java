@@ -18,6 +18,7 @@ package org.elasticlib.console.http;
 import java.io.Closeable;
 import java.net.URI;
 import org.elasticlib.common.client.Client;
+import org.elasticlib.common.client.ClientBuilder;
 import org.elasticlib.common.client.ClientTarget;
 import org.elasticlib.common.client.RepositoryTarget;
 import org.elasticlib.common.hash.Guid;
@@ -50,7 +51,9 @@ public class Session implements Closeable {
     public Session(Display display, ConsoleConfig config) {
         this.config = config;
         printingHandler = new PrintingHandler(display, config);
-        client = new Client(printingHandler);
+        client = new ClientBuilder()
+                .withLoggingHandler(printingHandler)
+                .build();
     }
 
     /**

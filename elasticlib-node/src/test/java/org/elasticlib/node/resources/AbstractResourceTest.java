@@ -19,10 +19,9 @@ import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.List;
 import javax.ws.rs.core.Application;
-import org.elasticlib.common.client.Client;
-import org.elasticlib.common.client.ClientBuilder;
 import org.elasticlib.common.client.ClientTarget;
-import org.elasticlib.node.manager.client.ClientLoggingHandler;
+import static org.elasticlib.node.TestUtil.config;
+import org.elasticlib.node.manager.client.ClientManager;
 import org.elasticlib.node.providers.HttpExceptionMapper;
 import org.elasticlib.node.providers.MappableBodyWriter;
 import org.elasticlib.node.providers.MappableListBodyWriter;
@@ -32,7 +31,6 @@ import org.glassfish.jersey.test.JerseyTestNg.ContainerPerClassTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -42,8 +40,8 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractResourceTest extends ContainerPerClassTest {
 
-    private final List<Object> mocks;
-    private final Client client;
+    private final List<Object> mocks = new ArrayList<>();
+    private final ClientManager clientManager = new ClientManager(config());
 
     static {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -52,19 +50,13 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
 
     /**
      * Constructor.
-     *
-     * @param logger Logger for HTTP dialogs.
      */
-    public AbstractResourceTest(Logger logger) {
+    public AbstractResourceTest() {
         super(new GrizzlyTestContainerFactory());
 
         // Specifies the test container to dynamically bind to an available port
         // instead of using the fixed default one.
         set(TestProperties.CONTAINER_PORT, 0);
-        mocks = new ArrayList<>();
-        client = new ClientBuilder()
-                .withLoggingHandler(new ClientLoggingHandler(logger))
-                .build();
     }
 
     @Override
@@ -83,7 +75,7 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
     @AfterClass
     @Override
     public final void tearDown() throws Exception {
-        client.close();
+        clientManager.stop();
         super.tearDown();
     }
 
@@ -118,6 +110,6 @@ public abstract class AbstractResourceTest extends ContainerPerClassTest {
      * @return A new base API instance.
      */
     protected ClientTarget clientTarget() {
-        return client.target(getBaseUri());
+        return clientManager.getClient().target(getBaseUri());
     }
 }

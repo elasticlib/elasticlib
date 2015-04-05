@@ -34,8 +34,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -45,7 +43,6 @@ import org.testng.annotations.Test;
  */
 public class RemotesResourceTest extends AbstractResourceTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RemotesResourceTest.class);
     private final RemotesService remotesService = mock(RemotesService.class);
     private RemotesTarget remotes;
 
@@ -53,7 +50,7 @@ public class RemotesResourceTest extends AbstractResourceTest {
      * Constructor.
      */
     public RemotesResourceTest() {
-        super(LOG);
+        super();
         registerMocks(remotesService);
     }
 

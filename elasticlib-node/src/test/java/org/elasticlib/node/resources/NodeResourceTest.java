@@ -29,8 +29,6 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -39,7 +37,6 @@ import org.testng.annotations.Test;
  */
 public class NodeResourceTest extends AbstractResourceTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NodeResourceTest.class);
     private final NodeService nodeService = mock(NodeService.class);
     private NodeTarget node;
 
@@ -47,7 +44,7 @@ public class NodeResourceTest extends AbstractResourceTest {
      * Constructor.
      */
     public NodeResourceTest() {
-        super(LOG);
+        super();
         registerMocks(nodeService);
     }
 

@@ -63,8 +63,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -73,8 +71,6 @@ import org.testng.annotations.Test;
  * Integration tests on the repositories resource and the HTTP client. Service layer is mocked in these tests.
  */
 public class RepositoriesResourceTest extends AbstractResourceTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RepositoriesResourceTest.class);
 
     private final RepositoriesService repositoriesService = mock(RepositoriesService.class);
     private final Guid guid = Guid.random();
@@ -95,7 +91,7 @@ public class RepositoriesResourceTest extends AbstractResourceTest {
      * Constructor.
      */
     public RepositoriesResourceTest() {
-        super(LOG);
+        super();
         registerMocks(repositoriesService);
     }
 

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 /**
  * Utility handler used to route node client logging messages to SLF4J.
  */
-public class ClientLoggingHandler implements LoggingHandler {
+class ClientLoggingHandler implements LoggingHandler {
 
     private final Logger logger;
 

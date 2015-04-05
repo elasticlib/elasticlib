@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import javax.ws.rs.ProcessingException;
-import org.elasticlib.common.client.RemotesTarget;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.config.ConfigUtil;
 import static org.elasticlib.common.config.ConfigUtil.duration;
@@ -150,29 +149,38 @@ public class UnicastDiscoveryClient {
 
         private void process(URI uri) {
             try {
-                RemotesTarget remotesTarget = clientManager.getClient()
-                        .target(uri)
-                        .remotes();
-
                 if (remotes.stream().noneMatch(x -> x.getTransportUri().equals(uri))) {
                     remotesService.saveRemote(uri);
                 }
 
-                List<RemoteInfo> targetRemotes = remotesTarget.listInfos();
+                List<RemoteInfo> targetRemotes = clientManager.getClient()
+                        .target(uri)
+                        .remotes()
+                        .listInfos();
+
                 targetRemotes.stream()
                         .filter(remote -> !knownNodes.contains(remote.getGuid()))
                         .forEach(remote -> remotesService.saveRemote(remote.getPublishUris(), remote.getGuid()));
 
-                if (!guids(targetRemotes).contains(local.getGuid()) && !local.getPublishUris().isEmpty()) {
-                    try {
-                        remotesTarget.add(local.getPublishUris());
+                tryAddLocalNodeToRemote(uri, targetRemotes);
 
-                    } catch (NodeException e) {
-                        LOG.warn("Failed to add local node to {}. Remote responded: {}", uri, e.getMessage());
-                    }
-                }
             } catch (ProcessingException e) {
                 EXCEPTION_HANDLER.log(uri, e);
+            }
+        }
+
+        private void tryAddLocalNodeToRemote(URI uri, List<RemoteInfo> targetRemotes) {
+            if (guids(targetRemotes).contains(local.getGuid()) || local.getPublishUris().isEmpty()) {
+                return;
+            }
+            try {
+                clientManager.getClient()
+                        .target(uri)
+                        .remotes()
+                        .add(local.getPublishUris());
+
+            } catch (NodeException e) {
+                LOG.warn("Failed to add local node to {}. Remote responded: {}", uri, e.getMessage());
             }
         }
     }

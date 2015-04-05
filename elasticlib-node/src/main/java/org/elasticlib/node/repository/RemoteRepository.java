@@ -24,8 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.client.RepositoryTarget;
@@ -56,7 +54,6 @@ public class RemoteRepository implements Repository {
 
     private final RepositoryTarget repository;
     private final String name;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**

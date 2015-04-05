@@ -24,6 +24,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Hash;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_CONNECT_TIMEOUT;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS_PER_ROUTE;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_READ_TIMEOUT;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_CLEANUP_ENABLED;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_CLEANUP_INTERVAL;
 import static org.elasticlib.node.config.NodeConfig.STAGING_SESSIONS_MAX_SIZE;
@@ -59,6 +63,10 @@ public final class TestUtil {
      */
     public static Config config() {
         return Config.empty()
+                .set(CLIENT_CONNECT_TIMEOUT, "500 ms")
+                .set(CLIENT_READ_TIMEOUT, "")
+                .set(CLIENT_MAX_CONNECTIONS, 10)
+                .set(CLIENT_MAX_CONNECTIONS_PER_ROUTE, 2)
                 .set(TASKS_POOL_SIZE, 1)
                 .set(STAGING_SESSIONS_MAX_SIZE, 10)
                 .set(STAGING_SESSIONS_TIMEOUT, "10 s")

@@ -22,6 +22,12 @@ http:
   port: 9400
   context: /
 
+client:
+  connectTimeout: 10 seconds
+  readTimeout: 60 seconds
+  maxConnections: 100
+  maxConnectionsPerRoute: 20
+
 discovery:
   multicast:
     listen: true

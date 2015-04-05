@@ -51,6 +51,22 @@ public final class NodeConfig {
      */
     public static final String HTTP_CONTEXT = "http.context";
     /**
+     * HTTP client connect timeout. Infinite if empty.
+     */
+    public static final String CLIENT_CONNECT_TIMEOUT = "client.connectTimeout";
+    /**
+     * HTTP client read timeout. Infinite if empty.
+     */
+    public static final String CLIENT_READ_TIMEOUT = "client.readTimeout";
+    /**
+     * HTTP client total maximum number of connections.
+     */
+    public static final String CLIENT_MAX_CONNECTIONS = "client.maxConnections";
+    /**
+     * HTTP client maximum number of connections per route.
+     */
+    public static final String CLIENT_MAX_CONNECTIONS_PER_ROUTE = "client.maxConnectionsPerRoute";
+    /**
      * Whether listening to multicast discovery requests is enabled. If disabled, this node will not be discoverable by
      * other ones.
      */

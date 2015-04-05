@@ -15,8 +15,17 @@
  */
 package org.elasticlib.node.manager.client;
 
+import com.google.common.primitives.Ints;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import org.elasticlib.common.client.Client;
 import org.elasticlib.common.client.ClientBuilder;
+import org.elasticlib.common.config.Config;
+import static org.elasticlib.common.config.ConfigUtil.duration;
+import static org.elasticlib.common.config.ConfigUtil.unit;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_CONNECT_TIMEOUT;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS_PER_ROUTE;
+import static org.elasticlib.node.config.NodeConfig.CLIENT_READ_TIMEOUT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +40,24 @@ public class ClientManager {
 
     /**
      * Constructor.
+     *
+     * @param config Configuration holder.
      */
-    public ClientManager() {
+    public ClientManager(Config config) {
         client = new ClientBuilder()
                 .withLoggingHandler(new ClientLoggingHandler(LOG))
+                .withConnectTimeout(millis(config, CLIENT_CONNECT_TIMEOUT))
+                .withReadTimeout(millis(config, CLIENT_READ_TIMEOUT))
+                .withMaxConnections(config.getInt(CLIENT_MAX_CONNECTIONS))
+                .withMaxConnectionsPerRoute(config.getInt(CLIENT_MAX_CONNECTIONS_PER_ROUTE))
                 .build();
+    }
+
+    private static int millis(Config config, String key) {
+        if (config.getString(key).isEmpty()) {
+            return 0;
+        }
+        return Ints.checkedCast(MILLISECONDS.convert(duration(config, key), unit(config, key)));
     }
 
     /**

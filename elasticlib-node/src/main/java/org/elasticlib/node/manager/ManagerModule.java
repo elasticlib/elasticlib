@@ -44,7 +44,7 @@ public class ManagerModule {
      * @param config Configuration holder.
      */
     public ManagerModule(Path home, Config config) {
-        clientManager = new ClientManager();
+        clientManager = new ClientManager(config);
         taskManager = new TaskManager(config);
         storageManager = newStorageManager(home.resolve(STORAGE), config, taskManager);
         messageManager = new MessageManager(taskManager);

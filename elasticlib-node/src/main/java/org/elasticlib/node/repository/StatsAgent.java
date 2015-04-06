@@ -42,7 +42,7 @@ class StatsAgent extends Agent {
      * @param curSeqsDao Agent sequences DAO.
      */
     public StatsAgent(Repository repository, StatsManager statsManager, CurSeqsDao curSeqsDao) {
-        super("stats-" + repository.getDef().getName(), repository, curSeqsDao, "stats");
+        super("stats-" + repository.getDef().getGuid(), repository, curSeqsDao, "stats");
 
         this.repository = repository;
         this.statsManager = statsManager;

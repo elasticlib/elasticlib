@@ -37,7 +37,7 @@ class IndexingAgent extends Agent {
      * @param curSeqsDao Agent sequences DAO.
      */
     public IndexingAgent(Repository repository, Index index, CurSeqsDao curSeqsDao) {
-        super("indexation-" + repository.getDef().getName(), repository, curSeqsDao, "index");
+        super("indexation-" + repository.getDef().getGuid(), repository, curSeqsDao, "index");
 
         this.repository = repository;
         this.index = index;

@@ -218,13 +218,13 @@ public class StorageManager {
     }
 
     /**
-     * Executes supplied procedure in a transaction.
+     * Executes supplied query in a transaction.
      *
-     * @param procedure Procedure to execute.
+     * @param query Query to execute.
      */
-    public void inTransaction(Procedure procedure) {
+    public void inTransaction(Runnable query) {
         inTransaction(() -> {
-            procedure.apply();
+            query.run();
             return null;
         });
     }

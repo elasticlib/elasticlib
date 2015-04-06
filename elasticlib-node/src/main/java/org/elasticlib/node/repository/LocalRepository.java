@@ -16,7 +16,6 @@
 package org.elasticlib.node.repository;
 
 import static com.google.common.base.Joiner.on;
-import com.sleepycat.je.Database;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -49,9 +48,9 @@ import org.elasticlib.common.model.RepositoryInfo;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.message.NewRepositoryEvent;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.TaskManager;
 import org.slf4j.Logger;
@@ -64,9 +63,6 @@ import org.slf4j.LoggerFactory;
 public class LocalRepository implements Repository {
 
     private static final String STORAGE = "storage";
-    private static final String INDEX = "index";
-    private static final String STATS = "stats";
-    private static final String CUR_SEQS = "curSeqs";
     private static final Logger LOG = LoggerFactory.getLogger(LocalRepository.class);
 
     private final RepositoryDef def;
@@ -99,9 +95,9 @@ public class LocalRepository implements Repository {
         this.contentManager = contentManager;
         this.index = index;
 
-        Database curSeqsDb = storageManager.openDatabase(CUR_SEQS);
-        indexingAgent = new IndexingAgent(this, index, curSeqsDb, entry(INDEX));
-        statsAgent = new StatsAgent(this, statsManager, curSeqsDb, entry(STATS));
+        CurSeqsDao curSeqsDao = new CurSeqsDao(storageManager);
+        indexingAgent = new IndexingAgent(this, index, curSeqsDao);
+        statsAgent = new StatsAgent(this, statsManager, curSeqsDao);
 
         indexingAgent.start();
         statsAgent.start();
@@ -116,7 +112,9 @@ public class LocalRepository implements Repository {
      * @param messageManager Messaging infrastructure manager.
      * @return Created repository.
      */
-    public static LocalRepository create(Path path, Config config, TaskManager taskManager,
+    public static LocalRepository create(Path path,
+                                         Config config,
+                                         TaskManager taskManager,
                                          MessageManager messageManager) {
         try {
             Files.createDirectories(path);
@@ -154,7 +152,10 @@ public class LocalRepository implements Repository {
      * @param messageManager Messaging infrastructure manager.
      * @return Opened repository.
      */
-    public static LocalRepository open(Path path, Config config, TaskManager taskManager, MessageManager messageManager) {
+    public static LocalRepository open(Path path,
+                                       Config config,
+                                       TaskManager taskManager,
+                                       MessageManager messageManager) {
         if (!Files.isDirectory(path)) {
             throw new InvalidRepositoryPathException();
         }

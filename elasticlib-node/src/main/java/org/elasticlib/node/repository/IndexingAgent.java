@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,11 @@
  */
 package org.elasticlib.node.repository;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RevisionTree;
+import org.elasticlib.node.dao.CurSeqsDao;
 
 /**
  * An agent that performs indexing from a repository to its internal index.
@@ -30,8 +29,15 @@ class IndexingAgent extends Agent {
     private final Repository repository;
     private final Index index;
 
-    public IndexingAgent(Repository repository, Index index, Database curSeqsDb, DatabaseEntry curSeqKey) {
-        super("indexation-" + repository.getDef().getName(), repository, curSeqsDb, curSeqKey);
+    /**
+     * Constructor.
+     *
+     * @param repository Tracked repository.
+     * @param index Tracked repository index.
+     * @param curSeqsDao Agent sequences DAO.
+     */
+    public IndexingAgent(Repository repository, Index index, CurSeqsDao curSeqsDao) {
+        super("indexation-" + repository.getDef().getName(), repository, curSeqsDao, "index");
 
         this.repository = repository;
         this.index = index;

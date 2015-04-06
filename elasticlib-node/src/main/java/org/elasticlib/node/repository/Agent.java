@@ -16,10 +16,6 @@
 package org.elasticlib.node.repository;
 
 import static com.google.common.collect.Iterables.getLast;
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -37,8 +33,7 @@ import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.Event;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.asLong;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,12 +57,12 @@ public abstract class Agent {
      *
      * @param name Agent name.
      * @param repository Tracked repository.
-     * @param curSeqsDb Database used to persist agent curSeq value.
-     * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqs Database.
+     * @param curSeqsDao The agents sequences DAO.
+     * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqsDao.
      */
-    protected Agent(String name, Repository repository, Database curSeqsDb, DatabaseEntry curSeqKey) {
+    protected Agent(String name, Repository repository, CurSeqsDao curSeqsDao, String curSeqKey) {
         this.repository = repository;
-        agentThread = new AgentThread(name, curSeqsDb, curSeqKey);
+        agentThread = new AgentThread(name, curSeqsDao, curSeqKey);
     }
 
     /**
@@ -157,27 +152,18 @@ public abstract class Agent {
 
     private class AgentThread extends Thread {
 
-        private final Database curSeqsDb;
-        private final DatabaseEntry curSeqKey;
+        private final CurSeqsDao curSeqsDao;
+        private final String curSeqKey;
         private final Deque<Event> events = new ArrayDeque<>(FETCH_SIZE);
         private final AtomicReference<AgentInfo> info;
         private long curSeq;
         private long maxSeq;
 
-        public AgentThread(String name, Database curSeqsDb, DatabaseEntry curSeqKey) {
+        public AgentThread(String name, CurSeqsDao curSeqsDao, String curSeqKey) {
             super(name);
-            this.curSeqsDb = curSeqsDb;
+            this.curSeqsDao = curSeqsDao;
             this.curSeqKey = curSeqKey;
-            curSeq = loadCurSeq();
             info = new AtomicReference<>(new AgentInfo(curSeq, maxSeq, AgentState.NEW));
-        }
-
-        private long loadCurSeq() {
-            DatabaseEntry entry = new DatabaseEntry();
-            if (curSeqsDb.get(null, curSeqKey, entry, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                return asLong(entry);
-            }
-            return 0;
         }
 
         public AgentInfo info() {
@@ -187,6 +173,7 @@ public abstract class Agent {
         @Override
         public final void run() {
             try {
+                curSeq = curSeqsDao.load(curSeqKey);
                 Optional<Event> nextEvent = next();
                 while (nextEvent.isPresent()) {
                     Event event = nextEvent.get();
@@ -269,7 +256,7 @@ public abstract class Agent {
 
         private void updateCurSeq(long c) {
             curSeq = c;
-            curSeqsDb.put(null, curSeqKey, entry(curSeq));
+            curSeqsDao.save(curSeqKey, curSeq);
             updateInfo(AgentState.RUNNING);
         }
 

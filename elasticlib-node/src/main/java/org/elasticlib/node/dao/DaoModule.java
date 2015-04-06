@@ -27,6 +27,7 @@ public class DaoModule {
     private final RepositoriesDao repositoriesDao;
     private final ReplicationsDao replicationsDao;
     private final RemotesDao remotesDao;
+    private final CurSeqsDao curSeqsDao;
 
     /**
      * Constructor.
@@ -40,6 +41,7 @@ public class DaoModule {
         repositoriesDao = new RepositoriesDao(storageManager);
         replicationsDao = new ReplicationsDao(storageManager);
         remotesDao = new RemotesDao(storageManager);
+        curSeqsDao = new CurSeqsDao(storageManager);
     }
 
     /**
@@ -68,5 +70,12 @@ public class DaoModule {
      */
     public RemotesDao getRemotesDao() {
         return remotesDao;
+    }
+
+    /**
+     * @return The agents sequences DAO.
+     */
+    public CurSeqsDao getCurSeqsDao() {
+        return curSeqsDao;
     }
 }

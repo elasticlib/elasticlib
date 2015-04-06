@@ -45,10 +45,15 @@ import org.elasticlib.node.components.LocalRepositoriesPool;
 import org.elasticlib.node.components.RemoteRepositoriesPool;
 import org.elasticlib.node.components.ReplicationAgentsPool;
 import org.elasticlib.node.components.RepositoriesProvider;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.dao.ReplicationsDao;
 import org.elasticlib.node.dao.RepositoriesDao;
 import org.elasticlib.node.manager.ManagerModule;
+import org.elasticlib.node.manager.client.ClientManager;
+import org.elasticlib.node.manager.message.MessageManager;
+import org.elasticlib.node.manager.storage.StorageManager;
+import org.elasticlib.node.manager.task.TaskManager;
 import org.elasticlib.node.repository.Repository;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.AfterClass;
@@ -85,31 +90,29 @@ public class ReplicationsServiceTest {
         path = Files.createTempDirectory(getClass().getSimpleName() + "-");
         managerModule = new ManagerModule(path.resolve("home"), config);
 
-        RepositoriesDao repositoriesDao = new RepositoriesDao(managerModule.getStorageManager());
-        ReplicationsDao replicationsDao = new ReplicationsDao(managerModule.getStorageManager());
-        RemotesDao remotesDao = new RemotesDao(managerModule.getStorageManager());
+        StorageManager storageManager = managerModule.getStorageManager();
+        ClientManager clientManager = managerModule.getClientManager();
+        TaskManager taskManager = managerModule.getTaskManager();
+        MessageManager messageManager = managerModule.getMessageManager();
 
-        LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config,
-                                                                        managerModule.getTaskManager(),
-                                                                        managerModule.getMessageManager());
+        RepositoriesDao repositoriesDao = new RepositoriesDao(storageManager);
+        ReplicationsDao replicationsDao = new ReplicationsDao(storageManager);
+        RemotesDao remotesDao = new RemotesDao(storageManager);
+        CurSeqsDao curSeqsDao = new CurSeqsDao(storageManager);
+
+        LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config, taskManager, messageManager);
 
         localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
-        remoteRepositoriesPool = new RemoteRepositoriesPool(managerModule.getClientManager(),
-                                                            managerModule.getMessageManager(),
-                                                            remotesDao);
+        remoteRepositoriesPool = new RemoteRepositoriesPool(clientManager, messageManager, remotesDao);
 
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
                                                                              remoteRepositoriesPool);
 
-        replicationAgentsPool = new ReplicationAgentsPool(managerModule.getStorageManager(),
-                                                          repositoriesProvider);
+        replicationAgentsPool = new ReplicationAgentsPool(curSeqsDao, repositoriesProvider);
 
-        repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
-                                                      managerModule.getMessageManager(),
-                                                      localRepositoriesPool);
-
-        replicationsService = new ReplicationsService(managerModule.getStorageManager(),
-                                                      managerModule.getMessageManager(),
+        repositoriesService = new RepositoriesService(storageManager, messageManager, localRepositoriesPool);
+        replicationsService = new ReplicationsService(storageManager,
+                                                      messageManager,
                                                       replicationsDao,
                                                       repositoriesProvider,
                                                       replicationAgentsPool);

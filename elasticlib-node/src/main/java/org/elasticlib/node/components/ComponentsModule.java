@@ -17,6 +17,7 @@ package org.elasticlib.node.components;
 
 import org.elasticlib.common.config.Config;
 import org.elasticlib.node.dao.AttributesDao;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.dao.RepositoriesDao;
@@ -57,6 +58,7 @@ public class ComponentsModule {
         AttributesDao attributesDao = daoModule.getAttributesDao();
         RemotesDao remotesDao = daoModule.getRemotesDao();
         RepositoriesDao repositoriesDao = daoModule.getRepositoriesDao();
+        CurSeqsDao curSeqsDao = daoModule.getCurSeqsDao();
 
         nodeNameProvider = new NodeNameProvider(config);
         nodeGuidProvider = new NodeGuidProvider(attributesDao);
@@ -70,7 +72,7 @@ public class ComponentsModule {
         localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, localRepositoriesFactory);
         remoteRepositoriesPool = new RemoteRepositoriesPool(clientManager, messageManager, remotesDao);
         repositoriesProvider = new RepositoriesProvider(localRepositoriesPool, remoteRepositoriesPool);
-        replicationAgentsPool = new ReplicationAgentsPool(storageManager, repositoriesProvider);
+        replicationAgentsPool = new ReplicationAgentsPool(curSeqsDao, repositoriesProvider);
     }
 
     /**

@@ -15,8 +15,6 @@
  */
 package org.elasticlib.node.components;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -24,8 +22,7 @@ import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.ReplicationDef;
-import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
-import org.elasticlib.node.manager.storage.StorageManager;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.repository.Agent;
 import org.elasticlib.node.repository.Repository;
 
@@ -34,21 +31,18 @@ import org.elasticlib.node.repository.Repository;
  */
 public class ReplicationAgentsPool {
 
-    private static final String REPLICATION_CUR_SEQS = "replicationCurSeqs";
-
-    private final StorageManager storageManager;
+    private final CurSeqsDao curSeqsDao;
     private final RepositoriesProvider repositoriesProvider;
     private final Map<Guid, Agent> agents = new HashMap<>();
-    private Database curSeqsDb;
 
     /**
      * Constructor.
      *
-     * @param storageManager Persistent storage provider.
+     * @param curSeqsDao The agents sequences DAO.
      * @param repositoriesProvider Repositories provider.
      */
-    public ReplicationAgentsPool(StorageManager storageManager, RepositoriesProvider repositoriesProvider) {
-        this.storageManager = storageManager;
+    public ReplicationAgentsPool(CurSeqsDao curSeqsDao, RepositoriesProvider repositoriesProvider) {
+        this.curSeqsDao = curSeqsDao;
         this.repositoriesProvider = repositoriesProvider;
     }
 
@@ -56,7 +50,7 @@ public class ReplicationAgentsPool {
      * Initializes the pool.
      */
     public void start() {
-        curSeqsDb = storageManager.openDeferredWriteDatabase(REPLICATION_CUR_SEQS);
+        // Nothing to do.
     }
 
     /**
@@ -74,7 +68,7 @@ public class ReplicationAgentsPool {
      */
     public void createAgent(ReplicationDef def) {
         // Ensures agent won't see a stale value.
-        curSeqsDb.delete(null, entry(def.getGuid()));
+        curSeqsDao.delete(def.getGuid().asHexadecimalString());
         tryStartAgent(def);
     }
 
@@ -119,9 +113,7 @@ public class ReplicationAgentsPool {
     }
 
     private void startAgent(Guid guid, Repository source, Repository destination) {
-        DatabaseEntry curSeqKey = entry(guid);
-        Agent agent = new ReplicationAgent(guid, source, destination, curSeqsDb, curSeqKey);
-
+        Agent agent = new ReplicationAgent(guid, source, destination, curSeqsDao, guid.asHexadecimalString());
         Agent previous = agents.put(guid, agent);
         if (previous != null) {
             previous.stop();
@@ -148,9 +140,7 @@ public class ReplicationAgentsPool {
      */
     public void deleteAgent(Guid guid) {
         stopAgent(guid);
-
-        // Can't use a transaction on a deffered write database :(
-        curSeqsDb.delete(null, entry(guid));
+        curSeqsDao.delete(guid.asHexadecimalString());
     }
 
     /**

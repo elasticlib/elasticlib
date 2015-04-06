@@ -15,8 +15,6 @@
  */
 package org.elasticlib.node.components;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Math.min;
@@ -26,6 +24,7 @@ import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
+import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.repository.Agent;
 import org.elasticlib.node.repository.Repository;
 
@@ -35,16 +34,26 @@ import org.elasticlib.node.repository.Repository;
 class ReplicationAgent extends Agent {
 
     private static final long CHUNK_SIZE = 1024 * 1024;
+
     private final Repository source;
     private final Repository destination;
 
+    /**
+     * Constructor.
+     *
+     * @param guid Replication guid.
+     * @param source Source repository.
+     * @param destination Destination repository.
+     * @param curSeqsDao The agents sequences DAO.
+     * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqsDao.
+     */
     public ReplicationAgent(Guid guid,
                             Repository source,
                             Repository destination,
-                            Database curSeqsDb,
-                            DatabaseEntry curSeqKey) {
+                            CurSeqsDao curSeqsDao,
+                            String curSeqKey) {
 
-        super("replication-" + guid.asHexadecimalString(), source, curSeqsDb, curSeqKey);
+        super("replication-" + guid.asHexadecimalString(), source, curSeqsDao, curSeqKey);
 
         this.source = source;
         this.destination = destination;

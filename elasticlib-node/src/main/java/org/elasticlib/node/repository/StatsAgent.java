@@ -15,8 +15,6 @@
  */
 package org.elasticlib.node.repository;
 
-import com.sleepycat.je.Database;
-import com.sleepycat.je.DatabaseEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -26,6 +24,7 @@ import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RepositoryStats;
 import org.elasticlib.common.model.Revision;
 import org.elasticlib.common.model.RevisionTree;
+import org.elasticlib.node.dao.CurSeqsDao;
 
 /**
  * An agent that computes statistics about a repository.
@@ -35,11 +34,15 @@ class StatsAgent extends Agent {
     private final Repository repository;
     private final StatsManager statsManager;
 
-    public StatsAgent(Repository repository,
-                      StatsManager statsManager,
-                      Database curSeqsDb,
-                      DatabaseEntry curSeqKey) {
-        super("stats-" + repository.getDef().getName(), repository, curSeqsDb, curSeqKey);
+    /**
+     * Constructor.
+     *
+     * @param repository Tracked repository.
+     * @param statsManager Tracked repository stats manager.
+     * @param curSeqsDao Agent sequences DAO.
+     */
+    public StatsAgent(Repository repository, StatsManager statsManager, CurSeqsDao curSeqsDao) {
+        super("stats-" + repository.getDef().getName(), repository, curSeqsDao, "stats");
 
         this.repository = repository;
         this.statsManager = statsManager;

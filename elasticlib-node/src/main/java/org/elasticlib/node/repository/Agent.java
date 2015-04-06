@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.elasticlib.common.config.Config;
 import org.elasticlib.common.exception.IOFailureException;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.exception.RepositoryClosedException;
@@ -33,6 +34,7 @@ import org.elasticlib.common.exception.UnreachableNodeException;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
 import org.elasticlib.common.model.Event;
+import static org.elasticlib.node.config.NodeConfig.AGENTS_HISTORY_FETCH_SIZE;
 import org.elasticlib.node.dao.CurSeqsDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +44,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class Agent {
 
-    private static final int FETCH_SIZE = 20;
     private static final Logger LOG = LoggerFactory.getLogger(Agent.class);
 
     private final Lock lock = new ReentrantLock();
@@ -56,13 +57,14 @@ public abstract class Agent {
      * Constructor.
      *
      * @param name Agent name.
+     * @param config Configuration holder.
      * @param repository Tracked repository.
      * @param curSeqsDao The agents sequences DAO.
      * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqsDao.
      */
-    protected Agent(String name, Repository repository, CurSeqsDao curSeqsDao, String curSeqKey) {
+    protected Agent(String name, Config config, Repository repository, CurSeqsDao curSeqsDao, String curSeqKey) {
         this.repository = repository;
-        agentThread = new AgentThread(name, curSeqsDao, curSeqKey);
+        agentThread = new AgentThread(name, config, curSeqsDao, curSeqKey);
     }
 
     /**
@@ -150,22 +152,39 @@ public abstract class Agent {
         return agentThread.info();
     }
 
+    /**
+     * Thread responsible for executing agent tasks.
+     */
     private class AgentThread extends Thread {
 
+        private final Config config;
         private final CurSeqsDao curSeqsDao;
         private final String curSeqKey;
-        private final Deque<Event> events = new ArrayDeque<>(FETCH_SIZE);
+        private final Deque<Event> events;
         private final AtomicReference<AgentInfo> info;
         private long curSeq;
         private long maxSeq;
 
-        public AgentThread(String name, CurSeqsDao curSeqsDao, String curSeqKey) {
+        /**
+         * Constructor.
+         *
+         * @param name Agent name.
+         * @param config Configuration holder.
+         * @param curSeqsDao The agents sequences DAO.
+         * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqsDao.
+         */
+        public AgentThread(String name, Config config, CurSeqsDao curSeqsDao, String curSeqKey) {
             super(name);
+            this.config = config;
             this.curSeqsDao = curSeqsDao;
             this.curSeqKey = curSeqKey;
+            events = new ArrayDeque<>(config.getInt(AGENTS_HISTORY_FETCH_SIZE));
             info = new AtomicReference<>(new AgentInfo(curSeq, maxSeq, AgentState.NEW));
         }
 
+        /**
+         * @return A snapshot of current info about this agent.
+         */
         public AgentInfo info() {
             return info.get();
         }
@@ -239,10 +258,11 @@ public abstract class Agent {
         }
 
         private void fetchEvents() {
-            List<Event> chunk = repository.history(true, curSeq + 1, FETCH_SIZE);
+            int fetchSize = config.getInt(AGENTS_HISTORY_FETCH_SIZE);
+            List<Event> chunk = repository.history(true, curSeq + 1, fetchSize);
             events.addAll(chunk);
 
-            if (chunk.size() == FETCH_SIZE) {
+            if (chunk.size() == fetchSize) {
                 maxSeq = repository.history(false, Long.MAX_VALUE, 1).get(0).getSeq();
 
             } else if (!chunk.isEmpty()) {

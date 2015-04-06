@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeMap;
+import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RepositoryStats;
@@ -37,12 +38,13 @@ class StatsAgent extends Agent {
     /**
      * Constructor.
      *
+     * @param config Configuration holder.
      * @param repository Tracked repository.
      * @param statsManager Tracked repository stats manager.
      * @param curSeqsDao Agent sequences DAO.
      */
-    public StatsAgent(Repository repository, StatsManager statsManager, CurSeqsDao curSeqsDao) {
-        super("stats-" + repository.getDef().getGuid(), repository, curSeqsDao, "stats");
+    public StatsAgent(Config config, Repository repository, StatsManager statsManager, CurSeqsDao curSeqsDao) {
+        super("stats-" + repository.getDef().getGuid(), config, repository, curSeqsDao, "stats");
 
         this.repository = repository;
         this.statsManager = statsManager;

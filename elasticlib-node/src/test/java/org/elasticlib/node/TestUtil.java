@@ -24,6 +24,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Hash;
+import static org.elasticlib.node.config.NodeConfig.AGENTS_CONTENT_CHUNK_SIZE;
+import static org.elasticlib.node.config.NodeConfig.AGENTS_HISTORY_FETCH_SIZE;
 import static org.elasticlib.node.config.NodeConfig.CLIENT_CONNECT_TIMEOUT;
 import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS;
 import static org.elasticlib.node.config.NodeConfig.CLIENT_MAX_CONNECTIONS_PER_ROUTE;
@@ -68,6 +70,8 @@ public final class TestUtil {
                 .set(CLIENT_MAX_CONNECTIONS, 10)
                 .set(CLIENT_MAX_CONNECTIONS_PER_ROUTE, 2)
                 .set(TASKS_POOL_SIZE, 1)
+                .set(AGENTS_HISTORY_FETCH_SIZE, 10)
+                .set(AGENTS_CONTENT_CHUNK_SIZE, 256)
                 .set(STAGING_SESSIONS_MAX_SIZE, 10)
                 .set(STAGING_SESSIONS_TIMEOUT, "10 s")
                 .set(STAGING_SESSIONS_CLEANUP_ENABLED, true)

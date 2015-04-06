@@ -126,6 +126,14 @@ public final class NodeConfig {
      */
     public static final String TASKS_POOL_SIZE = "tasks.poolSize";
     /**
+     * Number of history events to fetch each time an agent processing queue is empty.
+     */
+    public static final String AGENTS_HISTORY_FETCH_SIZE = "agents.historyFetchSize";
+    /**
+     * Chunk size used for content replications, in bytes.
+     */
+    public static final String AGENTS_CONTENT_CHUNK_SIZE = "agents.contentChunkSize";
+    /**
      * Maximum number of suspended content staging sessions.
      */
     public static final String STAGING_SESSIONS_MAX_SIZE = "staging.maxSize";

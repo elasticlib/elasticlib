@@ -18,12 +18,14 @@ package org.elasticlib.node.components;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.Math.min;
+import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.hash.Hash;
 import org.elasticlib.common.model.ContentState;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.common.model.StagingInfo;
+import static org.elasticlib.node.config.NodeConfig.AGENTS_CONTENT_CHUNK_SIZE;
 import org.elasticlib.node.dao.CurSeqsDao;
 import org.elasticlib.node.repository.Agent;
 import org.elasticlib.node.repository.Repository;
@@ -33,8 +35,7 @@ import org.elasticlib.node.repository.Repository;
  */
 class ReplicationAgent extends Agent {
 
-    private static final long CHUNK_SIZE = 1024 * 1024;
-
+    private final Config config;
     private final Repository source;
     private final Repository destination;
 
@@ -42,19 +43,22 @@ class ReplicationAgent extends Agent {
      * Constructor.
      *
      * @param guid Replication guid.
+     * @param config Configuration holder.
      * @param source Source repository.
      * @param destination Destination repository.
      * @param curSeqsDao The agents sequences DAO.
      * @param curSeqKey The key persisted agent curSeq value is associated with in curSeqsDao.
      */
     public ReplicationAgent(Guid guid,
+                            Config config,
                             Repository source,
                             Repository destination,
                             CurSeqsDao curSeqsDao,
                             String curSeqKey) {
 
-        super("replication-" + guid.asHexadecimalString(), source, curSeqsDao, curSeqKey);
+        super("replication-" + guid.asHexadecimalString(), config, source, curSeqsDao, curSeqKey);
 
+        this.config = config;
         this.source = source;
         this.destination = destination;
     }
@@ -108,7 +112,8 @@ class ReplicationAgent extends Agent {
 
     private StagingInfo writeChunk(Hash content, long totalLength, StagingInfo stagingInfo) throws IOException {
         long offset = stagingInfo.getLength();
-        long length = min(CHUNK_SIZE, totalLength - offset);
+        long length = min(config.getInt(AGENTS_CONTENT_CHUNK_SIZE), totalLength - offset);
+
         try (InputStream inputStream = source.getContent(content, offset, length)) {
             return destination.writeContent(content, stagingInfo.getSessionId(), inputStream, offset);
         }

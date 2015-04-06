@@ -108,7 +108,7 @@ public class ReplicationsServiceTest {
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,
                                                                              remoteRepositoriesPool);
 
-        replicationAgentsPool = new ReplicationAgentsPool(curSeqsDao, repositoriesProvider);
+        replicationAgentsPool = new ReplicationAgentsPool(config, curSeqsDao, repositoriesProvider);
 
         repositoriesService = new RepositoriesService(storageManager, messageManager, localRepositoriesPool);
         replicationsService = new ReplicationsService(storageManager,

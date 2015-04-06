@@ -96,8 +96,8 @@ public class LocalRepository implements Repository {
         this.index = index;
 
         CurSeqsDao curSeqsDao = new CurSeqsDao(storageManager);
-        indexingAgent = new IndexingAgent(this, index, curSeqsDao);
-        statsAgent = new StatsAgent(this, statsManager, curSeqsDao);
+        indexingAgent = new IndexingAgent(config, this, index, curSeqsDao);
+        statsAgent = new StatsAgent(config, this, statsManager, curSeqsDao);
 
         indexingAgent.start();
         statsAgent.start();

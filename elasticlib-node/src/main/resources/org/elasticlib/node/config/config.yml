@@ -53,6 +53,10 @@ remotes:
 tasks:
   poolSize: 1
 
+agents:
+  historyFetchSize: 20
+  contentChunkSize: 1048576
+
 staging:
   maxSize: 20
   timeout: 60 seconds

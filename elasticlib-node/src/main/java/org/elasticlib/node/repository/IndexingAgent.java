@@ -17,6 +17,7 @@ package org.elasticlib.node.repository;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.elasticlib.common.config.Config;
 import org.elasticlib.common.model.Event;
 import org.elasticlib.common.model.RevisionTree;
 import org.elasticlib.node.dao.CurSeqsDao;
@@ -32,12 +33,13 @@ class IndexingAgent extends Agent {
     /**
      * Constructor.
      *
+     * @param config Configuration holder.
      * @param repository Tracked repository.
      * @param index Tracked repository index.
      * @param curSeqsDao Agent sequences DAO.
      */
-    public IndexingAgent(Repository repository, Index index, CurSeqsDao curSeqsDao) {
-        super("indexation-" + repository.getDef().getGuid(), repository, curSeqsDao, "index");
+    public IndexingAgent(Config config, Repository repository, Index index, CurSeqsDao curSeqsDao) {
+        super("indexation-" + repository.getDef().getGuid(), config, repository, curSeqsDao, "index");
 
         this.repository = repository;
         this.index = index;

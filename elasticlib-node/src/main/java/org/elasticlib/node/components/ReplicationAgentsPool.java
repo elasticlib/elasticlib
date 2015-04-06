@@ -18,6 +18,7 @@ package org.elasticlib.node.components;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.elasticlib.common.config.Config;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.AgentInfo;
 import org.elasticlib.common.model.AgentState;
@@ -31,6 +32,7 @@ import org.elasticlib.node.repository.Repository;
  */
 public class ReplicationAgentsPool {
 
+    private final Config config;
     private final CurSeqsDao curSeqsDao;
     private final RepositoriesProvider repositoriesProvider;
     private final Map<Guid, Agent> agents = new HashMap<>();
@@ -38,10 +40,12 @@ public class ReplicationAgentsPool {
     /**
      * Constructor.
      *
+     * @param config Configuration holder.
      * @param curSeqsDao The agents sequences DAO.
      * @param repositoriesProvider Repositories provider.
      */
-    public ReplicationAgentsPool(CurSeqsDao curSeqsDao, RepositoriesProvider repositoriesProvider) {
+    public ReplicationAgentsPool(Config config, CurSeqsDao curSeqsDao, RepositoriesProvider repositoriesProvider) {
+        this.config = config;
         this.curSeqsDao = curSeqsDao;
         this.repositoriesProvider = repositoriesProvider;
     }
@@ -113,7 +117,7 @@ public class ReplicationAgentsPool {
     }
 
     private void startAgent(Guid guid, Repository source, Repository destination) {
-        Agent agent = new ReplicationAgent(guid, source, destination, curSeqsDao, guid.asHexadecimalString());
+        Agent agent = new ReplicationAgent(guid, config, source, destination, curSeqsDao, guid.asHexadecimalString());
         Agent previous = agents.put(guid, agent);
         if (previous != null) {
             previous.stop();

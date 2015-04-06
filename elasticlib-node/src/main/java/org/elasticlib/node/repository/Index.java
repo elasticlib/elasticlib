@@ -52,7 +52,6 @@ import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.SingleInstanceLockFactory;
-import org.apache.lucene.util.Version;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.elasticlib.common.exception.BadRequestException;
@@ -84,12 +83,12 @@ class Index {
 
     private Index(String name, Path path) throws IOException {
         this.name = name;
-        directory = FSDirectory.open(path.resolve(INDEX).toFile(), new SingleInstanceLockFactory());
+        directory = FSDirectory.open(path.resolve(INDEX), new SingleInstanceLockFactory());
         analyzer = new StandardAnalyzer();
     }
 
     private IndexWriter newIndexWriter() throws IOException {
-        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_3, analyzer);
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
         return new IndexWriter(directory, config);
     }
 
@@ -173,16 +172,16 @@ class Index {
             try (Reader reader = new Tika().parse(inputStream)) {
                 Document document = newDocument(revisionTree);
                 document.add(new TextField(BODY, reader));
-                writer.addDocument(document, analyzer);
+                writer.addDocument(document);
                 return true;
 
             } catch (IOException e) {
-                if (!(e.getCause() instanceof TikaException)) {
-                    throw e;
+                if (e.getCause() instanceof TikaException) {
+                    LOG.error("Failed to index content from " + revisionTree.getContent(), e);
+                    writer.rollback();
+                    return false;
                 }
-                LOG.error("Failed to index content from " + revisionTree.getContent(), e);
-                writer.rollback();
-                return false;
+                throw e;
             }
         }
     }
@@ -194,7 +193,7 @@ class Index {
 
             // Here we do not extract and index content.
             Document document = newDocument(revisionTree);
-            writer.addDocument(document, analyzer);
+            writer.addDocument(document);
         }
     }
 

@@ -35,7 +35,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response.StatusType;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
-import org.glassfish.jersey.internal.util.collection.StringIgnoreCaseKeyComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,7 +160,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
                                              MultivaluedMap<String, String> headers) {
         headers.entrySet()
                 .stream()
-                .sorted((x, y) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(x.getKey(), y.getKey()))
+                .sorted((x, y) -> x.getKey().compareToIgnoreCase(y.getKey()))
                 .forEach(headerEntry -> {
                     prefixId(builder, id)
                     .append(prefix)

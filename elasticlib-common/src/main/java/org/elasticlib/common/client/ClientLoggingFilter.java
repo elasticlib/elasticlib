@@ -25,7 +25,6 @@ import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.MultivaluedMap;
-import org.glassfish.jersey.internal.util.collection.StringIgnoreCaseKeyComparator;
 
 /**
  * A filter that logs HTTP requests and reponses.
@@ -92,7 +91,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
                                              MultivaluedMap<String, String> headers) {
         headers.entrySet()
                 .stream()
-                .sorted((x, y) -> StringIgnoreCaseKeyComparator.SINGLETON.compare(x.getKey(), y.getKey()))
+                .sorted((x, y) -> x.getKey().compareToIgnoreCase(y.getKey()))
                 .forEach(header -> {
                     prefix(builder, id, prefix)
                     .append(header.getKey())

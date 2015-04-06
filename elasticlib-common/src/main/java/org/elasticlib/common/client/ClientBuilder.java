@@ -15,14 +15,11 @@
  */
 package org.elasticlib.common.client;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 /**
@@ -37,17 +34,13 @@ public class ClientBuilder {
      * Constructor
      */
     public ClientBuilder() {
-        Logger logger = Logger.getGlobal();
-        logger.setLevel(Level.OFF);
-
         connectionManager = new PoolingHttpClientConnectionManager();
         config = new ClientConfig()
                 .property(ClientProperties.CHUNKED_ENCODING_SIZE, 8192)
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .connectorProvider(new ApacheConnectorProvider())
                 .register(MultiPartFeature.class)
-                .register(new HeaderRestoringWriterInterceptor())
-                .register(new LoggingFilter(logger, true));
+                .register(new HeaderRestoringWriterInterceptor());
     }
 
     /**

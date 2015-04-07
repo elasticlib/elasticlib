@@ -33,6 +33,7 @@ import org.elasticlib.common.value.Value;
 public final class ReplicationInfo implements Mappable {
 
     private static final String GUID = "guid";
+    private static final String TYPE = "type";
     private static final String SOURCE = "source";
     private static final String DESTINATION = "destination";
     private static final String SOURCE_DEF = "sourceDef";
@@ -40,6 +41,7 @@ public final class ReplicationInfo implements Mappable {
     private static final String AGENT_INFO = "agentInfo";
     private static final String STARTED = "started";
     private static final String AGENT = "agent";
+    private static final String SEPARATOR = ".";
 
     private final Guid guid;
     private final Guid source;
@@ -100,6 +102,29 @@ public final class ReplicationInfo implements Mappable {
     }
 
     /**
+     * @return The type of this replication.
+     */
+    public ReplicationType getType() {
+        boolean isSrcLocal = isLocal(sourceDef);
+        boolean isDestLocal = isLocal(destinationdef);
+
+        if (isSrcLocal && isDestLocal) {
+            return ReplicationType.LOCAL;
+        }
+        if (isSrcLocal) {
+            return ReplicationType.PUSH;
+        }
+        if (isDestLocal) {
+            return ReplicationType.PULL;
+        }
+        return ReplicationType.REMOTE;
+    }
+
+    private static boolean isLocal(RepositoryDef def) {
+        return def != null && !def.getName().contains(SEPARATOR);
+    }
+
+    /**
      * @return The replication agent info. Fails if replication is not started.
      */
     public AgentInfo getAgentInfo() {
@@ -113,6 +138,7 @@ public final class ReplicationInfo implements Mappable {
     public Map<String, Value> toMap() {
         MapBuilder builder = new MapBuilder()
                 .put(GUID, guid)
+                .put(TYPE, getType().toString())
                 .put(SOURCE, map(source, sourceDef))
                 .put(DESTINATION, map(destination, destinationdef))
                 .put(STARTED, isStarted());

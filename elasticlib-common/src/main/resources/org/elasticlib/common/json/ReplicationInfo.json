@@ -5,6 +5,9 @@
         "guid": {
             "type": "guid"
         },
+        "type": {
+            "type": "string"
+        },
         "source": {
             "type": "object",
             "properties": {

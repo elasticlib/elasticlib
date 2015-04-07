@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Splitter;
 import com.google.common.net.HttpHeaders;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import static java.util.Collections.emptyList;
 import java.util.List;
@@ -93,6 +94,13 @@ public class RepositoryTarget {
      */
     RepositoryTarget(WebTarget target) {
         this.target = target;
+    }
+
+    /**
+     * @return The URI identifying this resource target.
+     */
+    public URI getUri() {
+        return target.getUri();
     }
 
     /**

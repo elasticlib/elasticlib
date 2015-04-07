@@ -15,6 +15,7 @@
  */
 package org.elasticlib.common.client;
 
+import java.net.URI;
 import javax.ws.rs.client.WebTarget;
 
 /**
@@ -22,6 +23,7 @@ import javax.ws.rs.client.WebTarget;
  */
 public class ClientTarget {
 
+    private final WebTarget target;
     private final NodeTarget nodeTarget;
     private final RemotesTarget remotesTarget;
     private final RepositoriesTarget repositoriesTarget;
@@ -33,10 +35,18 @@ public class ClientTarget {
      * @param target Underlying resource target.
      */
     ClientTarget(WebTarget target) {
+        this.target = target;
         nodeTarget = new NodeTarget(target);
         remotesTarget = new RemotesTarget(target);
         repositoriesTarget = new RepositoriesTarget(target);
         replicationsTarget = new ReplicationsTarget(target);
+    }
+
+    /**
+     * @return The URI identifying this resource target.
+     */
+    public URI getUri() {
+        return target.getUri();
     }
 
     /**

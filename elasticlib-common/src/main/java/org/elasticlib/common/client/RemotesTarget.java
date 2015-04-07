@@ -53,6 +53,13 @@ public class RemotesTarget {
     }
 
     /**
+     * @return The URI identifying this resource target.
+     */
+    public URI getUri() {
+        return target.getUri();
+    }
+
+    /**
      * Lists remote nodes.
      *
      * @return A list of node definitions.

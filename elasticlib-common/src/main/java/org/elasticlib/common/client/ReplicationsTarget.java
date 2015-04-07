@@ -16,6 +16,7 @@
 package org.elasticlib.common.client;
 
 import static com.google.common.collect.ImmutableMap.of;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import static javax.json.Json.createObjectBuilder;
@@ -52,6 +53,13 @@ public class ReplicationsTarget {
      */
     ReplicationsTarget(WebTarget target) {
         this.target = target.path(REPLICATIONS);
+    }
+
+    /**
+     * @return The URI identifying this resource target.
+     */
+    public URI getUri() {
+        return target.getUri();
     }
 
     /**

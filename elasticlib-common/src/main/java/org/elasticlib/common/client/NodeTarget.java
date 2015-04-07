@@ -15,6 +15,7 @@
  */
 package org.elasticlib.common.client;
 
+import java.net.URI;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import static org.elasticlib.common.client.ClientUtil.read;
@@ -36,6 +37,13 @@ public class NodeTarget {
      */
     NodeTarget(WebTarget target) {
         this.target = target.path(NODE);
+    }
+
+    /**
+     * @return The URI identifying this resource target.
+     */
+    public URI getUri() {
+        return target.getUri();
     }
 
     /**

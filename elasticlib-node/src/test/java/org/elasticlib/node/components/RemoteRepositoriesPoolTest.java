@@ -180,8 +180,10 @@ public class RemoteRepositoriesPoolTest {
         RepositoryInfo repositoryInfo = open();
         create(reachable(repositoryInfo));
         storageManager.inTransaction(() -> {
-            RepositoryDef expected = repositoryInfo.getDef();
             RepositoryDef actual = remoteRepositoriesPool.tryGetRepositoryDef(REPOSITORY_GUID).get();
+            RepositoryDef expected = new RepositoryDef(NODE_NAME + "." + REPOSITORY_NAME,
+                                                       NODE_GUID,
+                                                       NODE_URI.resolve("repositories/" + REPOSITORY_NAME).toString());
 
             assertThat(actual).isEqualTo(expected);
         });

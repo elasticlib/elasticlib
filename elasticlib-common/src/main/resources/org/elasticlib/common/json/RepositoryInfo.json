@@ -2,10 +2,19 @@
     "title": "repositoryInfo",
     "type": "object",
     "properties": {
-        "name": {"type": "string"},
-        "guid": {"type": "guid"},
-        "path": {"type": "string"},
-        "open": {"type": "boolean"},
+        "name": {
+            "type": "string"
+        },
+        "guid": {
+            "type": "guid"
+        },
+        "path": {
+            "type": "string",
+            "optional": true
+        },
+        "open": {
+            "type": "boolean"
+        },
         "stats": {
             "type": "object",
             "optional": true,
@@ -13,12 +22,20 @@
                 "operations": {
                     "type": "object",
                     "properties": {
-                        "create": {"type": "integer"},
-                        "update": {"type": "integer"},
-                        "delete": {"type": "integer"}
+                        "create": {
+                            "type": "integer"
+                        },
+                        "update": {
+                            "type": "integer"
+                        },
+                        "delete": {
+                            "type": "integer"
+                        }
                     }
                 },
-                "metadata": {"definition": "schema"}
+                "metadata": {
+                    "definition": "schema"
+                }
             }
         },
         "agents": {
@@ -28,17 +45,29 @@
                 "indexing": {
                     "type": "object",
                     "properties": {
-                        "curSeq": {"type": "integer"},
-                        "maxSeq": {"type": "integer"},
-                        "state": {"type": "string"}
+                        "curSeq": {
+                            "type": "integer"
+                        },
+                        "maxSeq": {
+                            "type": "integer"
+                        },
+                        "state": {
+                            "type": "string"
+                        }
                     }
                 },
                 "stats": {
                     "type": "object",
                     "properties": {
-                        "curSeq": {"type": "integer"},
-                        "maxSeq": {"type": "integer"},
-                        "state": {"type": "string"}
+                        "curSeq": {
+                            "type": "integer"
+                        },
+                        "maxSeq": {
+                            "type": "integer"
+                        },
+                        "state": {
+                            "type": "string"
+                        }
                     }
                 }
             }

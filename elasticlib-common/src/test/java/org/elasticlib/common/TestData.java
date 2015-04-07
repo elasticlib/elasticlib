@@ -209,6 +209,10 @@ public final class TestData {
                                               GUIDS[1],
                                               "/repo/secondary"));
 
+        REPOSITORY_DEFS.add(new RepositoryDef("unreachable",
+                                              GUIDS[2],
+                                              ""));
+
         REPLICATION_DEFS.add(new ReplicationDef(GUIDS[3], GUIDS[0], GUIDS[1]));
         REPLICATION_DEFS.add(new ReplicationDef(GUIDS[4], GUIDS[1], GUIDS[0]));
 

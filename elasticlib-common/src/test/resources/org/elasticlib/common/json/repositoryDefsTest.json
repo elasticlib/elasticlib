@@ -8,5 +8,9 @@
         "name": "secondary",
         "guid": "0d99dd9895a2a1c485e0c75f79f92cc1",
         "path": "/repo/secondary"
+    },
+    {
+        "name": "unreachable",
+        "guid": "39819150ee99549a8c0a59782169bb3b"
     }
 ]

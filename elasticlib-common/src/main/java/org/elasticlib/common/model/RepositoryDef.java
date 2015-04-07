@@ -51,6 +51,8 @@ public final class RepositoryDef implements Mappable {
     }
 
     /**
+     * Provides the name of the repository.
+     *
      * @return The repository name.
      */
     public String getName() {
@@ -58,6 +60,8 @@ public final class RepositoryDef implements Mappable {
     }
 
     /**
+     * Provides the GUID of the repository.
+     *
      * @return The repository GUID.
      */
     public Guid getGuid() {
@@ -65,6 +69,10 @@ public final class RepositoryDef implements Mappable {
     }
 
     /**
+     * Provides the path of the repository. For a local repository, It corresponds to its the path on the node
+     * file-system. For a remote repository, It corresponds to its URI on this node, or defaults to an empty string if
+     * the node is unreachable.
+     *
      * @return The repository path.
      */
     public String getPath() {
@@ -73,15 +81,18 @@ public final class RepositoryDef implements Mappable {
 
     @Override
     public Map<String, Value> toMap() {
-        return new MapBuilder()
+        MapBuilder builder = new MapBuilder()
                 .put(NAME, name)
-                .put(GUID, guid)
-                .put(PATH, path)
-                .build();
+                .put(GUID, guid);
+
+        if (!path.isEmpty()) {
+            builder.put(PATH, path);
+        }
+        return builder.build();
     }
 
     /**
-     * Read a new instance from supplied map of values.
+     * Reads a new instance from supplied map of values.
      *
      * @param map A map of values.
      * @return A new instance.
@@ -89,7 +100,7 @@ public final class RepositoryDef implements Mappable {
     public static RepositoryDef fromMap(Map<String, Value> map) {
         return new RepositoryDef(map.get(NAME).asString(),
                                  map.get(GUID).asGuid(),
-                                 map.get(PATH).asString());
+                                 map.containsKey(PATH) ? map.get(PATH).asString() : "");
     }
 
     @Override

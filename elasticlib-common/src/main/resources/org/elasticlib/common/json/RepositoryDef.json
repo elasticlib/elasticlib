@@ -9,7 +9,8 @@
             "type": "guid"
         },
         "path": {
-            "type": "string"
+            "type": "string",
+            "optional": true
         }
     }
 }

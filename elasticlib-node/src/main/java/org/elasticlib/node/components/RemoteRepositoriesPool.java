@@ -118,23 +118,27 @@ public class RemoteRepositoriesPool {
      * @return Corresponding RepositoryDef, if any.
      */
     public Optional<RepositoryDef> tryGetRepositoryDef(Guid guid) {
-        Optional<RemoteInfo> remoteInfo = remotesDao.tryGetRemoteInfo(x -> hasRepository(x, guid));
-        if (!remoteInfo.isPresent()) {
+        Optional<RemoteInfo> remoteInfoOpt = remotesDao.tryGetRemoteInfo(x -> hasRepository(x, guid));
+        if (!remoteInfoOpt.isPresent()) {
             return Optional.empty();
         }
-        return repositoryDefs(remoteInfo.get())
+        RemoteInfo remoteInfo = remoteInfoOpt.get();
+        return repositoryDefs(remoteInfo)
                 .filter(x -> x.getGuid().equals(guid))
+                .map(x -> new RepositoryDef(name(remoteInfo, x), x.getGuid(), path(remoteInfo, x)))
                 .findFirst();
     }
 
-    private static boolean hasRepository(RemoteInfo remoteInfo, Guid guid) {
-        return repositoryDefs(remoteInfo).anyMatch(x -> x.getGuid().equals(guid));
-    }
-
-    private static Stream<RepositoryDef> repositoryDefs(RemoteInfo remoteInfo) {
-        return remoteInfo.listRepositoryInfos()
-                .stream()
-                .map(RepositoryInfo::getDef);
+    private String path(RemoteInfo remoteInfo, RepositoryDef repositoryDef) {
+        if (!remoteInfo.isReachable()) {
+            return "";
+        }
+        return clientManager.getClient()
+                .target(remoteInfo.getTransportUri())
+                .repositories()
+                .get(repositoryDef.getName())
+                .getUri()
+                .toString();
     }
 
     /**
@@ -193,15 +197,12 @@ public class RemoteRepositoriesPool {
                     .repositories()
                     .get(guid);
 
-            String repositoryName = repositoryDefs(remoteInfo)
+            RepositoryDef repositoryDef = repositoryDefs(remoteInfo)
                     .filter(x -> x.getGuid().equals(guid))
-                    .map(RepositoryDef::getName)
                     .findFirst()
                     .get();
 
-            String name = join(SEPARATOR, remoteInfo.getName(), repositoryName);
-
-            repositories.put(guid, new RemoteRepository(target, name));
+            repositories.put(guid, new RemoteRepository(target, name(remoteInfo, repositoryDef)));
         }
         return repositories.get(guid);
     }
@@ -216,5 +217,19 @@ public class RemoteRepositoriesPool {
             return;
         }
         repositories.remove(guid).close();
+    }
+
+    private static boolean hasRepository(RemoteInfo remoteInfo, Guid guid) {
+        return repositoryDefs(remoteInfo).anyMatch(x -> x.getGuid().equals(guid));
+    }
+
+    private static Stream<RepositoryDef> repositoryDefs(RemoteInfo remoteInfo) {
+        return remoteInfo.listRepositoryInfos()
+                .stream()
+                .map(RepositoryInfo::getDef);
+    }
+
+    private static String name(RemoteInfo remoteInfo, RepositoryDef repositoryDef) {
+        return join(SEPARATOR, remoteInfo.getName(), repositoryDef.getName());
     }
 }

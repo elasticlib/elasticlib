@@ -67,6 +67,11 @@ public final class NodeConfig {
      */
     public static final String CLIENT_MAX_CONNECTIONS_PER_ROUTE = "client.maxConnectionsPerRoute";
     /**
+     * Whether hybrid discovery is enabled. If this is the case, multicast discovery requests are only sent if there is
+     * no reachable remote node.
+     */
+    public static final String DISCOVERY_HYBRID = "discovery.hybrid";
+    /**
      * Whether listening to multicast discovery requests is enabled. If disabled, this node will not be discoverable by
      * other ones.
      */
@@ -102,7 +107,8 @@ public final class NodeConfig {
      */
     public static final String DISCOVERY_UNICAST_INTERVAL = "discovery.unicast.interval";
     /**
-     * URI(s) of the remotes node to contact for unicast discovery. If empty, all known remotes are contacted.
+     * URI(s) of the remotes node to contact for unicast discovery. If empty, a random reachable remote node is
+     * contacted.
      */
     public static final String DISCOVERY_UNICAST_URIS = "discovery.unicast.uris";
     /**

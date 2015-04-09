@@ -126,6 +126,9 @@ public class MulticastDiscoveryClient {
 
         @Override
         public void run() {
+            if (config.getBoolean(NodeConfig.DISCOVERY_HYBRID) && remotesService.hasReachableRemotes()) {
+                return;
+            }
             try {
                 InetAddress group = InetAddress.getByName(config.getString(NodeConfig.DISCOVERY_MULTICAST_GROUP));
                 int port = config.getInt(NodeConfig.DISCOVERY_MULTICAST_PORT);

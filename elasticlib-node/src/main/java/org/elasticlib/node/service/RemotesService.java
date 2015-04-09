@@ -226,6 +226,16 @@ public class RemotesService {
     }
 
     /**
+     * Checks if there is at least one reachable remote node.
+     *
+     * @return True if this is the case.
+     */
+    public boolean hasReachableRemotes() {
+        LOG.info("Checking if there are reachable remote nodes");
+        return storageManager.inTransaction(() -> remotesDao.tryGetRemoteInfo(RemoteInfo::isReachable).isPresent());
+    }
+
+    /**
      * Pings all known remote nodes and refresh info about them.
      */
     public void pingRemotes() {

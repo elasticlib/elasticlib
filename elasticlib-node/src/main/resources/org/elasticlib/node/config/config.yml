@@ -29,6 +29,7 @@ client:
   maxConnectionsPerRoute: 20
 
 discovery:
+  hybrid: true
   multicast:
     listen: true
     ping:
@@ -38,14 +39,14 @@ discovery:
     port: 23875
     ttl: 3
   unicast:
-    enabled: false
+    enabled: true
     interval: 60 seconds
     uris: []
 
 remotes:
   ping:
     enabled: true
-    interval: 60 seconds
+    interval: 30 seconds
   cleanup:
     enabled: true
     interval: 10 minutes

@@ -16,8 +16,11 @@
 package org.elasticlib.node.discovery;
 
 import java.net.URI;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -109,12 +112,6 @@ public class UnicastDiscoveryClient {
         task.cancel();
     }
 
-    private static Set<Guid> guids(List<RemoteInfo> infos) {
-        return infos.stream()
-                .map(info -> info.getGuid())
-                .collect(toSet());
-    }
-
     /**
      * Discovery task.
      */
@@ -126,9 +123,11 @@ public class UnicastDiscoveryClient {
 
         @Override
         public void run() {
+            List<RemoteInfo> remotesInfo = remotesService.listRemotes();
+
             local = nodeService.getNodeDef();
-            remotes = remotesService.listReachableRemotes();
-            knownNodes = guids(remotes);
+            remotes = remotesInfo.stream().filter(RemoteInfo::isReachable).collect(toList());
+            knownNodes = guids(remotesInfo);
             for (URI uri : targetUris()) {
                 if (!started.get()) {
                     return;
@@ -137,14 +136,22 @@ public class UnicastDiscoveryClient {
             }
         }
 
+        private Set<Guid> guids(List<RemoteInfo> infos) {
+            return infos.stream()
+                    .map(info -> info.getGuid())
+                    .collect(toSet());
+        }
+
         private Iterable<URI> targetUris() {
             List<URI> uris = ConfigUtil.uris(config, NodeConfig.DISCOVERY_UNICAST_URIS);
             if (!uris.isEmpty()) {
                 return uris;
             }
-            return remotes.stream()
-                    .map(RemoteInfo::getTransportUri)
-                    .collect(toList());
+            if (remotes.isEmpty()) {
+                return emptyList();
+            }
+            int index = ThreadLocalRandom.current().nextInt(remotes.size());
+            return singleton(remotes.get(index).getTransportUri());
         }
 
         private void process(URI uri) {

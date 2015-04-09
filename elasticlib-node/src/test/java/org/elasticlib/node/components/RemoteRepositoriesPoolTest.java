@@ -111,10 +111,17 @@ public class RemoteRepositoriesPoolTest {
 
         Client client = mock(Client.class, RETURNS_DEEP_STUBS);
         when(clientManager.getClient()).thenReturn(client);
+
         when(client.target(NODE_URI)
                 .repositories()
                 .get(REPOSITORY_GUID))
                 .thenReturn(mock(RepositoryTarget.class));
+
+        when(client.target(NODE_URI)
+                .repositories()
+                .get(REPOSITORY_NAME)
+                .getUri())
+                .thenReturn(NODE_URI.resolve("/repositories/" + REPOSITORY_NAME));
 
         remoteRepositoriesPool.start();
     }
@@ -182,8 +189,8 @@ public class RemoteRepositoriesPoolTest {
         storageManager.inTransaction(() -> {
             RepositoryDef actual = remoteRepositoriesPool.tryGetRepositoryDef(REPOSITORY_GUID).get();
             RepositoryDef expected = new RepositoryDef(NODE_NAME + "." + REPOSITORY_NAME,
-                                                       NODE_GUID,
-                                                       NODE_URI.resolve("repositories/" + REPOSITORY_NAME).toString());
+                                                       REPOSITORY_GUID,
+                                                       NODE_URI.resolve("/repositories/" + REPOSITORY_NAME).toString());
 
             assertThat(actual).isEqualTo(expected);
         });

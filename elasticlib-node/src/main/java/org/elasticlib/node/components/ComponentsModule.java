@@ -69,7 +69,11 @@ public class ComponentsModule {
                                                                                          taskManager,
                                                                                          messageManager);
 
-        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, localRepositoriesFactory);
+        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao,
+                                                          localRepositoriesFactory,
+                                                          nodeNameProvider,
+                                                          nodeGuidProvider);
+
         remoteRepositoriesPool = new RemoteRepositoriesPool(clientManager, messageManager, remotesDao);
         repositoriesProvider = new RepositoriesProvider(localRepositoriesPool, remoteRepositoriesPool);
         replicationAgentsPool = new ReplicationAgentsPool(config, curSeqsDao, repositoriesProvider);

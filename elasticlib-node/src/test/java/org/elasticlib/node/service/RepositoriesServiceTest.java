@@ -83,7 +83,7 @@ public class RepositoriesServiceTest {
                                                                         managerModule.getTaskManager(),
                                                                         managerModule.getMessageManager());
 
-        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
+        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory, null, null);
 
         repositoriesService = new RepositoriesService(managerModule.getStorageManager(),
                                                       managerModule.getMessageManager(),

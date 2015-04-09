@@ -102,7 +102,7 @@ public class ReplicationsServiceTest {
 
         LocalRepositoriesFactory factory = new LocalRepositoriesFactory(config, taskManager, messageManager);
 
-        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory);
+        localRepositoriesPool = new LocalRepositoriesPool(repositoriesDao, factory, null, null);
         remoteRepositoriesPool = new RemoteRepositoriesPool(clientManager, messageManager, remotesDao);
 
         RepositoriesProvider repositoriesProvider = new RepositoriesProvider(localRepositoriesPool,

@@ -42,18 +42,11 @@ public class RepositoriesProvider {
 
     /**
      * Resolves GUID of a repository. Fails if it is unknown.
-     * <p>
-     * Resolution rules:<br>
-     * - If supplied key matches <i>node.repository</i> a remote repository is searched.<br>
-     * - Otherwise first a local repository is searched, and then, if there is no result, a remote one is searched.
      *
      * @param key Repository name or encoded GUID.
      * @return Corresponding Repository GUID.
      */
     public Guid getRepositoryGuid(String key) {
-        if (key.contains(".")) {
-            return remoteRepositoriesPool.getRepositoryGuid(key);
-        }
         Optional<Guid> local = localRepositoriesPool.tryGetRepositoryGuid(key);
         if (local.isPresent()) {
             return local.get();

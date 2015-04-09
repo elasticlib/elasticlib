@@ -55,8 +55,8 @@ public class NodeServiceTest {
 
     private Path path;
     private ManagerModule managerModule;
-    private LocalRepositoriesPool localRepositoriesPool;
     private NodeGuidProvider nodeGuidProvider;
+    private LocalRepositoriesPool localRepositoriesPool;
     private NodeService nodeService;
 
     /**
@@ -91,17 +91,19 @@ public class NodeServiceTest {
 
         managerModule = new ManagerModule(path.resolve("home"), config);
 
-        localRepositoriesPool = new LocalRepositoriesPool(
-                new RepositoriesDao(managerModule.getStorageManager()),
-                new LocalRepositoriesFactory(config,
-                                             managerModule.getTaskManager(),
-                                             managerModule.getMessageManager()));
-
+        NodeNameProvider nodeNameProvider = new NodeNameProvider(config);
         nodeGuidProvider = new NodeGuidProvider(new AttributesDao(managerModule.getStorageManager()));
+
+        localRepositoriesPool = new LocalRepositoriesPool(new RepositoriesDao(managerModule.getStorageManager()),
+                                                          new LocalRepositoriesFactory(config,
+                                                                                       managerModule.getTaskManager(),
+                                                                                       managerModule.getMessageManager()),
+                                                          nodeNameProvider,
+                                                          nodeGuidProvider);
 
         nodeService = new NodeService(managerModule.getStorageManager(),
                                       localRepositoriesPool,
-                                      new NodeNameProvider(config),
+                                      nodeNameProvider,
                                       nodeGuidProvider,
                                       new PublishUrisProvider(config));
 

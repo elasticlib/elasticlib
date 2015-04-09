@@ -22,7 +22,6 @@ import com.sleepycat.je.OperationStatus;
 import java.util.List;
 import java.util.Optional;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
-import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
@@ -81,17 +80,6 @@ public class RepositoriesDao {
      */
     public boolean deleteRepositoryDef(Guid guid) {
         return repositoryDefs.delete(storageManager.currentTransaction(), entry(guid)) == OperationStatus.SUCCESS;
-    }
-
-    /**
-     * Loads a RepositoryDef. If key represents a valid encoded GUID, first try to resolve def by GUID. Otherwise
-     * returns the first def matching by name with key. Fails if no matching def is found after this second step.
-     *
-     * @param key Repository name or encoded GUID.
-     * @return Corresponding RepositoryDef.
-     */
-    public RepositoryDef getRepositoryDef(String key) {
-        return tryGetRepositoryDef(key).orElseThrow(UnknownRepositoryException::new);
     }
 
     /**

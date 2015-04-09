@@ -15,6 +15,7 @@
  */
 package org.elasticlib.node.components;
 
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import org.elasticlib.common.exception.RepositoryAlreadyClosedException;
 import org.elasticlib.common.exception.RepositoryAlreadyExistsException;
 import org.elasticlib.common.exception.RepositoryAlreadyOpenException;
 import org.elasticlib.common.exception.RepositoryClosedException;
+import org.elasticlib.common.exception.UnknownRepositoryException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RepositoryDef;
 import org.elasticlib.common.model.RepositoryInfo;
@@ -48,10 +50,13 @@ import org.slf4j.LoggerFactory;
  */
 public class LocalRepositoriesPool {
 
+    private static final String SEPARATOR = ".";
     private static final Logger LOG = LoggerFactory.getLogger(LocalRepositoriesPool.class);
 
     private final RepositoriesDao repositoriesDao;
     private final LocalRepositoriesFactory factory;
+    private final NodeNameProvider nodeNameProvider;
+    private final NodeGuidProvider nodeGuidProvider;
     private final Map<Guid, Repository> repositories = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -60,10 +65,17 @@ public class LocalRepositoriesPool {
      *
      * @param repositoriesDao Repositories definitions DAO.
      * @param localRepositoriesFactory Local repositories factory
+     * @param nodeNameProvider Local node name provider.
+     * @param nodeGuidProvider Local node GUID provider.
      */
-    public LocalRepositoriesPool(RepositoriesDao repositoriesDao, LocalRepositoriesFactory localRepositoriesFactory) {
+    public LocalRepositoriesPool(RepositoriesDao repositoriesDao,
+                                 LocalRepositoriesFactory localRepositoriesFactory,
+                                 NodeNameProvider nodeNameProvider,
+                                 NodeGuidProvider nodeGuidProvider) {
         this.repositoriesDao = repositoriesDao;
         this.factory = localRepositoriesFactory;
+        this.nodeNameProvider = nodeNameProvider;
+        this.nodeGuidProvider = nodeGuidProvider;
     }
 
     /**
@@ -158,7 +170,7 @@ public class LocalRepositoriesPool {
     public RepositoryDef openRepository(String key) {
         lock.writeLock().lock();
         try {
-            RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+            RepositoryDef def = getRepositoryDef(key);
             if (repositories.containsKey(def.getGuid())) {
                 throw new RepositoryAlreadyOpenException();
             }
@@ -179,7 +191,7 @@ public class LocalRepositoriesPool {
     public RepositoryDef closeRepository(String key) {
         lock.writeLock().lock();
         try {
-            RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+            RepositoryDef def = getRepositoryDef(key);
             if (!repositories.containsKey(def.getGuid())) {
                 throw new RepositoryAlreadyClosedException();
             }
@@ -214,7 +226,7 @@ public class LocalRepositoriesPool {
     private RepositoryDef removeRepository(String key, boolean delete) {
         lock.writeLock().lock();
         try {
-            RepositoryDef def = repositoriesDao.getRepositoryDef(key);
+            RepositoryDef def = getRepositoryDef(key);
             Guid guid = def.getGuid();
             Path path = Paths.get(def.getPath());
 
@@ -293,7 +305,7 @@ public class LocalRepositoriesPool {
     public RepositoryInfo getRepositoryInfo(String key) {
         lock.readLock().lock();
         try {
-            return repositoryInfoOf(repositoriesDao.getRepositoryDef(key));
+            return repositoryInfoOf(getRepositoryDef(key));
 
         } finally {
             lock.readLock().unlock();
@@ -316,18 +328,11 @@ public class LocalRepositoriesPool {
     public Repository getRepository(String key) {
         lock.readLock().lock();
         try {
-            return repositoryOf(repositoriesDao.getRepositoryDef(key));
+            return repositoryOf(getRepositoryDef(key));
 
         } finally {
             lock.readLock().unlock();
         }
-    }
-
-    private Repository repositoryOf(RepositoryDef def) {
-        if (!repositories.containsKey(def.getGuid())) {
-            throw new RepositoryClosedException();
-        }
-        return repositories.get(def.getGuid());
     }
 
     /**
@@ -339,8 +344,7 @@ public class LocalRepositoriesPool {
     public Optional<Guid> tryGetRepositoryGuid(String key) {
         lock.readLock().lock();
         try {
-            return repositoriesDao.tryGetRepositoryDef(key)
-                    .map(RepositoryDef::getGuid);
+            return tryGetRepositoryDef(key).map(RepositoryDef::getGuid);
 
         } finally {
             lock.readLock().unlock();
@@ -397,5 +401,31 @@ public class LocalRepositoriesPool {
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    private Repository repositoryOf(RepositoryDef def) {
+        if (!repositories.containsKey(def.getGuid())) {
+            throw new RepositoryClosedException();
+        }
+        return repositories.get(def.getGuid());
+    }
+
+    private RepositoryDef getRepositoryDef(String key) {
+        return tryGetRepositoryDef(key).orElseThrow(UnknownRepositoryException::new);
+    }
+
+    private Optional<RepositoryDef> tryGetRepositoryDef(String key) {
+        if (!key.contains(SEPARATOR)) {
+            return repositoriesDao.tryGetRepositoryDef(key);
+        }
+        List<String> parts = Splitter.on(SEPARATOR).splitToList(key);
+        if (parts.size() != 2 || !matchesNode(parts.get(0))) {
+            return Optional.empty();
+        }
+        return repositoriesDao.tryGetRepositoryDef(parts.get(1));
+    }
+
+    private boolean matchesNode(String key) {
+        return nodeNameProvider.name().equals(key) || nodeGuidProvider.guid().asHexadecimalString().equals(key);
     }
 }

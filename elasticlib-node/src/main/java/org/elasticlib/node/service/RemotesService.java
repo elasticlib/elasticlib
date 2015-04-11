@@ -129,6 +129,24 @@ public class RemotesService {
     }
 
     /**
+     * Save the remote node with supplied URI if:<br>
+     * - It is not the local node one.<br>
+     * - It is not already tracked.<br>
+     * - It is reachable.
+     * <p>
+     * If any of theses conditions does not hold, does nothing.
+     *
+     * @param uri Remote node URI.
+     */
+    public void saveRemote(URI uri) {
+        LOG.info("Saving remote node at [{}]", uri);
+        Optional<RemoteInfo> info = nodePingHandler.ping(uri);
+        if (info.isPresent() && !info.get().getGuid().equals(nodeGuidProvider.guid())) {
+            save(info.get());
+        }
+    }
+
+    /**
      * Save the remote node with supplied URI(s) and GUID if:<br>
      * - It is not the local node one.<br>
      * - It is not already tracked.<br>
@@ -146,7 +164,7 @@ public class RemotesService {
         }
         Optional<RemoteInfo> info = nodePingHandler.ping(uris, expected);
         if (info.isPresent()) {
-            storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
+            save(info.get());
         }
     }
 
@@ -154,21 +172,12 @@ public class RemotesService {
         return storageManager.inTransaction(() -> remotesDao.containsRemoteInfo(guid));
     }
 
-    /**
-     * Save the remote node with supplied URI if:<br>
-     * - It is not the local node one.<br>
-     * - It is not already tracked.<br>
-     * - It is reachable.
-     * <p>
-     * If any of theses conditions does not hold, does nothing.
-     *
-     * @param uri Remote node URI.
-     */
-    public void saveRemote(URI uri) {
-        LOG.info("Saving remote node at [{}]", uri);
-        Optional<RemoteInfo> info = nodePingHandler.ping(uri);
-        if (info.isPresent() && !info.get().getGuid().equals(nodeGuidProvider.guid())) {
-            storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info.get()));
+    private void save(RemoteInfo info) {
+        Optional<RemoteInfo> previous = storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(info));
+        if (previous.isPresent()) {
+            remoteNodesMessagesFactory.updateMessages(previous.get(), info).forEach(messageManager::post);
+        } else {
+            remoteNodesMessagesFactory.createMessages(info).forEach(messageManager::post);
         }
     }
 
@@ -186,6 +195,7 @@ public class RemotesService {
                 throw new SelfTrackingException();
             }
             storageManager.inTransaction(() -> remotesDao.createRemoteInfo(info.get()));
+            remoteNodesMessagesFactory.createMessages(info.get()).forEach(messageManager::post);
             return;
         }
         throw new UnreachableNodeException();
@@ -198,7 +208,8 @@ public class RemotesService {
      */
     public void removeRemote(String key) {
         LOG.info("Removing remote node {}", key);
-        storageManager.inTransaction(() -> remotesDao.deleteRemoteInfo(key));
+        RemoteInfo deleted = storageManager.inTransaction(() -> remotesDao.deleteRemoteInfo(key));
+        remoteNodesMessagesFactory.deleteMessages(deleted).forEach(messageManager::post);
     }
 
     /**
@@ -248,7 +259,7 @@ public class RemotesService {
                     .orElse(current.asUnreachable());
 
             storageManager.inTransaction(() -> remotesDao.saveRemoteInfo(updated));
-            remoteNodesMessagesFactory.messages(current, updated).forEach(messageManager::post);
+            remoteNodesMessagesFactory.updateMessages(current, updated).forEach(messageManager::post);
         }
     }
 

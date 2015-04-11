@@ -26,6 +26,7 @@ import org.elasticlib.common.exception.NodeAlreadyTrackedException;
 import org.elasticlib.common.exception.UnknownNodeException;
 import org.elasticlib.common.hash.Guid;
 import org.elasticlib.common.model.RemoteInfo;
+import static org.elasticlib.node.manager.storage.DatabaseEntries.asMappable;
 import static org.elasticlib.node.manager.storage.DatabaseEntries.entry;
 import org.elasticlib.node.manager.storage.DatabaseStream;
 import org.elasticlib.node.manager.storage.StorageManager;
@@ -66,12 +67,20 @@ public class RemotesDao {
     }
 
     /**
-     * Creates a new RemoteInfo if it does not exist, does nothing otherwise.
+     * Creates a new RemoteInfo if it does not exist, updates exiting one otherwise.
      *
      * @param info RemoteInfo to save.
+     * @return Previous remote info, if any.
      */
-    public void saveRemoteInfo(RemoteInfo info) {
-        remoteInfos.put(storageManager.currentTransaction(), entry(info.getGuid()), entry(info));
+    public Optional<RemoteInfo> saveRemoteInfo(RemoteInfo info) {
+        DatabaseEntry key = entry(info.getGuid());
+        DatabaseEntry value = new DatabaseEntry();
+        OperationStatus retrieval = remoteInfos.get(storageManager.currentTransaction(), key, value, LockMode.RMW);
+        remoteInfos.put(storageManager.currentTransaction(), key, entry(info));
+        if (retrieval == OperationStatus.SUCCESS) {
+            return Optional.of(asMappable(value, RemoteInfo.class));
+        }
+        return Optional.empty();
     }
 
     /**
@@ -93,24 +102,29 @@ public class RemotesDao {
      * Deletes a RemoteInfo. Fails if it does not exist.
      *
      * @param key Node name or encoded GUID.
+     * @return Deleted remote info.
      */
-    public void deleteRemoteInfo(String key) {
+    public RemoteInfo deleteRemoteInfo(String key) {
         if (Guid.isValid(key)) {
-            OperationStatus status = remoteInfos.delete(storageManager.currentTransaction(), entry(new Guid(key)));
-            if (status == OperationStatus.SUCCESS) {
-                return;
+            DatabaseEntry k = entry(new Guid(key));
+            DatabaseEntry v = new DatabaseEntry();
+            OperationStatus retrieval = remoteInfos.get(storageManager.currentTransaction(), k, v, LockMode.RMW);
+            if (retrieval == OperationStatus.SUCCESS) {
+                remoteInfos.delete(storageManager.currentTransaction(), k);
+                return asMappable(v, RemoteInfo.class);
             }
         }
-        boolean found = stream().any((cursor, info) -> {
+        Optional<RemoteInfo> deleted = stream().first((cursor, info) -> {
             if (info.getName().equals(key)) {
                 cursor.delete();
                 return true;
             }
             return false;
         });
-        if (!found) {
+        if (!deleted.isPresent()) {
             throw new UnknownNodeException();
         }
+        return deleted.get();
     }
 
     /**

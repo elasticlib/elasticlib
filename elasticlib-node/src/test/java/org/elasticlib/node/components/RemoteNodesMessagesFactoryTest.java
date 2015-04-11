@@ -50,13 +50,67 @@ public class RemoteNodesMessagesFactoryTest {
     private static final long SEQ = 1;
     private static final URI NODE_URI = URI.create("http://localhost:9400");
 
+    private final RemoteNodesMessagesFactory factory = new RemoteNodesMessagesFactory();
+
     /**
-     * Data provider.
+     * Creation messages data provider.
      *
-     * @return test data.
+     * @return Test data.
      */
-    @DataProvider(name = "dataProvider")
-    public Object[][] dataProvider() {
+    @DataProvider(name = "create")
+    public Object[][] createDataProvider() {
+        return new Object[][]{
+            test(unreachable(closed(GUID))),
+            test(unreachable(open(GUID))),
+            test(reachable(closed(GUID))),
+            test(reachable(open(GUID)), new RepositoryAvailable(GUID))
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param info Created remote info.
+     * @param expected Expected messages.
+     */
+    @Test(dataProvider = "create")
+    public void createMessagesTest(RemoteInfo info, List<RepositoryChangeMessage> expected) {
+        assertThat(factory.createMessages(info)).isEqualTo(expected);
+    }
+
+    /**
+     * Deletion messages data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "delete")
+    public Object[][] deleteDataProvider() {
+        return new Object[][]{
+            test(unreachable(closed(GUID))),
+            test(unreachable(open(GUID))),
+            test(reachable(closed(GUID))),
+            test(reachable(open(GUID)), new RepositoryUnavailable(GUID))
+        };
+    }
+
+    /**
+     * Test.
+     *
+     * @param info Deleted remote info.
+     * @param expected Expected messages.
+     */
+    @Test(dataProvider = "delete")
+    public void deleteMessagesTest(RemoteInfo info, List<RepositoryChangeMessage> expected) {
+        assertThat(factory.deleteMessages(info)).isEqualTo(expected);
+    }
+
+    /**
+     * Update messages data provider.
+     *
+     * @return Test data.
+     */
+    @DataProvider(name = "update")
+    public Object[][] updateDataProvider() {
         return new Object[][]{
             test(unreachable(open(GUID)), unreachable(open(GUID))),
             test(unreachable(open(GUID)), reachable(open(GUID)), new RepositoryAvailable(GUID)),
@@ -75,14 +129,17 @@ public class RemoteNodesMessagesFactoryTest {
     /**
      * Test.
      *
-     * @param before info before the update.
-     * @param after info after the update.
+     * @param before Info before the update.
+     * @param after Info after the update.
      * @param expected Expected messages.
      */
-    @Test(dataProvider = "dataProvider")
-    public void messagesTest(RemoteInfo before, RemoteInfo after, List<RepositoryChangeMessage> expected) {
-        List<RepositoryChangeMessage> actual = new RemoteNodesMessagesFactory().messages(before, after);
-        assertThat(actual).isEqualTo(expected);
+    @Test(dataProvider = "update")
+    public void updateMessagesTest(RemoteInfo before, RemoteInfo after, List<RepositoryChangeMessage> expected) {
+        assertThat(factory.updateMessages(before, after)).isEqualTo(expected);
+    }
+
+    private static Object[] test(RemoteInfo info, RepositoryChangeMessage... expected) {
+        return new Object[]{info, asList(expected)};
     }
 
     private static Object[] test(RemoteInfo before, RemoteInfo after, RepositoryChangeMessage... expected) {

@@ -34,26 +34,52 @@ import org.elasticlib.node.manager.message.RepositoryUnavailable;
 public class RemoteNodesMessagesFactory {
 
     /**
-     * Provides the list of messages to send following a remote node info update.
+     * Provides the list of messages to send following a remote node info creation.
      *
-     * @param before info before the update.
-     * @param after info after the update.
+     * @param info Created remote node info.
      * @return Corresponding messages to send.
      */
-    public List<RepositoryChangeMessage> messages(RemoteInfo before, RemoteInfo after) {
+    public List<RepositoryChangeMessage> createMessages(RemoteInfo info) {
+        if (!info.isReachable()) {
+            return emptyList();
+        }
+        return info.listRepositoryInfos()
+                .stream()
+                .filter(RepositoryInfo::isOpen)
+                .map(x -> new RepositoryAvailable(x.getDef().getGuid()))
+                .collect(toList());
+    }
+
+    /**
+     * Provides the list of messages to send following a remote node info deletion.
+     *
+     * @param info Deleted remote node info.
+     * @return Corresponding messages to send.
+     */
+    public List<RepositoryChangeMessage> deleteMessages(RemoteInfo info) {
+        if (!info.isReachable()) {
+            return emptyList();
+        }
+        return info.listRepositoryInfos()
+                .stream()
+                .filter(RepositoryInfo::isOpen)
+                .map(x -> new RepositoryUnavailable(x.getDef().getGuid()))
+                .collect(toList());
+    }
+
+    /**
+     * Provides the list of messages to send following a remote node info update.
+     *
+     * @param before Info before the update.
+     * @param after Info after the update.
+     * @return Corresponding messages to send.
+     */
+    public List<RepositoryChangeMessage> updateMessages(RemoteInfo before, RemoteInfo after) {
         if (before.isReachable() && !after.isReachable()) {
-            return before.listRepositoryInfos()
-                    .stream()
-                    .filter(RepositoryInfo::isOpen)
-                    .map(info -> new RepositoryUnavailable(info.getDef().getGuid()))
-                    .collect(toList());
+            return deleteMessages(before);
         }
         if (!before.isReachable() && after.isReachable()) {
-            return after.listRepositoryInfos()
-                    .stream()
-                    .filter(RepositoryInfo::isOpen)
-                    .map(info -> new RepositoryAvailable(info.getDef().getGuid()))
-                    .collect(toList());
+            return createMessages(after);
         }
         if (before.isReachable() && after.isReachable()) {
             return before.listRepositoryInfos()

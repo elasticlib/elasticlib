@@ -149,6 +149,24 @@ public class DatabaseStream<T extends Mappable> {
     }
 
     /**
+     * Provides the first value in the stream that matches supplied predicate, if any.
+     *
+     * @param predicate The predicate to be applied.
+     * @return The first matching value, if any.
+     */
+    public Optional<T> first(BiPredicate<Cursor, T> predicate) {
+        List<T> list = new ArrayList<>(1);
+        any((cursor, value) -> {
+            if (predicate.test(cursor, value)) {
+                list.add(value);
+                return true;
+            }
+            return false;
+        });
+        return list.stream().findFirst();
+    }
+
+    /**
      * Lists all values in the stream that match supplied predicate.
      *
      * @param predicate The predicate to be applied.

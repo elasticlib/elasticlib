@@ -61,7 +61,7 @@ agents:
 
 staging:
   maxSize: 20
-  timeout: 60 seconds
+  timeout: 5 minutes
   cleanup:
     enabled: true
     interval: 30 seconds

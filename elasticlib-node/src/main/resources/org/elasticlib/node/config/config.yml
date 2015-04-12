@@ -50,6 +50,7 @@ remotes:
   cleanup:
     enabled: true
     interval: 10 minutes
+    expiration: 60 minutes
 
 tasks:
   poolSize: 1

@@ -40,9 +40,11 @@ import org.elasticlib.node.components.NodeGuidProvider;
 import org.elasticlib.node.components.NodePingHandler;
 import org.elasticlib.node.components.RemoteNodesMessagesFactory;
 import static org.elasticlib.node.config.NodeConfig.REMOTES_CLEANUP_ENABLED;
+import static org.elasticlib.node.config.NodeConfig.REMOTES_CLEANUP_EXPIRATION;
 import static org.elasticlib.node.config.NodeConfig.REMOTES_PING_ENABLED;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.manager.ManagerModule;
+import org.elasticlib.node.runtime.RuntimeInfo;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -107,6 +109,7 @@ public class RemotesServiceTest {
         Config config = config()
                 .set(REMOTES_PING_ENABLED, false)
                 .set(REMOTES_CLEANUP_ENABLED, false)
+                .set(REMOTES_CLEANUP_EXPIRATION, "0 s")
                 .set(LOG_MEM_ONLY, "true");
 
         managerModule = new ManagerModule(path.resolve("home"), config);
@@ -117,7 +120,8 @@ public class RemotesServiceTest {
         NodeGuidProvider nodeGuidProvider = mock(NodeGuidProvider.class);
         when(nodeGuidProvider.guid()).thenReturn(LOCAL_GUID);
 
-        remotesService = new RemotesService(config,
+        remotesService = new RemotesService(new RuntimeInfo(),
+                                            config,
                                             null,
                                             managerModule.getStorageManager(),
                                             managerModule.getMessageManager(),

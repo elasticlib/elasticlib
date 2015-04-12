@@ -128,6 +128,10 @@ public final class NodeConfig {
      */
     public static final String REMOTES_CLEANUP_INTERVAL = "remotes.cleanup.interval";
     /**
+     * Delay after which unreachable remote nodes become eligible for cleanup.
+     */
+    public static final String REMOTES_CLEANUP_EXPIRATION = "remotes.cleanup.expiration";
+    /**
      * Asynchronous tasks executor pool size.
      */
     public static final String TASKS_POOL_SIZE = "tasks.poolSize";

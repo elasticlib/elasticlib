@@ -27,6 +27,7 @@ import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.discovery.DiscoveryModule;
 import org.elasticlib.node.manager.ManagerModule;
 import org.elasticlib.node.providers.LoggingFilter;
+import org.elasticlib.node.runtime.RuntimeInfo;
 import org.elasticlib.node.service.NodeService;
 import org.elasticlib.node.service.RemotesService;
 import org.elasticlib.node.service.ReplicationsService;
@@ -47,6 +48,7 @@ public class Node {
 
     private static final Logger LOG = LoggerFactory.getLogger(Node.class);
     private final Path home;
+    private final RuntimeInfo runtimeInfo;
     private final Config config;
     private final ManagerModule managerModule;
     private final DaoModule daoModule;
@@ -63,12 +65,12 @@ public class Node {
      */
     public Node(Path home) {
         this.home = home;
+        runtimeInfo = new RuntimeInfo();
         config = NodeConfig.load(home.resolve("config.yml"));
-
         managerModule = new ManagerModule(home, config);
         daoModule = new DaoModule(managerModule);
         componentsModule = new ComponentsModule(config, managerModule, daoModule);
-        serviceModule = new ServiceModule(config, managerModule, daoModule, componentsModule);
+        serviceModule = new ServiceModule(runtimeInfo, config, managerModule, daoModule, componentsModule);
         discoveryModule = new DiscoveryModule(config, managerModule, serviceModule);
 
         ResourceConfig resourceConfig = new ResourceConfig()
@@ -122,19 +124,12 @@ public class Node {
 
     private String startingMessage() {
         return new StringBuilder()
-                .append(about()).append(lineSeparator())
+                .append(runtimeInfo.getTitle()).append(" ").append(runtimeInfo.getVersion()).append(lineSeparator())
                 .append("Starting...").append(lineSeparator())
                 .append("Using home: ").append(home).append(lineSeparator())
                 .append("Using config:").append(lineSeparator())
                 .append(config)
                 .toString();
-    }
-
-    private static String about() {
-        Package pkg = Node.class.getPackage();
-        String title = pkg.getImplementationTitle() == null ? "" : pkg.getImplementationTitle();
-        String version = pkg.getImplementationVersion() == null ? "" : pkg.getImplementationVersion();
-        return String.join("", title, " ", version);
     }
 
     /**

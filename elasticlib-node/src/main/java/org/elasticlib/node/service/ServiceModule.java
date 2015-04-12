@@ -20,6 +20,7 @@ import org.elasticlib.node.components.ComponentsModule;
 import org.elasticlib.node.components.RemoteNodesMessagesFactory;
 import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.manager.ManagerModule;
+import org.elasticlib.node.runtime.RuntimeInfo;
 
 /**
  * Manages services life-cycle.
@@ -34,12 +35,14 @@ public class ServiceModule {
     /**
      * Constructor. Build and starts all services.
      *
+     * @param runtimeInfo Runtime information provider.
      * @param config Configuration holder.
      * @param managerModule Manager module.
      * @param daoModule DAO module.
      * @param componentsModule Components module.
      */
-    public ServiceModule(Config config,
+    public ServiceModule(RuntimeInfo runtimeInfo,
+                         Config config,
                          ManagerModule managerModule,
                          DaoModule daoModule,
                          ComponentsModule componentsModule) {
@@ -60,7 +63,8 @@ public class ServiceModule {
                                       componentsModule.getNodeGuidProvider(),
                                       componentsModule.getPublishUrisProvider());
 
-        remotesService = new RemotesService(config,
+        remotesService = new RemotesService(runtimeInfo,
+                                            config,
                                             managerModule.getTaskManager(),
                                             managerModule.getStorageManager(),
                                             managerModule.getMessageManager(),

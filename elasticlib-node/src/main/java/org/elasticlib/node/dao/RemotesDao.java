@@ -128,11 +128,13 @@ public class RemotesDao {
     }
 
     /**
-     * Deletes info of all unreachable nodes.
+     * Deletes all RemoteInfo matching supplied predicate.
+     *
+     * @param predicate Filtering predicate.
      */
-    public void deleteUnreachableRemoteInfos() {
+    public void deleteRemoteInfos(Predicate<RemoteInfo> predicate) {
         stream().each((cursor, info) -> {
-            if (!info.isReachable()) {
+            if (predicate.test(info)) {
                 cursor.delete();
             }
         });

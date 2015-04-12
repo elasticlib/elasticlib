@@ -19,9 +19,14 @@ import static com.google.common.base.Joiner.on;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import static java.time.Instant.now;
+import java.time.temporal.ChronoUnit;
 import static java.util.Collections.singleton;
 import java.util.List;
 import java.util.Optional;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.elasticlib.common.config.Config;
 import static org.elasticlib.common.config.ConfigUtil.duration;
@@ -34,11 +39,13 @@ import org.elasticlib.node.components.NodeGuidProvider;
 import org.elasticlib.node.components.NodePingHandler;
 import org.elasticlib.node.components.RemoteNodesMessagesFactory;
 import org.elasticlib.node.config.NodeConfig;
+import static org.elasticlib.node.config.NodeConfig.REMOTES_CLEANUP_EXPIRATION;
 import org.elasticlib.node.dao.RemotesDao;
 import org.elasticlib.node.manager.message.MessageManager;
 import org.elasticlib.node.manager.storage.StorageManager;
 import org.elasticlib.node.manager.task.Task;
 import org.elasticlib.node.manager.task.TaskManager;
+import org.elasticlib.node.runtime.RuntimeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +56,7 @@ public class RemotesService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemotesService.class);
 
+    private final RuntimeInfo runtimeInfo;
     private final Config config;
     private final TaskManager taskManager;
     private final StorageManager storageManager;
@@ -64,6 +72,7 @@ public class RemotesService {
     /**
      * Constructor.
      *
+     * @param runtimeInfo Runtime information provider.
      * @param config Configuration holder.
      * @param taskManager Asynchronous tasks manager.
      * @param storageManager Persistent storage provider.
@@ -73,7 +82,8 @@ public class RemotesService {
      * @param nodePingHandler Remote nodes ping handler.
      * @param remoteNodesMessagesFactory Remote nodes messages factory.
      */
-    public RemotesService(Config config,
+    public RemotesService(RuntimeInfo runtimeInfo,
+                          Config config,
                           TaskManager taskManager,
                           StorageManager storageManager,
                           MessageManager messageManager,
@@ -82,6 +92,7 @@ public class RemotesService {
                           NodePingHandler nodePingHandler,
                           RemoteNodesMessagesFactory remoteNodesMessagesFactory) {
 
+        this.runtimeInfo = runtimeInfo;
         this.config = config;
         this.taskManager = taskManager;
         this.storageManager = storageManager;
@@ -276,6 +287,17 @@ public class RemotesService {
      */
     public void cleanupRemotes() {
         LOG.info("Removing unreachable remote nodes");
-        storageManager.inTransaction(remotesDao::deleteUnreachableRemoteInfos);
+        Instant now = now();
+        Duration expiration = millis(config, REMOTES_CLEANUP_EXPIRATION);
+        storageManager.inTransaction(() -> remotesDao.deleteRemoteInfos(info -> {
+            return !info.isReachable() &&
+                    runtimeInfo.getUptime().compareTo(expiration) > 0 &&
+                    Duration.between(info.getRefreshDate(), now).compareTo(expiration) > 0;
+        }));
+    }
+
+    private static Duration millis(Config config, String key) {
+        long millis = MILLISECONDS.convert(duration(config, key), unit(config, key));
+        return Duration.of(millis, ChronoUnit.MILLIS);
     }
 }

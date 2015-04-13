@@ -189,7 +189,7 @@ public class Session implements Closeable {
         if (repositoryDef == null) {
             return nodeName;
         }
-        return String.join("/", nodeName, repositoryDef.getName());
+        return String.join(".", nodeName, repositoryDef.getName());
     }
 
     @Override

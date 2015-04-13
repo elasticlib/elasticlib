@@ -44,6 +44,8 @@ import static org.elasticlib.console.util.Directories.workingDirectory;
  */
 class ParametersCompleter {
 
+    private static final String SEPARATOR = ".";
+
     private final Session session;
     private final DiscoveryClient discoveryClient;
 
@@ -131,6 +133,15 @@ class ParametersCompleter {
             RepositoryDef def = info.getDef();
             repositories.add(def.getName());
             repositories.add(def.getGuid().asHexadecimalString());
+        });
+        session.getClient().remotes().listInfos().forEach(remote -> {
+            remote.listRepositoryInfos().forEach(repository -> {
+                RepositoryDef def = repository.getDef();
+                repositories.add(remote.getName() + SEPARATOR + def.getName());
+                repositories.add(remote.getName() + SEPARATOR + def.getGuid());
+                repositories.add(remote.getGuid() + SEPARATOR + def.getName());
+                repositories.add(remote.getGuid() + SEPARATOR + def.getGuid());
+            });
         });
         return filterStartWith(repositories, param);
     }

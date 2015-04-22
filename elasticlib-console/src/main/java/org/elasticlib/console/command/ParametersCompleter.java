@@ -30,6 +30,7 @@ import static java.util.stream.Collectors.toList;
 import javax.ws.rs.ProcessingException;
 import org.elasticlib.common.exception.NodeException;
 import org.elasticlib.common.model.RepositoryDef;
+import org.elasticlib.common.model.RepositoryInfo;
 import static org.elasticlib.console.command.CommandProvider.commands;
 import static org.elasticlib.console.command.Type.KEY;
 import org.elasticlib.console.config.ConsoleConfig;
@@ -96,6 +97,9 @@ class ParametersCompleter {
 
                 case DIRECTORY:
                     return completePath(param, true);
+
+                case QUERY:
+                    return completeQuery(param);
 
                 default:
                     return emptyList();
@@ -219,5 +223,20 @@ class ParametersCompleter {
             return candidate.toString();
         }
         return workingDirectory().relativize(candidate).toString();
+    }
+
+    private List<String> completeQuery(String param) {
+        RepositoryInfo info = session.getRepository().getInfo();
+        if (!info.isOpen()) {
+            return emptyList();
+        }
+        List<String> keys = info.getStats()
+                .getMetadataCounts()
+                .keySet()
+                .stream()
+                .map(x -> x + ":")
+                .collect(toList());
+
+        return filterStartWith(keys, param);
     }
 }

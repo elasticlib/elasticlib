@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ public class EscapingCompletionHandler implements CompletionHandler {
             if (value.equals(buf.toString())) {
                 return false;
             }
-            setBuffer(reader, Tokenizing.escape(value.toString()) + " ", pos);
+            setBuffer(reader, postProcess(value), pos);
             return true;
 
         } else if (candidates.size() > 1) {
@@ -63,7 +63,14 @@ public class EscapingCompletionHandler implements CompletionHandler {
         return true;
     }
 
-    private String getUnambiguousCompletions(List<CharSequence> candidates) {
+    private static String postProcess(CharSequence candidate) {
+        String value = Tokenizing.escape(candidate.toString());
+        // We do not want space to be added for search query parameters completions.
+        // However, there should be a better place to do this stuff !
+        return value.endsWith(":") ? value : value + " ";
+    }
+
+    private static String getUnambiguousCompletions(List<CharSequence> candidates) {
         if (candidates == null || candidates.isEmpty()) {
             return null;
         }

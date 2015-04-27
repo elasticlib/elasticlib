@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 import javax.ws.rs.ProcessingException;
 import jline.console.completer.Completer;
 import org.elasticlib.common.exception.NodeException;
@@ -39,6 +40,9 @@ import static org.elasticlib.console.tokenizing.Tokenizing.isComplete;
  * Provide actual command implementations.
  */
 public final class CommandParser implements Completer {
+
+    private static final String HELP = "'%s' is not a valid command. Type 'help' to get help.";
+    private static final String SPACE = " ";
 
     private final Display display;
     private final Session session;
@@ -72,7 +76,7 @@ public final class CommandParser implements Completer {
         }
         Optional<Command> commandOpt = CommandProvider.command(argList);
         if (!commandOpt.isPresent()) {
-            display.println(CommandProvider.help());
+            display.println(String.format(HELP, command(argList)) + System.lineSeparator());
             return;
         }
         Command command = commandOpt.get();
@@ -82,6 +86,21 @@ public final class CommandParser implements Completer {
             return;
         }
         execute(command, params);
+    }
+
+    private static String command(List<String> argList) {
+        if (argList.size() >= 2) {
+            List<String> prefixes = CommandProvider.commands()
+                    .stream()
+                    .filter(x -> x.name().contains(SPACE))
+                    .map(x -> Splitter.on(SPACE).split(x.name()).iterator().next())
+                    .collect(toList());
+
+            if (prefixes.contains(argList.get(0))) {
+                return String.join(SPACE, argList.get(0), argList.get(1));
+            }
+        }
+        return argList.get(0);
     }
 
     private void execute(Command command, List<String> params) {

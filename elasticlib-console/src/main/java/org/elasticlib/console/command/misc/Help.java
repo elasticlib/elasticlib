@@ -15,7 +15,9 @@
  */
 package org.elasticlib.console.command.misc;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.elasticlib.console.command.AbstractCommand;
@@ -53,7 +55,7 @@ public class Help extends AbstractCommand {
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Optional<Command> commandOpt = command(params);
         if (!commandOpt.isPresent()) {
-            display.println(CommandProvider.help());
+            display.println(generalHelp());
             return;
         }
         Command command = commandOpt.get();
@@ -74,5 +76,40 @@ public class Help extends AbstractCommand {
                 .omitEmptyStrings()
                 .trimResults()
                 .splitToList(params.get(0)));
+    }
+
+    private static String generalHelp() {
+        List<String> categoryHelps = new ArrayList<>();
+        for (Category category : Category.values()) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(category).append(System.lineSeparator());
+            CommandProvider.commands()
+                    .stream()
+                    .filter(command -> command.category() == category)
+                    .forEach(command -> {
+                        builder.append(tab(2))
+                        .append(fixedSize(command.name(), 24))
+                        .append(command.description())
+                        .append(System.lineSeparator());
+                    });
+            categoryHelps.add(builder.toString());
+        }
+        return Joiner.on(System.lineSeparator()).join(categoryHelps);
+    }
+
+    private static String tab(int size) {
+        StringBuilder builder = new StringBuilder(size);
+        for (int i = 0; i < size; i++) {
+            builder.append(' ');
+        }
+        return builder.toString();
+    }
+
+    private static String fixedSize(String value, int size) {
+        StringBuilder builder = new StringBuilder(value);
+        for (int i = 0; i < size - value.length(); i++) {
+            builder.append(' ');
+        }
+        return builder.toString();
     }
 }

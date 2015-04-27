@@ -43,7 +43,7 @@ import static org.elasticlib.console.util.Directories.workingDirectory;
 /**
  * Provides parameters completion.
  */
-class ParametersCompleter {
+public class ParametersCompleter {
 
     private static final String SEPARATOR = ".";
 

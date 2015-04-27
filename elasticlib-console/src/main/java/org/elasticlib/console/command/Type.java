@@ -18,7 +18,7 @@ package org.elasticlib.console.command;
 /**
  * Define command line parameter types.
  */
-enum Type {
+public enum Type {
 
     /**
      * A config key.

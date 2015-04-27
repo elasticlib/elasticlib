@@ -23,8 +23,52 @@ import static java.util.Collections.sort;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import org.elasticlib.console.command.config.Config;
+import org.elasticlib.console.command.config.Reset;
+import org.elasticlib.console.command.config.Set;
+import org.elasticlib.console.command.config.Unset;
+import org.elasticlib.console.command.contents.Delete;
+import org.elasticlib.console.command.contents.Digest;
+import org.elasticlib.console.command.contents.Find;
+import org.elasticlib.console.command.contents.Get;
+import org.elasticlib.console.command.contents.Head;
+import org.elasticlib.console.command.contents.History;
+import org.elasticlib.console.command.contents.Put;
+import org.elasticlib.console.command.contents.Revisions;
+import org.elasticlib.console.command.contents.Tree;
+import org.elasticlib.console.command.contents.Update;
+import org.elasticlib.console.command.misc.About;
+import org.elasticlib.console.command.misc.Cd;
+import org.elasticlib.console.command.misc.Help;
+import org.elasticlib.console.command.misc.Ls;
+import org.elasticlib.console.command.misc.OsCommand;
+import org.elasticlib.console.command.misc.Pwd;
+import org.elasticlib.console.command.misc.Quit;
+import org.elasticlib.console.command.node.Connect;
+import org.elasticlib.console.command.node.Disconnect;
+import org.elasticlib.console.command.node.Leave;
+import org.elasticlib.console.command.node.Node;
+import org.elasticlib.console.command.node.Use;
+import org.elasticlib.console.command.remotes.AddRemote;
+import org.elasticlib.console.command.remotes.Remotes;
+import org.elasticlib.console.command.remotes.RemoveRemote;
+import org.elasticlib.console.command.replications.CreateReplication;
+import org.elasticlib.console.command.replications.DropReplication;
+import org.elasticlib.console.command.replications.Replications;
+import org.elasticlib.console.command.replications.Start;
+import org.elasticlib.console.command.replications.Stop;
+import org.elasticlib.console.command.repositories.AddRepository;
+import org.elasticlib.console.command.repositories.Close;
+import org.elasticlib.console.command.repositories.CreateRepository;
+import org.elasticlib.console.command.repositories.DropRepository;
+import org.elasticlib.console.command.repositories.Open;
+import org.elasticlib.console.command.repositories.RemoveRepository;
+import org.elasticlib.console.command.repositories.Repositories;
 
-final class CommandProvider {
+/**
+ * Provides commands.
+ */
+public final class CommandProvider {
 
     private static final List<Command> COMMANDS = Arrays.<Command>asList(new Config(),
                                                                          new Set(),
@@ -75,6 +119,12 @@ final class CommandProvider {
     private CommandProvider() {
     }
 
+    /**
+     * Provides command matching supplied arguments list, if any.
+     *
+     * @param argList An arguments list.
+     * @return Corresponding command, if any.
+     */
     public static Optional<Command> command(List<String> argList) {
         if (argList.isEmpty()) {
             return Optional.empty();
@@ -98,10 +148,20 @@ final class CommandProvider {
         return true;
     }
 
+    /**
+     * Lists all commands.
+     *
+     * @return A list of commands.
+     */
     public static List<Command> commands() {
         return COMMANDS;
     }
 
+    /**
+     * Provides general help.
+     *
+     * @return Help text to display.
+     */
     public static String help() {
         List<String> categoryHelps = new ArrayList<>();
         for (Category category : Category.values()) {

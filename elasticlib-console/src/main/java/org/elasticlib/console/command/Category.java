@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,35 @@ package org.elasticlib.console.command;
 /**
  * Define command categories.
  */
-enum Category {
+public enum Category {
 
+    /**
+     * Current node related commands.
+     */
     NODE,
+    /**
+     * Remote nodes related commands.
+     */
     REMOTES,
+    /**
+     * Repositories related commands.
+     */
     REPOSITORIES,
+    /**
+     * Replications related commands.
+     */
     REPLICATIONS,
+    /**
+     * Current repository contents related commands.
+     */
     CONTENTS,
+    /**
+     * Console configuration related commands.
+     */
     CONFIG,
+    /**
+     * Miscellaneous commands
+     */
     MISC,;
 
     @Override

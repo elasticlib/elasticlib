@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import org.elasticlib.console.http.Session;
 /**
  * A command.
  */
-interface Command {
+public interface Command {
 
     /**
      * @return This command name.
@@ -76,6 +76,7 @@ interface Command {
      *
      * @param display Display to output to.
      * @param session Session to execute against.
+     * @param config Console configuration.
      * @param params Parameters (Exclude command name).
      */
     void execute(Display display, Session session, ConsoleConfig config, List<String> params);

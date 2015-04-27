@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +23,21 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import java.util.List;
 
-abstract class AbstractCommand implements Command {
+/**
+ * Base class of most command implementations.
+ */
+public abstract class AbstractCommand implements Command {
 
     private static final String USAGE = "Usage:";
     private final Category category;
     private final List<Type> syntax;
 
+    /**
+     * Constructor.
+     *
+     * @param category This command category.
+     * @param syntax This command syntax.
+     */
     protected AbstractCommand(Category category, Type... syntax) {
         this.category = category;
         this.syntax = asList(syntax);

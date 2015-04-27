@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2014 Guillaume Masclet <guillaume.masclet@yahoo.fr>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,10 @@ package org.elasticlib.console.command;
 
 import static java.util.Arrays.asList;
 import java.util.List;
+import org.elasticlib.console.command.contents.Get;
+import org.elasticlib.console.command.misc.Quit;
+import org.elasticlib.console.command.remotes.AddRemote;
+import org.elasticlib.console.command.repositories.DropRepository;
 import static org.fest.assertions.api.Assertions.assertThat;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

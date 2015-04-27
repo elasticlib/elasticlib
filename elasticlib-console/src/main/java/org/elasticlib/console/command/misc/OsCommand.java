@@ -51,7 +51,7 @@ public class OsCommand implements Command {
 
     @Override
     public String usage() {
-        return "Usage: !OS_COMMAND ARGS...";
+        return "Usage: !<os_command> <args>...";
     }
 
     @Override

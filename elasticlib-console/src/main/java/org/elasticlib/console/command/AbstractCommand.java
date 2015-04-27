@@ -17,7 +17,6 @@ package org.elasticlib.console.command;
 
 import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -28,7 +27,6 @@ import java.util.List;
  */
 public abstract class AbstractCommand implements Command {
 
-    private static final String USAGE = "Usage:";
     private final Category category;
     private final List<Type> syntax;
 
@@ -55,11 +53,17 @@ public abstract class AbstractCommand implements Command {
 
     @Override
     public String usage() {
-        String name = name();
-        if (syntax.isEmpty()) {
-            return Joiner.on(" ").join(USAGE, name);
-        }
-        return Joiner.on(" ").join(USAGE, name, Joiner.on(" ").join(syntax));
+        StringBuilder builder = new StringBuilder()
+                .append("Usage: ")
+                .append(name());
+
+        syntax.forEach(x -> {
+            builder.append(" <")
+                    .append(x.name().toLowerCase())
+                    .append(">");
+        });
+
+        return builder.toString();
     }
 
     @Override

@@ -61,9 +61,9 @@ public enum Type {
      */
     QUERY,
     /**
-     * A command name.
+     * A help subject.
      */
-    COMMAND;
+    SUBJECT;
 
     @Override
     public String toString() {

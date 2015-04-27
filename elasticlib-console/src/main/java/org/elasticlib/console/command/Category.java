@@ -23,31 +23,44 @@ public enum Category {
     /**
      * Current node related commands.
      */
-    NODE,
+    NODE("Current node related commands"),
     /**
      * Remote nodes related commands.
      */
-    REMOTES,
+    REMOTES("Remote nodes related commands"),
     /**
      * Repositories related commands.
      */
-    REPOSITORIES,
+    REPOSITORIES("Repositories related commands"),
     /**
      * Replications related commands.
      */
-    REPLICATIONS,
+    REPLICATIONS("Replications related commands"),
     /**
      * Current repository contents related commands.
      */
-    CONTENTS,
+    CONTENTS("Current repository contents related commands"),
     /**
      * Console configuration related commands.
      */
-    CONFIG,
+    CONFIG("Console configuration related commands"),
     /**
-     * Miscellaneous commands
+     * Miscellaneous commands.
      */
-    MISC,;
+    MISC("Miscellaneous commands");
+
+    private final String description;
+
+    private Category(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return A description of this category.
+     */
+    public String getDescription() {
+        return description;
+    }
 
     @Override
     public String toString() {

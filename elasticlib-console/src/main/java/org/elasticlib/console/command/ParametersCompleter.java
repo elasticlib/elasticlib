@@ -21,6 +21,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import static java.util.Collections.emptyList;
 import java.util.Iterator;
@@ -89,8 +90,8 @@ public class ParametersCompleter {
                 case HASH:
                     return completeHash(param);
 
-                case COMMAND:
-                    return completeCommand(param);
+                case SUBJECT:
+                    return completeSubject(param);
 
                 case PATH:
                     return completePath(param, false);
@@ -175,20 +176,19 @@ public class ParametersCompleter {
         return filterStartWith(hashes, param);
     }
 
-    private static List<String> completeCommand(String param) {
-        List<String> commands = commands()
+    private static List<String> completeSubject(String param) {
+        List<String> completions = new ArrayList<>();
+
+        completions.addAll(Arrays.stream(Category.values())
+                .map(x -> "@" + x.name().toLowerCase())
+                .collect(toList()));
+
+        completions.addAll(commands()
                 .stream()
                 .map(Command::name)
-                .collect(toList());
+                .collect(toList()));
 
-        return filterStartWith(commands, param.toLowerCase());
-    }
-
-    private static List<String> filterStartWith(Collection<String> collection, final String param) {
-        return collection.stream()
-                .filter(x -> x.startsWith(param))
-                .sorted()
-                .collect(toList());
+        return filterStartWith(completions, param.toLowerCase());
     }
 
     private static List<String> completePath(String param, boolean directoriesOnly) {
@@ -238,5 +238,12 @@ public class ParametersCompleter {
                 .collect(toList());
 
         return filterStartWith(keys, param);
+    }
+
+    private static List<String> filterStartWith(Collection<String> collection, String param) {
+        return collection.stream()
+                .filter(x -> x.startsWith(param))
+                .sorted()
+                .collect(toList());
     }
 }

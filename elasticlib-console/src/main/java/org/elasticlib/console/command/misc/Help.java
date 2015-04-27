@@ -15,9 +15,9 @@
  */
 package org.elasticlib.console.command.misc;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import java.util.ArrayList;
+import static java.lang.System.lineSeparator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.elasticlib.console.command.AbstractCommand;
@@ -38,12 +38,12 @@ public class Help extends AbstractCommand {
      * Constructor.
      */
     public Help() {
-        super(Category.MISC, Type.COMMAND);
+        super(Category.MISC, Type.SUBJECT);
     }
 
     @Override
     public String description() {
-        return "Print help about a command";
+        return "Print help about a command or a category of commands";
     }
 
     @Override
@@ -53,18 +53,51 @@ public class Help extends AbstractCommand {
 
     @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
-        Optional<Command> commandOpt = command(params);
-        if (!commandOpt.isPresent()) {
-            display.println(generalHelp());
+        Optional<Category> category = category(params);
+        if (category.isPresent()) {
+            display.println(help(category.get()));
             return;
         }
-        Command command = commandOpt.get();
-        display.println(new StringBuilder()
-                .append(command.description())
-                .append(System.lineSeparator())
-                .append(command.usage())
-                .append(System.lineSeparator())
-                .toString());
+
+        Optional<Command> command = command(params);
+        if (command.isPresent()) {
+            display.println(help(command.get()));
+            return;
+        }
+
+        display.println(String.join(lineSeparator(),
+                                    "Type: 'help @<category>' to list commands in <category>",
+                                    "      'help <command>' to display help about <command>",
+                                    "      'help <tab>' to display available help subjects",
+                                    ""));
+    }
+
+    private Optional<Category> category(List<String> params) {
+        if (params.isEmpty() || !params.get(0).startsWith("@")) {
+            return Optional.empty();
+        }
+        return Arrays.stream(Category.values())
+                .filter(x -> x.name().equalsIgnoreCase(params.get(0).substring(1)))
+                .findFirst();
+    }
+
+    private String help(Category category) {
+        StringBuilder builder = new StringBuilder()
+                .append(category.getDescription())
+                .append(lineSeparator())
+                .append(lineSeparator());
+
+        CommandProvider.commands()
+                .stream()
+                .filter(command -> command.category() == category)
+                .forEach(command -> {
+                    builder.append(tab(2))
+                    .append(fixedSize(command.name(), 24))
+                    .append(command.description())
+                    .append(lineSeparator());
+                });
+
+        return builder.toString();
     }
 
     private Optional<Command> command(List<String> params) {
@@ -78,23 +111,13 @@ public class Help extends AbstractCommand {
                 .splitToList(params.get(0)));
     }
 
-    private static String generalHelp() {
-        List<String> categoryHelps = new ArrayList<>();
-        for (Category category : Category.values()) {
-            StringBuilder builder = new StringBuilder();
-            builder.append(category).append(System.lineSeparator());
-            CommandProvider.commands()
-                    .stream()
-                    .filter(command -> command.category() == category)
-                    .forEach(command -> {
-                        builder.append(tab(2))
-                        .append(fixedSize(command.name(), 24))
-                        .append(command.description())
-                        .append(System.lineSeparator());
-                    });
-            categoryHelps.add(builder.toString());
-        }
-        return Joiner.on(System.lineSeparator()).join(categoryHelps);
+    private String help(Command command) {
+        return new StringBuilder()
+                .append(command.description())
+                .append(lineSeparator())
+                .append(command.usage())
+                .append(lineSeparator())
+                .toString();
     }
 
     private static String tab(int size) {

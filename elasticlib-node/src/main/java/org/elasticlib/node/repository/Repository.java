@@ -80,8 +80,7 @@ public interface Repository {
     void unstageContent(Hash hash, Guid sessionId);
 
     /**
-     * Adds a revision. If associated content is not present, started transaction is suspended so that caller may latter
-     * complete this operation by adding this content.
+     * Adds a revision.
      *
      * @param revision revision.
      * @return Actual operation result.
@@ -89,8 +88,7 @@ public interface Repository {
     CommandResult addRevision(Revision revision);
 
     /**
-     * Merges supplied revision tree with existing one, if any. If associated content is not present, started
-     * transaction is suspended so that caller may latter complete this operation by creating this content.
+     * Merges supplied revision tree with existing one, if any.
      *
      * @param tree Revision tree.
      * @return Actual operation result.

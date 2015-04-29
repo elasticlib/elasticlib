@@ -35,7 +35,7 @@ public class Remotes extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "List existing remote nodes";
     }
 

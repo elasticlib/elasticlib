@@ -36,7 +36,7 @@ public class Node extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Display info about current node";
     }
 

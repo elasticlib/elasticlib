@@ -36,7 +36,7 @@ public class Close extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Close an existing repository";
     }
 

@@ -37,7 +37,7 @@ public class AddRepository extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Add an existing repository";
     }
 

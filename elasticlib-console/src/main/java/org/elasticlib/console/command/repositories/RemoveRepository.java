@@ -38,7 +38,7 @@ public class RemoveRepository extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Remove an existing repository, without deleting it";
     }
 

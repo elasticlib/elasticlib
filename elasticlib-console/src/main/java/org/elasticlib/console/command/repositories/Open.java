@@ -36,7 +36,7 @@ public class Open extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Open an existing repository";
     }
 

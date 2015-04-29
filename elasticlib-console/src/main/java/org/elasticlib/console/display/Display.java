@@ -63,6 +63,16 @@ public class Display {
     }
 
     /**
+     * Provides the display underlying console width, in characters.
+     *
+     * @return The display width.
+     */
+    public int getWidth() {
+        // All terminal implementations are expected to always return a relevant value.
+        return consoleReader.getTerminal().getWidth();
+    }
+
+    /**
      * Print supplied text.
      *
      * @param text Text to print.

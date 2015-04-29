@@ -16,6 +16,7 @@
 package org.elasticlib.console.command.misc;
 
 import com.google.common.base.Splitter;
+import static java.lang.Math.min;
 import static java.lang.System.lineSeparator;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.elasticlib.console.command.Type;
 import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
 import org.elasticlib.console.http.Session;
+import org.elasticlib.console.util.Justifier;
 
 /**
  * The help command.
@@ -42,7 +44,7 @@ public class Help extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print help about a command or a category of commands";
     }
 
@@ -61,7 +63,7 @@ public class Help extends AbstractCommand {
 
         Optional<Command> command = command(params);
         if (command.isPresent()) {
-            display.println(help(command.get()));
+            display.println(help(command.get(), display));
             return;
         }
 
@@ -83,7 +85,7 @@ public class Help extends AbstractCommand {
 
     private String help(Category category) {
         StringBuilder builder = new StringBuilder()
-                .append(category.getDescription())
+                .append(category.summary())
                 .append(lineSeparator())
                 .append(lineSeparator());
 
@@ -93,7 +95,7 @@ public class Help extends AbstractCommand {
                 .forEach(command -> {
                     builder.append(tab(2))
                     .append(fixedSize(command.name(), 24))
-                    .append(command.description())
+                    .append(command.summary())
                     .append(lineSeparator());
                 });
 
@@ -111,13 +113,23 @@ public class Help extends AbstractCommand {
                 .splitToList(params.get(0)));
     }
 
-    private String help(Command command) {
-        return new StringBuilder()
-                .append(command.description())
+    private String help(Command command, Display display) {
+        StringBuilder builder = new StringBuilder()
+                .append(command.summary())
                 .append(lineSeparator())
                 .append(command.usage())
-                .append(lineSeparator())
-                .toString();
+                .append(lineSeparator());
+
+        if (!command.description().isEmpty()) {
+            builder.append(lineSeparator())
+                    .append(Justifier.width(min(display.getWidth(), 80))
+                            .paddingLeft(2)
+                            .paddingRight(2)
+                            .justify(command.description()))
+                    .append(lineSeparator());
+        }
+
+        return builder.toString();
     }
 
     private static String tab(int size) {

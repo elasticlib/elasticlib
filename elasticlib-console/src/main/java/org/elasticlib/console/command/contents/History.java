@@ -38,7 +38,7 @@ public class History extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print current repository history";
     }
 

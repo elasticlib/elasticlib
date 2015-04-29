@@ -39,7 +39,7 @@ public class Find extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Search contents";
     }
 

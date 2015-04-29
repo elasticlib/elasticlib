@@ -36,7 +36,7 @@ public class Use extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Select repository to use";
     }
 

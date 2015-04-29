@@ -36,7 +36,7 @@ public class Unset extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Unset a config value";
     }
 

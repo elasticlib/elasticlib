@@ -48,7 +48,7 @@ public class Get extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Get an existing content";
     }
 

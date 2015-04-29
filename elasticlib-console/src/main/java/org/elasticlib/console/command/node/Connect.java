@@ -38,7 +38,7 @@ public class Connect extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Connect to a node";
     }
 

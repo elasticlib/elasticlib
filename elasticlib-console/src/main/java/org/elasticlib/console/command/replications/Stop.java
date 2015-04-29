@@ -37,7 +37,7 @@ public class Stop extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Stop an existing replication, without deleting it";
     }
 

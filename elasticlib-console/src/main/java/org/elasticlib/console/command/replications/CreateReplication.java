@@ -36,7 +36,7 @@ public class CreateReplication extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Create a new replication";
     }
 

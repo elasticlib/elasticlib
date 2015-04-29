@@ -36,7 +36,7 @@ public class RemoveRemote extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Remove a remote node";
     }
 

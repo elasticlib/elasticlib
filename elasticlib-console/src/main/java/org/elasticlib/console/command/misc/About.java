@@ -36,7 +36,7 @@ public class About extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print info about this app";
     }
 

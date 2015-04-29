@@ -35,7 +35,7 @@ public class Config extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Display current config";
     }
 

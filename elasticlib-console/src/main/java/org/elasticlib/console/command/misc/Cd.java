@@ -39,7 +39,7 @@ public class Cd extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Change current working directory";
     }
 

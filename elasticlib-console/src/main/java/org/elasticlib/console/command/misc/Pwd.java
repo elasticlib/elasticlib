@@ -36,7 +36,7 @@ public class Pwd extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print current working directory";
     }
 

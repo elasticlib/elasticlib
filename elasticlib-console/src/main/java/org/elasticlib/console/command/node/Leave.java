@@ -35,7 +35,7 @@ public class Leave extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Stop using current repository";
     }
 

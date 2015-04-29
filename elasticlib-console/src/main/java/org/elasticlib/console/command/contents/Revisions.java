@@ -39,7 +39,7 @@ public class Revisions extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print revisions of an existing content";
     }
 

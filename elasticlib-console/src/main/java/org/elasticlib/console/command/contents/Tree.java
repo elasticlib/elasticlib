@@ -39,7 +39,7 @@ public class Tree extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Print revision tree of an existing content";
     }
 

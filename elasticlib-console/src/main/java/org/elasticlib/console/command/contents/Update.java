@@ -62,7 +62,7 @@ public class Update extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Update info about an existing content";
     }
 

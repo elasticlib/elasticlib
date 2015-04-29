@@ -35,7 +35,7 @@ public class Reset extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Reset config";
     }
 

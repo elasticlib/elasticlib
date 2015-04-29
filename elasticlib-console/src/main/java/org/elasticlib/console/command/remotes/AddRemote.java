@@ -37,7 +37,7 @@ public class AddRemote extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Add a remote node to current node";
     }
 

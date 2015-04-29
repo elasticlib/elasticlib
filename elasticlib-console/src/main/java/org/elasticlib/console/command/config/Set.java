@@ -36,7 +36,7 @@ public class Set extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Set a config value";
     }
 

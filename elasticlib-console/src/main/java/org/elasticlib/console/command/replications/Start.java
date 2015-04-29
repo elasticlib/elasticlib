@@ -37,7 +37,7 @@ public class Start extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Start an existing replication";
     }
 

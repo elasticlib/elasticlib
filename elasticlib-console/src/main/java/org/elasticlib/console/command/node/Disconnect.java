@@ -35,7 +35,7 @@ public class Disconnect extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Disconnect from current node";
     }
 

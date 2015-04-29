@@ -35,7 +35,7 @@ public class Replications extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "List existing replications";
     }
 

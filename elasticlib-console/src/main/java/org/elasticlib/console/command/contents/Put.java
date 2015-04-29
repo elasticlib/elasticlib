@@ -70,8 +70,8 @@ public class Put extends AbstractCommand {
     }
 
     @Override
-    public String description() {
-        return "Put a new content";
+    public String summary() {
+        return "Import content(s) in current repository";
     }
 
     @Override

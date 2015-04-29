@@ -43,7 +43,7 @@ public class Delete extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Delete an existing content";
     }
 

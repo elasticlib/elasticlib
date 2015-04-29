@@ -37,7 +37,7 @@ public class DropReplication extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Physically delete an existing replication";
     }
 

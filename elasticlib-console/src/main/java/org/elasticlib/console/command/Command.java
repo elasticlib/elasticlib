@@ -36,18 +36,22 @@ public interface Command {
     Category category();
 
     /**
-     * @return Description of this command.
+     * @return A short summary of this command.
+     */
+    String summary();
+
+    /**
+     * @return A more comprehensive presentation of this command.
      */
     String description();
 
     /**
-     *
-     * @return Human readable command syntax.
+     * @return This command syntax in a human readable manner.
      */
     String usage();
 
     /**
-     * Extract parameters list from supplied command line argument list (ie truncate command name).
+     * Extracts parameters list from supplied command line argument list (ie truncate command name).
      *
      * @param argList Command line argument list.
      * @return Corresponding parameters list.
@@ -55,7 +59,7 @@ public interface Command {
     List<String> params(List<String> argList);
 
     /**
-     * Complete the supplied parameters list.
+     * Completes the supplied parameters list.
      *
      * @param completer Parameters completer.
      * @param params Parameters (Exclude command name).
@@ -64,7 +68,7 @@ public interface Command {
     List<String> complete(ParametersCompleter completer, List<String> params);
 
     /**
-     * Validate the supplied parameters list.
+     * Validates the supplied parameters list.
      *
      * @param params Parameters (Exclude command name).
      * @return True if parameters list matches command syntax.
@@ -72,7 +76,7 @@ public interface Command {
     boolean isValid(List<String> params);
 
     /**
-     * Execute the command.
+     * Executes the command.
      *
      * @param display Display to output to.
      * @param session Session to execute against.

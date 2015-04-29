@@ -38,7 +38,7 @@ public class Digest extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Compute actual hash and length of an existing content";
     }
 

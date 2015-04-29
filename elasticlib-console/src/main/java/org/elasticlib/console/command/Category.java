@@ -49,17 +49,17 @@ public enum Category {
      */
     MISC("Miscellaneous commands");
 
-    private final String description;
+    private final String summary;
 
-    private Category(String description) {
-        this.description = description;
+    private Category(String summary) {
+        this.summary = summary;
     }
 
     /**
-     * @return A description of this category.
+     * @return A short summary of this category.
      */
-    public String getDescription() {
-        return description;
+    public String summary() {
+        return summary;
     }
 
     @Override

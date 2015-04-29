@@ -45,8 +45,13 @@ public class OsCommand implements Command {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Execute an OS specific command";
+    }
+
+    @Override
+    public String description() {
+        return "";
     }
 
     @Override

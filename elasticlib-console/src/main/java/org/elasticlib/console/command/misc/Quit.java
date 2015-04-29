@@ -36,7 +36,7 @@ public class Quit extends AbstractCommand {
     }
 
     @Override
-    public String description() {
+    public String summary() {
         return "Leave this console";
     }
 

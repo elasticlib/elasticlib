@@ -52,6 +52,11 @@ public abstract class AbstractCommand implements Command {
     }
 
     @Override
+    public String description() {
+        return "";
+    }
+
+    @Override
     public String usage() {
         StringBuilder builder = new StringBuilder()
                 .append("Usage: ")

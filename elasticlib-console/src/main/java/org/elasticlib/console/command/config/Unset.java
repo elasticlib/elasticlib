@@ -36,11 +36,6 @@ public class Unset extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Unset a config value";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         config.unset(params.get(0));
         display.printOk();

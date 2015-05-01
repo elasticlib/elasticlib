@@ -36,11 +36,6 @@ public class RemoveRemote extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Remove a remote node";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .remotes()

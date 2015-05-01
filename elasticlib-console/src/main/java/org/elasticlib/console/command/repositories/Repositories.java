@@ -35,11 +35,6 @@ public class Repositories extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "List existing repositories";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .repositories()

@@ -38,11 +38,6 @@ public class History extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print current repository history";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         long cursor = Long.MAX_VALUE;
         List<Event> events;

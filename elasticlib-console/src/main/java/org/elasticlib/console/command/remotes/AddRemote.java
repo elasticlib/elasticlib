@@ -37,11 +37,6 @@ public class AddRemote extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Add a remote node to current node";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .remotes()

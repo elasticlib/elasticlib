@@ -15,12 +15,15 @@
  */
 package org.elasticlib.console.command;
 
+import com.google.common.base.CaseFormat;
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import com.google.common.base.Splitter;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import java.util.List;
+import org.elasticlib.console.i18n.Resources;
 
 /**
  * Base class of most command implementations.
@@ -43,7 +46,7 @@ public abstract class AbstractCommand implements Command {
 
     @Override
     public String name() {
-        return UPPER_CAMEL.to(LOWER_UNDERSCORE, getClass().getSimpleName()).replace('_', ' ');
+        return name(LOWER_UNDERSCORE).replace('_', ' ');
     }
 
     @Override
@@ -52,8 +55,21 @@ public abstract class AbstractCommand implements Command {
     }
 
     @Override
+    public String summary() {
+        return Resources.get(key("summary"));
+    }
+
+    @Override
     public String description() {
-        return "";
+        return Resources.tryGet(key("description")).orElse("");
+    }
+
+    private String name(CaseFormat format) {
+        return UPPER_CAMEL.to(format, getClass().getSimpleName());
+    }
+
+    private String key(String item) {
+        return String.join(".", "command", name(LOWER_CAMEL), item);
     }
 
     @Override

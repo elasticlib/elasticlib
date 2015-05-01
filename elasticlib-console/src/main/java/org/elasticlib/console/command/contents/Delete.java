@@ -43,11 +43,6 @@ public class Delete extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Delete an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
         ContentInfo contentInfo = session.getRepository().getContentInfo(hash);

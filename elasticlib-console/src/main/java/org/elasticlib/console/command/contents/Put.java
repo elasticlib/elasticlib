@@ -70,11 +70,6 @@ public class Put extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Import content(s) in current repository";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Path path = Directories.resolve(params.get(0));
         if (!Files.exists(path)) {

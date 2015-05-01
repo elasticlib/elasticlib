@@ -39,11 +39,6 @@ public class Tree extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print revision tree of an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
         RevisionTree tree = session.getRepository().getTree(hash);

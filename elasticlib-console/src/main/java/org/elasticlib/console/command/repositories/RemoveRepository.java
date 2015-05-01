@@ -38,11 +38,6 @@ public class RemoveRepository extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Remove an existing repository, without deleting it";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Guid guid = resolveRepositoryGuid(session.getClient(), params.get(0));
         session.getClient()

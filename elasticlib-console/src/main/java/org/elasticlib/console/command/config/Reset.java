@@ -35,11 +35,6 @@ public class Reset extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Reset config";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         config.reset();
         display.printOk();

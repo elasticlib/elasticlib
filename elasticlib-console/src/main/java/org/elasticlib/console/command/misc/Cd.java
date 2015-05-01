@@ -39,11 +39,6 @@ public class Cd extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Change current working directory";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         if (params.get(0).equals("~")) {
             changeToUserHome();

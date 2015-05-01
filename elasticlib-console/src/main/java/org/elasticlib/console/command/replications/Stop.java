@@ -37,11 +37,6 @@ public class Stop extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Stop an existing replication, without deleting it";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .replications()

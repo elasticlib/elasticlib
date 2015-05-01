@@ -35,11 +35,6 @@ public class Remotes extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "List existing remote nodes";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .remotes()

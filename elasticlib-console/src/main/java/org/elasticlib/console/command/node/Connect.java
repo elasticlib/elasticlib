@@ -38,11 +38,6 @@ public class Connect extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Connect to a node";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         URI uri = parseUri(params.get(0));
         session.connect(uri);

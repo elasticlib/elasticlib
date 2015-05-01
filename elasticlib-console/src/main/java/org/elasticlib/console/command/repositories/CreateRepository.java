@@ -37,11 +37,6 @@ public class CreateRepository extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Create a new repository";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .repositories()

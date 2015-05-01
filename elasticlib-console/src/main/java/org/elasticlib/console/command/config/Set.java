@@ -36,11 +36,6 @@ public class Set extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Set a config value";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         config.set(params.get(0), params.get(1));
         display.printOk();

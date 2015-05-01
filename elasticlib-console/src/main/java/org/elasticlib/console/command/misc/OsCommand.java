@@ -27,6 +27,7 @@ import org.elasticlib.console.command.ParametersCompleter;
 import org.elasticlib.console.config.ConsoleConfig;
 import org.elasticlib.console.display.Display;
 import org.elasticlib.console.http.Session;
+import org.elasticlib.console.i18n.Resources;
 import static org.elasticlib.console.util.Directories.workingDirectory;
 
 /**
@@ -46,12 +47,12 @@ public class OsCommand implements Command {
 
     @Override
     public String summary() {
-        return "Execute an OS specific command";
+        return Resources.get("command.osCommand.summary");
     }
 
     @Override
     public String description() {
-        return "";
+        return Resources.tryGet("command.osCommand.description").orElse("");
     }
 
     @Override

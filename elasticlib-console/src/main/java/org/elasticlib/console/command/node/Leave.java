@@ -35,11 +35,6 @@ public class Leave extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Stop using current repository";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.leave();
         display.printOk();

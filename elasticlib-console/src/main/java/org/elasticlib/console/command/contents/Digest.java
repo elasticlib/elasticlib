@@ -38,11 +38,6 @@ public class Digest extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Compute actual hash and length of an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
         display.print(session.getRepository().getDigest(hash));

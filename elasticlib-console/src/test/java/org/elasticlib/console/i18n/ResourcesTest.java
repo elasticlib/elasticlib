@@ -13,30 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticlib.console.command.misc;
+package org.elasticlib.console.i18n;
 
-import java.util.List;
-import org.elasticlib.console.command.AbstractCommand;
-import org.elasticlib.console.command.Category;
-import org.elasticlib.console.config.ConsoleConfig;
-import org.elasticlib.console.display.Display;
-import org.elasticlib.console.exception.QuitException;
-import org.elasticlib.console.http.Session;
+import static org.fest.assertions.api.Assertions.assertThat;
+import org.testng.annotations.Test;
 
 /**
- * The quit command.
+ * Unit tests.
  */
-public class Quit extends AbstractCommand {
+public class ResourcesTest {
 
     /**
-     * Constructor.
+     * Test.
      */
-    public Quit() {
-        super(Category.MISC);
-    }
-
-    @Override
-    public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
-        throw new QuitException();
+    @Test
+    public void getTest() {
+        assertThat(Resources.get("command.about.summary")).isNotEmpty();
     }
 }

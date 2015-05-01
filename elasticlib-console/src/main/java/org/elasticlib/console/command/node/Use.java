@@ -36,11 +36,6 @@ public class Use extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Select repository to use";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.use(params.get(0));
         display.printOk();

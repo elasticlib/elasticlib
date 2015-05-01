@@ -36,11 +36,6 @@ public class Close extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Close an existing repository";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .repositories()

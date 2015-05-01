@@ -36,11 +36,6 @@ public class Pwd extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print current working directory";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         display.println(workingDirectory().toString());
     }

@@ -38,11 +38,6 @@ public class Head extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print head revisions of an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
         session.getRepository()

@@ -36,11 +36,6 @@ public class About extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print info about this app";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         display.println(new StringBuilder()
                 .append(appInfoLine())

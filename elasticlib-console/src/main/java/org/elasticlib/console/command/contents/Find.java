@@ -39,11 +39,6 @@ public class Find extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Search contents";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         int cursor = 0;
         List<Revision> revisions;

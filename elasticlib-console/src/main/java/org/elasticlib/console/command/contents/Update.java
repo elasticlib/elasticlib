@@ -62,11 +62,6 @@ public class Update extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Update info about an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         String editor = config.getEditor();
         if (editor.isEmpty()) {

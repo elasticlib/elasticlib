@@ -36,11 +36,6 @@ public class CreateReplication extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Create a new replication";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .replications()

@@ -35,11 +35,6 @@ public class Replications extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "List existing replications";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .replications()

@@ -35,11 +35,6 @@ public class Config extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Display current config";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         display.println(config.print());
     }

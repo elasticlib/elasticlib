@@ -48,11 +48,6 @@ public class Get extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Get an existing content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         Hash hash = parseHash(params.get(0));
         try {

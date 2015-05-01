@@ -69,11 +69,6 @@ public class Ls extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print current working directory content";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         pad(rows())
                 .stream()

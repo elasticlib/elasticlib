@@ -44,11 +44,6 @@ public class Help extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Print help about a command or a category of commands";
-    }
-
-    @Override
     public boolean isValid(List<String> params) {
         return true;
     }

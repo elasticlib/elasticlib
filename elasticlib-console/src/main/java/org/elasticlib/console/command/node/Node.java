@@ -36,11 +36,6 @@ public class Node extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Display info about current node";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         NodeInfo info = session.getClient()
                 .node()

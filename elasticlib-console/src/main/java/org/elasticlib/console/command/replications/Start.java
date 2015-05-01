@@ -37,11 +37,6 @@ public class Start extends AbstractCommand {
     }
 
     @Override
-    public String summary() {
-        return "Start an existing replication";
-    }
-
-    @Override
     public void execute(Display display, Session session, ConsoleConfig config, List<String> params) {
         session.getClient()
                 .replications()

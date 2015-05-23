@@ -84,6 +84,9 @@ public class ParametersCompleter {
                 case REPOSITORY:
                     return completeRepository(param);
 
+                case LOCAL_REPOSITORY:
+                    return completeLocalRepository(param);
+
                 case REPLICATION:
                     return completeReplication(param);
 
@@ -134,11 +137,7 @@ public class ParametersCompleter {
 
     private List<String> completeRepository(String param) {
         Collection<String> repositories = new TreeSet<>();
-        session.getClient().repositories().listInfos().forEach(info -> {
-            RepositoryDef def = info.getDef();
-            repositories.add(def.getName());
-            repositories.add(def.getGuid().asHexadecimalString());
-        });
+        repositories.addAll(completeLocalRepository(param));
         session.getClient().remotes().listInfos().forEach(remote -> {
             remote.listRepositoryInfos().forEach(repository -> {
                 RepositoryDef def = repository.getDef();
@@ -147,6 +146,16 @@ public class ParametersCompleter {
                 repositories.add(remote.getGuid() + SEPARATOR + def.getName());
                 repositories.add(remote.getGuid() + SEPARATOR + def.getGuid());
             });
+        });
+        return filterStartWith(repositories, param);
+    }
+
+    private List<String> completeLocalRepository(String param) {
+        Collection<String> repositories = new TreeSet<>();
+        session.getClient().repositories().listInfos().forEach(info -> {
+            RepositoryDef def = info.getDef();
+            repositories.add(def.getName());
+            repositories.add(def.getGuid().asHexadecimalString());
         });
         return filterStartWith(repositories, param);
     }

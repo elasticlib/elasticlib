@@ -80,7 +80,7 @@ public abstract class AbstractCommand implements Command {
 
         syntax.forEach(x -> {
             builder.append(" <")
-                    .append(x.name().toLowerCase())
+                    .append(x)
                     .append(">");
         });
 

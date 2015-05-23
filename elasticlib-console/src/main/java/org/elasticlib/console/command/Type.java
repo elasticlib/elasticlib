@@ -45,9 +45,13 @@ public enum Type {
      */
     NODE,
     /**
-     * A repository name or GUID.
+     * The name or GUID of a repository, which may be namespaced by a node name or GUID.
      */
     REPOSITORY,
+    /**
+     * The name or GUID of a repository related to the local node.
+     */
+    LOCAL_REPOSITORY,
     /**
      * A replication GUID.
      */
@@ -67,6 +71,6 @@ public enum Type {
 
     @Override
     public String toString() {
-        return name();
+        return name().toLowerCase().replace('_', ' ');
     }
 }

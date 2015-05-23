@@ -32,7 +32,7 @@ public class Use extends AbstractCommand {
      * Constructor.
      */
     public Use() {
-        super(Category.NODE, Type.REPOSITORY);
+        super(Category.NODE, Type.LOCAL_REPOSITORY);
     }
 
     @Override

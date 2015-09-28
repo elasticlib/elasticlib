@@ -40,6 +40,7 @@ public class MulticastDiscoveryListener {
 
     private final Config config;
     private final NodeService nodeService;
+    private boolean starting;
     private boolean started;
     private DiscoveryThread thread;
 
@@ -65,10 +66,11 @@ public class MulticastDiscoveryListener {
         if (started) {
             return;
         }
+        starting = true;
         thread = new DiscoveryThread();
         thread.start();
         try {
-            while (!started) {
+            while (starting) {
                 wait();
             }
         } catch (InterruptedException e) {
@@ -127,24 +129,28 @@ public class MulticastDiscoveryListener {
 
         private void buildSocket() {
             synchronized (MulticastDiscoveryListener.this) {
+                String address = config.getString(NodeConfig.DISCOVERY_MULTICAST_GROUP);
+                int port = config.getInt(NodeConfig.DISCOVERY_MULTICAST_PORT);
+                int ttl = config.getInt(NodeConfig.DISCOVERY_MULTICAST_TTL);
                 try {
-                    String address = config.getString(NodeConfig.DISCOVERY_MULTICAST_GROUP);
-                    int port = config.getInt(NodeConfig.DISCOVERY_MULTICAST_PORT);
-                    int ttl = config.getInt(NodeConfig.DISCOVERY_MULTICAST_TTL);
-
                     group = InetAddress.getByName(address);
                     socket = new MulticastSocket(port);
                     socket.joinGroup(group);
                     socket.setTimeToLive(ttl);
                     socket.setLoopbackMode(false);
 
+                    started = true;
                     LOG.info("Multicast discovery listener bound to [{}:{}]", address, port);
 
-                    started = true;
-                    MulticastDiscoveryListener.this.notifyAll();
-
                 } catch (IOException e) {
-                    throw new IllegalStateException(e);
+                    String template = "Failed to bind multicast discovery listener to [%s:%s]";
+                    LOG.error(String.format(template, address, port), e);
+                    if (socket != null) {
+                        socket.close();
+                    }
+                } finally {
+                    starting = false;
+                    MulticastDiscoveryListener.this.notifyAll();
                 }
             }
         }

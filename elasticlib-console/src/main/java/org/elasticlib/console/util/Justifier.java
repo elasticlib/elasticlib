@@ -17,9 +17,12 @@ package org.elasticlib.console.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Splitter.on;
+import com.google.common.base.Strings;
 import static java.lang.Math.min;
+import static java.lang.String.join;
 import static java.lang.System.lineSeparator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import java.util.Iterator;
@@ -38,11 +41,13 @@ public class Justifier {
     private final int width;
     private final int paddingLeft;
     private final int paddingRight;
+    private final List<String> fixed;
 
-    private Justifier(int width, int paddingLeft, int paddingRight) {
+    private Justifier(int width, int paddingLeft, int paddingRight, List<String> fixed) {
         this.width = width;
         this.paddingLeft = paddingLeft;
         this.paddingRight = paddingRight;
+        this.fixed = fixed;
     }
 
     /**
@@ -53,7 +58,7 @@ public class Justifier {
      */
     public static Justifier width(int value) {
         checkArgument(value > 0);
-        return new Justifier(value, 0, 0);
+        return new Justifier(value, 0, 0, emptyList());
     }
 
     /**
@@ -64,7 +69,7 @@ public class Justifier {
      */
     public Justifier paddingLeft(int value) {
         checkArgument(value >= 0);
-        return new Justifier(width, value, paddingRight);
+        return new Justifier(width, value, paddingRight, fixed);
     }
 
     /**
@@ -75,7 +80,22 @@ public class Justifier {
      */
     public Justifier paddingRight(int value) {
         checkArgument(value >= 0);
-        return new Justifier(width, paddingLeft, value);
+        return new Justifier(width, paddingLeft, value, fixed);
+    }
+
+    /**
+     * Provides a copy of this justifier that does not insert justification spaces around supplied separator(s).
+     *
+     * @param separators Separator(s) around which additional spaces should never been added.
+     * @return A new Justifier instance.
+     */
+    public Justifier fixed(String... separators) {
+        checkArgument(Arrays.stream(separators).noneMatch(x -> Strings.isNullOrEmpty(x) || x.equals(SPACE)));
+        List<String> collector = new ArrayList<>();
+        collector.addAll(fixed);
+        Arrays.stream(separators).forEach(collector::add);
+
+        return new Justifier(width, paddingLeft, paddingRight, collector);
     }
 
     /**
@@ -103,7 +123,7 @@ public class Justifier {
         int innerWidth = width - paddingLeft - paddingRight;
         List<Line> lines = new ArrayList<>();
         List<String> words = new ArrayList<>();
-        Iterator<String> it = on(SPACE).split(paragraph).iterator();
+        Iterator<String> it = words(paragraph).iterator();
         while (it.hasNext()) {
             String word = it.next();
             if (length(words) + 1 + word.length() > innerWidth) {
@@ -138,6 +158,56 @@ public class Justifier {
     private static void pad(StringBuilder builder, int length) {
         for (int i = 0; i < length; i++) {
             builder.append(SPACE);
+        }
+    }
+
+    private Iterable<String> words(String paragraph) {
+        return () -> new WordsIterator(paragraph, fixed);
+    }
+
+    /**
+     * An iterator that provides words in a paragraph.
+     */
+    private static class WordsIterator implements Iterator<String> {
+
+        private final Iterator<String> source;
+        private final List<String> fixed;
+        private String buffer;
+
+        public WordsIterator(String paragraph, List<String> fixed) {
+            source = on(SPACE).split(paragraph).iterator();
+            this.fixed = fixed;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return buffer != null || source.hasNext();
+        }
+
+        @Override
+        public String next() {
+            String current = take();
+            if (!hasNext()) {
+                return current;
+            }
+            String next = take();
+            if (!fixed.contains(current) && !fixed.contains(next)) {
+                buffer = next;
+                return current;
+            }
+            if (fixed.contains(current) || !hasNext()) {
+                return join(SPACE, current, next);
+            }
+            return join(SPACE, current, next, take());
+        }
+
+        private String take() {
+            if (buffer == null) {
+                return source.next();
+            }
+            String item = buffer;
+            buffer = null;
+            return item;
         }
     }
 

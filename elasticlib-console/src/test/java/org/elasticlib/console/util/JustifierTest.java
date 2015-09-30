@@ -70,6 +70,24 @@ public class JustifierTest {
                      "    ",
                      "  Aliquam  euismod pulvinar lorem eget  ",
                      "  pulvinar.  ")
+            },
+            new Object[]{
+                45, 0, 0,
+                "* Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                text("* Lorem  ipsum  dolor  sit  amet, consectetur",
+                     "adipiscing elit.")
+            },
+            new Object[]{
+                45, 0, 0,
+                "Lorem ipsum * dolor sit amet, consectetur adipiscing elit.",
+                text("Lorem  ipsum * dolor  sit  amet,  consectetur",
+                     "adipiscing elit.")
+            },
+            new Object[]{
+                45, 0, 0,
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. *",
+                text("Lorem   ipsum  dolor  sit  amet,  consectetur",
+                     "adipiscing elit. *")
             }
         };
     }
@@ -88,6 +106,7 @@ public class JustifierTest {
         String actual = Justifier.width(width)
                 .paddingLeft(paddingLeft)
                 .paddingRight(paddingRight)
+                .fixed("*")
                 .justify(text);
 
         assertThat(actual).isEqualTo(expected);

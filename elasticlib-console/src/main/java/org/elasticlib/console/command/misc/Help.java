@@ -118,6 +118,7 @@ public class Help extends AbstractCommand {
         if (!command.description().isEmpty()) {
             builder.append(lineSeparator())
                     .append(Justifier.width(min(display.getWidth(), 80))
+                            .fixed("-")
                             .paddingLeft(2)
                             .paddingRight(2)
                             .justify(command.description()))

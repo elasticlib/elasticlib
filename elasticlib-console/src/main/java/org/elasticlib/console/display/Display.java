@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -115,7 +116,8 @@ public class Display {
      * @param e Exception to print.
      */
     public void print(ProcessingException e) {
-        String message = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage()).get(1);
+        List<String> parts = Splitter.on(':').limit(2).trimResults().splitToList(e.getMessage());
+        String message = parts.get(parts.size() - 1);
         out.println(message + System.lineSeparator());
         out.flush();
     }

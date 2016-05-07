@@ -34,6 +34,7 @@ import org.elasticlib.node.service.ReplicationsService;
 import org.elasticlib.node.service.RepositoriesService;
 import org.elasticlib.node.service.ServiceModule;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -82,6 +83,9 @@ public class Node {
         httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config),
                                                                resourceConfig,
                                                                false);
+
+        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(home.resolve("www").toString()),
+                                                           config.getString(NodeConfig.HTTP_WWW_PATH));
     }
 
     private AbstractBinder bindings() {
@@ -100,7 +104,7 @@ public class Node {
         return UriBuilder.fromUri("http:/")
                 .host(config.getString(NodeConfig.HTTP_HOST))
                 .port(config.getInt(NodeConfig.HTTP_PORT))
-                .path(config.getString(NodeConfig.HTTP_CONTEXT))
+                .path(config.getString(NodeConfig.HTTP_API_PATH))
                 .build();
     }
 

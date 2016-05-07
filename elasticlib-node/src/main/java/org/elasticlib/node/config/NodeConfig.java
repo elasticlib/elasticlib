@@ -47,9 +47,13 @@ public final class NodeConfig {
      */
     public static final String HTTP_PORT = "http.port";
     /**
-     * Node deployment context.
+     * Node API root path.
      */
-    public static final String HTTP_CONTEXT = "http.context";
+    public static final String HTTP_API_PATH = "http.apiPath";
+    /**
+     * Node static web files root path.
+     */
+    public static final String HTTP_WWW_PATH = "http.wwwPath";
     /**
      * HTTP client connect timeout. Infinite if empty.
      */

@@ -77,7 +77,7 @@ public class PublishUrisProvider {
         return UriBuilder.fromUri("http:/")
                 .host(host)
                 .port(config.getInt(NodeConfig.HTTP_PORT))
-                .path(config.getString(NodeConfig.HTTP_CONTEXT))
+                .path(config.getString(NodeConfig.HTTP_API_PATH))
                 .build();
     }
 

@@ -20,10 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import static java.lang.Math.min;
-import static java.lang.String.join;
 import static java.lang.System.lineSeparator;
-import java.net.URI;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -31,10 +28,9 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.container.PreMatching;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.StatusType;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
+import org.elasticlib.common.util.HttpLogBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,18 +43,6 @@ import org.slf4j.LoggerFactory;
 @Priority(Integer.MIN_VALUE)
 public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
 
-    private static final String SPACE = " ";
-    private static final String DASH = " - ";
-    private static final String COLON = ": ";
-    private static final String COMMA = ",";
-    private static final String NOTIFICATION_PREFIX = "* ";
-    private static final String REQUEST_PREFIX = "> ";
-    private static final String RESPONSE_PREFIX = "< ";
-    private static final String MORE = "...more...";
-    private static final String REQUEST_ENTITY_NOTE = "With request entity";
-    private static final String RESPONSE_ENTITY_NOTE = "With response entity";
-    private static final String REQUEST_NOTE = "Server has received a request";
-    private static final String RESPONSE_NOTE = "Server responded with a response";
     private static final String ENTITY_LOGGER_PROPERTY = LoggingFilter.class.getName() + ".entityLogger";
     private static final String ID_PROPERTY = LoggingFilter.class.getName() + ".id";
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
@@ -70,20 +54,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     public void filter(ContainerRequestContext requestCtx) throws IOException {
         long currentId = id.incrementAndGet();
         requestCtx.setProperty(ID_PROPERTY, currentId);
-        StringBuilder builder = new StringBuilder();
 
-        printRequestLine(builder,
-                         REQUEST_NOTE,
-                         currentId,
-                         requestCtx.getMethod(),
-                         requestCtx.getUriInfo().getRequestUri());
+        String message = new HttpLogBuilder(currentId).request(requestCtx.getMethod(),
+                                                               requestCtx.getUriInfo().getRequestUri().toASCIIString(),
+                                                               requestCtx.getHeaders());
 
-        printPrefixedHeaders(builder,
-                             currentId,
-                             REQUEST_PREFIX,
-                             requestCtx.getHeaders());
-
-        LOG.info(builder.toString());
+        LOG.info("Received request{}{}", lineSeparator(), message);
 
         if (requestCtx.hasEntity() && LOG.isDebugEnabled()) {
             StringBuilder entityBuilder = new StringBuilder();
@@ -95,19 +71,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     @Override
     public void filter(ContainerRequestContext requestCtx, ContainerResponseContext responseCtx) throws IOException {
         long currentId = (long) requestCtx.getProperty(ID_PROPERTY);
-        StringBuilder builder = new StringBuilder();
 
-        printResponseLine(builder,
-                          RESPONSE_NOTE,
-                          currentId,
-                          responseCtx.getStatusInfo());
+        String message = new HttpLogBuilder(currentId).response(responseCtx.getStatus(),
+                                                                responseCtx.getStatusInfo().getReasonPhrase(),
+                                                                responseCtx.getStringHeaders());
 
-        printPrefixedHeaders(builder,
-                             currentId,
-                             RESPONSE_PREFIX,
-                             responseCtx.getStringHeaders());
-
-        LOG.info(builder.toString());
+        LOG.info("Responded with response{}{}", lineSeparator(), message);
 
         if (responseCtx.hasEntity() && LOG.isDebugEnabled()) {
             OutputStream stream = new LoggingStream(currentId, responseCtx.getEntityStream());
@@ -122,53 +91,8 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         LoggingStream stream = (LoggingStream) writerInterceptorCtx.getProperty(ENTITY_LOGGER_PROPERTY);
         writerInterceptorCtx.proceed();
         if (stream != null && LOG.isDebugEnabled()) {
-            LOG.debug(stream.getStringBuilder().toString());
+            LOG.debug(stream.toString());
         }
-    }
-
-    private static void printRequestLine(StringBuilder builder, String note, long id, String method, URI uri) {
-        prefixId(builder, id)
-                .append(NOTIFICATION_PREFIX)
-                .append(note)
-                .append(lineSeparator());
-
-        prefixId(builder, id)
-                .append(REQUEST_PREFIX)
-                .append(method)
-                .append(SPACE)
-                .append(uri.toASCIIString())
-                .append(lineSeparator());
-    }
-
-    private static void printResponseLine(StringBuilder builder, String note, long id, StatusType status) {
-        prefixId(builder, id)
-                .append(NOTIFICATION_PREFIX)
-                .append(note)
-                .append(lineSeparator());
-
-        prefixId(builder, id)
-                .append(RESPONSE_PREFIX)
-                .append(status.getStatusCode())
-                .append(DASH)
-                .append(status.getReasonPhrase())
-                .append(lineSeparator());
-    }
-
-    private static void printPrefixedHeaders(StringBuilder builder,
-                                             long id,
-                                             String prefix,
-                                             MultivaluedMap<String, String> headers) {
-        headers.entrySet()
-                .stream()
-                .sorted((x, y) -> x.getKey().compareToIgnoreCase(y.getKey()))
-                .forEach(headerEntry -> {
-                    prefixId(builder, id)
-                    .append(prefix)
-                    .append(headerEntry.getKey())
-                    .append(COLON)
-                    .append(join(COMMA, headerEntry.getValue()))
-                    .append(lineSeparator());
-                });
     }
 
     private static InputStream logInboundEntity(long id, StringBuilder builder, InputStream stream) throws IOException {
@@ -178,25 +102,15 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         stream.mark(MAX_ENTITY_SIZE + 1);
         byte[] entity = new byte[MAX_ENTITY_SIZE + 1];
         int entitySize = stream.read(entity);
-
-        prefixId(builder, id)
-                .append(NOTIFICATION_PREFIX)
-                .append(REQUEST_ENTITY_NOTE)
-                .append(lineSeparator())
-                .append(new String(entity, 0, min(entitySize, MAX_ENTITY_SIZE)));
-
-        if (entitySize > MAX_ENTITY_SIZE) {
-            builder.append(MORE);
+        boolean hasMore = false;
+        if (entitySize < 0 || entitySize > MAX_ENTITY_SIZE) {
+            entitySize = MAX_ENTITY_SIZE;
+            hasMore = true;
         }
-        builder.append(lineSeparator());
+
+        builder.append(new HttpLogBuilder(id).requestEntity(entity, entitySize, hasMore));
         stream.reset();
         return stream;
-    }
-
-    private static StringBuilder prefixId(StringBuilder builder, long id) {
-        return builder
-                .append(Long.toString(id))
-                .append(SPACE);
     }
 
     /**
@@ -207,6 +121,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         private final long id;
         private final OutputStream entityStream;
         private final ByteArrayOutputStream buffer;
+        private int entitySize;
 
         /**
          * Constructor.
@@ -221,23 +136,14 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         }
 
         /**
-         * Writes entity to a string builder and returns filled builder.
+         * Writes entity to a string.
          *
-         * @return A new StringBuilder instance.
+         * @return A new String instance.
          */
-        public StringBuilder getStringBuilder() {
+        @Override
+        public String toString() {
             byte[] entity = buffer.toByteArray();
-            StringBuilder builder = prefixId(new StringBuilder(), id)
-                    .append(NOTIFICATION_PREFIX)
-                    .append(RESPONSE_ENTITY_NOTE)
-                    .append(lineSeparator())
-                    .append(new String(entity, 0, min(entity.length, MAX_ENTITY_SIZE)));
-
-            if (entity.length > MAX_ENTITY_SIZE) {
-                builder.append(MORE);
-            }
-            builder.append(lineSeparator());
-            return builder;
+            return new HttpLogBuilder(id).responseEntity(entity, entity.length, entitySize > MAX_ENTITY_SIZE);
         }
 
         @Override
@@ -246,6 +152,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
                 buffer.write(i);
             }
             entityStream.write(i);
+            entitySize++;
         }
     }
 }

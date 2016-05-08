@@ -15,8 +15,6 @@
  */
 package org.elasticlib.common.client;
 
-import static java.lang.String.join;
-import static java.lang.System.lineSeparator;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
 import javax.ws.rs.client.ClientRequestContext;
@@ -24,7 +22,7 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseContext;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.container.PreMatching;
-import javax.ws.rs.core.MultivaluedMap;
+import org.elasticlib.common.util.HttpLogBuilder;
 
 /**
  * A filter that logs HTTP requests and reponses.
@@ -33,12 +31,6 @@ import javax.ws.rs.core.MultivaluedMap;
 @Priority(Integer.MIN_VALUE)
 public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseFilter {
 
-    private static final String SPACE = " ";
-    private static final String DASH = " - ";
-    private static final String COLON = ": ";
-    private static final String COMMA = ",";
-    private static final String REQUEST_PREFIX = "> ";
-    private static final String RESPONSE_PREFIX = "< ";
     private static final String ID_PROPERTY = ClientLoggingFilter.class.getName() + ".id";
 
     private final AtomicLong id;
@@ -59,51 +51,20 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
         long currentId = id.incrementAndGet();
         context.setProperty(ID_PROPERTY, currentId);
 
-        StringBuilder builder = prefix(new StringBuilder(), currentId, REQUEST_PREFIX)
-                .append(context.getMethod())
-                .append(SPACE)
-                .append(context.getUri().toASCIIString())
-                .append(lineSeparator());
+        String message = new HttpLogBuilder(currentId).request(context.getMethod(),
+                                                               context.getUri().toASCIIString(),
+                                                               context.getStringHeaders());
 
-        printPrefixedHeaders(builder, currentId, REQUEST_PREFIX, context.getStringHeaders());
-
-        handler.logRequest(builder.toString());
+        handler.logRequest(message);
     }
 
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) {
         long currentId = (long) requestContext.getProperty(ID_PROPERTY);
+        String message = new HttpLogBuilder(currentId).response(responseContext.getStatus(),
+                                                                responseContext.getStatusInfo().getReasonPhrase(),
+                                                                responseContext.getHeaders());
 
-        StringBuilder builder = prefix(new StringBuilder(), currentId, RESPONSE_PREFIX)
-                .append(responseContext.getStatus())
-                .append(DASH)
-                .append(responseContext.getStatusInfo().getReasonPhrase())
-                .append(lineSeparator());
-
-        printPrefixedHeaders(builder, currentId, RESPONSE_PREFIX, responseContext.getHeaders());
-
-        handler.logResponse(builder.toString());
-    }
-
-    private static void printPrefixedHeaders(StringBuilder builder,
-                                             long id,
-                                             String prefix,
-                                             MultivaluedMap<String, String> headers) {
-        headers.entrySet()
-                .stream()
-                .sorted((x, y) -> x.getKey().compareToIgnoreCase(y.getKey()))
-                .forEach(header -> {
-                    prefix(builder, id, prefix)
-                    .append(header.getKey())
-                    .append(COLON)
-                    .append(join(COMMA, header.getValue()))
-                    .append(lineSeparator());
-                });
-    }
-
-    private static StringBuilder prefix(StringBuilder builder, long id, String prefix) {
-        return builder.append(Long.toString(id))
-                .append(SPACE)
-                .append(prefix);
+        handler.logResponse(message);
     }
 }

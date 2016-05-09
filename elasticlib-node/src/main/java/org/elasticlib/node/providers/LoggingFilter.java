@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import static java.lang.System.lineSeparator;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -31,6 +30,7 @@ import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
 import org.elasticlib.common.util.HttpLogBuilder;
+import org.elasticlib.common.util.IdProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +48,20 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
     private static final Logger LOG = LoggerFactory.getLogger(LoggingFilter.class);
 
-    private final AtomicLong id = new AtomicLong();
+    private final IdProvider idProvider;
+
+    /**
+     * Constructor.
+     *
+     * @param idProvider Provides identifiers for logged requests and responses.
+     */
+    public LoggingFilter(IdProvider idProvider) {
+        this.idProvider = idProvider;
+    }
 
     @Override
     public void filter(ContainerRequestContext requestCtx) throws IOException {
-        long currentId = id.incrementAndGet();
+        long currentId = idProvider.get();
         requestCtx.setProperty(ID_PROPERTY, currentId);
 
         String message = new HttpLogBuilder(currentId).request(requestCtx.getMethod(),

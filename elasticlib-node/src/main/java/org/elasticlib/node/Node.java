@@ -21,10 +21,12 @@ import java.net.URI;
 import java.nio.file.Path;
 import javax.ws.rs.core.UriBuilder;
 import org.elasticlib.common.config.Config;
+import org.elasticlib.common.util.IdProvider;
 import org.elasticlib.node.components.ComponentsModule;
 import org.elasticlib.node.config.NodeConfig;
 import org.elasticlib.node.dao.DaoModule;
 import org.elasticlib.node.discovery.DiscoveryModule;
+import org.elasticlib.node.handlers.LoggingStaticHttpHandler;
 import org.elasticlib.node.manager.ManagerModule;
 import org.elasticlib.node.providers.LoggingFilter;
 import org.elasticlib.node.runtime.RuntimeInfo;
@@ -33,8 +35,8 @@ import org.elasticlib.node.service.RemotesService;
 import org.elasticlib.node.service.ReplicationsService;
 import org.elasticlib.node.service.RepositoriesService;
 import org.elasticlib.node.service.ServiceModule;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -74,18 +76,20 @@ public class Node {
         serviceModule = new ServiceModule(runtimeInfo, config, managerModule, daoModule, componentsModule);
         discoveryModule = new DiscoveryModule(config, managerModule, serviceModule);
 
+        IdProvider idProvider = new IdProvider();
+
         ResourceConfig resourceConfig = new ResourceConfig()
                 .packages("org.elasticlib.node.resources",
                           "org.elasticlib.node.providers")
-                .register(new LoggingFilter())
+                .register(new LoggingFilter(idProvider))
                 .register(bindings());
 
         httpServer = GrizzlyHttpServerFactory.createHttpServer(host(config),
                                                                resourceConfig,
                                                                false);
 
-        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(home.resolve("www").toString()),
-                                                           config.getString(NodeConfig.HTTP_WWW_PATH));
+        HttpHandler staticHandler = new LoggingStaticHttpHandler(home.resolve("www"), idProvider);
+        httpServer.getServerConfiguration().addHttpHandler(staticHandler, config.getString(NodeConfig.HTTP_WWW_PATH));
     }
 
     private AbstractBinder bindings() {

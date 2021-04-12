@@ -20,7 +20,7 @@ Concerning this latter point, metadata is automatically extracted from each file
 
 * For an audio file, it could be the author, title, album...
 * For a photo, the date on which it was taken, its format and size.
-* Content is also extracted from readable files like PDFs or flat text ones.
+* Content is also extracted from readable files like PDFs or plain text ones.
 
 All collected metadata is stored along with associated file in the repository and indexed in an embedded search engine,
 so you can find files by searching on metadata or text content. Metadata is also freely modifiable, in order to enable you to
